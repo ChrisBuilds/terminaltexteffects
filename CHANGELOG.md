@@ -12,6 +12,9 @@ Detailed examples and explanations may appear in the optional
 
 ### Breaking changes
 
+- The minimum supported Python version is now 3.9.2. Upgrade Python 3.9.0 or
+  3.9.1 before installing TerminalTextEffects.
+  ([#122](https://github.com/ChrisBuilds/terminaltexteffects/issues/122))
 - Empty or whitespace-only CLI input is a successful no-op instead of
   displaying `No Input.`. Library effects raise `EmptyInputError` when no
   visible input remains; empty text-boundary coordinate selection raises
@@ -167,6 +170,9 @@ Detailed examples and explanations may appear in the optional
 - Update the documentation theme to fix a cross-site scripting vulnerability in
   search suggestions (GHSA-xvg9-69gf-fjrf).
   ([#121](https://github.com/ChrisBuilds/terminaltexteffects/issues/121))
+- Require patched cryptography in release tooling and remove vulnerable legacy
+  dependency selections.
+  ([#122](https://github.com/ChrisBuilds/terminaltexteffects/issues/122))
 
 <!-- unreleased notes end -->
 
