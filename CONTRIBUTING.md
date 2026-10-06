@@ -152,6 +152,12 @@ Temporary builds and environments are removed automatically. Optionally pass
 `--output-dir /path/to/empty-directory` to retain the distributions for inspection.
 This check does not publish artifacts. Documentation-only changes skip artifact validation.
 
+Selected canonical library/CLI examples are executed directly from Markdown in CI. When
+editing their marked code blocks, run `./.venv/bin/pytest -q tests/test_documented_examples.py`;
+see [executable example guidance](.github/CI.md#executable-documentation-examples) for selection
+and maintenance. Keep expected behavior assertions meaningful; page rendering alone cannot
+validate APIs or commands.
+
 Run manual or visual tests when human inspection is needed. Reserve exhaustive effect-argument
 testing for pre-release validation unless diagnosing the full parameter matrix. Performance
 claims require before/after measurements and checks that seeded output and frame behavior are

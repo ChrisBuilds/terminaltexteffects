@@ -122,3 +122,27 @@ effect to see if it supports infinite looping.
 !!! note
 
     Infinite looping is *NOT* supported when TTE is run as an application. The command line argument validators will not accept these values. This is by design, to prevent users inadvertently inputting a configuration that results in having to interrupt the process to end an effect.
+
+## Small complete frame-iteration example
+
+This example collects a short [Wipe](./effects/wipe.md) animation and prints its last frame.
+A fixed canvas and no frame-rate delay make it suitable for checking integration without a
+live terminal. For normal animations, print each frame with the context manager shown above.
+
+<!-- tte-example: library-wipe -->
+```python
+from terminaltexteffects.effects.effect_wipe import Wipe
+
+effect = Wipe("Hi")
+effect.terminal_config.canvas_width = 2
+effect.terminal_config.canvas_height = 1
+effect.terminal_config.ignore_terminal_dimensions = True
+effect.terminal_config.frame_rate = 0
+effect.terminal_config.no_color = True
+frames = list(effect)
+print(frames[-1])
+```
+
+The final frame contains `Hi`. Collecting frames retains them in memory; for larger input,
+consume the iterator incrementally. Frame strings contain cursor-positioning sequences even
+when colors are disabled. CI executes this marked example directly from this page.

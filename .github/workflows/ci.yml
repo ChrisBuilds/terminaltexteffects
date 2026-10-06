@@ -83,6 +83,10 @@ jobs:
             args+=(--base "$QUALITY_BASE")
           fi
           .venv/bin/python tools/generate_changelog.py "${args[@]}"
+      - name: Execute selected documentation examples
+        env:
+          TTE_REQUIRE_DOC_EXAMPLES: "1"
+        run: .venv/bin/python -m pytest -q tests/test_documented_examples.py
       - name: Build documentation and check links
         if: steps.changes.outputs.build_docs == 'true'
         run: .venv/bin/python -m mkdocs build --strict --site-dir "$RUNNER_TEMP/docs"

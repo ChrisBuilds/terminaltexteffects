@@ -199,6 +199,8 @@ expressions, job dependencies, and Bash/sh scripts without editing files. The op
 `workflows` hook runs only when explicitly invoked with `--hook-stage manual`; ordinary
 commit hooks do not require these external tools.
 
+For the marked canonical library/CLI snippets, also run `./.venv/bin/pytest -q tests/test_documented_examples.py`. The tests execute the actual Markdown code with bounded subprocesses and semantic assertions. Preserve unique markers and standalone fences when editing; see [executable example maintenance](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/CI.md#executable-documentation-examples). This deliberately small selection does not validate every example or terminal appearance.
+
 A successful local build verifies documentation; it does not deploy it. Strict builds fail on relevant warnings/errors and configured link validation. A dependency update deserves integration checks for the tools it affects: successful lock resolution alone does not prove compatibility or safe behavior.
 
 **Complete when:** applicable focused tests, touched-file formatting/lint/types, and generated-file checks pass. Report remaining uncertainty instead of overstating QA.
@@ -299,7 +301,8 @@ The workflow listens to `pull_request`, pushes to `main`, and `workflow_dispatch
 4. **Hook regressions for code-bearing changes.** Validate pre-commit configuration and run `tests/test_hooks.py`.
 5. **Artifact validation for code-bearing changes.** Run `tools/check_artifacts.py`; see below.
 6. **Changelog validation on every change.** Check fragment naming/content, preview freshness, and the committed branch's decision. Release-note consumption into a new dated section is supported.
-7. **Strict documentation build when classified as relevant.** Recognized prose, all `docs/` and theme files, runtime package changes, `mkdocs.yml`, `pyproject.toml`, `uv.lock`, and the CI/docs deployment workflows request this build explicitly. Source-only or dependency-only changes need no accompanying fragment to trigger it. Deletions and both sides of renames count. Tests-only and unrelated tool/workflow changes do not independently request it. This is one build in Code quality, not one per matrix job; the separate main deployment rebuilds the tested revision for publication.
+7. **Selected executable examples on every run.** `tests/test_documented_examples.py` reads the marked Python library and Bash CLI blocks directly from their public guides. Bounded subprocesses use the current environment outside the checkout and check final text plus CLI cursor restoration. The same tests run in the ordinary Linux matrix; no separate examples matrix is added.
+8. **Strict documentation build when classified as relevant.** Recognized prose, all `docs/` and theme files, runtime package changes, `mkdocs.yml`, `pyproject.toml`, `uv.lock`, and the CI/docs deployment workflows request this build explicitly. Source-only or dependency-only changes need no accompanying fragment to trigger it. Deletions and both sides of renames count. Tests-only and unrelated tool/workflow changes do not independently request it. This is one build in Code quality, not one per matrix job; the separate main deployment rebuilds the tested revision for publication.
 
 ### Why validate artifacts before a release?
 
@@ -490,6 +493,7 @@ See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/S
 | Towncrier and changelog helper | Fragments, generated preview, dated release assembly | `changelog.d/`, template, `tools/generate_changelog.py` | Each issue; hooks/CI; release preparation |
 | Completion generator and shtab | Bundled shell resources | `tools/generate_shell_completions.py`, runtime parser | CLI changes; completion CI |
 | Hatchling, artifact checker, Twine | Build/validate installed distributions; approved upload | Build settings, `tools/check_artifacts.py`, release runbook | Code-bearing CI; release validation; manual publication |
+| Documented example tests | Selected actual Python/CLI snippets remain executable | `tests/test_documented_examples.py`, marked public guide blocks | Example edits; every Code quality run and default Linux matrix |
 | MkDocs, Material, mkdocstrings | Render documentation and API pages | `mkdocs.yml`, docs, theme overrides | Relevant PR checks; tested-main deployment |
 | pytest-cov | Line/branch reports | Coverage settings and Python 3.14 CI steps | One existing Linux matrix run |
 | GitHub Actions | Hosted CI and Pages deployment | `.github/workflows/` | PR/main push/manual CI; successful-main workflow completion |
