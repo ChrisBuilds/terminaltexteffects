@@ -87,8 +87,14 @@ jobs:
           .venv/bin/python -m pytest -q tests/test_workflow_lint.py tests/test_ci_classification.py tests/test_coverage_reporting.py
       - name: Check all tracked Python files
         run: .venv/bin/python tools/check_quality.py --all
+      - name: Check changed text hygiene
+        env:
+          HYGIENE_BASE: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
+        run: .venv/bin/python tools/run_hook.py hygiene --base "$HYGIENE_BASE"
       - name: Check local QA hooks
         if: steps.changes.outputs.run_tests == 'true'
+        env:
+          TTE_REQUIRE_HOOK_INTEGRATION: "1"
         run: |
           .venv/bin/pre-commit validate-config
           .venv/bin/python -m pytest -q tests/test_hooks.py
@@ -329,3 +335,11 @@ jobs:
             tests/test_cli.py::test_main_empty_input_is_silent_success \
             tests/test_cli.py::test_main_empty_renderable_input_exits_with_error \
             tests/test_cli.py::test_development_effects_require_explicit_opt_in
+      - name: Exercise native Windows QA hooks
+        if: needs.quality.outputs.run_tests == 'true' && runner.os == 'Windows'
+        env:
+          TTE_REQUIRE_HOOK_INTEGRATION: "1"
+        run: |
+          uv sync --locked --no-default-groups --group test --group hooks --no-editable
+          uv run --no-sync python -m pre_commit validate-config
+          uv run --no-sync python -m pytest -q tests/test_hooks.py
