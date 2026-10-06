@@ -32,7 +32,7 @@ def _hex_to_int(hex_color: str) -> tuple[int, int, int]:
         ValueError: If `hex_color` is not exactly six hexadecimal digits with at most one leading `#`.
 
     """
-    color_string = hex_color[1:] if hex_color.startswith("#") else hex_color
+    color_string = hex_color.removeprefix("#")
     if not hexterm.is_valid_color(hex_color):
         msg = f"Invalid RGB hex color code: {hex_color}"
         raise ValueError(msg)

@@ -1,0 +1,1 @@
+Effect iterators and output contexts share their terminal graph. Terminal setup and cleanup are idempotent, cursor-relative printing requires preparation, and overlapping output contexts are rejected.

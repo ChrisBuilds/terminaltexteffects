@@ -70,12 +70,17 @@ def test_sweep_travel_speed_preserves_eased_prefixes_phase_handoff_and_animation
     random.seed(918)
     effect = effect_sweep.Sweep("\x1b[38;5;196m\x1b[48;5;21mabc\nd界f\x1b[0m")
     effect.terminal_config = TerminalConfig(
-        frame_rate=0, existing_color_handling=color_handling, canvas_width=7, canvas_height=5, anchor_text="c",
+        frame_rate=0,
+        existing_color_handling=color_handling,
+        canvas_width=7,
+        canvas_height=5,
+        anchor_text="c",
     )
     effect.effect_config = effect_sweep.SweepConfig(
         first_sweep_direction=order,
         second_sweep_direction=(
-            argutils.CharacterOrder.SPIRAL_COUNTER_CLOCKWISE_QUAD if order.is_grouped
+            argutils.CharacterOrder.SPIRAL_COUNTER_CLOCKWISE_QUAD
+            if order.is_grouped
             else argutils.CharacterOrder.CIRCLE_CENTER_TO_OUTSIDE
         ),
         reverse_first_sweep_direction=reverse,
@@ -111,8 +116,7 @@ def test_sweep_travel_speed_preserves_eased_prefixes_phase_handoff_and_animation
             next(iterator)
             step = min((frame + 1) * travel_speed, 100)
             group_count = (
-                len(sequence) if step == 100
-                else int(effect_sweep.tte.easing.in_out_circ(step / 100) * len(sequence))
+                len(sequence) if step == 100 else int(effect_sweep.tte.easing.in_out_circ(step / 100) * len(sequence))
             )
             prefix = [character for group in sequence[:group_count] for character in group]
             assert scheduled[scene] == prefix
@@ -143,12 +147,14 @@ def test_sweep_travel_speed_preserves_eased_prefixes_phase_handoff_and_animation
     if color_handling == "dynamic":
         assert all(
             character.animation.current_character_visual.colors == ColorPair()
-            for character in inventory if character.is_fill_character
+            for character in inventory
+            if character.is_fill_character
         )
         assert all(
             character.animation.current_character_visual.colors
             == ColorPair(fg=character.animation.input_fg_color, bg=character.animation.input_bg_color)
-            for character in inventory if not character.is_fill_character
+            for character in inventory
+            if not character.is_fill_character
         )
 
 
@@ -269,7 +275,7 @@ def test_sweep_mixed_directions_activate_both_phases_in_order_and_restore_canvas
     monkeypatch.setattr(effect_sweep.tte.Animation, "activate_scene", record_activation)
     for _ in iterator:
         for scene, characters in scheduled.items():
-            assert characters == expected[scene][:len(characters)]
+            assert characters == expected[scene][: len(characters)]
     assert iterator.complete
     assert iterator.phase == "second sweep"
     assert scheduled == expected
@@ -286,11 +292,13 @@ def test_sweep_mixed_directions_activate_both_phases_in_order_and_restore_canvas
         assert all(
             character.animation.current_character_visual.colors
             == ColorPair(fg=character.animation.input_fg_color, bg=character.animation.input_bg_color)
-            for character in inventory if not character.is_fill_character
+            for character in inventory
+            if not character.is_fill_character
         )
         assert all(
             character.animation.current_character_visual.colors == ColorPair()
-            for character in inventory if character.is_fill_character
+            for character in inventory
+            if character.is_fill_character
         )
 
 

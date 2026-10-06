@@ -1,489 +1,193 @@
-# Change Log
+# Changelog
 
----
+Notable user-facing changes are recorded here. Upcoming notes are generated from
+[changelog fragments](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/changelog.d/README.md);
+published history before 0.16.0 retains its original format.
+Detailed examples and explanations may appear in the optional
+[ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/changeblog/).
 
-## 0.16.0
+<!-- unreleased notes start -->
 
----
+## Unreleased
 
-### New Features (0.16.0)
+### Breaking changes
 
----
+- The minimum supported Python version is now 3.9.2. Upgrade Python 3.9.0 or
+  3.9.1 before installing TerminalTextEffects.
+  ([#122](https://github.com/ChrisBuilds/terminaltexteffects/issues/122))
+- Empty or whitespace-only CLI input is a successful no-op instead of
+  displaying `No Input.`. Library effects raise `EmptyInputError` when no
+  visible input remains; empty text-boundary coordinate selection raises
+  `ValueError`.
+- Import `Canvas` from `terminaltexteffects.engine.canvas`. Canvas bounds are
+  positive, inclusive, and immutable; text anchoring returns immutable
+  coordinate placements.
+- Library configuration construction and assignment now enforce the same
+  ranges, types, and choices as CLI parsing. Invalid colors, symbols, gradient
+  steps, coordinates, and easing parameters raise explicit validation errors.
+- Python 3.9 is now the minimum supported version; Python 3.8 is no longer
+  supported.
+- Spanning-tree generators reject pre-linked character graphs and track
+  visitation independently. Start generation with an unlinked graph.
+- `Color` is now immutable and normalizes RGB strings to lowercase. Use
+  `ColorPair.fg` and `ColorPair.bg`; the inconsistent `fg_color` and `bg_color`
+  attributes have been removed.
+- `Terminal` captures an immutable snapshot of `TerminalConfig` at
+  construction. Set options before creating the terminal; changing the caller's
+  config afterward no longer changes rendering.
+- `find_coords_in_circle()` now calls its size argument `radius`, rather than
+  `diameter`. Line, Bézier, and ray distances are terminal-adjusted by default;
+  pass `terminal_adjusted=False` for Cartesian distance.
 
-#### Development Tooling (0.16.0)
+### Added
 
----
+- Added `--repeat COUNT` to replay the selected CLI effect without buffering
+  frames. The default remains one playback; `--repeat 0` replays until
+  interrupted, and effects that yield no frames stop immediately.
+  ([#70](https://github.com/ChrisBuilds/terminaltexteffects/issues/70))
+- Support explicitly loading development effects through `TTE_DEV_EFFECTS_DIR`,
+  while excluding repository development effects from release archives.
+  ([#94](https://github.com/ChrisBuilds/terminaltexteffects/issues/94))
+- Added native PowerShell 7 completion for both CLI entry points. Use `tte
+  --print-completion powershell` for effect names, options, allowed values, and
+  input-file paths.
+  ([#104](https://github.com/ChrisBuilds/terminaltexteffects/issues/104))
+- Publish security-reporting and support policies, including a private GitHub
+  vulnerability-reporting route and guidance on Python, platforms, terminals,
+  and shell completion.
+  ([#129](https://github.com/ChrisBuilds/terminaltexteffects/issues/129))
+- Added `CharacterOrder` and `CharacterOrderArg` for shared flat and grouped
+  retrieval. Retrieval also supports `reverse=True`, optional serpentine group
+  traversal, and explicit off-canvas selection.
+- Added `colorterm.reset_fg()` and `reset_bg()`, Bresenham and supercover line
+  helpers, and `interpolate_coord()`; `find_coord_on_line` remains a
+  compatibility alias.
+- Added `engine.effect_support.particles.ParticlePool` and `ParticleReset` for
+  effect-owned helper reuse and event-based reclamation.
+- Added `geometry.GridLayout`, `find_balanced_grid()`, and
+  `Terminal.get_characters_grouped_by_grid()` for balanced rectangular
+  character partitions.
+- Added clockwise and counterclockwise single, double, and quad spiral sorts,
+  plus `CIRCLE_CENTER_TO_OUTSIDE` and `CIRCLE_OUTSIDE_TO_CENTER` groups.
+- Added opt-in `Scene(cache_appearance=True)`, `Scene(cache_easing=True)`, and
+  corresponding `Animation.new_scene()` options, plus
+  `Animation.set_appearance_if_changed()` and `Terminal.enable_row_cache()` for
+  custom effects.
+- Bundled Bash and native Zsh completions suggest enum, gradient, ordering, and
+  easing values. `tte --print-completion` without a shell prints setup commands
+  for both shells; generation excludes user effect plugins.
+- Printable single-code-point wide symbols now span two terminal cells, with
+  width-aware layout, wrapping, layering, and rendering.
+- Wipe, Highlight, Sweep, Waves, and LaserEtch accept unified character orders,
+  including spirals and circular groups. Added direction-reversal flags for
+  these effects and `--travel-speed` to Sweep and Waves; its default of `1`
+  preserves their existing pacing.
 
-* Added a stdlib-only performance benchmarking workflow via `tools/perf/benchmark_effects.py`.
-  The harness measures effect iterator build time, render iteration time, total time, frame counts,
-  and output character counts without terminal stdout rendering or frame-rate sleeps.
-* Added benchmark report JSON output, advisory baseline/candidate comparison, deterministic seeding,
-  input presets, and optional `cProfile` output for investigating performance changes.
-* Added focused tests for the benchmark harness and documented the recommended performance optimization workflow in
-  `docs/performance.md`.
-* Added a `--lifecycle terminal-output` benchmark mode for measuring context setup, iterator construction, in-memory
-  frame printing, and cursor restoration without writing to the real terminal.
-* Added a sparse 80-by-24 input preset and optional build/total peak-memory measurements to the performance harness.
-* Reduced the default test-suite runtime by excluding manual visual renders and selecting deterministic pairwise
-  coverage for large effect-configuration matrices. Pass `--exhaustive-effect-args` to restore every Cartesian
-  configuration combination, and select the `manual` or `visual` markers explicitly to run visual checks.
-* Matrix render tests and the generic Matrix and Thunderstorm smoke tests now advance effect clocks deterministically
-  while retaining their configured timed phases. This removes real-time waits from those tests; the default parallel
-  suite took 54 seconds locally, compared with 80 seconds before the change.
+### Changed
 
-#### Engine Features (0.16.0)
-
----
-
-* Motion path activation now calculates straight-line origin distances directly with terminal-scaled `math.hypot`,
-  avoiding geometry-cache key hashing for this small calculation. Bézier distance caching, fresh origin objects,
-  activation resets, and event behavior are preserved. Added retained-reference and callback-restart regression tests.
-  Paired production Rings iterator benchmarks (seven samples, two warmups) reduced dense total time 2.5%, with
-  identical output; the full shared-engine suite passes.
-* Added opt-in `Animation.set_appearance_if_changed()` to reuse unchanged effective visuals while detecting
-  direct visual edits, scene replacement, color-policy changes, and width transitions. The ordinary appearance
-  setter retains fresh-visual semantics. Overflow row coloring and Spotlights use the helper in `always` input-color
-  mode; other color modes retain their existing appearance paths. Paired dense iterator measurements reduced
-  total time by 32.2% and 17.2%, respectively, with identical output. Overflow peak traced allocation increased
-  21.6%; Spotlights stayed near parity.
-* Reuse read-only event-registration validation tables across characters instead of rebuilding them for each
-  registration. Caller and target validation, ID resolution, duplicate detection, and per-character actions retain
-  their existing behavior. Added coverage for independent registrations when characters use the same path IDs.
-  Paired dense 80-by-24 Rings benchmarks (seven samples, two warmups, seed 1337, no terminal printing) reduced
-  build time from 0.408s to 0.297s (27.3%) and total time from 2.964s to 2.860s (3.5%), with identical output.
-* Added opt-in `Terminal.enable_row_cache()` to reuse unchanged single-cell output rows while tracking motion,
-  animation, visibility, layering, and direct formatted-symbol edits. Wide characters retain width-aware rendering.
-  Matrix enables caching on canvases with at least four rows and 256 cells. Fixed-clock dense 80-by-24 benchmarks
-  (seven samples, two warmups, seed 1337) reduced render time from 0.400s to 0.310s (22%) and total time from
-  0.471s to 0.386s (18%), with identical frames and output. A separate traced-memory sample increased peak memory
-  from 14.0 MB to 15.3 MB (9%); small Matrix and uncached Wipe timings were essentially unchanged.
-* Print, Pour, BouncyBalls, ErrorCorrect, SynthGrid, and Rain now enable row caching within measured size,
-  occupancy, and display-width ranges. Horizontal Pour retains ordinary rendering after caching regressed its
-  timing. Seven-sample iterator benchmarks (two warmups, seed 1337, dense 80-by-24 input, no terminal printing)
-  reduced total time by 62.5%, 25.0%, 15.9%, 19.7%, 15.4%, and 10.1%, respectively. All 124 seeded output
-  signatures matched, including color modes, offsets, alternate configurations, and width-aware helper rendering.
-  Added activation-boundary and width-transition tests and documented the effect-specific gates in `docs/performance.md`.
-* Added `CharacterOrder` and `CharacterOrderArg` to unify spatial grouping and individual traversal.
-  Both `Terminal.get_characters(order=...)` and `get_characters_grouped(order=...)` accept every order:
-  spatial groups flatten into character sequences, and individual sorts produce singleton groups.
-  Legacy enums and `sort` / `grouping` arguments remain supported. `canvas_only` makes off-canvas selection explicit.
-* Added `reverse=True` to flat, grouped, and grid character retrieval. Grouped reversal reverses both group order
-  and internal character order while preserving membership. Optional `serpentine=True` on order-based retrieval
-  reverses alternate spatial groups before global reversal, without reshuffling random traversals.
-* Added clockwise and counterclockwise single, double, and quad spiral `CharacterSort` options for
-  `Terminal.get_characters()`. Spirals wind inward through the selected coordinates' bounding box, with
-  interleaved arms starting at top-left, opposite corners, or all four corners respectively.
-  CLI keys are `spiral_clockwise`, `spiral_clockwise_double`, `spiral_clockwise_quad`,
-  `spiral_counter_clockwise`, `spiral_counter_clockwise_double`, and `spiral_counter_clockwise_quad`.
-* Added `CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE` and `CIRCLE_OUTSIDE_TO_CENTER`, which group characters in
-  terminal-adjusted circular bands around the text's geometric midpoint. Bands are one column wide, empty bands
-  are omitted, and even-sized text is grouped symmetrically.
-* Added `geometry.GridLayout`, `geometry.find_balanced_grid()`, and `Terminal.get_characters_grouped_by_grid()`
-  for reusable rectangular partitions and grouping without enumerating empty canvas coordinates.
-* Color - Added `colorterm.reset_fg()` and `reset_bg()` helpers to restore one default color without clearing the other
-  color or text attributes.
-* Added `engine.effect_support.particles`, a reusable particle helper for effect-owned helper characters. The helper
-  provides `ParticlePool` and `ParticleReset` for pooling transient characters, applying per-emission setup with
-  `on_emit`, and reclaiming particles directly or from character events.
-* Geometry - Added ordered, reversible Bresenham and supercover line rasterization helpers for thin drawing and
-  complete terminal-cell coverage.
-* Terminal symbols now support printable single-code-point wide characters as one `EffectCharacter` spanning two
-  display cells, including width-aware input layout, wrapping, text bounds, neighbor lookup, and layered rendering.
-
-#### Application Features (0.16.0)
-
----
-
-* Added `--repeat COUNT` to replay the selected CLI effect without buffering frames. The default remains one
-  playback; `--repeat 0` replays until interrupted, and effects that yield no frames stop immediately.
-* Added Sweep's `--travel-speed` option to advance multiple easing steps per frame in both phases.
-  The positive-integer default is `1`, preserving original pacing. Faster sweeps retain every scheduled
-  character/group, the easing curve, direction/reversal, and next-frame phase handoff; animations advance
-  once per frame. Updated documentation and Bash/Zsh completions, with ordering and restoration coverage.
-* Added Waves' `--travel-speed` option to activate multiple ordered entries per frame: individual characters
-  for sorts or whole groups for spatial orders. The positive-integer default is `1`, preserving current pacing.
-  Partial final batches retain the selected order and reversal, and animations still advance once per frame.
-  Updated documentation and bundled Bash/Zsh completions, with scheduling and final-appearance coverage.
-* Wipe, Highlight, Sweep, Waves, and LaserEtch now normalize their direction/pattern options to `CharacterOrder`.
-  Waves accepts every order, including diagonals and spirals, while retaining its circular default. Spatial
-  orders activate whole groups and individual orders activate singleton entries through each effect's scheduler.
-* Added `--reverse-wipe-direction`, `--reverse-highlight-direction`, `--reverse-wave-direction`,
-  `--reverse-etch-pattern`, and independent `--reverse-first-sweep-direction` / `--reverse-second-sweep-direction`
-  flags. Defaults remain off; LaserEtch reverses the completed serpentine or algorithm path. Updated help,
-  documentation, and bundled Bash/Zsh completions, with regression coverage for traversal and final appearance.
-* Shell completions are now generated with `shtab` during development and bundled with the package. Completion no
-  longer imports user effect plugins during generation, and zsh now receives a native completion script.
-* Running `tte --print-completion` without a shell argument now prints copy-and-paste setup commands for bash and zsh.
-* Shell completion now suggests valid values for custom enum-like arguments, including gradient directions,
-  character grouping modes, and easing functions.
-* LaserEtch's `--etch-pattern` now accepts every `CharacterSort`, including clockwise and counterclockwise single,
-  double, and quad spirals, while retaining the `algorithm` default and serpentine character-group patterns.
-  The reusable `CharacterGroupOrSortArg` validator supports CLI names and native enum values, and bundled Bash
-  and Zsh completions advertise the full pattern set.
-* Wipe's `--wipe-direction` now accepts every `CharacterSort`, including all six spiral patterns, alongside
-  existing character groups. Sorted modes reveal individual characters through the existing easing and delay
-  controls; the default diagonal grouping is unchanged. Bash and Zsh completions include the new choices,
-  with coverage for ordering, non-monotonic easing, and final color restoration.
-* Highlight's `--highlight-direction` now accepts every `CharacterSort`, including all six spiral patterns,
-  alongside existing character groups. Sorted modes activate highlights in exact character order while keeping
-  the original diagonal default, scene-width behavior, and final colors. Updated Bash/Zsh completions, help,
-  and documentation, with regression coverage for scheduling and color restoration.
-* Sweep's `--first-sweep-direction` and `--second-sweep-direction` now independently accept every `CharacterSort`,
-  including all six spiral patterns, alongside existing character groups. Sorted phases preserve full-canvas fill
-  selection, the existing easing schedule, and final text/color restoration. Updated help, docs, and Bash/Zsh
-  completions, with coverage for mixed group/sort phases and opposite spiral directions.
-* Bundled Bash and Zsh completions now include both circular grouping modes for Wipe, Highlight, and both Sweep
-  directions, with regression coverage for completion choices and runtime parser acceptance.
-
-### Changes (0.16.0)
-
----
-
-#### Engine Changes (0.16.0)
-
----
-
-* Renamed the diamond-shaped character groups to `DIAMONDS_CENTER_TO_OUTSIDE` and
-  `DIAMONDS_OUTSIDE_TO_CENTER`, with CLI keys `diamonds_center_to_outside` and `diamonds_outside_to_center`.
-  Updated Waves, help, documentation, and Bash/Zsh completions to use the explicit names. The original enum
-  names and CLI spellings remain accepted as compatibility aliases; grouping behavior is unchanged.
-* Step- and distance-synced scenes now start at their first frame before motion and reset progress when a path is
-  reactivated.
-* Spanning-tree generators now track their own visitation state and reject pre-linked character graphs instead of
-  silently producing partial traversal orders or leaving Aldous-Broder unable to complete.
-* Smoke's breadth-first traversal no longer copies its complete explored set for every layer, preserving linear work
-  on deep linked trees.
-* Boundary-limited weighted Prim generation now retains weights only for eligible text-region characters while
-  preserving the existing seeded random sequence.
-* Aldous-Broder now supports limiting random starts, traversal, and completion tracking to the text boundary.
-* Spanning-tree generator construction now preserves lazy character-graph initialization. Link-only breadth-first
-  traversal no longer materializes every fill character and cardinal-neighbor mapping on the canvas.
-* Base effect extension docstrings now reference the current configuration and active-set APIs.
-* Easing documentation now describes progress input ranges, intentional back/elastic and custom Bezier overshoot,
-  horizontal control-point limits, and the different clamping behavior of `EasingTracker` and `SequenceEaser`.
-* Custom Bezier easing no longer retains every generated curve in a global 8,192-entry factory cache. Each returned
-  curve still caches repeated progress values, while one-off and randomized curves can be reclaimed normally.
-* Scene and animation XTerm color conversion now share a bounded 1,024-entry cache, preventing unbounded retention of
-  distinct RGB colors.
-* Removed the unused `Animation.active_scene_current_step` field; scene and motion objects remain the playback progress
-  sources.
-* Corrected `Motion.movement_is_complete()` documentation to match its no-active-path completion result.
-* Updated the `argutils` documentation example to use the current `BaseConfig` and `ArgSpec` API, with runnable direct
-  construction and CLI parsing examples.
-* `Terminal` now owns an immutable construction-time snapshot of `TerminalConfig`. Mutating the caller's configuration
-  after construction no longer changes output behavior, and attempts to mutate `terminal.config` fail explicitly.
-* Terminal output now tracks canvas preparation and cursor restoration explicitly. Setup and cleanup are idempotent,
-  cleanup always flushes stdout, cursor-relative printing requires preparation, and overlapping output contexts are
-  rejected before they can overwrite the terminal-global DEC saved cursor position.
-* `CharacterSort.OUTSIDE_ROW_TO_MIDDLE` and `MIDDLE_ROW_TO_OUTSIDE` now order complete rows by distance from the
-  selected rows' vertical midpoint while preserving left-to-right order within each row. Character retrieval now
-  documents its input-coordinate semantics and the visible-canvas scope of grouped retrieval.
-* Terminal input parsing now uses a reusable virtual-screen parser with explicit style, cursor, screen, ID, and color
-  frequency state. Parsing is independently testable and produces immutable records before `Terminal` allocates
-  characters; unused stored ANSI-sequence metadata was removed from `EffectCharacter` and Overflow.
-* Removed the unused `utils.ansitools.parse_ansi_color_sequence()` and `move_cursor_to_column()` APIs. Extended-color
-  decoding now has one implementation in the virtual-screen parser that consumes it.
-* `Canvas` now lives in `terminaltexteffects.engine.canvas` with dedicated tests and documentation.
-* Canvas text anchoring now operates on coordinates and cell widths and returns immutable layout results. `Terminal`
-  applies those placements to characters through a single coordinate operation that keeps motion state synchronized.
-* `BaseEffect.terminal_output()` and the associated effect iterator now share one `Terminal` graph regardless of
-  whether the iterator or output context is created first. Nested and repeated contexts remain isolated, and every
-  `iter(effect)` call still creates a fresh iterator.
-* Terminal fill characters and cardinal neighbor graphs are now materialized only when requested. Empty-coordinate
-  lookup can create one fill cell, public full-map access retains its complete-canvas behavior, and spanning-tree
-  algorithms explicitly prepare the dense graph they require. Reserved IDs preserve helper/fill painter ordering.
-* `BaseEffectIterator.update()` now ticks a snapshot of `active_characters`, allowing character events and callbacks to
-  add or remove active characters during an update without mutating the set being iterated.
-* `Motion.move()` now reuses the current immutable `Coord` object when preserving `previous_coord` instead of
-  allocating a duplicate coordinate on every active-character motion tick. This reduces per-frame allocation overhead
-  in movement-heavy effects while preserving identical rendered output.
-* `Motion.activate_path()` now replaces an existing origin segment in place when reactivating a path instead of
-  removing and reinserting the first segment. This reduces list churn in activation-heavy effects while preserving
-  identical rendered output.
-* Eased scene playback now stores one cumulative frame boundary per frame instead of one dictionary entry per playback
-  tick. This reduces animation build-time allocation and memory use for long-duration scenes.
-* Ordinary scene playback now advances through frames with an internal index instead of repeatedly removing the first
-  list element. This avoids quadratic list-shifting work for long scenes while retaining list-backed frame inspection.
-* Wrapped terminal input rows are now calculated once and reused for both canvas sizing and character setup, reducing
-  preprocessing allocation for wrapped input.
-* Terminal input preprocessing now keeps unstyled gaps sparse instead of materializing temporary blank
-  `EffectCharacter` instances. Logical columns, wrapping, styled spaces, and character ID progression are preserved,
-  while fill characters continue to represent unstyled spaces on the canvas.
-* ANSI input parsing now rejects unsupported SGR styles and colon-form colors, validates color ranges and cursor
-  command arity, reports malformed numeric parameters consistently, and bounds cursor-created virtual layouts.
-* `Terminal.get_input_colors()` now derives color frequencies from retained input characters after cursor overwrites
-  and canvas clipping instead of counting discarded parser intermediates.
-* Rendering collisions now use a deterministic painter order: higher layers win, followed by higher character IDs
-  when layers are equal.
-* Empty terminal input no longer expands to the placeholder text `No Input.`. `Terminal` now exposes an empty text
-  region on its minimal one-cell canvas, while trailing unstyled spaces, blank lines, and cursor-only gaps are
-  deliberately excluded from automatic input geometry; leading/internal gaps and styled spaces remain significant.
-* Character grouping now buckets selected characters in one pass and orders only populated row, column, diagonal, or
-  distance keys. This removes repeated full-list scans and empty-span traversal while preserving group direction and
-  within-group ordering.
-* Terminal frame rendering now reuses blank row strings for sparse frames, retains direct dense-buffer rendering once
-  visibility crosses a canvas-aware threshold, and caches multi-layer painter ordering until visibility or a character
-  layer changes. Direct `EffectCharacter.layer` assignment continues to update collision ordering immediately.
-* Printable ASCII symbols now bypass Unicode metadata lookups, while validated non-ASCII display widths use a bounded
-  cache. Terminal rendering tracks visible double-cell visuals as animation widths change, avoiding a full visible-
-  character width scan on ordinary single-cell frames without weakening wide-character collision handling.
-* Outside/middle character sorting now interleaves sorted characters with indexes instead of repeated front-pops,
-  reducing the ordering pass from quadratic to linear work.
-* Event dispatch now branches directly on registered actions instead of allocating an action map and callback lambdas
-  for every event, reducing allocation in event-heavy effects.
-* Geometry - Shape coordinate helpers now reject negative dimensions and point limits consistently while preserving
-  their existing zero-dimension behavior.
-* Geometry - Reduced coordinate-list cache limits from 8,192 to 128 entries for perimeter and rectangle helpers and
-  512 entries for filled circles, bounding retained shape data while preserving useful `spotlights` cache reuse.
-* Geometry - Renamed the `find_coords_in_circle()` `diameter` parameter to `radius` to match its terminal-adjusted
-  distance semantics, and clarified the generated ellipse's horizontal and vertical extents.
-* Geometry - Standardized `find_coords_on_circle()` and `find_coords_in_circle()` so equal radii use matching
-  terminal-adjusted extents, while preserving the established visual sizes of affected effects.
-* Geometry - Centralized terminal row scaling and made terminal-adjusted distance the default for line, Bézier, and
-  ray calculations. Pass `terminal_adjusted=False` to use Cartesian grid distance.
-* Geometry - Degenerate circle and rectangle helpers now collapse to a center point or one-dimensional perimeter
-  instead of returning no coordinates.
-* Geometry - Added `interpolate_coord()` as the canonical linear interpolation API while preserving
-  `find_coord_on_line` as an alias, and aligned the Bézier evaluator and length helper control-point contracts.
-* Canvas bounds are now validated, positive, inclusive, and immutable. Width, height, centers, text anchoring, random
-  coordinate selection, and terminal center offsets now honor non-default origins and consistently select the lower
-  center cell for even dimensions; Spray's cardinal origins now consume the canonical canvas centers.
-* Color - RGB channel tuples are now parsed once per immutable `Color` and reused by gradient and color-shift
-  interpolation. Both APIs use nearest, ties-to-even channel rounding, and the unused global color-shift cache has
-  been removed.
-* Color - Terminal escape generation now constructs RGB tuples without an intermediate list, retains conversions in a
-  bounded 1,024-entry cache, and reuses precomputed foreground/background sequences for the finite XTerm-256 palette.
-* Color - Repeated RGB foreground and background escape sequences now reuse completed strings from a bounded cache,
-  reducing animation build time when colors recur across frames.
-* Graphics documentation now reflects `Color` specification-based equality, canonical `ColorPair` fields, `Gradient`
-  iteration and transition-count semantics, loop closure, fractional lookup, coordinate endpoints, and validation
-  errors, with examples for single-channel color pairs and coordinate mappings.
-
-#### Effects Changes (0.16.0)
-
----
-
-* Spotlights now calculates nearest-beam distances directly and reuses brightness results in a bounded,
-  iterator-owned cache. An occupied-column index preserves the original ellipse spans, colored spaces,
-  and wide continuation cells while avoiding empty-cell enumeration and fill-character allocation.
-  Unchanged visuals are reused within the effect, with direct visual edits and color-policy changes
-  detected before skipping an appearance update. The shared animation API retains its existing behavior.
-  Paired iterator benchmarks (seven samples, two warmups, seed 1337, no terminal printing) reduced dense
-  80-by-24 total time from 2.302s to 0.948s (58.8%) and sparse total time by 93.4%, with identical output.
-  A fresh-process traced-memory sample reduced dense peak allocation from 25.46 MB to 8.27 MB (67.5%).
-* SynthGrid now divides the full canvas into balanced cells whose widths and heights differ by at most one position,
-  choosing counts that favor visually square cells. The layout supports odd, narrow, large, and offset canvases.
-  Grid lines share intersection characters and omit decoration on tiny cells; single-cell canvases, including one
-  character, start dissolving immediately. Characters on grid boundaries and wide symbols are grouped exactly once.
-* Waves supports `circle_center_to_outside` and `circle_outside_to_center` wave directions, including shell completions.
-  The default direction is now `circle_center_to_outside`.
-* LaserEtch now schedules grouped etch patterns correctly after configuration normalization, including circular modes.
-* OrbittingVolley now builds text in expanding circular rings, launching each character from its nearest canvas
-  side. Rings launch in order with up to two still in flight; the effect waits for all arrivals before finishing.
-  Side distances account for terminal cell height; equally near sides are balanced by magazine size with a stable
-  top/right/bottom/left tie order. The default launch delay is now one animation tick, reduced from 30, for a faster reveal.
-* OrbittingVolley uses deques for ring and launcher queues to avoid shifting lists as characters launch.
-* OrbittingVolley help and documentation now explain the per-launcher volley limit, active-ring assignment, and
-  overlapping arrivals. Showroom defaults and examples now match the actual launcher and character speeds and new
-  launch delay.
-* Waves documentation and examples include circular directions and the new default.
-* Matrix skips rebuilding rain-character visuals when their symbol and color stay the same, while preserving swap draws
-  and rendered frames. With a fixed effect clock, seven-sample iterator benchmarks measured mean render time falling
-  from 1.879 to 0.513 seconds (72.7%) on generated 80-by-24 input and from 0.0157 to 0.00610 seconds (61.2%) on medium
-  input. Frame counts and output lengths matched for each seed; these timings exclude terminal printing.
-* Matrix tracks completed fill columns without list scans and retains dropped characters in one pass.
-* Matrix skips visual reads and symbol/color comparisons when neither random swap is selected, preserving random
-  draws and rendered frames while reducing work in the rain, fill, and resolve phases. A seven-sample, fixed-clock
-  benchmark on generated 80-by-24 input measured mean render time falling from 484 to 405 ms (16.3%) and total
-  iterator time from 555 to 476 ms (14.2%). Frame counts and output lengths matched; terminal printing was excluded.
-* Matrix reuses resolve gradients by endpoint color during scene construction and skips the unused final-gradient
-  mapping in dynamic color mode. Characters retain independent scenes and playback state. A seven-sample,
-  fixed-clock benchmark on generated 80-by-24 input measured mean construction time falling from 95.2 to 71.0 ms
-  (25.3%) and total iterator time from 584 to 550 ms (5.8%), with matching frame counts and output lengths.
-  These timings exclude terminal printing.
-* Blackhole now uses a border-character set for membership checks during starfield construction and consumption,
-  while retaining the ordered list for ring movement.
-* Beams now releases its build-only final-color mapping after scene construction and consumes character, pending-group,
-  and final-wipe queues in constant time instead of repeatedly shifting lists from the front.
-* Beams configuration documentation now identifies beam-gradient step pairing, explains that beam speed ranges use
-  tenths of a character per frame, and accurately describes the scalar-or-tuple final-gradient step contract.
-* BinaryPath no longer retains its build-only final-color map or an unused pending-character queue.
-* BinaryPath paths no longer include redundant zero-distance origin and destination waypoints.
-* BinaryPath assigns binary-helper colors directly instead of retaining one-frame static scenes.
-* BinaryPath documentation now describes binary encoding, outside-to-home travel, spatial gradient steps, and the
-  one-group minimum when the active-group fraction is zero.
-* Smoke's breadth-first fill traversal now uses an efficient queue and constant-time discovery tracking, reducing
-  traversal overhead on wide or densely linked character graphs.
-* Burn smoke now uses `ParticlePool` for pooled helper characters and event-based reclaim behavior.
-* Burn now creates its capped smoke-particle pool on demand instead of eagerly constructing all 2,000 particles.
-* Burn releases its build-only per-character final-color references after constructing the animation scenes.
-* Burn's showroom options now match the configured default smoke chance.
-* LaserEtch sparks now use `ParticlePool` for pooled helper characters and event-based reclaim behavior.
-* LaserEtch configuration docs now identify `etch_pattern` and list the supported character-ordering patterns.
-* Rain API documentation now identifies `RainConfig` as the effect configuration type.
-* RandomSequence API documentation now identifies `RandomSequenceConfig` as the effect configuration type.
-* Blackhole now documents final-gradient steps as color transition counts for its spatial gradient, not as an
-  animation-duration setting.
-* BouncyBalls now documents that `ball_delay=0` removes the delay between ball-drop batches.
-
-### Bug Fixes (0.16.0)
-
----
-
-* ErrorCorrect now accepts `--swap-delay 0` to schedule each pair on consecutive frames, matching its documented range.
-* ErrorCorrect now rounds its target displaced-character count to a whole pair, with half pairs rounded up.
-* Fireworks now documents zero `firework_volume` and `explode_distance` as selecting their one-character and one-cell minimums.
-* Matrix now treats symbol and color swap chances as probabilities from 0 to 1, with 0 disabling swaps.
-* OrbittingVolley now documents that a zero volley size still launches one available input character.
-* Overflow now accepts `--overflow-cycles-range 0-0` to disable overflow cycles, matching its documented range.
-* RandomSequence now enforces its documented `0 < speed <= 1` range.
-* Rings now enforces the documented `ring_gap` range and accepts zero `disperse_duration`.
-* Slice's copyable CLI example now separates `--slice-direction` and `--movement-speed` correctly.
-* Spotlights now rejects `beam_falloff` values above 1, matching its documented percentage range.
-* Spotlights now handles zero beam falloff when only a wide character's continuation cell is covered,
-  illuminating the character at full brightness instead of dividing by zero.
-* Swarm now compares complete area indices and documents the zero behavior of `swarm_size` and `swarm_coordination`.
-* VHSTape glitch-wave paths now animate with the configured `glitch_wave_colors` palette.
-* Blackhole now keeps input stars available for consumption on short text, uses helper border stars when necessary,
-  fits the border inside compact canvases, and hides helpers before restoring the final text.
-* Blackhole now uses its configured `star_colors` palette for explosion characters and documents its collapse-point use.
-* ColorShift now accepts `--cycles 0` for infinite gradient cycling, matching its runtime behavior.
-* Beams now emits a character as soon as a group accumulates one whole unit of progress instead of waiting for more
-  than one unit and releasing characters in unintended bursts.
-* `BaseEffect` now preserves explicitly supplied effect and terminal configuration objects whose truth value is false;
-  only `None` requests a default configuration.
-* `BaseConfig` now validates declared `ArgSpec` defaults, rejects argument-specification objects used as runtime
-  values, preserves explicitly parsed canonical values that compare equal to differently typed defaults, and applies
-  ordinary dataclass defaults and factories when building from partial namespaces.
-* Removed an unmatched code fence from the `ArgSpec` and `BaseConfig` documentation example.
-* `EasingTracker` and `SequenceEaser` now reject zero, negative, noninteger, and boolean `total_steps` at construction
-  instead of silently starting complete or failing later. Added tests for invalid counts and a valid one-step ease.
-* `EasingTracker.clamp` is now a public dataclass field that reports the active setting and controls subsequent
-  steps when changed. Added regression tests for lower and upper clamping with both settings.
-* Cubic Bezier easing now validates finite horizontal control points in `[0, 1]` and uses a bracketed Newton solver
-  with bisection fallback, so flat endpoint curves converge accurately without reversing or leaving the curve domain.
-  Vertical control points may still overshoot. Added reference-based endpoint, monotonicity, and validation tests.
-* `SequenceEaser` now includes the final sequence element when an easing function's endpoint rounds just below one,
-  and repeated steps after completion do not report that element as newly added again. Added focused coverage for
-  affected and ordinary easing functions, sequence lengths, and intentionally partial final values.
-* `ArgSpec.normalize()` now rejects empty explicit lists and tuples for `TupleAction` arguments declared with
-  `nargs="+"`. Direct effect configs now catch missing gradient stops and other required multi-value options when
-  constructed or assigned; scalar values and optional tuple arguments retain their existing behavior. Added focused
-  regression tests for direct config and CLI behavior.
-* `PositiveFloatRange` now rejects native tuples and lists with nonpositive endpoints, so direct effect configuration
-  construction and assignment enforce the same positive-range contract as CLI input. Clarified the validator docstring
-  and added focused parser and effect-config regression tests.
-* The ANSI cursor-up helper now rejects booleans, non-integer values, and negative distances before emitting a control
-  sequence, while zero-row relative movement is treated as a no-op.
-* `CharacterVisual.dim` now emits the ANSI dim sequence when formatting rendered symbols, matching the behavior of
-  the other supported visual-mode flags.
-* Canvas empty text regions no longer contain the sentinel coordinate `(0, 0)`, and random text-boundary selection now
-  raises `ValueError` instead of returning an off-canvas coordinate.
-* The CLI now treats empty and whitespace-only input as a successful no-op, emitting no status text or terminal
-  control sequences.
-* Animation and terminal symbol entry points now consistently reject empty, multi-code-point, combining-only, and
-  non-printable symbols with `InvalidSymbolError` instead of allowing malformed frames or applying inconsistent checks.
-* Terminal character mutation APIs now reject foreign or unregistered characters, non-boolean visibility values, and
-  malformed helper coordinates with stable terminal-specific exceptions.
-* Terminal - Raw C0 controls other than tab, newline, and carriage return, plus DEL and C1 controls, are now rejected
-  before character creation so unsupported control bytes cannot reach rendered frames.
-* Configuration - Fixed CLI help displaying Python representations for defaults such as colors, enums, gradients,
-  easing functions, and ranges. Defaults now use their valid command-line syntax and enum arguments list all accepted
-  options.
-* Animation - Fixed `adjust_color_brightness()` rounding so a brightness factor of `1` preserves mixed-channel RGB colors instead of subtly darkening individual channels.
-* Motion - Fixed crashes and incorrect path state updates when `SEGMENT_ENTERED`, `SEGMENT_EXITED`, or `PATH_HOLDING`
-  callbacks deactivate, replace, or restart the active path. Processing of the old traversal now stops, preserving
-  callback-set coordinates and the newly activated path's state until the next tick.
-* Motion - Fixed final path segments not emitting `SEGMENT_EXITED` before path completion. Exit handlers now run for
-  every completed segment and can safely deactivate or replace the path.
-* Motion - Fixed segments crossed in a single path step emitting `SEGMENT_EXITED` before `SEGMENT_ENTERED`. Segment
-  events now follow their documented enter/exit order.
-* Animation - Fixed looping scenes being treated as complete while active. Loops now continue advancing without
-  triggering `SCENE_COMPLETE` events, and remain active until explicitly deactivated. LaserEtch now deactivates its
-  looping beam scenes when the laser is disabled so the effect can complete normally.
-* Animation - Fixed eased scenes skipping their final frame. Eased playback now maps its existing duration ticks
-  inclusively across the easing range so the final tick evaluates at full progress.
-* Animation - Fixed explicit duplicate scene IDs silently replacing existing scenes. Scene creation now raises
-  `DuplicateSceneIDError`, preventing event callbacks from retaining detached scene instances.
-* Terminal - Fixed terminal construction for empty and fully clipped text regions. Effects now raise a clear
-  `EmptyInputError` when no visible input characters remain within the configured canvas.
-* Configuration - Fixed direct `BaseConfig` and `TerminalConfig` construction leaving CLI `ArgSpec` objects in config
-  fields. Library callers can now instantiate configs with defaults and pass them directly to effects or `Terminal`.
-* Terminal - Fixed wrapped input being clipped when terminal dimensions are ignored. Automatic canvas height now
-  includes every wrapped input row.
-* Terminal - Fixed center anchoring for odd-sized text regions. Their center cells now align with the canvas center.
-* Gradient - Fixed fractional RGB interpolation for long and descending gradients. Generated colors now stay within
-  their specified stop range and transition smoothly to the end stop.
-* Gradient - Fixed horizontal, vertical, and diagonal coordinate mappings offsetting their normalized ranges by one
-  cell, which could skip the first gradient stop on short spans. Directional mappings now use their exact bounds, and
-  single-cell mappings consistently use the first gradient color.
-* Gradient - Fractional color lookup now selects the nearest precomputed spectrum sample in constant time and rejects
-  non-finite or non-numeric fractions instead of silently selecting an endpoint or failing with an incidental error.
-  Coordinate mappings perform one lookup per axis position or output cell regardless of spectrum length.
-* Geometry - Fixed cached coordinate results being shared as mutable lists. Callers can now reorder or modify returned
-  coordinate lists without corrupting later cache hits.
-* Geometry - Fixed Bézier path-length estimation omitting the final segment to the endpoint. Curved motion now uses
-  the complete sampled path length when calculating its progress.
-* Geometry - Fixed Bézier path-length estimation measuring rounded terminal coordinates. Lengths now use adaptive
-  floating-point subdivision, preventing rasterization from inflating curved-path durations.
-* Geometry - Fixed radial distance normalization being offset toward the lower-left. Odd and even rectangles now use
-  their true center, produce symmetric radial gradients, and support one-cell regions.
-* Geometry - Fixed negative ray offsets equal to the origin-target distance returning the target instead of the
-  origin. Signed offsets now consistently move forward or backward along the ray.
-* ParticlePool - Fixed duplicate and cross-pool particle adoption. Pools now reject already-owned characters and
-  duplicate `extend()` entries, preventing one character from being checked out concurrently.
-* ParticlePool - Fixed foreign-pool particle reclamation. A pool now rejects attempts to reclaim characters it does
-  not own, preventing one pool from resetting or hiding a character checked out by another pool.
-* Configuration - Fixed library configuration values bypassing CLI validation. `ArgSpec` parsers now normalize both
-  CLI spellings and canonical library values during config construction and assignment, including tuple options,
-  booleans, choices, colors, enums, ranges, and custom easing callables.
-* Color - Fixed malformed RGB hex values being accepted and silently truncated during rendering. RGB colors now require
-  exactly six hexadecimal digits with, at most, one leading `#`.
-* Color - RGB hex validation now requires ASCII hexadecimal digits. `Color`, `is_valid_color()`, `hex_to_xterm()`, and
-  `colorterm.fg()`/`bg()` consistently reject signed values, Unicode digits, `0x` prefixes, and underscores instead of
-  accepting malformed colors or emitting invalid RGB escape sequences.
-* Color - Fixed booleans and equal-valued non-integer numerics being accepted as XTerm-256 codes. `Color` now rejects
-  every constructor value other than non-boolean integers and RGB strings, and `is_valid_color()` safely returns
-  `False` for unsupported types. The `colorterm.fg()` and `colorterm.bg()` helpers now reject booleans instead of
-  emitting malformed ANSI sequences.
-* Color - `repr()` output for XTerm `Color` values and all `ColorPair` combinations now uses valid, reconstructible
-  constructor syntax while preserving the original color representation.
-* Color - RGB specifications now normalize to lowercase for consistent equality and hashing. `Color` instances are
-  immutable, and identity deliberately preserves exact XTerm indices separately from RGB specifications because their
-  terminal rendering semantics can differ.
-* Gradient - Defined steps as transition counts between adjacent stops. Single-stop gradients now contain one color,
-  unused tuple step values are rejected when transitions exist, invalid stops fail at construction, and loop
-  generation no longer mutates the stored source stops. Single-stop gradients continue accepting configuration step
-  tuples of any length, with each value validated.
-* Gradient - Coordinate color mapping now rejects unsupported directions and non-integer or boolean bounds with clear
-  `TypeError`s instead of returning an empty map or failing through incidental arithmetic behavior.
-* ColorPair - Standardized the immutable value object's stored fields, dataclass introspection, serialization, pattern
-  matching, constructor, and representation on `fg` and `bg`. The incoherent `fg_color` and `bg_color` attributes were
-  removed; callers should use `fg` and `bg`.
-* Gradient - Fixed invalid step tuples causing empty spectra, accidental `IndexError`s, or silently ignored invalid
-  values. Gradient construction now rejects empty, non-integer, and non-positive step counts before generation.
-* Animation - Fixed empty symbol sequences passed to `Scene.apply_gradient_to_symbols()` raising an internal
-  `ZeroDivisionError`. The method now raises `AnimationSceneError` with a clear validation message.
-* Terminal - Fixed `get_characters_grouped()` inconsistently including off-canvas added characters depending on the
-  grouping direction. All grouping modes now restrict selected characters to the visible canvas.
-* Engine - Fixed `EffectCharacter` instances from separate terminals comparing equal when their terminal-local IDs
-  matched. Characters now use object identity for equality and hashing, preventing cross-terminal set and dictionary
+- The documentation site now follows development main automatically after
+  successful CI and identifies the built commit, distinguishing development
+  APIs from the published PyPI release.
+  ([#100](https://github.com/ChrisBuilds/terminaltexteffects/issues/100))
+- Diamond-shaped groups are named `DIAMONDS_CENTER_TO_OUTSIDE` and
+  `DIAMONDS_OUTSIDE_TO_CENTER`. Existing enum names and CLI spellings remain
+  accepted as aliases.
+- Effect iterators and output contexts share their terminal graph. Terminal
+  setup and cleanup are idempotent, cursor-relative printing requires
+  preparation, and overlapping output contexts are rejected.
+- Gradient and color-shift interpolation use nearest, ties-to-even RGB channel
+  rounding. Color identity preserves the distinction between XTerm indices and
+  RGB specifications.
+- Input parsing preserves styled spaces and internal gaps while excluding
+  trailing unstyled spaces and cursor-only gaps from automatic geometry.
+  Painter order is deterministic: higher layers, then higher character IDs, win
   collisions.
-* Color - Fixed `shift_color_towards()` documenting unsupported RGB extrapolation. It now rejects factors outside the
-  inclusive interpolation range from `0` to `1` with a clear `ValueError`.
-* Blackhole - Fixed repeated in-process renders mutating cached circle coordinates during the collapse phase, which
-  could cause later runs with the same canvas geometry to fail with an `IndexError`.
-* Thunderstorm - Fixed `text_glow_time` being ignored due to a hardcoded frame duration. It now controls the number
-  of frames each color is displayed in the post-lightning text glow cooling gradient.
-* Bubbles - Fixed `bubble_delay=0` being rejected even though zero is a supported delay for launching bubbles on
-  consecutive frames.
-* Beams - Fixed effect construction raising `DuplicateSceneIDError` after duplicate scene ID validation was added.
-  Row and column beam groups now share one named scene set per character.
-* ErrorCorrect - Fixed zero or very small `error_pairs` values producing no output. Zero now renders the settled
-  text, while any positive ratio schedules at least one pair when the input contains two or more characters.
-* Rings - Fixed `spin_duration=0` being rejected even though zero is supported for skipping directly to the next
-  phase.
-* Thunderstorm - Fixed fractional `storm_time` values being rejected, restoring support for sub-second storms.
+- OrbittingVolley reveals text in expanding circular rings launched from the
+  nearest canvas side, with overlapping ring arrivals. Its default launch delay
+  falls from 30 ticks to 1.
+- Reduced animation, motion, grouping, rendering, and input-preprocessing
+  overhead, and bounded geometry and color caches. Matrix, Spotlights, Waves,
+  and several other effects reuse visuals or rows where measurements support
+  it. Improvements depend on effect and input; some caches trade memory for
+  speed. See the [performance
+  guide](https://chrisbuilds.github.io/terminaltexteffects/performance/) for
+  measurement methods.
+- SynthGrid uses balanced cells across odd, narrow, offset, and tiny canvases;
+  shared boundaries and wide symbols are grouped once, and one-cell canvases
+  dissolve immediately.
+- Waves defaults to `circle_center_to_outside` and supports the reverse
+  circular direction.
+- `OUTSIDE_ROW_TO_MIDDLE` and `MIDDLE_ROW_TO_OUTSIDE` sort complete rows around
+  the selected rows' midpoint, preserving left-to-right order within each row.
+
+### Removed
+
+- Removed `Animation.active_scene_current_step`,
+  `utils.ansitools.parse_ansi_color_sequence()`, and `move_cursor_to_column()`.
+  Use scene/path progress, terminal input parsing, and supported cursor helpers
+  instead.
+
+### Fixed
+
+- Blackhole handles short text and compact canvases and uses its configured
+  explosion palette. Beams emits characters as soon as progress reaches a whole
+  unit; Spotlights handles zero falloff on wide continuation cells; Swarm
+  compares complete area indices.
+- Cached coordinate lists can be modified without affecting later calls. Bézier
+  lengths include the endpoint without rasterization inflation; signed ray
+  offsets, degenerate shapes, and offset canvas centers now behave
+  consistently.
+- Corrected long and descending RGB gradients, directional and radial
+  coordinate normalization, and fractional color lookup. Gradient steps
+  represent transitions; single-stop gradients contain one color and looping
+  leaves source stops unchanged.
+- Cubic Bézier easing converges accurately at flat endpoints, easing step
+  counts are validated, `EasingTracker.clamp` reflects the active setting, and
+  `SequenceEaser` includes its final element despite endpoint rounding.
+- Direct config construction produces usable defaults, partial namespaces
+  preserve dataclass defaults and factories, explicitly supplied falsey configs
+  are retained, and CLI help displays defaults in valid command-line syntax.
+- Grouped retrieval consistently excludes off-canvas characters. Characters
+  from different terminals no longer compare equal merely because their local
+  IDs match; active-character callbacks can safely change the active set.
+- Looping scenes remain active until deactivated, eased scenes show their final
+  frame, duplicate scene IDs raise `DuplicateSceneIDError`, and
+  `CharacterVisual.dim` emits the dim escape sequence.
+- Malformed or unsupported ANSI input, control bytes, symbols, and character
+  mutations are rejected consistently. Wrapped input includes every row when
+  terminal dimensions are ignored, and odd-sized text centers anchor correctly.
+- Matrix swap chances are probabilities in `[0, 1]`; RandomSequence speed,
+  Rings gaps, and Spotlights falloff enforce their documented ranges.
+  ErrorCorrect rounds displaced characters to whole pairs and handles zero or
+  very small pair ratios.
+- Motion callbacks can safely stop, replace, or restart paths without
+  corrupting state. Every completed segment emits enter/exit events in order,
+  and synced scenes reset to their first frame when paths reactivate.
+- Restored supported zero values for Bubbles' `bubble_delay`, Rings'
+  `spin_duration` and `disperse_duration`, ErrorCorrect's `swap_delay`,
+  Overflow's cycle range, and ColorShift's infinite cycling. Thunderstorm
+  accepts fractional storm durations.
+- VHSTape glitch waves use `glitch_wave_colors`, and Thunderstorm's
+  post-lightning glow honors `text_glow_time`.
+- `Terminal.get_input_colors()` counts retained characters after cursor
+  overwrites and clipping. Brightness factor `1` preserves RGB colors, and
+  color representations use reconstructible constructor syntax.
+
+### Security
+
+- Update the documentation theme to fix a cross-site scripting vulnerability in
+  search suggestions (GHSA-xvg9-69gf-fjrf).
+  ([#121](https://github.com/ChrisBuilds/terminaltexteffects/issues/121))
+- Require patched cryptography in release tooling and remove vulnerable legacy
+  dependency selections.
+  ([#122](https://github.com/ChrisBuilds/terminaltexteffects/issues/122))
+- Update idna and Pygments to address security vulnerabilities in documentation
+  and release tooling.
+  ([#128](https://github.com/ChrisBuilds/terminaltexteffects/issues/128))
+
+<!-- unreleased notes end -->
+
+<!-- towncrier release notes start -->
 
 ## 0.15.0
 

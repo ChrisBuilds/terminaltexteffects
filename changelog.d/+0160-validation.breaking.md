@@ -1,0 +1,1 @@
+Library configuration construction and assignment now enforce the same ranges, types, and choices as CLI parsing. Invalid colors, symbols, gradient steps, coordinates, and easing parameters raise explicit validation errors.

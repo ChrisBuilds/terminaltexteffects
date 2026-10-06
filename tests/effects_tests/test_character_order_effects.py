@@ -32,6 +32,9 @@ _CONFIG_FIELDS = [
 ]
 
 
+pytestmark = pytest.mark.usefixtures("bounded_laseretch_sparks")
+
+
 def _make_effect(
     name: str,
     order: CharacterOrder | Literal["algorithm"],
@@ -119,7 +122,8 @@ def test_character_order_effect_reversal_preserves_queue_and_final_appearance(
 
 @pytest.mark.parametrize("order", CharacterOrder)
 @pytest.mark.parametrize(
-    ("first_reverse", "second_reverse"), [(False, False), (True, False), (False, True), (True, True)],
+    ("first_reverse", "second_reverse"),
+    [(False, False), (True, False), (False, True), (True, True)],
 )
 def test_character_order_sweep_reverses_phases_independently(
     order: CharacterOrder,

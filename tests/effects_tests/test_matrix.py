@@ -246,7 +246,8 @@ def test_matrix_fill_registers_each_full_column_once() -> None:
 
 
 @pytest.mark.parametrize(
-    ("width", "height", "enabled"), [(63, 4, False), (64, 4, True), (80, 3, False), (80, 24, True)],
+    ("width", "height", "enabled"),
+    [(63, 4, False), (64, 4, True), (80, 3, False), (80, 24, True)],
 )
 def test_matrix_row_cache_activation(width: int, height: int, *, enabled: bool) -> None:
     """Matrix opts in only for canvases large enough to benefit from row caching."""
@@ -267,7 +268,9 @@ def test_matrix_drop_column_hides_all_characters_below_canvas() -> None:
     first, second, third = column.characters
     bottom = iterator.terminal.canvas.bottom
     column.visible_characters = column.characters.copy()
-    for character, row in zip(column.characters, (bottom, bottom, bottom + 1), strict=True):
+    rows = (bottom, bottom, bottom + 1)
+    assert len(column.characters) == len(rows)
+    for character, row in zip(column.characters, rows):
         character.motion.current_coord = effect_matrix.Coord(character.input_coord.column, row)
         iterator.terminal.set_character_visibility(character, is_visible=True)
 
@@ -294,7 +297,7 @@ def test_matrix_matching_resolve_gradients_keep_independent_playback(
     second_scene = second.animation.scenes["resolve"]
 
     assert len(first_scene.frames) == len(second_scene.frames) == 9
-    for first_frame, second_frame in zip(first_scene.frames, second_scene.frames, strict=True):
+    for first_frame, second_frame in zip(first_scene.frames, second_scene.frames):
         assert first_frame is not second_frame
         assert first_frame.character_visual is not second_frame.character_visual
         assert first_frame.character_visual.symbol == "A"
@@ -312,6 +315,7 @@ def test_matrix_matching_resolve_gradients_keep_independent_playback(
 
 def test_matrix_dynamic_skips_final_gradient_mapping(monkeypatch: pytest.MonkeyPatch) -> None:
     """Dynamic resolution uses input colors without constructing a coordinate color mapping."""
+
     def reject_mapping(*_args: object, **_kwargs: object) -> dict[effect_matrix.Coord, Color]:
         pytest.fail("Dynamic mode should not build the unused final-gradient mapping")
 

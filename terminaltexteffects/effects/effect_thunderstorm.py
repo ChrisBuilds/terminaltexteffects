@@ -206,16 +206,8 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
     @staticmethod
     def _adjust_color_pair_brightness(colors: tte.ColorPair, brightness: float) -> tte.ColorPair:
         return tte.ColorPair(
-            fg=(
-                tte.Animation.adjust_color_brightness(colors.fg, brightness)
-                if colors.fg is not None
-                else None
-            ),
-            bg=(
-                tte.Animation.adjust_color_brightness(colors.bg, brightness)
-                if colors.bg is not None
-                else None
-            ),
+            fg=(tte.Animation.adjust_color_brightness(colors.fg, brightness) if colors.fg is not None else None),
+            bg=(tte.Animation.adjust_color_brightness(colors.bg, brightness) if colors.bg is not None else None),
         )
 
     @staticmethod

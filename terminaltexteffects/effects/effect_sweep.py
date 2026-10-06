@@ -220,14 +220,16 @@ class SweepIterator(BaseEffectIterator[SweepConfig]):
             )
 
         self.groups_first_sweep = self._get_sweep_groups(
-            self.config.first_sweep_direction, reverse=self.config.reverse_first_sweep_direction,
+            self.config.first_sweep_direction,
+            reverse=self.config.reverse_first_sweep_direction,
         )
         self.easer = tte.easing.SequenceEaser(
             sequence=self.groups_first_sweep,
             easing_function=tte.easing.in_out_circ,
         )
         self.groups_second_sweep = self._get_sweep_groups(
-            self.config.second_sweep_direction, reverse=self.config.reverse_second_sweep_direction,
+            self.config.second_sweep_direction,
+            reverse=self.config.reverse_second_sweep_direction,
         )
 
     def _get_sweep_groups(

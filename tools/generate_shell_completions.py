@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 from typing import cast
 
@@ -18,6 +19,7 @@ COMPLETION_DIR = PROJECT_ROOT / "terminaltexteffects" / "completions"
 COMPLETION_PATHS = {
     "bash": COMPLETION_DIR / "tte.bash",
     "zsh": COMPLETION_DIR / "_tte",
+    "powershell": COMPLETION_DIR / "tte.ps1",
 }
 
 _COMPLETION_CHOICES_BY_TYPE = {
@@ -30,41 +32,6 @@ _COMPLETION_CHOICES_BY_TYPE = {
     argutils.Ease.type_parser: argutils.Ease.COMPLETION_CHOICES,
     effect_laseretch._etch_pattern_type_parser: ("algorithm", *argutils.CharacterOrderArg.COMPLETION_CHOICES),
 }
-
-_BASH_MAPFILE_BLOCK = """  if [[ $pos_only = 0 && "${completing_word}" == -* ]]; then
-    # optional argument started: use option strings
-    mapfile -t COMPREPLY < <(compgen -W "${current_option_strings[*]}" -- "${completing_word}")
-  elif [[ "${previous_word}" == ">" || "${previous_word}" == ">>" ||
-          "${previous_word}" =~ ^[12]">" || "${previous_word}" =~ ^[12]">>" ]]; then
-    # handle redirection operators
-    mapfile -t COMPREPLY < <(compgen -f -- "${completing_word}")
-  else
-    # use choices & compgen
-    [ -n "${current_action_compgen}" ] &&
-      mapfile -t COMPREPLY < <("${current_action_compgen}" "${completing_word}")
-    mapfile -t -O "${#COMPREPLY[@]}" COMPREPLY < <(
-      compgen -W "${current_action_choices[*]}" -- "${completing_word}")
-  fi"""
-
-_BASH_32_COMPLETION_BLOCK = """  local completion
-  if [[ $pos_only = 0 && "${completing_word}" == -* ]]; then
-    # optional argument started: use option strings
-    while IFS= read -r completion; do COMPREPLY+=("$completion"); done < <(
-      compgen -W "${current_option_strings[*]}" -- "${completing_word}")
-  elif [[ "${previous_word}" == ">" || "${previous_word}" == ">>" ||
-          "${previous_word}" =~ ^[12]">" || "${previous_word}" =~ ^[12]">>" ]]; then
-    # handle redirection operators
-    while IFS= read -r completion; do COMPREPLY+=("$completion"); done < <(
-      compgen -f -- "${completing_word}")
-  else
-    # use choices & compgen
-    if [ -n "${current_action_compgen}" ]; then
-      while IFS= read -r completion; do COMPREPLY+=("$completion"); done < <(
-        "${current_action_compgen}" "${completing_word}")
-    fi
-    while IFS= read -r completion; do COMPREPLY+=("$completion"); done < <(
-      compgen -W "${current_action_choices[*]}" -- "${completing_word}")
-  fi"""
 
 
 def _configure_completers(
@@ -90,14 +57,15 @@ def _configure_completers(
 def _register_aliases(script: str, shell: str) -> str:
     """Register the generated completion function for both CLI entry points."""
     if shell == "bash":
-        if _BASH_MAPFILE_BLOCK not in script:
-            msg = "shtab's Bash output changed; review the Bash 3.2 compatibility transform"
+        # shtab 1.12 uses read loops compatible with Bash 3.2; no mapfile transform is needed.
+        registration = "complete -F _shtab_tte tte"
+        if registration not in script:
+            msg = "shtab's Bash registration changed; review CLI alias registration"
             raise RuntimeError(msg)
-        script = script.replace(_BASH_MAPFILE_BLOCK, _BASH_32_COMPLETION_BLOCK, 1)
-        registration = "complete -o filenames -F _shtab_tte tte"
         script = script.replace(
             registration,
-            f"{registration}\ncomplete -o filenames -F _shtab_tte terminaltexteffects",
+            "complete -o filenames -F _shtab_tte tte\ncomplete -o filenames -F _shtab_tte terminaltexteffects",
+            1,
         )
     else:
         script = script.replace("#compdef tte\n", "#compdef tte terminaltexteffects\n", 1)
@@ -106,7 +74,7 @@ def _register_aliases(script: str, shell: str) -> str:
             "#compdef tte terminaltexteffects\n\n"
             "autoload -Uz compinit\n"
             "if ! whence compdef >/dev/null 2>&1; then\n"
-            "  compinit\n"
+            "  compinit -i\n"
             "fi\n",
             1,
         )
@@ -117,12 +85,58 @@ def _register_aliases(script: str, shell: str) -> str:
     return f"{script.rstrip()}\n"
 
 
+def parser_metadata(parser: argparse.ArgumentParser) -> dict[str, object]:
+    """Describe options, arity, and subcommands without serializing executable validators."""
+    options: dict[str, object] = {}
+    effects: dict[str, object] = {}
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            for name, child in cast("dict[str, argparse.ArgumentParser]", action.choices).items():
+                effects[name] = parser_metadata(child)["root"]
+            continue
+        if not action.option_strings or action.help == argparse.SUPPRESS:
+            continue
+        nargs = action.nargs
+        if nargs is None:
+            minimum, maximum = 1, 1
+        elif isinstance(nargs, int):
+            minimum, maximum = nargs, nargs
+        elif nargs == "?":
+            minimum, maximum = 0, 1
+        elif nargs in ("+", "*"):
+            minimum, maximum = int(nargs == "+"), -1
+        else:
+            msg = f"Unsupported PowerShell completion arity: {nargs!r}"
+            raise ValueError(msg)
+        info = {
+            "min": minimum,
+            "max": maximum,
+            "choices": [str(value) for value in action.choices] if action.choices is not None else [],
+            "file": "--input-file" in action.option_strings,
+            "help": action.help or action.dest,
+        }
+        for name in action.option_strings:
+            options[name] = info
+    return {"root": {"options": options}, "effects": effects}
+
+
+def build_powershell_script(parser: argparse.ArgumentParser) -> str:
+    """Embed parser data into a PowerShell 7 template using a literal JSON here-string."""
+    template = Path(__file__).with_name("completions") / "powershell.ps1"
+    metadata = json.dumps(parser_metadata(parser), ensure_ascii=True, indent=2)
+    return template.read_text(encoding="utf-8").replace("__TTE_METADATA__", metadata)
+
+
 def build_completion_scripts() -> dict[str, str]:
     """Build completion scripts containing bundled effects only."""
     parser, effect_resource_map = tte_main.build_parser(include_user_effects=False)
     _configure_completers(parser, tuple(effect_resource_map))
     return {
-        shell: _register_aliases(shtab.complete(parser, shell=shell), shell)
+        shell: (
+            build_powershell_script(parser)
+            if shell == "powershell"
+            else _register_aliases(shtab.complete(parser, shell=shell), shell)
+        )
         for shell in COMPLETION_PATHS
     }
 

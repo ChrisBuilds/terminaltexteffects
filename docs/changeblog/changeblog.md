@@ -1,7 +1,7 @@
 # ChangeBlog Home
 
-The ChangeBlog features explanatory documentation for each release. Blog entries will explain the major features of a
-given release and provide in-depth explanations of TTE Engine features.
+The ChangeBlog contains optional release write-ups, demos, and in-depth explanations of TTE Engine features.
+The [changelog](../changelog.md) is the canonical release history; a blog post is not required for every release.
 
 ## Release Entries
 

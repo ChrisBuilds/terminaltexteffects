@@ -475,16 +475,8 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             final_bg_color = self.character_final_color_map[character].bg
             resolve_scn = character.animation.new_scene(scene_id="resolve")
             if self.terminal.config.existing_color_handling == "dynamic":
-                fg_gradient = (
-                    resolve_gradient(final_fg_color)
-                    if final_fg_color
-                    else None
-                )
-                bg_gradient = (
-                    resolve_gradient(final_bg_color)
-                    if final_bg_color
-                    else None
-                )
+                fg_gradient = resolve_gradient(final_fg_color) if final_fg_color else None
+                bg_gradient = resolve_gradient(final_bg_color) if final_bg_color else None
                 if fg_gradient or bg_gradient:
                     resolve_scn.apply_gradient_to_symbols(
                         character.input_symbol,

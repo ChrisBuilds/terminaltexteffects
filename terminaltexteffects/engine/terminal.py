@@ -44,6 +44,9 @@ from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color
 from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
+if typing.TYPE_CHECKING:
+    from collections.abc import Callable
+
 _CHARACTER_ID_KEY = attrgetter("_character_id")
 _LAYER_KEY = attrgetter("_layer")
 _SPIRAL_SORT_OPTIONS: dict[CharacterOrder, tuple[int, tuple[int, ...]]] = {
@@ -54,6 +57,26 @@ _SPIRAL_SORT_OPTIONS: dict[CharacterOrder, tuple[int, tuple[int, ...]]] = {
     CharacterOrder.SPIRAL_CLOCKWISE_QUAD: (1, (0, 1, 2, 3)),
     CharacterOrder.SPIRAL_COUNTER_CLOCKWISE_QUAD: (-1, (0, 1, 2, 3)),
 }
+
+
+def _bisect_left_by_character_id(
+    characters: list[EffectCharacter],
+    character_id: int,
+    *,
+    key: Callable[[EffectCharacter], int],
+) -> int:
+    """Find a character ID's insertion point on Python versions without keyed bisection."""
+    low, high = 0, len(characters)
+    while low < high:
+        middle = (low + high) // 2
+        if key(characters[middle]) < character_id:
+            low = middle + 1
+        else:
+            high = middle
+    return low
+
+
+_bisect_visible_characters = bisect_left if sys.version_info >= (3, 10) else _bisect_left_by_character_id
 
 
 @dataclass
@@ -669,11 +692,7 @@ class Terminal:
         for row, line in enumerate(formatted_lines):
             for character in line:
                 logical_column = self._preprocessed_character_columns[character]
-                column = (
-                    self._wrapped_character_columns[character] + 1
-                    if self.config.wrap_text
-                    else logical_column + 1
-                )
+                column = self._wrapped_character_columns[character] + 1 if self.config.wrap_text else logical_column + 1
                 if character._input_symbol != " " or any(
                     (character.animation.input_fg_color, character.animation.input_bg_color),
                 ):
@@ -1347,7 +1366,7 @@ class Terminal:
         if is_visible:
             if character not in self._visible_characters:
                 self._visible_characters.add(character)
-                insertion_index = bisect_left(
+                insertion_index = _bisect_visible_characters(
                     self._visible_characters_by_id,
                     character._character_id,
                     key=_CHARACTER_ID_KEY,
@@ -1361,7 +1380,7 @@ class Terminal:
                 self._visible_character_order_dirty = True
         elif character in self._visible_characters:
             self._visible_characters.remove(character)
-            character_index = bisect_left(
+            character_index = _bisect_visible_characters(
                 self._visible_characters_by_id,
                 character._character_id,
                 key=_CHARACTER_ID_KEY,
@@ -1485,11 +1504,7 @@ class Terminal:
                     owners[row_index] = row_owners
                 else:
                     row_owners = existing_row_owners
-                overwritten_characters = {
-                    owner
-                    for owner in row_owners[column_index:right_column]
-                    if owner is not None
-                }
+                overwritten_characters = {owner for owner in row_owners[column_index:right_column] if owner is not None}
                 for overwritten_character in overwritten_characters:
                     old_row, old_column, old_width = footprints.pop(overwritten_character)
                     old_row_owners = owners[old_row]
@@ -1551,9 +1566,7 @@ class Terminal:
         """
         if self._output_prepared:
             return
-        active_terminal = (
-            self._active_output_terminal() if self._active_output_terminal is not None else None
-        )
+        active_terminal = self._active_output_terminal() if self._active_output_terminal is not None else None
         if active_terminal is not None:
             raise TerminalOutputActiveError
         self._output_prepared = True
@@ -1576,9 +1589,7 @@ class Terminal:
     def _release_output_ownership(self) -> None:
         """Mark output inactive and release this terminal's global cursor ownership."""
         self._output_prepared = False
-        active_terminal = (
-            self._active_output_terminal() if self._active_output_terminal is not None else None
-        )
+        active_terminal = self._active_output_terminal() if self._active_output_terminal is not None else None
         if active_terminal is self:
             type(self)._active_output_terminal = None
 

@@ -69,7 +69,7 @@ def test_unstable_final_gradient(
 @pytest.mark.parametrize("unstable_color", [Color("#ff00ff"), Color("#0ffff0")])
 @pytest.mark.parametrize("explosion_speed", [0.001, 2])
 @pytest.mark.parametrize("reassembly_speed", [0.001, 2])
-@pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)
+@pytest.mark.parametrize("input_data", ["single_char", "compact"], indirect=True)
 def test_unstable_args(
     terminal_config_default_no_framerate: TerminalConfig,
     input_data: str,
@@ -83,9 +83,20 @@ def test_unstable_args(
     effect.effect_config.unstable_color = unstable_color
     effect.effect_config.explosion_speed = explosion_speed
     effect.effect_config.reassembly_speed = reassembly_speed
+    iterator = cast("effect_unstable.UnstableIterator", iter(effect))
+    characters = iterator.terminal.get_characters()
+    for character in characters:
+        assert character.motion.paths["explosion"].speed == explosion_speed
+        assert character.motion.paths["reassembly"].speed == reassembly_speed
     with effect.terminal_output() as terminal:
-        for frame in effect:
+        for frame in iterator:
             terminal.print(frame)
+    assert not iterator.active_characters
+    for character in characters:
+        assert character.is_visible
+        assert character.motion.current_coord == character.input_coord
+        assert character.animation.current_character_visual.symbol == character.input_symbol
+        assert character.animation.current_character_visual.colors == iterator.character_final_color_map[character]
 
 
 @pytest.mark.parametrize("input_data", ["single_char", "medium"], indirect=True)

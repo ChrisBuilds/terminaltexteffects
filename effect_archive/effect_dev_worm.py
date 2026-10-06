@@ -137,6 +137,7 @@ class EffectIterator(BaseEffectIterator[EffectConfig]):
         self.build()
 
     def update_worm(self) -> None:
+        """Advance the worm body to the most recently visited maze character."""
         current_pos = self.alg.char_last_linked or self.alg.linked_char_last_visited
         if current_pos is None:
             return
@@ -170,9 +171,7 @@ class EffectIterator(BaseEffectIterator[EffectConfig]):
             self.config.final_gradient_direction,
         )
         for character in self.terminal.get_characters():
-            self.character_final_color_map[character] = final_gradient_mapping[
-                character.input_coord
-            ]
+            self.character_final_color_map[character] = final_gradient_mapping[character.input_coord]
 
         for char in self.terminal.get_characters(inner_fill_chars=True, outer_fill_chars=True):
             char.animation.set_appearance(

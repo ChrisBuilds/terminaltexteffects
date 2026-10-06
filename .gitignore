@@ -38,13 +38,13 @@ pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 htmlcov/
-.tox/
 .nox/
 .coverage
 .coverage.*
 .cache
 nosetests.xml
 coverage.xml
+/coverage/
 *.cover
 *.py,cover
 .hypothesis/
@@ -168,7 +168,8 @@ github_resources/*
 *.gv
 effect_test.py
 effect_canvas_test.
-effect_dev.py
+/terminaltexteffects/effects/effect_dev.py
+/dev_effects/effect_dev.py
 .vscode/*
 lib_tests/*
 dev_notes/*

@@ -9,6 +9,7 @@ import pytest
 from terminaltexteffects.effects import effect_vhstape
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair
+from tests.effects_tests.assertions import assert_final_gradient
 
 
 def _make_terminal_config(
@@ -61,9 +62,12 @@ def test_vhstape_final_gradient(
     effect.effect_config.final_gradient_steps = gradient_steps
     effect.effect_config.final_gradient_direction = gradient_direction
     effect.terminal_config = terminal_config_default_no_framerate
+    effect.effect_config.total_glitch_time = 1
+    iterator = iter(effect)
     with effect.terminal_output() as terminal:
-        for frame in effect:
+        for frame in iterator:
             terminal.print(frame)
+    assert_final_gradient(iterator, gradient_stops, gradient_steps, gradient_direction)
 
 
 @pytest.mark.parametrize("glitch_line_colors", [(Color("#ff00ff"), Color("#0ffff0")), (Color("#ff0fff"),)])
@@ -258,8 +262,9 @@ def test_vhstape_dynamic_keeps_glitch_noise_and_white_redraw_effect_colored() ->
     character.motion.activate_path("glitch_wave_end")
     assert character.animation.active_scene is glitch_wave_scene
     assert snow_scene is not None
-    assert {
-        frame.character_visual._fg_color_code for frame in snow_scene.frames[:-1]
-    } <= {Color("#111111").rgb_color, Color("#222222").rgb_color}
+    assert {frame.character_visual._fg_color_code for frame in snow_scene.frames[:-1]} <= {
+        Color("#111111").rgb_color,
+        Color("#222222").rgb_color,
+    }
     assert final_redraw_scene is not None
     assert final_redraw_scene.frames[0].character_visual._fg_color_code == Color("#ffffff").rgb_color

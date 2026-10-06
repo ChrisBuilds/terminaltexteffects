@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block announce %}
+  Development documentation from
+  {% if config.extra.docs_revision %}
+    <a href="{{ config.repo_url }}/tree/{{ config.extra.docs_revision }}">main ({{ config.extra.docs_revision[:7] }})</a>.
+  {% else %}
+    <a href="{{ config.repo_url }}/tree/main">main</a>.
+  {% endif %}
+  It may differ from the <a href="https://pypi.org/project/terminaltexteffects/">latest PyPI release</a>.
+{% endblock %}

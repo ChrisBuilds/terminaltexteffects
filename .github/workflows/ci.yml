@@ -1,0 +1,300 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Code quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      run_tests: ${{ steps.changes.outputs.run_tests }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.14"
+      - name: Select checks from committed changes
+        id: changes
+        env:
+          CHANGE_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          args=()
+          if [[ -n "$CHANGE_BASE" ]]; then
+            args+=(--base "$CHANGE_BASE")
+          fi
+          python -m tools.classify_ci "${args[@]}" >> "$GITHUB_OUTPUT"
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          cache-suffix: quality
+      - name: Install package and locked development tools
+        run: uv sync --locked --group dev
+      - name: Check all tracked Python files
+        run: .venv/bin/python tools/check_quality.py --all
+      - name: Check local QA hooks
+        if: steps.changes.outputs.run_tests == 'true'
+        run: |
+          .venv/bin/pre-commit validate-config
+          .venv/bin/python -m pytest -q tests/test_hooks.py
+      - name: Validate release artifacts
+        if: steps.changes.outputs.run_tests == 'true'
+        run: .venv/bin/python tools/check_artifacts.py
+      - name: Check changelog fragments and preview
+        env:
+          QUALITY_BASE: ${{ github.event.pull_request.base.sha || (github.ref == 'refs/heads/main' && github.event.before) || 'origin/main' }}
+          REQUIRE_CHANGELOG_DECISION: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) }}
+        run: |
+          args=(--check)
+          if [[ "$REQUIRE_CHANGELOG_DECISION" == 'true' ]]; then
+            args+=(--base "$QUALITY_BASE")
+          fi
+          .venv/bin/python tools/generate_changelog.py "${args[@]}"
+      - name: Build documentation and check links
+        if: steps.changes.outputs.build_docs == 'true'
+        run: .venv/bin/python -m mkdocs build --strict --site-dir "$RUNNER_TEMP/docs"
+
+  tests:
+    name: Python ${{ matrix.python-version }}
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - name: Documentation-only changes
+        if: needs.quality.outputs.run_tests != 'true'
+        run: echo 'Documentation-only changes; Python tests are not required.'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          cache-suffix: python-${{ matrix.python-version }}
+      - name: Install test shells
+        if: needs.quality.outputs.run_tests == 'true'
+        run: |
+          # Zsh needs only Ubuntu packages; unrelated third-party repositories can fail independently.
+          apt_options=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install --yes zsh
+      - name: Install package and locked test dependencies
+        if: needs.quality.outputs.run_tests == 'true'
+        run: uv sync --locked --no-default-groups --group test --no-editable
+      - name: Check installed package outside the checkout
+        if: needs.quality.outputs.run_tests == 'true'
+        working-directory: ${{ runner.temp }}
+        run: |
+          "$GITHUB_WORKSPACE/.venv/bin/python" -c "import terminaltexteffects"
+          "$GITHUB_WORKSPACE/.venv/bin/tte" --help
+      - name: Run default test suite
+        id: pytest
+        if: needs.quality.outputs.run_tests == 'true'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          coverage_args=()
+          if [[ "$PYTHON_VERSION" == '3.14' ]]; then
+            coverage_args+=(--cov=terminaltexteffects --cov-branch --cov-config=pyproject.toml
+              --cov-report=term-missing --cov-report=xml:coverage/coverage.xml
+              --cov-report=json:coverage/coverage.json --cov-report=html:coverage/html)
+          fi
+          .venv/bin/python -m pytest -n auto --durations=20 "${coverage_args[@]}"
+      - name: Summarize package line and branch coverage
+        if: >-
+          !cancelled() && matrix.python-version == '3.14' &&
+          needs.quality.outputs.run_tests == 'true' &&
+          (steps.pytest.outcome == 'success' || hashFiles('coverage/coverage.json') != '')
+        env:
+          COVERAGE_REVISION: ${{ github.sha }}
+          TEST_OUTCOME: ${{ steps.pytest.outcome }}
+        run: |
+          test -s coverage/coverage.xml
+          test -s coverage/html/index.html
+          .venv/bin/python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          import os
+          from pathlib import Path
+
+          report = json.loads(Path("coverage/coverage.json").read_text(encoding="utf-8"))
+          assert report["meta"]["branch_coverage"], "Branch coverage was not collected"
+          assert report["files"] and all(
+              name.startswith("terminaltexteffects/") for name in report["files"]
+          ), "Coverage must measure the runtime package only"
+          totals = report["totals"]
+          assert totals["num_statements"] > 0 and totals["num_branches"] > 0, "Empty coverage report"
+          print("## Package coverage — Linux / Python 3.14\n")
+          print(f"Tested revision: `{os.environ['COVERAGE_REVISION']}`  ")
+          print(f"Test step outcome: `{os.environ['TEST_OUTCOME']}`\n")
+          print("| Metric | Covered | Total | Coverage |")
+          print("| --- | ---: | ---: | ---: |")
+          for label, covered, total in (
+              ("Lines", totals["covered_lines"], totals["num_statements"]),
+              ("Branches", totals["covered_branches"], totals["num_branches"]),
+          ):
+              print(f"| {label} | {covered} | {total} | {100 * covered / total:.2f}% |")
+          print("\nDefault pairwise suite; manual/visual/exhaustive tests are excluded. "
+                "No percentage gate is enforced. A failed test run is diagnostic, not a baseline.")
+          print("\nDownload `coverage-python-3.14` for per-file HTML, XML, and JSON reports.")
+          PY
+      - name: Upload package coverage reports
+        if: >-
+          !cancelled() && matrix.python-version == '3.14' &&
+          needs.quality.outputs.run_tests == 'true' && hashFiles('coverage/coverage.json') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-python-3.14
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: error
+
+  completions:
+    name: Shell completions
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Documentation-only changes
+        if: needs.quality.outputs.run_tests != 'true'
+        run: echo 'Documentation-only changes; shell completion generation is not required.'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          cache-suffix: completions
+      - name: Install package and locked test dependencies
+        if: needs.quality.outputs.run_tests == 'true'
+        run: uv sync --locked --no-default-groups --group test --no-editable
+      - name: Check generated shell completions
+        if: needs.quality.outputs.run_tests == 'true'
+        run: .venv/bin/python tools/generate_shell_completions.py --check
+
+  platforms:
+    name: ${{ matrix.name }} / Python 3.14
+    needs: quality
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-2025
+          - name: macOS
+            os: macos-15
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONUTF8: "1"
+      TTE_REQUIRE_PWSH: "1"
+    steps:
+      - name: Documentation-only changes
+        if: needs.quality.outputs.run_tests != 'true'
+        run: echo 'Documentation-only changes; platform tests are not required.'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          cache-suffix: platform-${{ matrix.os }}
+      - name: Install package and locked test dependencies
+        if: needs.quality.outputs.run_tests == 'true'
+        run: uv sync --locked --no-default-groups --group test --no-editable
+      - name: Check installed CLI and piped input outside the checkout
+        if: needs.quality.outputs.run_tests == 'true'
+        run: |
+          uv run --no-sync python - <<'PY'
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          outside = Path(os.environ["RUNNER_TEMP"]) / "tte-platform-smoke"
+          outside.mkdir(exist_ok=True)
+          env = {key: value for key, value in os.environ.items()
+                 if key not in {"PYTHONPATH", "PYTHONHOME", "TTE_DEV_EFFECTS_DIR"}}
+          env["XDG_CONFIG_HOME"] = str(outside / "empty-config")
+          probe = (
+              "import pathlib, sys, terminaltexteffects; "
+              "assert pathlib.Path(terminaltexteffects.__file__).resolve().is_relative_to("
+              "pathlib.Path(sys.prefix).resolve()); "
+              "from terminaltexteffects.__main__ import build_parser; "
+              "assert 'wipe' in build_parser()[1]"
+          )
+          subprocess.run([sys.executable, "-I", "-c", probe], cwd=outside, env=env, check=True)
+          for entry in ("tte", "terminaltexteffects"):
+              executable = Path(sys.executable).parent / (entry + (".exe" if os.name == "nt" else ""))
+              result = subprocess.run([str(executable), "--help"], cwd=outside, env=env,
+                                      capture_output=True, text=True, encoding="utf-8", check=True)
+              assert "wipe" in result.stdout, result.stdout
+              result = subprocess.run(
+                  [str(executable), "--seed", "102", "--frame-rate", "0", "--no-color",
+                   "--canvas-width", "2", "--canvas-height", "1", "--ignore-terminal-dimensions",
+                   "wipe", "--final-gradient-stops", "ffffff", "--final-gradient-steps", "1",
+                   "--final-gradient-frames", "1"],
+                  cwd=outside, env=env, input="OK", capture_output=True, text=True,
+                  encoding="utf-8", check=True,
+              )
+              assert "OK" in result.stdout, result.stdout
+              assert "\x1b[?25l" in result.stdout and "\x1b[?25h" in result.stdout, result.stdout
+              print(f"{entry}: installed CLI help, piped input, rendering, and cursor restoration passed")
+          PY
+      - name: Run focused terminal and CLI regressions
+        if: needs.quality.outputs.run_tests == 'true'
+        run: |
+          uv run --no-sync python -m pytest -q --durations=10 \
+            tests/engine_tests/test_terminal.py \
+            tests/engine_tests/test_terminal_input.py \
+            tests/engine_tests/test_terminal_unicode.py \
+            tests/engine_tests/test_terminal_ansi_sequences.py \
+            tests/engine_tests/test_base_config.py \
+            tests/test_powershell_completion.py \
+            tests/test_cli.py::test_build_parser_registers_effects \
+            tests/test_cli.py::test_runtime_parser_includes_plugin_effect \
+            tests/test_cli.py::test_main_unsupported_ansi_sequence_exits_with_error \
+            tests/test_cli.py::test_main_empty_input_is_silent_success \
+            tests/test_cli.py::test_main_empty_renderable_input_exits_with_error \
+            tests/test_cli.py::test_development_effects_require_explicit_opt_in

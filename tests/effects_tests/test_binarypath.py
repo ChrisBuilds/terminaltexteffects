@@ -76,8 +76,7 @@ def test_binarypath_routes_have_no_zero_distance_or_diagonal_segments() -> None:
     for segment in path.segments:
         assert segment.start.coord != segment.end.coord
         assert (
-            segment.start.coord.column == segment.end.coord.column
-            or segment.start.coord.row == segment.end.coord.row
+            segment.start.coord.column == segment.end.coord.column or segment.start.coord.row == segment.end.coord.row
         )
 
 
@@ -99,7 +98,9 @@ def test_binarypath_binary_characters_use_static_colored_appearance() -> None:
     iterator = effect_binarypath.BinaryPathIterator(effect)
     binary_representation = iterator.pending_binary_representations[0]
 
-    for character, symbol in zip(binary_representation.binary_characters, format(ord("A"), "08b"), strict=True):
+    symbols = format(ord("A"), "08b")
+    assert len(binary_representation.binary_characters) == len(symbols)
+    for character, symbol in zip(binary_representation.binary_characters, symbols):
         visual = character.animation.current_character_visual
         assert visual.symbol == symbol
         assert visual.colors is not None

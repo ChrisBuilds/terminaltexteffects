@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from importlib import resources
 
-SUPPORTED_SHELLS = ("bash", "zsh")
+SUPPORTED_SHELLS = ("bash", "zsh", "powershell")
 
 _COMPLETION_PACKAGE = "terminaltexteffects.completions"
 _COMPLETION_FILES = {
     "bash": "tte.bash",
     "zsh": "_tte",
+    "powershell": "tte.ps1",
 }
 
 
@@ -28,6 +29,7 @@ def get_completion_instructions() -> str:
         "Enable completions in the current shell:\n"
         '  Bash: eval "$(tte --print-completion bash)"\n'
         '  Zsh:  eval "$(tte --print-completion zsh)"\n'
+        "  PowerShell 7+: tte --print-completion powershell | Out-String | Invoke-Expression\n"
     )
 
 

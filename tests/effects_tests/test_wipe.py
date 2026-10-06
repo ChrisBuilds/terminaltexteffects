@@ -84,7 +84,7 @@ def test_wipe_sorted_direction_reveals_sorted_prefix_and_restores_input(
         assert ordered == iterator.terminal.get_characters(sort=direction)
     for _ in iterator:
         assert {character for character in characters if character.is_visible} == set(
-            ordered[:len(iterator.easer.total)],
+            ordered[: len(iterator.easer.total)],
         )
     assert all(character.is_visible for character in characters)
     assert all(
@@ -112,6 +112,7 @@ def test_wipe_sorted_direction_keeps_delay_between_easing_steps(wipe_delay: int)
 
 def test_wipe_sorted_direction_can_remove_and_readd_characters() -> None:
     """Non-monotonic easing hides and resets removed characters before restarting their wipe scenes."""
+
     def reverse_then_finish(progress: float) -> float:
         if progress <= 0.01:
             return 0.5

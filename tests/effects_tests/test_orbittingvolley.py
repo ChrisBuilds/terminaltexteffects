@@ -161,7 +161,7 @@ def test_orbittingvolley_assigns_rings_to_nearest_canvas_side(*, padded_canvas: 
     expected_rings = iterator.terminal.get_characters_grouped(CharacterGroup.CIRCLE_CENTER_TO_OUTSIDE)
 
     assert len(rings) == len(expected_rings)
-    for magazines, expected_ring in zip(rings, expected_rings, strict=True):
+    for magazines, expected_ring in zip(rings, expected_rings):
         assigned = [character for magazine in magazines for character in magazine]
         assert len(assigned) == len(set(assigned))
         assert set(assigned) == set(expected_ring)
@@ -171,6 +171,19 @@ def test_orbittingvolley_assigns_rings_to_nearest_canvas_side(*, padded_canvas: 
                 # Vertical cell spacing is twice horizontal cell spacing.
                 distances = (2 * (canvas.top - y), canvas.right - x, 2 * (y - canvas.bottom), x - canvas.left)
                 assert distances[side] == min(distances)
+
+
+@pytest.mark.parametrize("magazine_count", [3, 5])
+def test_orbittingvolley_rejects_mismatched_ring_magazines(magazine_count: int) -> None:
+    """Ring loading rejects both missing and extra magazines before assigning launchers."""
+    iterator = effect_orbittingvolley.OrbittingVolleyIterator(effect_orbittingvolley.OrbittingVolley("A"))
+    iterator._pending_rings.appendleft([deque() for _ in range(magazine_count)])
+    previous_magazines = [launcher.magazine for launcher in iterator._launchers]
+
+    with pytest.raises(ValueError, match="one magazine per launcher"):
+        iterator._load_next_ring()
+
+    assert [launcher.magazine for launcher in iterator._launchers] == previous_magazines
 
 
 def test_orbittingvolley_balances_only_tied_nearest_sides() -> None:

@@ -1,0 +1,1 @@
+Removed `Animation.active_scene_current_step`, `utils.ansitools.parse_ansi_color_sequence()`, and `move_cursor_to_column()`. Use scene/path progress, terminal input parsing, and supported cursor helpers instead.

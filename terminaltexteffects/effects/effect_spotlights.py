@@ -179,16 +179,8 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
     @staticmethod
     def _adjust_color_pair_brightness(colors: ColorPair, brightness_factor: float) -> ColorPair:
         return ColorPair(
-            fg=(
-                animation.Animation.adjust_color_brightness(colors.fg, brightness_factor)
-                if colors.fg
-                else None
-            ),
-            bg=(
-                animation.Animation.adjust_color_brightness(colors.bg, brightness_factor)
-                if colors.bg
-                else None
-            ),
+            fg=(animation.Animation.adjust_color_brightness(colors.fg, brightness_factor) if colors.fg else None),
+            bg=(animation.Animation.adjust_color_brightness(colors.bg, brightness_factor) if colors.bg else None),
         )
 
     @staticmethod
@@ -384,11 +376,7 @@ class SpotlightsIterator(BaseEffectIterator[SpotlightsConfig]):
             start = bisect_left(self._spotlight_columns, center.column - range_)
             stop = bisect_right(self._spotlight_columns, center.column + range_)
             for column in self._spotlight_columns[start:stop]:
-                offset = (
-                    int((b_squared * (1 - ((column - center.column) ** 2) / a_squared)) ** 0.5)
-                    if range_
-                    else 0
-                )
+                offset = int((b_squared * (1 - ((column - center.column) ** 2) / a_squared)) ** 0.5) if range_ else 0
                 rows, characters = self._spotlight_cells[column]
                 lo = bisect_left(rows, center.row - offset)
                 hi = bisect_right(rows, center.row + offset)

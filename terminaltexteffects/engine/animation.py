@@ -14,6 +14,8 @@ import typing
 from bisect import bisect_right
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from functools import lru_cache
+from weakref import ReferenceType, ref
 
 from terminaltexteffects.utils import ansitools, colorterm, easing, graphics, hexterm
 from terminaltexteffects.utils.exceptions import (
@@ -29,7 +31,68 @@ if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character, motion  # pragma: no cover
 
 
+_MAX_ENCODED_APPEARANCES = 2048
+_NATIVE_COLOR_CODE_TYPES = (str, int, type(None))
 _MAX_XTERM_COLOR_CACHE_SIZE = 1024
+_MAX_EASING_SCHEDULES = 32
+_MAX_EASING_SCHEDULE_STEPS = 4096
+_CACHEABLE_EASING_FUNCTIONS = (
+    easing.linear,
+    easing.in_sine,
+    easing.out_sine,
+    easing.in_out_sine,
+    easing.in_quad,
+    easing.out_quad,
+    easing.in_out_quad,
+    easing.in_cubic,
+    easing.out_cubic,
+    easing.in_out_cubic,
+    easing.in_quart,
+    easing.out_quart,
+    easing.in_out_quart,
+    easing.in_quint,
+    easing.out_quint,
+    easing.in_out_quint,
+    easing.in_expo,
+    easing.out_expo,
+    easing.in_out_expo,
+    easing.in_circ,
+    easing.out_circ,
+    easing.in_out_circ,
+    easing.in_back,
+    easing.out_back,
+    easing.in_out_back,
+    easing.in_elastic,
+    easing.out_elastic,
+    easing.in_out_elastic,
+    easing.in_bounce,
+    easing.out_bounce,
+    easing.in_out_bounce,
+)
+
+
+@dataclass(frozen=True)
+class _EasingSchedule:
+    """Immutable frame positions shared without sharing playback state."""
+
+    positions: tuple[int, ...]
+
+
+@lru_cache(maxsize=_MAX_EASING_SCHEDULES)
+def _get_easing_schedule(
+    ease: easing.EasingFunction,
+    total_steps: int,
+    frame_end_steps: tuple[int, ...],
+) -> _EasingSchedule:
+    """Build a bounded schedule using ordinary eased playback's rounding and clamping."""
+    final_step = max(total_steps - 1, 0)
+    denominator = max(total_steps - 1, 1)
+    return _EasingSchedule(
+        tuple(
+            bisect_right(frame_end_steps, max(min(round(ease(step / denominator) * final_step), final_step), 0))
+            for step in range(total_steps)
+        ),
+    )
 
 
 def _get_color_code(
@@ -97,13 +160,18 @@ class CharacterVisual:
     # config args these are used by colorterm to produce the ansi sequences
     _fg_color_code: str | int | None = None
     _bg_color_code: str | int | None = None
+    _cache_appearance: bool = field(default=False, repr=False, compare=False)
     cell_width: int = field(init=False)
     _format_generation: typing.ClassVar[int] = 0
 
     def __post_init__(self) -> None:
         """Create the formatted symbol by applying ANSI sequences for any active modes and color."""
         self.cell_width = get_symbol_cell_width(self.symbol)
-        formatted_symbol = self.format_symbol()
+        formatted_symbol = (
+            _format_cached_appearance(self)
+            if self._cache_appearance and not hasattr(self, "_formatted_symbol")
+            else self.format_symbol()
+        )
         if hasattr(self, "_formatted_symbol"):
             self.formatted_symbol = formatted_symbol
         else:
@@ -148,6 +216,76 @@ class CharacterVisual:
         return f"{formatting_string}{self.symbol}{ansitools.reset_all() if formatting_string else ''}"
 
 
+_ORIGINAL_FORMAT_SYMBOL = CharacterVisual.format_symbol
+
+
+@lru_cache(maxsize=_MAX_ENCODED_APPEARANCES)
+def _get_encoded_appearance(symbol: str, modes: int, fg: str | int | None, bg: str | int | None) -> str:
+    """Share immutable encodings without retaining mutable visuals or color objects."""
+    formatting = ""
+    for bit, sequence in enumerate(
+        (
+            ansitools.apply_bold,
+            ansitools.apply_dim,
+            ansitools.apply_italic,
+            ansitools.apply_underline,
+            ansitools.apply_blink,
+            ansitools.apply_reverse,
+            ansitools.apply_hidden,
+            ansitools.apply_strikethrough,
+        ),
+    ):
+        if modes & (1 << bit):
+            formatting += sequence()
+    if fg is not None:
+        formatting += colorterm.fg(fg)
+    if bg is not None:
+        formatting += colorterm.bg(bg)
+    return f"{formatting}{symbol}{ansitools.reset_all() if formatting else ''}"
+
+
+def _format_cached_appearance(visual: CharacterVisual) -> str:
+    """Cache native construction inputs; preserve custom formatting and truth-value callbacks."""
+    if (
+        type(visual) is not CharacterVisual
+        or CharacterVisual.format_symbol is not _ORIGINAL_FORMAT_SYMBOL
+        or type(visual.symbol) is not str
+        or len(visual.symbol) != 1
+        or type(visual._fg_color_code) not in _NATIVE_COLOR_CODE_TYPES
+        or type(visual._bg_color_code) not in _NATIVE_COLOR_CODE_TYPES
+    ):
+        return visual.format_symbol()
+    # Most scenes only use bold. Identity checks avoid executing arbitrary truth-value callbacks.
+    if (
+        visual.dim is False
+        and visual.italic is False
+        and visual.underline is False
+        and visual.blink is False
+        and visual.reverse is False
+        and visual.hidden is False
+        and visual.strike is False
+        and (visual.bold is False or visual.bold is True)
+    ):
+        modes = 1 if visual.bold else 0
+    else:
+        flags = (
+            visual.bold,
+            visual.dim,
+            visual.italic,
+            visual.underline,
+            visual.blink,
+            visual.reverse,
+            visual.hidden,
+            visual.strike,
+        )
+        if any(type(flag) is not bool for flag in flags):
+            return visual.format_symbol()
+        modes = sum(int(flag) << bit for bit, flag in enumerate(flags))
+    if not modes and visual._fg_color_code is None and visual._bg_color_code is None:
+        return visual.symbol
+    return _get_encoded_appearance(visual.symbol, modes, visual._fg_color_code, visual._bg_color_code)
+
+
 @dataclass
 class Frame:
     """A Frame is a CharacterVisual with a duration.
@@ -186,6 +324,8 @@ class Scene:
         is_looping (bool): Whether the Scene should loop
         sync (Scene.SyncMetric | None): The type of sync to use for the Scene
         ease (easing.EasingFunction | None): The easing function to use for the Scene
+        cache_easing (bool): Opt into shared frame schedules for built-in easing functions.
+        cache_appearance (bool): Reuse immutable encoded strings during frame construction.
         no_color (bool): Whether to ignore colors
         use_xterm_colors (bool): Whether to convert all colors to XTerm-256 colors
         frames (list[Frame]): The list of Frames in the Scene
@@ -220,6 +360,8 @@ class Scene:
         is_looping: bool = False,
         sync: SyncMetric | None = None,
         ease: easing.EasingFunction | None = None,
+        cache_easing: bool = False,
+        cache_appearance: bool = False,
         no_color: bool = False,
         use_xterm_colors: bool = False,
     ) -> None:
@@ -230,6 +372,10 @@ class Scene:
             is_looping (bool, optional): Whether the Scene should loop. Defaults to False.
             sync (Scene.SyncMetric | None, optional): The type of sync to use for the Scene. Defaults to None.
             ease (easing.EasingFunction | None, optional): The easing function to use for the Scene. Defaults to None.
+            cache_easing (bool, optional): Reuse built-in easing schedules up to 4096 ticks. Defaults to False.
+                Custom callables retain per-tick evaluation. Frames and playback state remain independent.
+            cache_appearance (bool, optional): Share bounded immutable encodings during construction.
+                Defaults to False. Mutable visuals and frames remain independently owned.
             no_color (bool, optional): Whether to colors should be ignored. Defaults to False.
             use_xterm_colors (bool, optional): Whether to convert all colors to XTerm-256 colors. Defaults to False.
 
@@ -238,6 +384,16 @@ class Scene:
         self.is_looping = is_looping
         self.sync: Scene.SyncMetric | None = sync
         self.ease: easing.EasingFunction | None = ease
+        self.cache_easing = cache_easing
+        self.cache_appearance = cache_appearance
+        self._easing_schedule: (
+            tuple[
+                easing.EasingFunction,
+                int,
+                ReferenceType[_EasingSchedule] | None,
+            ]
+            | None
+        ) = None
         self.no_color = no_color
         self.use_xterm_colors = use_xterm_colors
         self.frames: list[Frame] = []
@@ -250,6 +406,35 @@ class Scene:
         self.preexisting_bold: bool = False
         self._frame_added_callback: typing.Callable[[CharacterVisual], None] | None = None
         self._visual_width_mask: int = 0
+
+    def _get_easing_schedule(self) -> _EasingSchedule | None:
+        """Reuse a schedule while easing and the duration layout remain unchanged.
+
+        `add_frame` changes `easing_total_steps`, invalidating the memo. Resetting
+        playback preserves the layout and schedule. Weak references let the shared
+        cache release evicted schedules even while scenes remain alive.
+        """
+        ease = self.ease
+        assert ease is not None
+        total_steps = self.easing_total_steps
+        memo = self._easing_schedule
+        valid = memo is not None and memo[0] is ease and memo[1] == total_steps
+        if valid and memo is not None:
+            if memo[2] is None:
+                return None
+            schedule = memo[2]()
+            if schedule is not None:
+                return schedule
+        if not (
+            isinstance(total_steps, int)
+            and 0 < total_steps <= _MAX_EASING_SCHEDULE_STEPS
+            and any(ease is f for f in _CACHEABLE_EASING_FUNCTIONS)
+        ):
+            self._easing_schedule = (ease, total_steps, None)
+            return None
+        schedule = _get_easing_schedule(ease, total_steps, tuple(self._frame_end_steps))
+        self._easing_schedule = (ease, total_steps, ref(schedule))
+        return schedule
 
     def _get_color_code(self, color: graphics.Color | None) -> str | int | None:
         """Get the color code for the given color.
@@ -338,6 +523,7 @@ class Scene:
             colors=colors,
             _fg_color_code=char_vis_fg_color,
             _bg_color_code=char_vis_bg_color,
+            _cache_appearance=self.cache_appearance,
         )
         width_bit = 1 << (char_vis.cell_width - 1)
         if not self._visual_width_mask & width_bit:
@@ -609,6 +795,8 @@ class Animation:
         is_looping: bool = False,
         sync: Scene.SyncMetric | None = None,
         ease: easing.EasingFunction | None = None,
+        cache_easing: bool = False,
+        cache_appearance: bool = False,
         scene_id: str = "",
     ) -> Scene:
         """Create a new Scene and add it to the Animation.
@@ -622,6 +810,8 @@ class Animation:
             is_looping (bool): Whether the scene should loop.
             sync (Scene.SyncMetric | None): The type of sync to use for the scene.
             ease (easing.EasingFunction | None): The easing function to use for the scene.
+            cache_easing (bool): Opt into shared built-in easing schedules. Defaults to False.
+            cache_appearance (bool): Share encoded frame appearances during construction. Defaults to False.
 
         Returns:
             Scene: The new Scene.
@@ -652,6 +842,8 @@ class Animation:
             is_looping=is_looping,
             sync=sync,
             ease=ease,
+            cache_easing=cache_easing,
+            cache_appearance=cache_appearance,
             no_color=self.no_color,
             use_xterm_colors=self.use_xterm_colors,
         )
@@ -948,11 +1140,7 @@ class Animation:
         """Return the scene frame index for the active path's progress."""
         final_frame_index = len(scene.frames) - 1
         if scene.sync == Scene.SyncMetric.STEP:
-            progress_ratio = (
-                active_path.current_step / active_path.max_steps
-                if active_path.max_steps > 0
-                else 0.0
-            )
+            progress_ratio = active_path.current_step / active_path.max_steps if active_path.max_steps > 0 else 0.0
         else:
             progress_ratio = (
                 active_path.last_distance_reached / active_path.total_distance
@@ -967,11 +1155,15 @@ class Animation:
     def _step_eased_scene(self, scene: Scene) -> None:
         """Apply the eased frame and update easing playback state."""
         assert scene.ease is not None
-        easing_factor = self._ease_animation(scene.ease)
-        final_frame_index = max(scene.easing_total_steps - 1, 0)
-        frame_index = round(easing_factor * final_frame_index)
-        frame_index = max(min(frame_index, final_frame_index), 0)
-        frame_position = bisect_right(scene._frame_end_steps, frame_index)
+        schedule = scene._get_easing_schedule() if scene.cache_easing else None
+        if schedule is None or not 0 <= scene.easing_current_step < scene.easing_total_steps:
+            easing_factor = self._ease_animation(scene.ease)
+            final_frame_index = max(scene.easing_total_steps - 1, 0)
+            frame_index = round(easing_factor * final_frame_index)
+            frame_index = max(min(frame_index, final_frame_index), 0)
+            frame_position = bisect_right(scene._frame_end_steps, frame_index)
+        else:
+            frame_position = schedule.positions[scene.easing_current_step]
         self.current_character_visual = scene.frames[frame_position].character_visual
 
         scene.easing_current_step += 1

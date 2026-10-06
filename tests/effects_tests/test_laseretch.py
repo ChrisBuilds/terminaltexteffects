@@ -11,6 +11,9 @@ from terminaltexteffects.effects import effect_laseretch
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.graphics import Color, ColorPair
+from tests.effects_tests.assertions import assert_final_gradient
+
+pytestmark = pytest.mark.usefixtures("bounded_laseretch_sparks")
 
 
 def _make_terminal_config(
@@ -20,6 +23,28 @@ def _make_terminal_config(
     terminal_config.frame_rate = 0
     terminal_config.existing_color_handling = existing_color_handling
     return terminal_config
+
+
+def test_laseretch_default_spark_pool_emits_and_reclaims(
+    terminal_config_default_no_framerate: TerminalConfig,
+) -> None:
+    """Default-capacity sparks still emit and recycle outside the bounded ordering fixture."""
+    random.seed(836)
+    effect = effect_laseretch.LaserEtch("X")
+    effect.terminal_config = terminal_config_default_no_framerate
+    iterator = cast("effect_laseretch.LaserEtchIterator", iter(effect))
+    pool = iterator.laser.sparks_pool
+    assert len(pool.particles) == 2000
+    assert len(pool.available) == len(pool.particles)
+    next(iterator)
+    assert len(pool.available) == len(pool.particles) - 1
+    for _ in iterator:
+        pass
+    assert len(pool.available) == len(pool.particles)
+    assert not iterator.active_characters
+    character = iterator.terminal.get_characters()[0]
+    assert character.is_visible
+    assert character.animation.current_character_visual.symbol == character.input_symbol
 
 
 @pytest.mark.parametrize(
@@ -34,8 +59,12 @@ def _make_terminal_config(
 )
 def test_laseretch_etch_pattern_normalizes_cli_and_native_values(value: object, expected: object) -> None:
     """LaserEtch normalizes its sentinel, groups, and sorts on construction and assignment."""
-    canonical = expected if expected == "algorithm" else argutils.CharacterOrderArg.type_parser(
-        cast("argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort | str", expected),
+    canonical = (
+        expected
+        if expected == "algorithm"
+        else argutils.CharacterOrderArg.type_parser(
+            cast("argutils.CharacterOrder | argutils.CharacterGroup | argutils.CharacterSort | str", expected),
+        )
     )
     config = effect_laseretch.LaserEtchConfig(etch_pattern=value)  # pyright: ignore[reportArgumentType]
     assert config.etch_pattern == canonical
@@ -188,9 +217,11 @@ def test_laseretch_final_gradient(
     effect.effect_config.final_gradient_direction = gradient_direction
     effect.effect_config.final_gradient_frames = gradient_frames
     effect.terminal_config = terminal_config_default_no_framerate
+    iterator = iter(effect)
     with effect.terminal_output() as terminal:
-        for frame in effect:
+        for frame in iterator:
             terminal.print(frame)
+    assert_final_gradient(iterator, gradient_stops, gradient_steps, gradient_direction)
 
 
 @pytest.mark.parametrize(

@@ -117,7 +117,8 @@ def test_synthgrid_uses_offset_canvas_bounds(monkeypatch: pytest.MonkeyPatch) ->
     assert iterator.grid_lines
     assert all(
         terminal.canvas.coord_is_in_canvas(character.motion.current_coord)
-        for line in iterator.grid_lines for character in line.characters
+        for line in iterator.grid_lines
+        for character in line.characters
     )
     for _ in iterator:
         pass

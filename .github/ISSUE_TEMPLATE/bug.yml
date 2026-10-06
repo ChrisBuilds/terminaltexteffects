@@ -1,0 +1,45 @@
+name: Bug report
+description: Report incorrect behavior with reproduction steps and acceptance criteria.
+title: "[Bug]: "
+assignees: [ChrisBuilds]
+labels: [bug]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the incorrect behavior and its impact.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Include a minimal command or Python example and any relevant input.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: TTE version, Python version, operating system, and terminal when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Describe observable conditions that would confirm the bug is fixed.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and evidence
+      description: Optional logs, investigation, related issues, or scope boundaries.

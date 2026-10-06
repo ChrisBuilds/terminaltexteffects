@@ -10,6 +10,7 @@ from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_rings
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair
+from tests.effects_tests.assertions import assert_final_gradient
 
 
 def test_rings_gap_and_disperse_duration_boundaries() -> None:
@@ -99,9 +100,14 @@ def test_rings_final_gradient(
     effect.effect_config.final_gradient_steps = gradient_steps
     effect.effect_config.final_gradient_direction = gradient_direction
     effect.terminal_config = terminal_config_default_no_framerate
+    effect.effect_config.spin_duration = 1
+    effect.effect_config.disperse_duration = 1
+    effect.effect_config.spin_disperse_cycles = 1
+    iterator = iter(effect)
     with effect.terminal_output() as terminal:
-        for frame in effect:
+        for frame in iterator:
             terminal.print(frame)
+    assert_final_gradient(iterator, gradient_stops, gradient_steps, gradient_direction)
 
 
 @pytest.mark.parametrize("ring_colors", [(Color("#ffffff"),), (Color("#f0f0f0"), Color("#00ff00"))])

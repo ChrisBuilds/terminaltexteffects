@@ -9,9 +9,88 @@ import pytest
 
 from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_waves
+from terminaltexteffects.engine.animation import Scene
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.graphics import Color, ColorPair
+from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
+
+
+@pytest.mark.parametrize("color_handling", ["ignore", "always", "dynamic"])
+@pytest.mark.parametrize("symbols", [("~",), ("a", "b", "c", "d", "e"), ("界", "😀")])
+@pytest.mark.parametrize("color_output", ["truecolor", "xterm", "none"])
+def test_waves_recipe_preserves_distribution_and_frame_ownership(
+    color_handling: Literal["ignore", "always", "dynamic"],
+    symbols: tuple[str, ...],
+    color_output: str,
+) -> None:
+    """Repeated waves retain symbol/color distribution and independent mutable playback state."""
+    effect = effect_waves.Waves("\x1b[1;38;5;196ma\x1b[0mb")
+    effect.terminal_config = _make_terminal_config(color_handling)
+    effect.terminal_config.no_color = color_output == "none"
+    effect.terminal_config.xterm_colors = color_output == "xterm"
+    effect.effect_config.wave_symbols = symbols
+    effect.effect_config.wave_count = 3
+    effect.effect_config.wave_gradient_steps = (2, 3)
+    iterator = cast("effect_waves.WavesIterator", iter(effect))
+    scenes = [c.animation.scenes["0"] for c in iterator.terminal.get_characters()]
+    for scene in scenes:
+        reference = Scene("reference", no_color=scene.no_color, use_xterm_colors=scene.use_xterm_colors)
+        reference.preexisting_colors = scene.preexisting_colors
+        reference.preexisting_bold = scene.preexisting_bold
+        reference.apply_gradient_to_symbols(
+            symbols,
+            duration=iterator.config.wave_length,
+            fg_gradient=Gradient(*iterator.config.wave_gradient_stops, steps=iterator.config.wave_gradient_steps),
+        )
+        expected = [
+            (f.character_visual.formatted_symbol, f.character_visual.colors, f.duration) for f in reference.frames
+        ]
+        assert [(f.character_visual.formatted_symbol, f.character_visual.colors, f.duration) for f in scene.frames] == (
+            expected * 3
+        )
+        assert scene.ease is iterator.config.wave_easing
+        assert scene.easing_total_steps == sum(f.duration for f in scene.frames)
+    frames = [f for scene in scenes for f in scene.frames]
+    assert len({id(f) for f in frames}) == len(frames)
+    assert len({id(f.character_visual) for f in frames}) == len(frames)
+    frames[0].ticks_elapsed = 1
+    frames[0].character_visual.symbol = "!"
+    assert all(f.ticks_elapsed == 0 and f.character_visual.symbol != "!" for f in frames[1:])
+
+
+def test_waves_dynamic_skips_spatial_gradient_and_preserves_channel_transitions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Dynamic settling restores foreground/background channels without a spatial color map."""
+
+    def unexpected_mapping(*_args: object, **_kwargs: object) -> dict[object, object]:
+        pytest.fail("Dynamic Waves must not construct a spatial gradient map")
+
+    monkeypatch.setattr(Gradient, "build_coordinate_color_mapping", unexpected_mapping)
+    effect = effect_waves.Waves("\x1b[38;5;196ma\x1b[0m\x1b[48;5;21mb\x1b[0m\x1b[38;5;196m\x1b[48;5;21mc\x1b[0md")
+    effect.terminal_config = _make_terminal_config("dynamic")
+    effect.effect_config.final_gradient_steps = (2, 5)
+    iterator = cast("effect_waves.WavesIterator", iter(effect))
+    wave_end = Gradient(*iterator.config.wave_gradient_stops, steps=iterator.config.wave_gradient_steps).spectrum[-1]
+    for character in iterator.terminal.get_characters():
+        target = iterator.character_final_color_map[character]
+        reference = Scene("reference")
+        if target.fg is None and target.bg is None:
+            reference.add_frame(character.input_symbol, 10, colors=ColorPair())
+        else:
+            reference.apply_gradient_to_symbols(
+                character.input_symbol,
+                10,
+                fg_gradient=Gradient(wave_end, target.fg, steps=2) if target.fg is not None else None,
+                bg_gradient=Gradient(wave_end, target.bg, steps=2) if target.bg is not None else None,
+            )
+            if target.fg is None:
+                reference.add_frame(character.input_symbol, 10, colors=ColorPair(bg=target.bg))
+        actual = character.animation.scenes["1"]
+        assert [(f.character_visual.colors, f.duration) for f in actual.frames] == [
+            (f.character_visual.colors, f.duration) for f in reference.frames
+        ]
+
 
 WaveDirection = Literal[
     "column_left_to_right",
@@ -446,3 +525,11 @@ def test_waves_dynamic_keeps_wave_scene_effect_colored() -> None:
         Color("#111111").rgb_color,
         Color("#222222").rgb_color,
     }
+
+
+def test_waves_caches_only_repeated_wave_appearances() -> None:
+    """Only the repeated wave scene opts into construction encoding reuse."""
+    iterator = iter(effect_waves.Waves("abc"))
+    for character in iterator.terminal.get_characters():
+        assert character.animation.scenes["0"].cache_appearance
+        assert not character.animation.scenes["1"].cache_appearance

@@ -27,13 +27,13 @@ from __future__ import annotations
 import functools
 import math
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, ParamSpec
+from typing import TYPE_CHECKING, TypeVar, cast
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
+    from typing import Any
 
-
-P = ParamSpec("P")
+_CoordinateListFunction = TypeVar("_CoordinateListFunction", bound="Callable[..., list[Coord]]")
 
 _BEZIER_LENGTH_TOLERANCE = 1e-4
 _BEZIER_LENGTH_MAX_DEPTH = 12
@@ -177,22 +177,22 @@ def find_balanced_grid(
 
 def _cache_coordinate_list(
     maxsize: int,
-) -> Callable[[Callable[P, list[Coord]]], Callable[P, list[Coord]]]:
+) -> Callable[[_CoordinateListFunction], _CoordinateListFunction]:
     """Cache coordinate sequences immutably while returning a fresh list to callers."""
 
-    def decorator(function: Callable[P, list[Coord]]) -> Callable[P, list[Coord]]:
+    def decorator(function: _CoordinateListFunction) -> _CoordinateListFunction:
         @functools.lru_cache(maxsize=maxsize)
-        def cached_function(*args: P.args, **kwargs: P.kwargs) -> tuple[Coord, ...]:
+        def cached_function(*args: Any, **kwargs: Any) -> tuple[Coord, ...]:
             return tuple(function(*args, **kwargs))
 
         @functools.wraps(function)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> list[Coord]:
+        def wrapper(*args: Any, **kwargs: Any) -> list[Coord]:
             return list(cached_function(*args, **kwargs))
 
         wrapper.cache_clear = cached_function.cache_clear  # type: ignore[attr-defined]
         wrapper.cache_info = cached_function.cache_info  # type: ignore[attr-defined]
         wrapper.cache_parameters = cached_function.cache_parameters  # type: ignore[attr-defined]
-        return wrapper
+        return cast("_CoordinateListFunction", wrapper)
 
     return decorator
 
@@ -352,14 +352,10 @@ def find_coords_on_rect(origin: Coord, half_width: int, half_height: int) -> lis
     """
     _validate_nonnegative_dimensions(half_width=half_width, half_height=half_height)
     if not half_width:
-        return [
-            Coord(origin.column, row)
-            for row in range(origin.row - half_height, origin.row + half_height + 1)
-        ]
+        return [Coord(origin.column, row) for row in range(origin.row - half_height, origin.row + half_height + 1)]
     if not half_height:
         return [
-            Coord(column, origin.row)
-            for column in range(origin.column - half_width, origin.column + half_width + 1)
+            Coord(column, origin.row) for column in range(origin.column - half_width, origin.column + half_width + 1)
         ]
     coords: list[Coord] = []
     for column in range(origin.column - half_width, origin.column + half_width + 1):

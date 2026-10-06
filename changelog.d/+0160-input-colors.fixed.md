@@ -1,0 +1,1 @@
+`Terminal.get_input_colors()` counts retained characters after cursor overwrites and clipping. Brightness factor `1` preserves RGB colors, and color representations use reconstructible constructor syntax.

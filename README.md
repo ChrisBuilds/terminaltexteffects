@@ -19,6 +19,7 @@
 
 * [About](#tte)
 * [Requirements](#requirements)
+* [Support and Security](#support-and-security)
 * [Installation](#installation)
 * [Usage (Application)](#application-quickstart)
 * [Usage (Library)](#library-quickstart)
@@ -46,7 +47,14 @@ TerminalTextEffects (TTE) is a terminal visual effects engine. TTE can be instal
 
 ## Requirements
 
-TerminalTextEffects is written in Python and does not require any 3rd party modules. Terminal interactions use standard ANSI terminal sequences and should work in most modern terminals.
+Development toward 0.16.0 requires Python 3.9.2 or newer; the published 0.15.0 package requires Python 3.8 or newer. The core package does not require any third-party modules. Terminal interactions use standard ANSI terminal sequences and should work in most modern terminals.
+
+## Support and Security
+
+See [SUPPORT.md](SUPPORT.md) for Python/platform coverage, terminal requirements, shell completion,
+and reporting ordinary problems. The public documentation follows development `main`, so some
+features are not yet in the published package. Report vulnerabilities privately through the
+route in [SECURITY.md](SECURITY.md); security fixes target the latest stable release.
 
 ## Installation
 
@@ -149,7 +157,7 @@ View the [Documentation](https://chrisbuilds.github.io/terminaltexteffects/) for
   --input-file, -i INPUT_FILE
                         File to read input from
   --version, -v         show program's version number and exit
-  --print-completion {bash,zsh}
+  --print-completion {bash,zsh,powershell}
                         Print a shell completion script for the requested shell and exit.
   --random-effect, -R   Randomly select an effect to apply
   --seed SEED           Seed to use for random effect selection
@@ -246,13 +254,15 @@ OR
   * Use `--seed` to make the random choice repeatable.
   * Use `--include-effects` or `--exclude-effects` to limit the random selection pool.
 * Generate shell completions for bundled effects with `tte --print-completion bash` or
-  `tte --print-completion zsh`.
+  `tte --print-completion zsh` or `tte --print-completion powershell`.
   * Run `tte --print-completion` without a shell name to print copy-and-paste setup commands.
   * Bash: `eval "$(tte --print-completion bash)"`
   * Zsh: `eval "$(tte --print-completion zsh)"`
+  * PowerShell 7+: `tte --print-completion powershell | Out-String | Invoke-Expression`
   * Completion includes valid values for enum-like options such as gradient directions, grouping modes, and easing
     functions.
-  * To enable completions for future shells, add the relevant command above to your shell startup file such as `~/.bashrc` or `~/.zshrc`.
+  * To enable completions for future shells, add the relevant command above to your shell startup file such as `~/.bashrc` or `~/.zshrc`. For PowerShell 7+, add its activation command to `$PROFILE`.
+  * On Windows, use Windows Terminal for rendering and PowerShell 7 for these completions. Windows PowerShell 5.1 is not supported by this script.
   * Completion scripts cover built-in effects only; options from custom effect plugins are not included.
 * Add custom effect modules to `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set.
   * Any `.py` file in that directory that provides `get_effect_resources()` can register an effect command alongside the built-in effects.
@@ -331,8 +341,10 @@ View all of the effects and related information in the [Effects Showroom](https:
 
 ## Latest Release Notes
 
-Visit the [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/changeblog/) for release write-ups and
-the [CHANGELOG](./CHANGELOG.md) for the current full release history.
+See the [CHANGELOG](./CHANGELOG.md) for release history and upcoming user-facing changes, also available
+in the [documentation](https://chrisbuilds.github.io/terminaltexteffects/changelog/).
+The [ChangeBlog](https://chrisbuilds.github.io/terminaltexteffects/changeblog/changeblog/) provides optional release
+write-ups and demos.
 
 ## License
 

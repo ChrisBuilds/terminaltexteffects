@@ -36,13 +36,7 @@ DEFAULT_SEED = 1337
 
 INPUT_PRESETS = {
     "small": "TerminalTextEffects",
-    "medium": (
-        "0123456789abcdefg\n"
-        "123456789abcdefgh\n"
-        "23456789abcdefghi\n"
-        "3456789abcdefghij\n"
-        "456789abcdefghijk"
-    ),
+    "medium": ("0123456789abcdefg\n123456789abcdefgh\n23456789abcdefghi\n3456789abcdefghij\n456789abcdefghijk"),
     "large": (
         "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\n"
         "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0\n"
@@ -97,9 +91,7 @@ def _effect_classes() -> dict[str, type[BaseEffect[Any]]]:
 def _make_input_data(input_preset: str) -> str:
     """Return benchmark input for a named preset."""
     if input_preset == "generated":
-        return "\n".join(
-            "".join(chr(65 + ((row + column) % 26)) for column in range(80)) for row in range(24)
-        )
+        return "\n".join("".join(chr(65 + ((row + column) % 26)) for column in range(80)) for row in range(24))
     try:
         return INPUT_PRESETS[input_preset]
     except KeyError as exc:
@@ -349,8 +341,7 @@ def compare_reports(baseline_report: dict[str, Any], candidate_report: dict[str,
                 delta = _percent_delta(baseline_mean, candidate_mean)
                 delta_text = "n/a" if delta is None else f"{delta:+.2f}"
                 lines.append(
-                    f"{key[0]},{key[1]},{key[2]},{memory_metric},"
-                    f"{baseline_mean:.0f},{candidate_mean:.0f},{delta_text}",
+                    f"{key[0]},{key[1]},{key[2]},{memory_metric},{baseline_mean:.0f},{candidate_mean:.0f},{delta_text}",
                 )
         baseline_frames = baseline_result["summary"]["frames"]
         candidate_frames = candidate_result["summary"]["frames"]
@@ -360,8 +351,7 @@ def compare_reports(baseline_report: dict[str, Any], candidate_report: dict[str,
         candidate_chars = candidate_result["summary"]["output_characters"]
         output_character_delta = candidate_chars - baseline_chars
         lines.append(
-            f"{key[0]},{key[1]},{key[2]},output_characters,"
-            f"{baseline_chars},{candidate_chars},{output_character_delta}",
+            f"{key[0]},{key[1]},{key[2]},output_characters,{baseline_chars},{candidate_chars},{output_character_delta}",
         )
     return "\n".join(lines)
 

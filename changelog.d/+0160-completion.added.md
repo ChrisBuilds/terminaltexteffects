@@ -1,0 +1,1 @@
+Bundled Bash and native Zsh completions suggest enum, gradient, ordering, and easing values. `tte --print-completion` without a shell prints setup commands for both shells; generation excludes user effect plugins.

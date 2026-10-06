@@ -8,6 +8,7 @@ every `parse()` call creates fresh state and returns a reusable parsed value obj
 from __future__ import annotations
 
 import re
+import sys
 from dataclasses import dataclass, field
 from typing import ClassVar
 
@@ -16,9 +17,10 @@ from terminaltexteffects.utils.graphics import Color
 from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 _ScreenCoord = tuple[int, int]
+_DATACLASS_SLOT_OPTIONS = {"slots": True} if sys.version_info >= (3, 10) else {}
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, **_DATACLASS_SLOT_OPTIONS)
 class ParsedCharacter:
     """A styled character retained on the parsed virtual screen."""
 
@@ -32,7 +34,7 @@ class ParsedCharacter:
     bold: bool
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, **_DATACLASS_SLOT_OPTIONS)
 class ParsedInput:
     """Immutable output from one virtual-screen parse."""
 
@@ -44,7 +46,7 @@ class ParsedInput:
     color_frequencies: tuple[tuple[Color, int], ...]
 
 
-@dataclass(slots=True)
+@dataclass(**_DATACLASS_SLOT_OPTIONS)
 class _ParserState:
     """Mutable state owned by exactly one `VirtualScreenParser.parse()` call."""
 
