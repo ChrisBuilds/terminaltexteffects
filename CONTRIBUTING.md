@@ -101,8 +101,13 @@ To run hooks manually on selected files:
 ```
 
 Use selected-file hooks for routine development. Focused pytest remains a development QA
-step; broad compatibility suites remain in CI. Hooks are optional and bypassable, so successful
-CI checks remain the enforced merge gate. Remove the local installation with
+step; broad compatibility suites remain in CI.
+
+Workflow edits also have a read-only actionlint/ShellCheck command and an optional manual-stage
+`workflows` hook. Install the pinned actionlint release and ShellCheck before invoking it; see
+[workflow linting](.github/CI.md#workflow-linting). Code quality enforces this check on every run.
+
+Hooks are optional and bypassable, so successful CI checks remain the enforced merge gate. Remove the local installation with
 `./.venv/bin/pre-commit uninstall`.
 
 The `Code quality` CI job checks every tracked Python file, including stubs, without modifying

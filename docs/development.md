@@ -192,6 +192,13 @@ For documentation-only work, use appropriate diff/format checks and a strict doc
 ./.venv/bin/python -m mkdocs build --strict
 ```
 
+For GitHub Actions workflow changes, install actionlint 1.7.12 and ShellCheck as described in
+[workflow linting](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/CI.md#workflow-linting),
+then run `./.venv/bin/python tools/check_workflows.py`. This checks workflow structure,
+expressions, job dependencies, and Bash/sh scripts without editing files. The optional
+`workflows` hook runs only when explicitly invoked with `--hook-stage manual`; ordinary
+commit hooks do not require these external tools.
+
 A successful local build verifies documentation; it does not deploy it. Strict builds fail on relevant warnings/errors and configured link validation. A dependency update deserves integration checks for the tools it affects: successful lock resolution alone does not prove compatibility or safe behavior.
 
 **Complete when:** applicable focused tests, touched-file formatting/lint/types, and generated-file checks pass. Report remaining uncertainty instead of overstating QA.
@@ -287,11 +294,12 @@ The workflow listens to `pull_request`, pushes to `main`, and `workflow_dispatch
 `.github/workflows/ci.yml` runs this job on Ubuntu 24.04 with Python 3.14. It checks out history, installs locked development tools, and runs:
 
 1. **Classify the committed diff.** `tools/classify_ci.py` compares against the base, including deletions and both sides of renames. Recognized prose/images may skip the test matrix. Code, dependencies, package configuration, workflows, unknown paths, and YAML configuration request full tests. For example, a `mkdocs.yml` navigation change can trigger full tests even when the intent is documentation-only. Manual runs request full validation.
-2. **Read-only whole-project quality.** `tools/check_quality.py --all` checks all tracked `.py`/`.pyi` files with Ruff formatting/lint and Pyright, including unchanged callers, tests, tools, and tracked experiments. Ignored/untracked personal prototypes are outside its inventory.
-3. **Hook regressions for code-bearing changes.** Validate pre-commit configuration and run `tests/test_hooks.py`.
-4. **Artifact validation for code-bearing changes.** Run `tools/check_artifacts.py`; see below.
-5. **Changelog validation on every change.** Check fragment naming/content, preview freshness, and the committed branch's decision. Release-note consumption into a new dated section is supported.
-6. **Strict documentation build when classified as relevant.** Markdown/docs images, `mkdocs.yml`, and theme overrides request this build. The main documentation deployment later rebuilds all documentation even after source-only changes.
+2. **Workflow linting on every run.** CI verifies the actionlint 1.7.12 archive checksum and runs the workflow helper with required ShellCheck plus focused regression fixtures. Documentation-only changes also receive this check. Pyflakes integration is disabled explicitly; ShellCheck comes from the hosted Ubuntu image.
+3. **Read-only whole-project quality.** `tools/check_quality.py --all` checks all tracked `.py`/`.pyi` files with Ruff formatting/lint and Pyright, including unchanged callers, tests, tools, and tracked experiments. Ignored/untracked personal prototypes are outside its inventory.
+4. **Hook regressions for code-bearing changes.** Validate pre-commit configuration and run `tests/test_hooks.py`.
+5. **Artifact validation for code-bearing changes.** Run `tools/check_artifacts.py`; see below.
+6. **Changelog validation on every change.** Check fragment naming/content, preview freshness, and the committed branch's decision. Release-note consumption into a new dated section is supported.
+7. **Strict documentation build when classified as relevant.** Markdown/docs images, `mkdocs.yml`, and theme overrides request this build. The main documentation deployment later rebuilds all documentation even after source-only changes.
 
 ### Why validate artifacts before a release?
 
@@ -472,6 +480,7 @@ See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/S
 | pytest and pytest-xdist | Behavioral tests and parallel workers | Tests, pytest settings, `tests/conftest.py` | Focused local QA; CI matrix |
 | Pairwise selection | Bound routine effect-configuration combinations | `tests/pairwise.py`, collection hook | Collection of designated tests, unless exhaustive flag supplied |
 | Ruff | Formatting and lint | `pyproject.toml` | Local QA/hooks; read-only CI |
+| actionlint and ShellCheck | Workflow structure, expressions, dependencies, Bash/sh lint | `tools/check_workflows.py`, CI binary pin | Workflow edits; every Code quality run; optional manual hook |
 | Pyright | Static typing with Python 3.9 target | `pyproject.toml` | Local QA/hooks; whole-project CI |
 | pre-commit | Staged local QA orchestration | `.pre-commit-config.yaml`, `tools/run_hook.py` | Commit after local installation, or explicit targeted invocation |
 | Towncrier and changelog helper | Fragments, generated preview, dated release assembly | `changelog.d/`, template, `tools/generate_changelog.py` | Each issue; hooks/CI; release preparation |

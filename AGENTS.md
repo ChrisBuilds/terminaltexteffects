@@ -90,6 +90,9 @@
   The `Code quality` CI job runs read-only formatting, lint, and type checks on all tracked Python files,
   including tests, tools, and archived experiments. Ignored local prototypes are excluded. Reproduce CI with `./.venv/bin/python tools/check_quality.py --all`; use
   `--base origin/main` for focused branch checks after committing.
+- For workflow changes, run `./.venv/bin/python tools/check_workflows.py` with actionlint 1.7.12
+  and ShellCheck installed (or `TTE_ACTIONLINT`/`TTE_SHELLCHECK` executable overrides). Follow
+  `.github/CI.md#workflow-linting`; the optional workflow hook runs only in the manual stage.
 
 ## Completion Criteria
 

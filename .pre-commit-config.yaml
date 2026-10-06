@@ -27,3 +27,10 @@ repos:
         files: '^(CHANGELOG\.md|changelog\.d/.*|tools/generate_changelog\.py|pyproject\.toml|uv\.lock)$'
         always_run: true
         require_serial: true
+      - id: workflows
+        name: GitHub Actions workflows (actionlint and ShellCheck)
+        entry: .venv/bin/python tools/check_workflows.py
+        language: system
+        files: '^\.github/workflows/.*\.ya?ml$'
+        stages: [manual]
+        require_serial: true
