@@ -7,6 +7,10 @@ the contribution rules; the guide explains how they fit together.
 Development follows an issue ticket -> branch -> pull request -> maintainer merge process.
 Use one issue and one PR for a coherent change. Track unrelated discoveries in separate issues.
 
+For compatibility and ordinary bug reports, see [SUPPORT.md](SUPPORT.md). Report vulnerabilities
+privately as described in [SECURITY.md](SECURITY.md); keep exploit details out of public tickets,
+fragments, and PRs until coordinated disclosure.
+
 Dependabot's generated update PRs are the narrow exception to issue-first creation and branch
 naming. Before merging, create/link a tracking issue, complete metadata and the changelog
 decision, and require latest CI. Follow [dependency update triage](.github/DEPENDENCIES.md).

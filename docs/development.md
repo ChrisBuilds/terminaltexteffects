@@ -81,7 +81,6 @@ The commands below assume POSIX `.venv/bin` paths. Native Windows environments u
 | `docs/`, `mkdocs.yml`, `overrides/` | Documentation sources, navigation/configuration, and theme overrides |
 | `changelog.d/` | Per-issue release-note fragments and explicit skip reasons |
 | `.github/` | Workflows, issue/PR templates, and CI/dependency documentation |
-| Sibling `dev_notes/` | Local investigations, evidence, and project working notes; keep out of project commits |
 
 ## 1. Define the issue before implementing
 
@@ -127,7 +126,7 @@ For agents, an implementation assignment authorizes routine branch creation, imp
 
 **Trigger:** work on the issue branch.
 
-**Purpose:** deliver the behavior described by the issue, with enough evidence for a developer unfamiliar with the conversation to review it.
+**Purpose:** deliver the behavior described by the issue, with enough evidence for another contributor to review it.
 
 Change implementation, relevant regression tests, documentation, and generated resources together. Preserve existing callers and configuration contracts. Tests should exercise meaningful behavior and edge cases; a new test is not required merely to mirror a trivial implementation detail.
 
@@ -224,7 +223,7 @@ Release-preparation PRs consume existing fragments into a dated section instead 
 
 **Purpose:** preserve a useful unit of work and ensure staging contains only the issue's intended changes.
 
-Inspect the worktree and staged diff, add explicit paths, and commit. Do not accidentally stage sibling working notes or unrelated edits.
+Inspect the worktree and staged diff, add explicit paths, and commit. Keep personal working notes and unrelated edits out of commits.
 
 ```sh
 git diff --check
@@ -347,7 +346,7 @@ Open the failing job and first failing step. Distinguish a test assertion, quali
 
 When main advances, update the branch if needed, preserving reviewed scope. Lockfile conflicts need dependency-graph review/resolution; generated-preview conflicts should be resolved from fragments using the generator. A resolver success alone cannot prove a security update safe. Recheck integration after substantive updates; stale green checks do not validate a new head.
 
-Mark the PR **ready for review** after local QA and required latest CI pass. The maintainer checks acceptance criteria, scope, docs/notes, and validation. Automated Codex review is currently active and can run when a draft becomes ready; read its actual inline findings, not only its summary. Address valid findings and resolve conversations. Automated review is advisory, not maintainer merge permission.
+Mark the PR **ready for review** after local QA and required latest CI pass. The maintainer checks acceptance criteria, scope, docs/notes, and validation. When automated review provides feedback, read its inline findings as well as its summary. Address valid findings and resolve conversations. Automated review is advisory, not maintainer merge permission.
 
 A PR author cannot formally approve their own PR. This solo-maintainer repository does not require an external approval count, but does require PRs, required checks, and resolved conversations. Contributors and agents still leave the merge decision to the maintainer.
 
@@ -361,7 +360,7 @@ A PR author cannot formally approve their own PR. This solo-maintainer repositor
 
 Use **Squash and merge**. Review/edit the resulting commit title and body in GitHub; its defaults are not a reason to leave noisy development history. The issue branch may contain multiple commits, but main receives the reviewed combined change as one commit.
 
-Delete the merged branch. `Closes #123` closes an ordinary issue when the PR reaches the default branch. Fetch/switch to main and fast-forward locally when the worktree is safe. Synchronize locked tools after branch/lock changes. Update local evidence logs where relevant.
+Delete the merged branch. `Closes #123` closes an ordinary issue when the PR reaches the default branch. Fetch/switch to main and fast-forward locally when the worktree is safe. Synchronize locked tools after branch/lock changes.
 
 An ordinary issue is complete after its work is merged and required follow-up is accounted for. Its changes may still be unreleased. A release tracking issue remains open beyond its PR merge.
 
@@ -458,11 +457,11 @@ Dependabot creates the PR first. Triage creates a real tracking issue, completes
 
 The existing `Graph Update: uv` runs provide dependency information to GitHub; they are separate from CI test jobs and from update PRs. Their success does not establish test compatibility. A documentation/release-tool update can matter to security without adding runtime dependencies to the core package.
 
-### Security reporting and support policy status
+### Security reporting and support policies
 
-The maintainer has approved security fixes for the latest stable release only; older releases should upgrade. GitHub private vulnerability reporting is enabled. Use the private vulnerability form for reports, avoiding public exploit details until coordinated disclosure. External plugins/prototypes execute Python and are not sandboxed.
+Security fixes target the latest stable release; users of older releases should upgrade. GitHub private vulnerability reporting is enabled. Use the private vulnerability form for reports, avoiding public exploit details until coordinated disclosure. External plugins/prototypes execute Python and are not sandboxed.
 
-At preparation of this guide, the written security/support policies are in pending [PR #130](https://github.com/ChrisBuilds/terminaltexteffects/pull/130). Refer to that PR until it merges, then use root `SECURITY.md` and `SUPPORT.md`. Their release-version statements must stay current. Do not interpret an unmerged policy PR as a deployed documentation change.
+See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/SECURITY.md) for private reporting and supported releases, and [SUPPORT.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/SUPPORT.md) for Python, platform, terminal, and completion support. Update these policies when a release changes support.
 
 ## Tool reference: what each component contributes
 
@@ -496,7 +495,7 @@ Tox is no longer part of this workflow. GitHub Actions owns the interpreter matr
 | Release prepared | Version/notes/QA reviewed and merged | Tag/upload/publication approval exists |
 | Release complete | Approved files published, clean install and public metadata verified, issue evidence complete | Future commits on main belong to that release |
 
-When uncertain, record the exact revision, command/run URL, result, and remaining limitation. That evidence is what lets another developer continue the work without reconstructing a conversation.
+When uncertain, record the exact revision, command/run URL, result, and remaining limitation. That evidence is what lets another developer continue the work without reconstructing earlier work.
 
 ## Keeping this guide current
 
