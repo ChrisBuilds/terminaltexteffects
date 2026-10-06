@@ -26,6 +26,9 @@
   tracking issue with required metadata before merge. Triage its milestone and changelog decision per
   `.github/DEPENDENCIES.md`; add an issue-numbered fragment and regenerate the preview on the bot branch.
   Do not exempt bot PRs from changelog/CI gates or auto-merge them. Review later bot rebases again.
+- Dependency gate failures require advisory remediation or graph diagnostics; never use
+  warn-only, blanket exclusions, or continue-on-error. No exceptions are approved; future
+  exemptions require explicit maintainer review and expiry validation per `.github/DEPENDENCIES.md`.
 - Verify reported bugs and establish acceptance criteria before implementation. For changes to effect options,
   defaults, or visual behavior, present the proposed behavior and obtain agreement before changing it.
 - Create unfinished effects in root `dev_effects/`, never in `terminaltexteffects/effects/`.
@@ -95,6 +98,9 @@
   The `Code quality` CI job runs read-only formatting, lint, and type checks on all tracked Python files,
   including tests, tools, and archived experiments. Ignored local prototypes are excluded. Reproduce CI with `./.venv/bin/python tools/check_quality.py --all`; use
   `--base origin/main` for focused branch checks after committing.
+- When editing marked canonical examples in `docs/libguide.md` or `docs/appguide.md`, run
+  `tests/test_documented_examples.py` with locked tools. Preserve unique markers and executable
+  standalone blocks; follow `.github/CI.md#executable-documentation-examples`.
 - For workflow changes, run `./.venv/bin/python tools/check_workflows.py` with actionlint 1.7.12
   and ShellCheck installed (or `TTE_ACTIONLINT`/`TTE_SHELLCHECK` executable overrides). Follow
   `.github/CI.md#workflow-linting`; the optional workflow hook runs only in the manual stage.

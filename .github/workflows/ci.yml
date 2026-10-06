@@ -43,8 +43,30 @@ jobs:
           enable-cache: true
           cache-dependency-glob: uv.lock
           cache-suffix: quality
+      - name: Review newly introduced dependency vulnerabilities
+        if: github.event_name == 'pull_request'
+        id: dependency_review
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          fail-on-scopes: runtime, development, unknown
+          license-check: false
+          vulnerability-check: true
+          warn-only: false
+          comment-summary-in-pr: never
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 120
       - name: Install package and locked development tools
         run: uv sync --locked --group dev
+      - name: Verify dependency review lock coverage
+        if: github.event_name == 'pull_request'
+        env:
+          DEPENDENCY_BASE: ${{ github.event.pull_request.base.sha }}
+          DEPENDENCY_HEAD: ${{ github.event.pull_request.head.sha }}
+          DEPENDENCY_CHANGES: ${{ steps.dependency_review.outputs.dependency-changes }}
+        run: .venv/bin/python tools/check_dependency_review.py --base "$DEPENDENCY_BASE" --head "$DEPENDENCY_HEAD"
+      - name: Test dependency review coverage guard
+        run: .venv/bin/python -m pytest -q tests/test_dependency_review.py
       - name: Install pinned workflow linter
         run: |
           archive="$RUNNER_TEMP/actionlint.tar.gz"
@@ -93,6 +115,10 @@ jobs:
             args+=(--base "$QUALITY_BASE")
           fi
           .venv/bin/python tools/generate_changelog.py "${args[@]}"
+      - name: Execute selected documentation examples
+        env:
+          TTE_REQUIRE_DOC_EXAMPLES: "1"
+        run: .venv/bin/python -m pytest -q tests/test_documented_examples.py
       - name: Build documentation and check links
         if: steps.changes.outputs.build_docs == 'true'
         run: .venv/bin/python -m mkdocs build --strict --site-dir "$RUNNER_TEMP/docs"

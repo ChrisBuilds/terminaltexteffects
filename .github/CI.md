@@ -102,6 +102,12 @@ Documentation-only changes still run quality checks. Reproduce them locally with
 `./.venv/bin/python tools/check_quality.py --all`; changed-file checks remain available with
 `--base origin/main` for focused development.
 
+On PR events, Code quality first runs the pinned [dependency vulnerability review](DEPENDENCIES.md#dependency-vulnerability-gate)
+for newly introduced high/critical findings across runtime/development/unknown scopes, then
+checks reported uv changes against both universal locks. Missing dependency pairs fail;
+unchanged alerts remain Dependabot's responsibility. Push/manual runs omit the differential
+review but still run offline guard regressions. No new required job or write permission is added.
+
 For code-bearing changes, the quality job also validates `.pre-commit-config.yaml` and runs the
 focused hook regression tests.
 Real hook integration uses the locked development environment here; matrix jobs run the hook dispatcher
@@ -225,3 +231,37 @@ changing versions; full `dev` still includes those tools. Regression tests cover
 fix/restage behavior, overlapping unstaged changes, read-only hygiene, paths with spaces,
 and changelog snapshots. `TTE_REQUIRE_HOOK_INTEGRATION=1` makes missing integration
 tools a failure in Code quality and Windows rather than silently skipping these tests.
+
+## Executable documentation examples
+
+Code quality runs `tests/test_documented_examples.py` on every run, including
+documentation-only PRs. The same small suite also runs in the ordinary Linux Python matrix.
+It reads two explicitly marked standalone code blocks directly from `docs/libguide.md`
+(`library-wipe`, Python) and `docs/appguide.md` (`cli-wipe`, Bash). There is no separate
+copy of their implementation in tests and no execution of arbitrary other docs blocks.
+
+The Python example consumes an effect iterator and checks its final frame. The CLI example
+uses literal piped input and global/effect options, checking final text and cursor restoration.
+Both run in subprocesses outside the checkout with empty user configuration, explicit UTF-8,
+a fixed small canvas, zero playback delay, and a 10-second timeout each. The Python example
+uses this environment's interpreter; the CLI check verifies the selected `tte` comes from
+that environment. Bash profiles/startup overrides and prototype discovery are excluded.
+Bash is mandatory in Code quality; local runs without Bash may skip only the POSIX CLI case.
+
+Run locally after syncing locked tools:
+
+```sh
+TTE_REQUIRE_DOC_EXAMPLES=1 ./.venv/bin/pytest -q tests/test_documented_examples.py
+```
+
+Keep each marker unique in its page and directly before a flush-left `python` or `bash`
+fence with a closing fence. Missing/duplicate markers and incorrect/unterminated fences
+fail clearly. When editing a selected example, run this check and update semantic assertions
+if its intended result changes. Follow normal review for changed public behavior.
+
+Add selections deliberately: keep them short, standalone, deterministic in their assertions,
+free of network/installation/credential requirements, and with explicit timeouts and meaningful
+results. Examples needing files should supply temporary fixtures. Do not blanket-execute
+installation commands, interactive snippets, demonstrations, or every Markdown fence.
+These checks supplement strict MkDocs/link validation; they do not verify visual fidelity,
+all examples, or every terminal/shell. Human visual and release QA remain necessary.

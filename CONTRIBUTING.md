@@ -11,6 +11,10 @@ For compatibility and ordinary bug reports, see [SUPPORT.md](SUPPORT.md). Report
 privately as described in [SECURITY.md](SECURITY.md); keep exploit details out of public tickets,
 fragments, and PRs until coordinated disclosure.
 
+PR CI also checks newly introduced high/critical dependency vulnerabilities and verifies
+uv graph coverage; see [the dependency gate and exception policy](.github/DEPENDENCIES.md#dependency-vulnerability-gate).
+Unchanged alerts still need Dependabot triage. Do not bypass a gate failure.
+
 Dependabot's generated update PRs are the narrow exception to issue-first creation and branch
 naming. Before merging, create/link a tracking issue, complete metadata and the changelog
 decision, and require latest CI. Follow [dependency update triage](.github/DEPENDENCIES.md).
@@ -162,6 +166,12 @@ tracked-file copy includes them, then run:
 Temporary builds and environments are removed automatically. Optionally pass
 `--output-dir /path/to/empty-directory` to retain the distributions for inspection.
 This check does not publish artifacts. Documentation-only changes skip artifact validation.
+
+Selected canonical library/CLI examples are executed directly from Markdown in CI. When
+editing their marked code blocks, run `./.venv/bin/pytest -q tests/test_documented_examples.py`;
+see [executable example guidance](.github/CI.md#executable-documentation-examples) for selection
+and maintenance. Keep expected behavior assertions meaningful; page rendering alone cannot
+validate APIs or commands.
 
 Run manual or visual tests when human inspection is needed. Reserve exhaustive effect-argument
 testing for pre-release validation unless diagnosing the full parameter matrix. Performance
