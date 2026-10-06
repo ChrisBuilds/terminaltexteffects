@@ -12,7 +12,8 @@ manual dispatch always requests full validation. Local QA hooks are optional; no
 [Dependency update automation](DEPENDENCIES.md) groups routine Dependabot PRs. They retain
 the same required checks and need a tracking issue and changelog decision before merge.
 
-The matrix runs the default pytest suite on Python 3.9 through 3.14 using Ubuntu 24.04.
+The matrix runs the default pytest suite on the latest patch releases of Python 3.9 through 3.14
+using Ubuntu 24.04. The package minimum is Python 3.9.2; 3.9.0 and 3.9.1 are unsupported.
 It uses locked test dependencies, installs a non-editable package, and checks package import
 and CLI startup from outside the checkout. Bash and Zsh completion behavior is covered by
 the tests, and a separate job checks that the committed completion scripts are current.

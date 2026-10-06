@@ -3,7 +3,7 @@ name = "terminaltexteffects"
 version = "0.15.0"
 description = "TerminalTextEffects (TTE) is a terminal visual effects engine."
 authors = [{ name = "Chris", email = "741258@pm.me" }]
-requires-python = ">=3.9"
+requires-python = ">=3.9.2"
 readme = "README.md"
 license = "MIT"
 
@@ -22,6 +22,10 @@ docs = [
     "mkdocstrings-python>=1.11.1",
     "pymdown-extensions>=10.15",
 ]
+
+[tool.uv]
+# Keep release-tool transitive dependencies above the reviewed security floor.
+constraint-dependencies = ["cryptography>=50.0.2"]
 
 [tool.ruff]
 show-fixes = true
@@ -161,7 +165,7 @@ test = [
     "pytest-cov>=5.0.0",
     "pytest-xdist>=3.6.1",
     "shtab==1.12.1",
-    "towncrier==25.8.0",
+    "towncrier==26.9.0",
 ]
 dev = [
     { include-group = "artifacts" },
