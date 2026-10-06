@@ -90,7 +90,7 @@ def context(root: Path, report: Report, outcome: str) -> dict[str, object]:
     configuration = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["tool"]
     selected = {key: configuration[key] for key in ("coverage", "pytest")}
     digest = hashlib.sha256(json.dumps(selected, sort_keys=True).encode())
-    for name in ("tests/conftest.py", "tests/pairwise.py"):
+    for name in ("tests/conftest.py", "tests/pairwise.py", ".github/workflows/ci.yml"):
         digest.update((root / name).read_bytes())
     return {
         "profile": PROFILE,

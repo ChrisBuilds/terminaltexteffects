@@ -271,6 +271,9 @@ def test_context_tracks_measurement_changes_without_unrelated_settings(
     ):
         monkeypatch.setenv(name, "fixture")
     (tmp_path / "tests").mkdir()
+    workflow = tmp_path / ".github/workflows/ci.yml"
+    workflow.parent.mkdir(parents=True)
+    workflow.write_text("# default CI collection\n", encoding="utf-8")
     for name in ("conftest.py", "pairwise.py"):
         (tmp_path / "tests" / name).write_text("# selection\n", encoding="utf-8")
     config = tmp_path / "pyproject.toml"
@@ -286,6 +289,9 @@ def test_context_tracks_measurement_changes_without_unrelated_settings(
     assert coverage.context(tmp_path, report, "success")["selection_config"] != original["selection_config"]
     assert original["test_outcome"] == "success"
     assert "GH_TOKEN" not in original
+    config.write_text(text, encoding="utf-8")
+    workflow.write_text("# changed CI collection\n", encoding="utf-8")
+    assert coverage.context(tmp_path, report, "success")["selection_config"] != original["selection_config"]
 
 
 def test_two_commit_checkout_can_read_exact_merge_base(tmp_path: Path) -> None:

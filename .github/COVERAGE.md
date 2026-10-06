@@ -37,9 +37,12 @@ No threshold is enforced: decreases do not fail CI.
 
 The comparison requires a complete successful main workflow, a nonexpired coverage artifact,
 and matching metadata: Linux/Python 3.14, default pairwise profile, pytest/coverage configuration,
-selection helper/conftest fingerprint, JSON format, and coverage/pytest-cov/pytest/xdist versions.
+selection helper/conftest and CI workflow fingerprint, JSON format, and coverage/pytest-cov/pytest/xdist versions.
 Artifact metadata must match its run ID, attempt, repository, commit, push event, main branch,
 and successful test outcome. Reports from PRs or failed tests cannot become baselines.
+The workflow fingerprint is deliberately conservative: any edit to `ci.yml` suppresses
+the historical delta, including edits unrelated to coverage, rather than overlooking
+changes to test commands, instrumentation or the runner.
 
 Missing/expired artifacts, API failures, changed settings, or a base commit without a successful
 coverage run produce **baseline unavailable**, with no numerical delta and no CI failure.
