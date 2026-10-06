@@ -113,6 +113,10 @@
   to `main` after prerequisites merge and incorporate their squash merges. Review integration
   conflicts and verify changed behavior. Never bypass strict branch protection or reuse stale CI.
   Refresh the next PR to merge rather than all queued branches after each main update.
+- Review informational coverage changes and untested added/modified runtime lines in the Linux/Python
+  3.14 summary. Missing baselines are not proof of unchanged coverage; coverage percentages do not
+  replace meaningful assertions or human visual QA. Workflow edits intentionally invalidate the
+  historical comparison fingerprint. Follow `.github/COVERAGE.md` for comparison rules.
 - Required GitHub Actions checks must pass for the latest PR revision including current `main`
   before the work is ready to merge.
   If CI is pending, report that status instead of blocking the conversation while the broad suites run.

@@ -200,6 +200,28 @@ Invoke it after installing the tools:
 Pre-commit handles staged/unstaged isolation when invoked on the index; the linter never
 modifies files or staging. No extra required job or duplicate matrix run is added.
 
+## Informational coverage comparisons
+
+`tools/report_coverage.py` replaces the inline coverage summary in the existing Linux/Python
+3.14 run. It publishes separate line/branch percentage-point changes against successful main
+CI at the exact PR base SHA, plus untested added/modified executable runtime lines. Baselines
+require matching collection/selection configuration (including the CI workflow fingerprint),
+profile/tool versions and successful
+main provenance. Unavailable or incompatible baselines show a reason without a delta;
+coverage decreases do not fail CI. Current collection errors and test failures still fail.
+
+The matrix job has read-only `contents` and `actions` permissions; only its reporting step
+receives the built-in token. It reads two JSON archive members, without extracting/executing
+artifacts or posting comments. Requests are individually bounded at 20 seconds. Python 3.14
+checkout fetches two commits of depth to read the tested merge parents; a missing exact
+base diff is reported as unavailable. Other matrix checkouts retain depth one. No new suite,
+job, service or dependency is added. Focused reporting regressions run in Code quality.
+
+`context.json` accompanies existing artifacts for 14 days. Older artifacts without this
+metadata cannot be compared; successful main CI after deployment establishes the first
+compatible baseline. See [coverage reporting](COVERAGE.md) for selection, missing-baseline
+behavior, changed-line detail and interpretation.
+
 ## Portable hooks and text hygiene
 
 After `uv sync --locked --group dev`, install optional commit hooks with

@@ -350,7 +350,9 @@ For recognized documentation-only changes, matrix and completion jobs execute li
 
 ### Coverage and slow-test reports
 
-Only Linux/Python 3.14 instruments its existing default pytest run with pytest-cov. It measures runtime-package line and branch coverage, merges xdist results, and publishes a job summary plus `coverage-python-3.14` artifacts: JSON, XML, and browsable HTML. Artifacts last 14 days. There is no percentage threshold, external coverage service, or additional coverage-only test run.
+Only Linux/Python 3.14 instruments its existing default pytest run with pytest-cov. It measures runtime-package line and branch coverage, merges xdist results, and publishes a job summary plus `coverage-python-3.14` artifacts: JSON, XML, browsable HTML, and `context.json` measurement/provenance metadata. Artifacts last 14 days. There is no percentage threshold, external coverage service, or additional coverage-only test run.
+
+PR summaries also show informational line/branch changes against successful main CI at the exact base commit and untested added/modified executable runtime lines. Baselines require matching scope, test selection/configuration and tool versions plus successful main provenance. Missing, expired, older metadata-free or incompatible artifacts show baseline unavailable without a delta; coverage decreases do not fail CI. Changed-line analysis can still work without a baseline. The built-in token has read-only Actions access, and downloaded JSON is never executed. No PR comment bot, extra suite or coverage service is involved. Main/manual summaries do not fetch a baseline. See [coverage comparison rules](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/COVERAGE.md#automatic-informational-comparison).
 
 Download the artifact and open `html/index.html` to find missing paths. Compare complete successful runs with the same scope; changing denominators, skipped tests, or environments affects percentages. Reports after failed tests are diagnostic, not a baseline. Coverage does not prove visual fidelity or useful assertions. Arbitrary CLI subprocesses are not included by the current coverage configuration.
 
@@ -507,7 +509,7 @@ See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/S
 | Hatchling, artifact checker, Twine | Build/validate installed distributions; approved upload | Build settings, `tools/check_artifacts.py`, release runbook | Code-bearing CI; release validation; manual publication |
 | Documented example tests | Selected actual Python/CLI snippets remain executable | `tests/test_documented_examples.py`, marked public guide blocks | Example edits; every Code quality run and default Linux matrix |
 | MkDocs, Material, mkdocstrings | Render documentation and API pages | `mkdocs.yml`, docs, theme overrides | Relevant PR checks; tested-main deployment |
-| pytest-cov | Line/branch reports | Coverage settings and Python 3.14 CI steps | One existing Linux matrix run |
+| pytest-cov and coverage reporter | Line/branch totals, informational deltas and untested changed lines | Coverage settings, `tools/report_coverage.py`, Python 3.14 CI steps | One existing Linux matrix run |
 | GitHub Actions | Hosted CI and Pages deployment | `.github/workflows/` | PR/main push/manual CI; successful-main workflow completion |
 | Dependency review and lock guard | New high/critical dependency findings and changed uv graph completeness | Pinned CI action, `tools/check_dependency_review.py` | PR CI; offline guard fixtures on every run |
 | Dependabot | Proposed dependency/action updates | `.github/dependabot.yml` and repository security setting | Weekly version check or security update |

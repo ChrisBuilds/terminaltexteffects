@@ -79,12 +79,12 @@ jobs:
           echo "TTE_ACTIONLINT=$RUNNER_TEMP/actionlint/actionlint" >> "$GITHUB_ENV"
           # ShellCheck is part of the Ubuntu hosted image; require it explicitly.
           shellcheck --version
-      - name: Check workflows and CI selection regressions
+      - name: Check workflows and CI reporting regressions
         env:
           TTE_REQUIRE_ACTIONLINT: "1"
         run: |
           .venv/bin/python tools/check_workflows.py
-          .venv/bin/python -m pytest -q tests/test_workflow_lint.py tests/test_ci_classification.py
+          .venv/bin/python -m pytest -q tests/test_workflow_lint.py tests/test_ci_classification.py tests/test_coverage_reporting.py
       - name: Check all tracked Python files
         run: .venv/bin/python tools/check_quality.py --all
       - name: Check changed text hygiene
@@ -125,6 +125,9 @@ jobs:
 
   tests:
     name: Python ${{ matrix.python-version }}
+    permissions:
+      contents: read
+      actions: read
     needs: quality
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -139,6 +142,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: needs.quality.outputs.run_tests == 'true'
         with:
+          # Only coverage needs the tested merge commit and its parents for source diffs.
+          fetch-depth: ${{ matrix.python-version == '3.14' && '2' || '1' }}
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         if: needs.quality.outputs.run_tests == 'true'
@@ -179,43 +184,21 @@ jobs:
               --cov-report=json:coverage/coverage.json --cov-report=html:coverage/html)
           fi
           .venv/bin/python -m pytest -n auto --durations=20 "${coverage_args[@]}"
-      - name: Summarize package line and branch coverage
+      - name: Summarize package coverage and informational changes
         if: >-
           !cancelled() && matrix.python-version == '3.14' &&
           needs.quality.outputs.run_tests == 'true' &&
           (steps.pytest.outcome == 'success' || hashFiles('coverage/coverage.json') != '')
         env:
           COVERAGE_REVISION: ${{ github.sha }}
+          COVERAGE_BASE: ${{ github.event.pull_request.base.sha }}
           TEST_OUTCOME: ${{ steps.pytest.outcome }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           test -s coverage/coverage.xml
           test -s coverage/html/index.html
-          .venv/bin/python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import json
-          import os
-          from pathlib import Path
-
-          report = json.loads(Path("coverage/coverage.json").read_text(encoding="utf-8"))
-          assert report["meta"]["branch_coverage"], "Branch coverage was not collected"
-          assert report["files"] and all(
-              name.startswith("terminaltexteffects/") for name in report["files"]
-          ), "Coverage must measure the runtime package only"
-          totals = report["totals"]
-          assert totals["num_statements"] > 0 and totals["num_branches"] > 0, "Empty coverage report"
-          print("## Package coverage — Linux / Python 3.14\n")
-          print(f"Tested revision: `{os.environ['COVERAGE_REVISION']}`  ")
-          print(f"Test step outcome: `{os.environ['TEST_OUTCOME']}`\n")
-          print("| Metric | Covered | Total | Coverage |")
-          print("| --- | ---: | ---: | ---: |")
-          for label, covered, total in (
-              ("Lines", totals["covered_lines"], totals["num_statements"]),
-              ("Branches", totals["covered_branches"], totals["num_branches"]),
-          ):
-              print(f"| {label} | {covered} | {total} | {100 * covered / total:.2f}% |")
-          print("\nDefault pairwise suite; manual/visual/exhaustive tests are excluded. "
-                "No percentage gate is enforced. A failed test run is diagnostic, not a baseline.")
-          print("\nDownload `coverage-python-3.14` for per-file HTML, XML, and JSON reports.")
-          PY
+          .venv/bin/python tools/report_coverage.py --base "$COVERAGE_BASE" \
+            --test-outcome "$TEST_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload package coverage reports
         if: >-
           !cancelled() && matrix.python-version == '3.14' &&

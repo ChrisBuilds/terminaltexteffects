@@ -194,6 +194,15 @@ Regenerate shell completions when CLI options change. Add an issue-numbered frag
 internal changes and fixes introduced in the same unreleased version need a `.skip.md` fragment
 explaining why no release note is needed. See [fragment guidance](changelog.d/README.md).
 
+### Read coverage changes
+
+For code-bearing PRs, the Linux/Python 3.14 summary reports separate line/branch changes
+against a compatible successful main run at the exact base commit, and identifies untested
+added/modified executable runtime lines. Review missing paths when adding code. The report
+is informational: a percentage drop does not fail CI, and coverage does not establish useful
+assertions or visual quality. Unavailable baselines are shown explicitly; inspect the current
+HTML artifact instead. See [coverage comparison rules](.github/COVERAGE.md#automatic-informational-comparison).
+
 ## 4. Open the pull request
 
 Open a draft PR targeting `main`. At creation, assign `ChrisBuilds` and copy the linked issue's
