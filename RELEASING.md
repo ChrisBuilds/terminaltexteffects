@@ -13,6 +13,10 @@ publication approval for the version and commit. A green CI run does not grant t
 Start from current `main` and use `release/<issue-number>-<version>` for the branch.
 Record the intended version, release date, Python support, included issues, and any
 migration instructions. The next planned release is 0.16.0 with Python 3.9.2 minimum.
+Update [SUPPORT.md](SUPPORT.md) for the new release's requirements and completion features,
+and [SECURITY.md](SECURITY.md) for the newly supported stable version. Clearly distinguish
+the release being prepared from the version currently published; verify those statements
+again after publication. Security fixes target the latest stable release, without older-release backports.
 Do not change the version or create a tag merely while improving this runbook.
 
 Sync locked tools with `uv sync --locked --group dev`. Keep prototypes in `dev_effects/`;

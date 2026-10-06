@@ -1,0 +1,7 @@
+contact_links:
+  - name: Report a security vulnerability privately
+    url: https://github.com/ChrisBuilds/terminaltexteffects/security/advisories/new
+    about: Use private vulnerability reporting instead of a public bug report for security issues.
+  - name: Support and compatibility
+    url: https://github.com/ChrisBuilds/terminaltexteffects/blob/main/SUPPORT.md
+    about: Check supported Python versions, platform coverage, terminal expectations, and reporting guidance.

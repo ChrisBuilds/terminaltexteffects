@@ -1,0 +1,66 @@
+# Support and compatibility
+
+## Releases and Python versions
+
+| Version | Minimum Python | Status |
+| --- | --- | --- |
+| 0.15.0, latest published stable release | 3.8 | Published package requirements |
+| Development `main`, toward 0.16.0 | 3.9.2 | Upcoming requirements; not yet a published release |
+
+Python 3.9.0 and 3.9.1 are unsupported for development `main` and the planned 0.16.0
+release. Use a current patch release of a supported Python series.
+
+CI currently tests the latest patch releases of Python 3.9 through 3.14 on Linux.
+Newer Python series are unverified until they join the matrix. Older releases retain
+their published installation metadata; that does not imply ongoing maintenance.
+Security fixes follow the [latest-stable-release policy](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/SECURITY.md).
+
+## Operating systems and automated coverage
+
+TTE runs on Linux, macOS, and Windows. The current automated checks cover:
+
+| Platform | Coverage |
+| --- | --- |
+| Linux, Ubuntu 24.04 | Default test suite on Python 3.9–3.14 |
+| macOS, macOS 15 | Focused terminal/ANSI/Unicode, configuration, CLI, and PowerShell completion tests on Python 3.14 |
+| Windows, Windows Server 2025 runner | The same focused native-platform checks on Python 3.14 |
+
+The Windows job uses native Windows Python and CLI executables. These runner versions
+describe test coverage, not minimum operating-system requirements. Other OS versions
+and terminal combinations may work but are not all exercised automatically. CI checks
+behavior and emitted output; [release QA](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/RELEASING.md)
+includes human inspection of animation, colors, wide characters, and resizing.
+
+## Terminal rendering
+
+Use a modern terminal that supports ANSI cursor movement and color sequences. On Windows,
+use Windows Terminal for animation; legacy console hosts are not a visual QA target.
+The terminal renders the output, while its selected shell handles commands and completion.
+
+RGB colors need true-color support. Try `--xterm-colors` for 256-color output or
+`--no-color` to disable colors. Fonts, Unicode glyph support, character widths, terminal
+size, and rendering speed can affect the result. Automated Unicode tests do not guarantee
+identical display in every terminal/font combination. Use UTF-8 input, especially on Windows.
+
+## Shell completion
+
+Development `main` bundles Bash, Zsh, and PowerShell 7+ completion for both `tte` and
+`terminaltexteffects`. PowerShell completion is planned for 0.16.0; published 0.15.0
+provides Bash and Zsh completion. Setup instructions are in the
+[application guide](https://chrisbuilds.github.io/terminaltexteffects/appguide/).
+Completion belongs to the shell, so Windows Terminal users should select the script for
+their chosen shell. Command Prompt and Windows PowerShell 5.1 completion are not covered.
+
+## Documentation and reporting problems
+
+The public [documentation site](https://chrisbuilds.github.io/terminaltexteffects/) follows
+development `main`; a documented feature may not exist in the PyPI release you installed.
+For released behavior, use the matching release tag's README and the release notes.
+Documentation deployment does not publish packages. See the
+[deployment policy](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/DOCUMENTATION.md).
+
+Report ordinary problems in [GitHub issues](https://github.com/ChrisBuilds/terminaltexteffects/issues).
+Include TTE and Python versions, OS, terminal application and version, shell, a minimal
+command or Python example, relevant flags/input, and expected versus actual output.
+For visual problems, include a screenshot or recording and terminal dimensions when helpful.
+Remove private data. Use the private reporting route in the security policy for vulnerabilities.
