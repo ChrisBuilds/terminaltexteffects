@@ -3,6 +3,9 @@
 ## Development Workflow
 
 - Follow `CONTRIBUTING.md`: issue ticket -> branch -> pull request -> maintainer merge.
+  Read `docs/development.md` for pipeline orientation. When changing CI, QA, hooks, changelog,
+  release, or deployment behavior, update the authoritative instructions and affected guide sections
+  in the same PR.
 - When the maintainer assigns an issue for implementation, that assignment authorizes creating the branch,
   implementing the agreed scope, committing, pushing, and opening a draft PR. Do not ask again for those routine
   steps. Merging remains the maintainer's decision; never merge without an explicit instruction.
