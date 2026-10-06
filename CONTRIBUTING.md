@@ -11,6 +11,10 @@ For compatibility and ordinary bug reports, see [SUPPORT.md](SUPPORT.md). Report
 privately as described in [SECURITY.md](SECURITY.md); keep exploit details out of public tickets,
 fragments, and PRs until coordinated disclosure.
 
+PR CI also checks newly introduced high/critical dependency vulnerabilities and verifies
+uv graph coverage; see [the dependency gate and exception policy](.github/DEPENDENCIES.md#dependency-vulnerability-gate).
+Unchanged alerts still need Dependabot triage. Do not bypass a gate failure.
+
 Dependabot's generated update PRs are the narrow exception to issue-first creation and branch
 naming. Before merging, create/link a tracking issue, complete metadata and the changelog
 decision, and require latest CI. Follow [dependency update triage](.github/DEPENDENCIES.md).
@@ -168,7 +172,10 @@ Develop unfinished effects in the repository-root `dev_effects/` directory. Run 
 The launcher opts in explicitly; normal CLI use and bundled completions remain independent
 of prototypes. Both build targets exclude development effects, and artifact validation injects
 prototypes into a temporary source copy to verify that exclusion. See the
-[development effect workflow](dev_effects/README.md) for tests and promotion into the shipped package.
+[development effect workflow and promotion checklist](dev_effects/README.md#promotion-checklist)
+for tests and promotion into the shipped package. Code quality checks the shipped inventory
+for built-in registration, docs/navigation, and permanent test definitions; completion freshness
+is checked separately. This structural gate supplements behavior tests and human visual review.
 
 Regenerate shell completions when CLI options change. Add an issue-numbered fragment in
 `changelog.d` for each change, then refresh the generated Unreleased preview with

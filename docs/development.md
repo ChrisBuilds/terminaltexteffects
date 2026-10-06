@@ -144,7 +144,7 @@ Replace `dev` with the effect command name. The development launcher explicitly 
 
 Reviewed issue-branch prototypes may be committed; ignored personal scratch work remains local. The build configuration excludes development effects from wheel and source distributions. Artifact verification deliberately injects a prototype into a temporary build copy to check those exclusions.
 
-Promotion requires a reviewed PR moving the finished effect into the shipped package, permanent tests, documentation, regenerated completions, and a user-facing fragment. See [dev_effects/README.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/dev_effects/README.md).
+Promotion requires a reviewed PR moving the finished effect into the shipped package, permanent tests, documentation, regenerated completions, and a user-facing fragment. Follow the [promotion checklist](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/dev_effects/README.md#promotion-checklist) and run `./.venv/bin/python tools/check_effect_inventory.py` with locked development tools. Documentation and permanent tests use the command name, which may differ from the module suffix. The gate checks structural prerequisites; meaningful behavior tests, accurate examples, demo decisions, and human visual/terminal QA remain review responsibilities.
 
 ### Update completions when the CLI changes
 
@@ -293,16 +293,25 @@ The workflow listens to `pull_request`, pushes to `main`, and `workflow_dispatch
 
 **Purpose:** stop downstream matrix jobs when basic quality, packaging, or changelog requirements fail.
 
-`.github/workflows/ci.yml` runs this job on Ubuntu 24.04 with Python 3.14. It checks out history, installs locked development tools, and runs:
+`.github/workflows/ci.yml` runs this job on Ubuntu 24.04 with Python 3.14. It checks out history, installs locked development tools. On PR events it also uses the pinned official dependency-review action to block
+newly introduced high/critical vulnerabilities across runtime, development, and unknown scopes.
+A companion guard checks every added/removed registry pair in both universal uv locks against
+the action's output, including conditional versions. Snapshots retry for up to 120 seconds;
+missing pairs fail rather than look clean. Push/manual events omit the differential action
+but run offline guard fixtures. This uses read-only permissions and job summaries, with no
+PR comments or added required check name. See [dependency gate limitations and exceptions](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/DEPENDENCIES.md#dependency-vulnerability-gate).
+
+The other checks are:
 
 1. **Classify the committed diff.** `tools/classify_ci.py` compares against the base, including deletions and both sides of renames. Recognized prose/images may skip the test matrix. Code, dependencies, package configuration, workflows, unknown paths, and YAML configuration request full tests. For example, a `mkdocs.yml` navigation change can trigger full tests even when the intent is documentation-only. Manual runs request full validation. Classification regressions run in Code quality even when the matrix is bypassed.
 2. **Workflow linting on every run.** CI verifies the actionlint 1.7.12 archive checksum and runs the workflow helper with required ShellCheck plus focused workflow and change-classification regression fixtures. Documentation-only changes also receive this check. Pyflakes integration is disabled explicitly; ShellCheck comes from the hosted Ubuntu image.
 3. **Read-only whole-project quality.** `tools/check_quality.py --all` checks all tracked `.py`/`.pyi` files with Ruff formatting/lint and Pyright, including unchanged callers, tests, tools, and tracked experiments. Ignored/untracked personal prototypes are outside its inventory.
 4. **Hook regressions for code-bearing changes.** Validate pre-commit configuration and run `tests/test_hooks.py`.
-5. **Artifact validation for code-bearing changes.** Run `tools/check_artifacts.py`; see below.
-6. **Changelog validation on every change.** Check fragment naming/content, preview freshness, and the committed branch's decision. Release-note consumption into a new dated section is supported.
-7. **Selected executable examples on every run.** `tests/test_documented_examples.py` reads the marked Python library and Bash CLI blocks directly from their public guides. Bounded subprocesses use the current environment outside the checkout and check final text plus CLI cursor restoration. The same tests run in the ordinary Linux matrix; no separate examples matrix is added.
-8. **Strict documentation build when classified as relevant.** Recognized prose, all `docs/` and theme files, runtime package changes, `mkdocs.yml`, `pyproject.toml`, `uv.lock`, and the CI/docs deployment workflows request this build explicitly. Source-only or dependency-only changes need no accompanying fragment to trigger it. Deletions and both sides of renames count. Tests-only and unrelated tool/workflow changes do not independently request it. This is one build in Code quality, not one per matrix job; the separate main deployment rebuilds the tested revision for publication.
+5. **Shipped effect inventory on every run.** The helper and focused fixtures connect each shipped module to built-in CLI registration, matching command/config names, nonempty command-named docs, a real navigation entry, and a permanent test file with test definitions. It rejects stray shipped prototypes. This does not prove useful assertions or visual fidelity; the separate completion job verifies generated-resource freshness.
+6. **Artifact validation for code-bearing changes.** Run `tools/check_artifacts.py`; see below.
+7. **Changelog validation on every change.** Check fragment naming/content, preview freshness, and the committed branch's decision. Release-note consumption into a new dated section is supported.
+8. **Selected executable examples on every run.** `tests/test_documented_examples.py` reads the marked Python library and Bash CLI blocks directly from their public guides. Bounded subprocesses use the current environment outside the checkout and check final text plus CLI cursor restoration. The same tests run in the ordinary Linux matrix; no separate examples matrix is added.
+9. **Strict documentation build when classified as relevant.** Recognized prose, all `docs/` and theme files, runtime package changes, `mkdocs.yml`, `pyproject.toml`, `uv.lock`, and the CI/docs deployment workflows request this build explicitly. Source-only or dependency-only changes need no accompanying fragment to trigger it. Deletions and both sides of renames count. Tests-only and unrelated tool/workflow changes do not independently request it. This is one build in Code quality, not one per matrix job; the separate main deployment rebuilds the tested revision for publication.
 
 ### Why validate artifacts before a release?
 
@@ -470,6 +479,8 @@ For partial uploads, inspect the existing published file and checksum before upl
 
 Dependabot creates the PR first. Triage creates a real tracking issue, completes metadata/reviewer/milestone, puts the PR in draft while adapting it, adds the appropriate fragment, installs its locked tools, and runs relevant integration checks. Keep action references SHA-pinned. Review Python compatibility, transitive fallbacks, and release notes; a “security” label does not prove the generated dependency graph is safe. Fresh CI and explicit merge authorization remain required. There is no auto-merge bypass.
 
+The PR dependency gate blocks newly introduced high/critical findings; it does not clear unchanged alerts or audit unknown vulnerabilities. No exemptions are installed. Fix affected versions or diagnose missing graph coverage; any future exception requires explicit maintainer review and expiry enforcement.
+
 The existing `Graph Update: uv` runs provide dependency information to GitHub; they are separate from CI test jobs and from update PRs. Their success does not establish test compatibility. A documentation/release-tool update can matter to security without adding runtime dependencies to the core package.
 
 ### Security reporting and support policies
@@ -492,11 +503,13 @@ See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/S
 | pre-commit | Staged local QA orchestration | `.pre-commit-config.yaml`, `tools/run_hook.py` | Commit after local installation, or explicit targeted invocation |
 | Towncrier and changelog helper | Fragments, generated preview, dated release assembly | `changelog.d/`, template, `tools/generate_changelog.py` | Each issue; hooks/CI; release preparation |
 | Completion generator and shtab | Bundled shell resources | `tools/generate_shell_completions.py`, runtime parser | CLI changes; completion CI |
+| Effect inventory helper | Shipped module/command, docs/navigation, permanent test presence | `tools/check_effect_inventory.py`, promotion checklist | Promotion/local QA; every Code quality run |
 | Hatchling, artifact checker, Twine | Build/validate installed distributions; approved upload | Build settings, `tools/check_artifacts.py`, release runbook | Code-bearing CI; release validation; manual publication |
 | Documented example tests | Selected actual Python/CLI snippets remain executable | `tests/test_documented_examples.py`, marked public guide blocks | Example edits; every Code quality run and default Linux matrix |
 | MkDocs, Material, mkdocstrings | Render documentation and API pages | `mkdocs.yml`, docs, theme overrides | Relevant PR checks; tested-main deployment |
 | pytest-cov | Line/branch reports | Coverage settings and Python 3.14 CI steps | One existing Linux matrix run |
 | GitHub Actions | Hosted CI and Pages deployment | `.github/workflows/` | PR/main push/manual CI; successful-main workflow completion |
+| Dependency review and lock guard | New high/critical dependency findings and changed uv graph completeness | Pinned CI action, `tools/check_dependency_review.py` | PR CI; offline guard fixtures on every run |
 | Dependabot | Proposed dependency/action updates | `.github/dependabot.yml` and repository security setting | Weekly version check or security update |
 
 Tox is no longer part of this workflow. GitHub Actions owns the interpreter matrix; uv supplies reproducible environments. No private runner or separate local matrix orchestrator is required for routine development.
