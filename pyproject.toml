@@ -44,6 +44,7 @@ ignore = [
     "EXE",
     "PLR0912", # too many branches
     "PLR0913", # too many function args
+    "PLR0917", # positional-argument count follows the same policy as PLR0913
     "PLR2004", # magic numbers
     "RUF009",  # function-call-in-dataclass-default-argument
     "S101",    # use of assert
@@ -156,14 +157,14 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 quality = [
-    "ruff==0.15.9",
-    "pyright==1.1.408",
+    "ruff==0.16.10",
+    "pyright==1.1.414",
 ]
 test = [
     "pytest>=8.3.5",
     "pytest-cov>=5.0.0",
     "pytest-xdist>=3.6.1",
-    "shtab==1.9.2",
+    "shtab==1.12.1",
     "towncrier==26.9.0",
 ]
 dev = [

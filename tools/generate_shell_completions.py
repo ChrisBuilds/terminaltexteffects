@@ -33,41 +33,6 @@ _COMPLETION_CHOICES_BY_TYPE = {
     effect_laseretch._etch_pattern_type_parser: ("algorithm", *argutils.CharacterOrderArg.COMPLETION_CHOICES),
 }
 
-_BASH_MAPFILE_BLOCK = """  if [[ $pos_only = 0 && "${completing_word}" == -* ]]; then
-    # optional argument started: use option strings
-    mapfile -t COMPREPLY < <(compgen -W "${current_option_strings[*]}" -- "${completing_word}")
-  elif [[ "${previous_word}" == ">" || "${previous_word}" == ">>" ||
-          "${previous_word}" =~ ^[12]">" || "${previous_word}" =~ ^[12]">>" ]]; then
-    # handle redirection operators
-    mapfile -t COMPREPLY < <(compgen -f -- "${completing_word}")
-  else
-    # use choices & compgen
-    [ -n "${current_action_compgen}" ] &&
-      mapfile -t COMPREPLY < <("${current_action_compgen}" "${completing_word}")
-    mapfile -t -O "${#COMPREPLY[@]}" COMPREPLY < <(
-      compgen -W "${current_action_choices[*]}" -- "${completing_word}")
-  fi"""
-
-_BASH_32_COMPLETION_BLOCK = """  local completion
-  if [[ $pos_only = 0 && "${completing_word}" == -* ]]; then
-    # optional argument started: use option strings
-    while IFS= read -r completion; do COMPREPLY+=("$completion"); done < <(
-      compgen -W "${current_option_strings[*]}" -- "${completing_word}")
-  elif [[ "${previous_word}" == ">" || "${previous_word}" == ">>" ||
-          "${previous_word}" =~ ^[12]">" || "${previous_word}" =~ ^[12]">>" ]]; then
-    # handle redirection operators
-    while IFS= read -r completion; do COMPREPLY+=("$completion"); done < <(
-      compgen -f -- "${completing_word}")
-  else
-    # use choices & compgen
-    if [ -n "${current_action_compgen}" ]; then
-      while IFS= read -r completion; do COMPREPLY+=("$completion"); done < <(
-        "${current_action_compgen}" "${completing_word}")
-    fi
-    while IFS= read -r completion; do COMPREPLY+=("$completion"); done < <(
-      compgen -W "${current_action_choices[*]}" -- "${completing_word}")
-  fi"""
-
 
 def _configure_completers(
     parser: argparse.ArgumentParser,
@@ -92,14 +57,15 @@ def _configure_completers(
 def _register_aliases(script: str, shell: str) -> str:
     """Register the generated completion function for both CLI entry points."""
     if shell == "bash":
-        if _BASH_MAPFILE_BLOCK not in script:
-            msg = "shtab's Bash output changed; review the Bash 3.2 compatibility transform"
+        # shtab 1.12 uses read loops compatible with Bash 3.2; no mapfile transform is needed.
+        registration = "complete -F _shtab_tte tte"
+        if registration not in script:
+            msg = "shtab's Bash registration changed; review CLI alias registration"
             raise RuntimeError(msg)
-        script = script.replace(_BASH_MAPFILE_BLOCK, _BASH_32_COMPLETION_BLOCK, 1)
-        registration = "complete -o filenames -F _shtab_tte tte"
         script = script.replace(
             registration,
-            f"{registration}\ncomplete -o filenames -F _shtab_tte terminaltexteffects",
+            "complete -o filenames -F _shtab_tte tte\ncomplete -o filenames -F _shtab_tte terminaltexteffects",
+            1,
         )
     else:
         script = script.replace("#compdef tte\n", "#compdef tte terminaltexteffects\n", 1)
