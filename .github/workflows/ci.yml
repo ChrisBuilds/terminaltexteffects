@@ -70,6 +70,10 @@ jobs:
         run: |
           .venv/bin/pre-commit validate-config
           .venv/bin/python -m pytest -q tests/test_hooks.py
+      - name: Check shipped effect promotion inventory
+        run: |
+          .venv/bin/python tools/check_effect_inventory.py
+          .venv/bin/python -m pytest -q tests/test_effect_inventory.py
       - name: Validate release artifacts
         if: steps.changes.outputs.run_tests == 'true'
         run: .venv/bin/python tools/check_artifacts.py
