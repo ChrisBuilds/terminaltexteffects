@@ -42,6 +42,12 @@
   to keep the tracking issue open until publication and verification complete; follow `RELEASING.md`.
   Describe resulting behavior and validation, and report any
   unresolved limitations. Leave the PR in draft until local verification and required CI checks pass.
+- When Codex review reports a finding, reply in its review thread to acknowledge the finding and state
+  the intended response. After pushing a fix, follow up in the same thread with the fix commit, resulting
+  behavior, and validation evidence; clearly identify pending CI or re-review. If a finding does not require
+  a change, explain the reasoning and evidence. These review replies are authorized as part of assigned
+  PR work. Resolve a conversation only after addressing and verifying its finding; a reply alone is not
+  approval or permission to merge.
 - Before running project tools, check the project root for a `.venv` and prefer the tool binaries from that environment.
 - Use the repo venv paths directly when available:
   - `./.venv/bin/pytest`

@@ -370,6 +370,8 @@ Before merging, the branch must include current main: GitHub enforces strict req
 
 Mark the PR **ready for review** after local QA and required latest CI pass. The maintainer checks acceptance criteria, scope, docs/notes, and validation. When automated review provides feedback, read its inline findings as well as its summary. Address valid findings and resolve conversations. Automated review is advisory, not maintainer merge permission.
 
+When Codex reports a finding, acknowledge it in the review thread and describe the intended response. After pushing the fix, follow up in that same thread with the commit, what changed, and validation evidence, including any pending CI or re-review. If investigation shows that no change is needed, explain the reasoning and supporting evidence. Agents are authorized to post these replies as part of assigned PR work. Resolve the conversation only after addressing and verifying the finding; acknowledgment alone does not constitute approval.
+
 A PR author cannot formally approve their own PR. This solo-maintainer repository does not require an external approval count, but does require PRs, required checks, and resolved conversations. Contributors and agents still leave the merge decision to the maintainer. If main advances again before merging, refresh and recheck; do not bypass protection.
 
 **Complete when:** latest required checks pass, acceptance criteria are met, relevant review findings are addressed, and the maintainer decides to merge.
