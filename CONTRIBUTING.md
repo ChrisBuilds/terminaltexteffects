@@ -72,7 +72,17 @@ artifacts included. Local review notes in the sibling `dev_notes` workspace rema
 
 Use the repository's `.venv` tools when available. Follow the commands and focused verification
 requirements in [AGENTS.md](AGENTS.md): format touched Python files with Ruff, run focused pytest,
-then check formatting, lint, and types. Install reproducible tools with `uv sync --locked --group dev`.
+then check formatting, lint, and types. Install reproducible tools with
+`uv sync --locked --group dev --python 3.14`. Full development, documentation, release,
+and hook environments require Python 3.10+; the TTE runtime still supports Python 3.9.2+.
+For focused native 3.9 diagnosis, use a separate environment so hooks retain the primary tools:
+
+```sh
+UV_PROJECT_ENVIRONMENT=/absolute/path/to/tte-python39 uv sync --locked --no-default-groups --group test --python 3.9
+UV_PROJECT_ENVIRONMENT=/absolute/path/to/tte-python39 uv run --no-sync --no-default-groups python -m pytest tests/test_cli.py
+```
+
+Select the relevant test file or node. CI remains responsible for routine cross-version suites.
 Ruff applies safe fixes by default; apply unsafe fixes only after deliberate review. Pyright targets
 Python 3.9. Documentation-only changes need formatting or diff checks.
 

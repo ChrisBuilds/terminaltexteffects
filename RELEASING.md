@@ -19,7 +19,8 @@ the release being prepared from the version currently published; verify those st
 again after publication. Security fixes target the latest stable release, without older-release backports.
 Do not change the version or create a tag merely while improving this runbook.
 
-Sync locked tools with `uv sync --locked --group dev`. Keep prototypes in `dev_effects/`;
+Sync locked release tools on Python 3.10+ with `uv sync --locked --group dev --python 3.14`.
+This tool interpreter requirement does not raise the Python 3.9.2 runtime minimum. Keep prototypes in `dev_effects/`;
 promote finished effects through their own reviewed PRs before preparing the release.
 
 ## 2. Prepare the version and release notes

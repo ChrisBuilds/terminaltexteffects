@@ -100,7 +100,12 @@
   routine development. Hooks do not replace focused tests or the required CI checks.
 - After Ruff passes, run Pyright on those same files. For example:
   - `./.venv/bin/pyright --pythonpath ./.venv/bin/python terminaltexteffects/effects/effect_<effect>.py tests/effects_tests/test_<effect>.py`
-- Install locked development tools with `uv sync --locked --group dev`. Pyright targets Python 3.9 in `pyproject.toml`.
+- Install locked development tools on Python 3.10+ with `uv sync --locked --group dev --python 3.14`.
+  TTE runtime support remains Python 3.9.2+. Use a separate environment with
+  `UV_PROJECT_ENVIRONMENT=/absolute/path/to/tte-python39 uv sync --locked --no-default-groups --group test --python 3.9`
+  for focused compatibility diagnosis;
+  do not replace the primary development environment while hooks or tools are using it.
+  Pyright targets Python 3.9 in `pyproject.toml`.
   The `Code quality` CI job runs read-only formatting, lint, and type checks on all tracked Python files,
   including tests, tools, and archived experiments. Ignored local prototypes are excluded. Reproduce CI with `./.venv/bin/python tools/check_quality.py --all`; use
   `--base origin/main` for focused branch checks after committing.
