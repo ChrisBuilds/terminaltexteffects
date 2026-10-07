@@ -513,6 +513,8 @@ Security fixes target the latest stable release; users of older releases should 
 
 See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/SECURITY.md) for private reporting and supported releases, and [SUPPORT.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/SUPPORT.md) for Python, platform, terminal, and completion support. Update these policies when a release changes support.
 
+Native Python 3.9 testing retains an open pytest temporary-directory advisory because the upstream patched release requires Python 3.10+. The maintainer has deferred a CI wrapper: current GitHub-hosted 3.9 jobs use fresh isolated VMs, limiting the advisory's cross-user local attack scenario. Routine development uses patched modern tooling. Shared Unix hosts or persistent runners need a fresh exposure assessment; a venv alone is not a security boundary. Track the compatible upstream fix in [#154](https://github.com/ChrisBuilds/terminaltexteffects/issues/154) and follow the [dependency policy](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/DEPENDENCIES.md#runtime-and-tooling-python-support). The alert remains open; this assessment does not mean pytest is patched.
+
 ## Tool reference: what each component contributes
 
 | Component | Role | Where configured or implemented | Usual trigger |
