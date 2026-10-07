@@ -139,8 +139,24 @@ PyMdown uses the patched 11.x line (>=11.0.1,<12); review another major separate
 Modern Python tests require pytest >=9.0.3. Python 3.9 still uses pytest 8.x because
 upstream's patched pytest requires Python >=3.10. Its temporary-directory advisory
 GHSA-6w46-j5rx-g56g remains unresolved under
-[#154](https://github.com/ChrisBuilds/terminaltexteffects/issues/154); this is not
-an approved risk exception or reason to dismiss the alert. No blanket allowlist is added.
+[#154](https://github.com/ChrisBuilds/terminaltexteffects/issues/154).
+No dependency-review exception, alert dismissal, or blanket allowlist is approved.
+
+The maintainer has deferred a CI wrapper for this existing test-only alert. The
+native 3.9 job runs on a fresh GitHub-hosted Ubuntu VM; the advisory's attack requires
+another local Unix user to interfere with pytest's predictable temporary directory.
+Other customers do not share that job's filesystem, and malicious code inside the
+job already has code execution. This limits practical exposure in the current CI
+configuration; it does not patch pytest. See the
+[advisory](https://github.com/advisories/GHSA-6w46-j5rx-g56g) and
+[runner isolation](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
+
+Use the patched modern development environment for routine local tests. Reassess
+native 3.9 test execution on shared Unix hosts or persistent/self-hosted runners
+with untrusted local users; a virtual environment alone does not isolate filesystem
+access. Keep #154 and the alert open while monitoring for a compatible upstream
+patch. Do not add a wrapper, fork, dismissal, or advisory allowlist solely to remove
+the warning. Revisit this decision if runner isolation or Python support changes.
 
 Running the updater on newer Python alone does not fix a universal lock:
 dependency metadata must describe the supported
