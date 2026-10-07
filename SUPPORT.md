@@ -15,6 +15,16 @@ Newer Python series are unverified until they join the matrix. Older releases re
 their published installation metadata; that does not imply ongoing maintenance.
 Security fixes follow the [latest-stable-release policy](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/SECURITY.md).
 
+## Developer tooling
+
+Documentation, release tooling, and QA hooks require Python 3.10+ on development `main`.
+Use Python 3.14 for the full locked development environment. This tooling requirement
+does not raise TTE's Python 3.9.2 runtime minimum; native 3.9 tests remain in CI.
+The `docs` extra supplies documentation dependencies only on Python 3.10+.
+On Python 3.9, installing that extra does not install a documentation toolchain.
+See [CONTRIBUTING.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CONTRIBUTING.md)
+for separate compatibility environments.
+
 ## Operating systems and automated coverage
 
 TTE runs on Linux, macOS, and Windows. The current automated checks cover:

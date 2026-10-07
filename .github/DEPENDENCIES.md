@@ -23,7 +23,8 @@ Dependabot creates its branch and PR before a project issue exists. This is the 
 exception to issue-first creation and branch naming. Keep its generated branch, then
 apply the normal acceptance, metadata, changelog, and CI requirements before merge:
 
-1. Review packages/actions, release notes, scope, and Python 3.9 compatibility. Create
+1. Review packages/actions, release notes, scope, runtime Python 3.9 compatibility,
+   and the Python 3.10+ documentation/release/hook tooling requirements. Create
    one tracking issue for the coherent batch with `ChrisBuilds`, `maintenance` + `ci`,
    and the intended milestone at creation. Unscheduled work uses `Release target: not
    scheduled` and no milestone. Add `Closes #<issue>` to the PR and mirror the milestone.
@@ -124,3 +125,24 @@ remediation plan, and expiry/review date. The PR must implement expiry validatio
 introducing a timed allowlist so an expired exemption fails CI. Consider that the official
 `allow-ghsas` input applies globally by advisory ID; do not pretend it is version-scoped.
 Until that support is reviewed, fix the dependency instead of adding a bypass.
+
+## Runtime and tooling Python support
+
+TTE runtime and the native compatibility test matrix retain Python >=3.9.2.
+The dev, artifacts, and hooks groups require Python >=3.10 through uv group settings.
+The docs extra uses Python markers for its whole toolchain, including Material; on
+Python 3.9 it does not install documentation tools. Use Python 3.14 for normal
+development and separate test-only environments for native compatibility diagnosis.
+
+Security floors constrain Requests >=2.33.0, urllib3 >=2.8.0, and filelock >=3.20.3.
+PyMdown uses the patched 11.x line (>=11.0.1,<12); review another major separately.
+Modern Python tests require pytest >=9.0.3. Python 3.9 still uses pytest 8.x because
+upstream's patched pytest requires Python >=3.10. Its temporary-directory advisory
+GHSA-6w46-j5rx-g56g remains unresolved under
+[#154](https://github.com/ChrisBuilds/terminaltexteffects/issues/154); this is not
+an approved risk exception or reason to dismiss the alert. No blanket allowlist is added.
+
+Running the updater on newer Python alone does not fix a universal lock:
+dependency metadata must describe the supported
+tooling environments. Verify the lock and GitHub alerts after merge, without assuming
+a green differential PR check clears every existing advisory.

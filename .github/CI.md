@@ -14,6 +14,10 @@ the same required checks and need a tracking issue and changelog decision before
 
 The matrix runs the default pytest suite on the latest patch releases of Python 3.9 through 3.14
 using Ubuntu 24.04. The package minimum is Python 3.9.2; 3.9.0 and 3.9.1 are unsupported.
+Documentation/release/hooks require Python 3.10+; CI already runs those on 3.14.
+The native 3.9 test job installs only the test group. Modern jobs use patched pytest;
+the 3.9 pytest temporary-directory advisory remains under separate remediation
+(see [dependency policy](DEPENDENCIES.md#runtime-and-tooling-python-support)).
 It uses locked test dependencies, installs a non-editable package, and checks package import
 and CLI startup from outside the checkout. Bash and Zsh completion behavior is covered by
 the tests, and a separate job checks that the committed completion scripts are current.

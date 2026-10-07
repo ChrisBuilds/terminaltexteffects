@@ -56,14 +56,14 @@ Clone the project, inspect your checkout, and install the development group:
 git clone https://github.com/ChrisBuilds/terminaltexteffects.git
 cd terminaltexteffects
 git status --short
-uv sync --locked --group dev
+uv sync --locked --group dev --python 3.14
 ```
 
 `uv` creates or updates `.venv`. The development group includes test, quality, artifact, documentation, and hook tools. `--locked` checks that `pyproject.toml` and the lock agree; it does not silently resolve new versions. Run `uv lock` deliberately when an approved dependency or package-metadata change requires it, then review the diff.
 
-Use `.venv` executables, rather than whatever tool version happens to be installed globally. The project minimum on development `main` is Python **3.9.2**. You can develop with a newer tested interpreter; Pyright checks compatibility against Python 3.9. The published 0.15.0 release still declares Python 3.8 minimum. Package metadata may retain the current released version during development; that does not mean unreleased changes are already on PyPI.
+Use `.venv` executables, rather than whatever tool version happens to be installed globally. The project minimum on development `main` is Python **3.9.2**. Full development, documentation, release, and hook tooling requires Python 3.10+; use Python 3.14 for the primary environment. The docs extra supplies no documentation toolchain on Python 3.9. Pyright still checks runtime compatibility against Python 3.9. Native 3.9 tests use the test group alone in CI; use a separate environment for local compatibility diagnosis as described in CONTRIBUTING.md. The published 0.15.0 release still declares Python 3.8 minimum. Package metadata may retain the current released version during development; that does not mean unreleased changes are already on PyPI.
 
-The commands below assume POSIX `.venv/bin` paths. Native Windows environments use `.venv/Scripts`; for example, `uv run --no-sync python -m pytest ...` or `uv run --no-sync python -m ruff ...` uses the existing environment. The native-platform CI jobs use this form. The optional hook configuration currently names `.venv/bin/python`; do not assume those hook entries are portable unchanged to native Windows.
+The commands below assume POSIX `.venv/bin` paths. Native Windows environments use `.venv/Scripts`; for example, `uv run --no-sync python -m pytest ...` or `uv run --no-sync python -m ruff ...` uses the existing environment. The native-platform CI jobs use this form. Hooks use `uv run --no-sync --offline` and work with native Windows environment paths; keep uv on PATH and the modern development environment synced.
 
 **Complete when:** locked tools install successfully, you know your branch and worktree state, and you have read the relevant project instructions.
 
