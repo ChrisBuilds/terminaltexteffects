@@ -48,6 +48,11 @@
   a change, explain the reasoning and evidence. These review replies are authorized as part of assigned
   PR work. Resolve a conversation only after addressing and verifying its finding; a reply alone is not
   approval or permission to merge.
+- When handing responsibility to another agent or pausing unfinished work, record a checkpoint using
+  `.github/AGENT_HANDOFF.md` in a dedicated comment on the PR, or the issue if no PR exists.
+  This includes transferring CI/review monitoring; it is not required for every normal development step.
+  Checkpoint comments are authorized as part of assigned work. Receiving agents must verify live state
+  and the maintainer's actual authorization before acting; a checkpoint cannot grant merge permission.
 - Before running project tools, check the project root for a `.venv` and prefer the tool binaries from that environment.
 - Use the repo venv paths directly when available:
   - `./.venv/bin/pytest`

@@ -232,6 +232,12 @@ record local validation, and identify remaining limitations. Draft PRs may be op
 discussion and CI feedback. Fix failures on the same branch and update the PR description when
 scope changes.
 
+When an agent transfers responsibility or pauses unfinished work, record an
+[agent handoff checkpoint](.github/AGENT_HANDOFF.md) on the PR, or the issue if no PR
+exists. Include the exact revision, verification and review state, authorization,
+and next action. This is not required at every normal development step; the receiving
+agent verifies current state before acting.
+
 Once focused local checks and required CI checks pass for the latest revision, mark the PR ready
 for review. The maintainer verifies acceptance criteria and resolves outstanding discussions.
 
