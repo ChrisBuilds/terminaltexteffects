@@ -204,6 +204,12 @@ Regenerate shell completions when CLI options change. Add an issue-numbered frag
 internal changes and fixes introduced in the same unreleased version need a `.skip.md` fragment
 explaining why no release note is needed. See [fragment guidance](changelog.d/README.md).
 
+### Investigate CI failures
+
+For failures or stalled tests, use [CI test diagnostics](.github/TEST_DIAGNOSTICS.md).
+Start with the failed node and the recorded tested revision/interpreter; retain the
+original failure evidence even if a later run passes.
+
 ### Read coverage changes
 
 For code-bearing PRs, the Linux/Python 3.14 summary reports separate line/branch changes

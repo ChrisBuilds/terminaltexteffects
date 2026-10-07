@@ -63,6 +63,9 @@
 
 - Use focused tests for routine development. Start with the narrowest test node or file that exercises the changed
   behavior; do not run the entire suite after every change.
+- For CI test failures, read `.github/TEST_DIAGNOSTICS.md`, inspect the first failing step and its
+  JUnit/context artifact, and record the tested revision/run and failing node before reproducing narrowly.
+  Inspect stalled-test tracebacks; do not hide failures with automatic retries or treat missing reports as passes.
 - Specify a single test, a filtered group, or a complete test file as appropriate:
   - `./.venv/bin/pytest -n auto tests/engine_tests/test_terminal.py::test_<name>`
   - `./.venv/bin/pytest -n auto tests/engine_tests/test_terminal.py -k '<expression>'`

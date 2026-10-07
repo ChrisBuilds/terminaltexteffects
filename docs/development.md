@@ -358,6 +358,10 @@ Download the artifact and open `html/index.html` to find missing paths. Compare 
 
 The duration report identifies slow tests for separate investigations. Do not remove meaningful coverage simply to lower the number. Pairwise selection and focused native coverage reduce routine CI cost while retaining an exhaustive release-validation path.
 
+### Test-failure diagnostics
+
+Existing pytest steps emit JUnit XML and small reproduction context artifacts retained for seven days, with separate names per matrix/native job. The quality job also retains its individual regression reports. Context records the actual tested SHA (including PR merge revisions), head/base, interpreter, tool versions, and run/attempt; it does not dump the environment. A 120-second per-test traceback timer diagnoses stalls without stopping or retrying tests. Reports upload after success or failure when context exists and the job is not cancelled; hard termination, early setup failure, or a still-hung session can leave reports missing or incomplete. Documentation-only matrix jobs produce no reports. Follow [test diagnostics](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/TEST_DIAGNOSTICS.md) to reproduce a failing node on the tested revision before broadening. Random failures still require the test's actual seed/input; no global replay seed is introduced.
+
 ## 10. Handle failures, review, and mark ready
 
 **Trigger:** CI feedback or review comments.
