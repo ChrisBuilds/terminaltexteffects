@@ -48,6 +48,11 @@
   a change, explain the reasoning and evidence. These review replies are authorized as part of assigned
   PR work. Resolve a conversation only after addressing and verifying its finding; a reply alone is not
   approval or permission to merge.
+- When handing responsibility to another agent or pausing unfinished work, record a checkpoint using
+  `.github/AGENT_HANDOFF.md` in a dedicated comment on the PR, or the issue if no PR exists.
+  This includes transferring CI/review monitoring; it is not required for every normal development step.
+  Checkpoint comments are authorized as part of assigned work. Receiving agents must verify live state
+  and the maintainer's actual authorization before acting; a checkpoint cannot grant merge permission.
 - Before running project tools, check the project root for a `.venv` and prefer the tool binaries from that environment.
 - Use the repo venv paths directly when available:
   - `./.venv/bin/pytest`
@@ -63,6 +68,9 @@
 
 - Use focused tests for routine development. Start with the narrowest test node or file that exercises the changed
   behavior; do not run the entire suite after every change.
+- For CI test failures, read `.github/TEST_DIAGNOSTICS.md`, inspect the first failing step and its
+  JUnit/context artifact, and record the tested revision/run and failing node before reproducing narrowly.
+  Inspect stalled-test tracebacks; do not hide failures with automatic retries or treat missing reports as passes.
 - Specify a single test, a filtered group, or a complete test file as appropriate:
   - `./.venv/bin/pytest -n auto tests/engine_tests/test_terminal.py::test_<name>`
   - `./.venv/bin/pytest -n auto tests/engine_tests/test_terminal.py -k '<expression>'`

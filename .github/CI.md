@@ -23,6 +23,10 @@ and CLI startup from outside the checkout. Bash and Zsh completion behavior is c
 the tests, and a separate job checks that the committed completion scripts are current.
 Manual, visual, and exhaustive effect-argument tests remain outside this workflow.
 Pytest reports the 20 slowest test durations to guide future test optimization.
+Existing pytest steps also write seven-day JUnit artifacts and small reproduction
+metadata; a 120-second per-test timer dumps tracebacks without stopping the test.
+See [test-failure diagnostics](TEST_DIAGNOSTICS.md) for artifact names, limitations,
+and exact-revision focused reproduction. Missing or cancelled reports are not passes.
 Only the Linux Python 3.14 job instruments this same run for [line and branch coverage](COVERAGE.md),
 with a summary and short-lived report artifacts. No percentage threshold is enforced.
 

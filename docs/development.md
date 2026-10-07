@@ -358,6 +358,10 @@ Download the artifact and open `html/index.html` to find missing paths. Compare 
 
 The duration report identifies slow tests for separate investigations. Do not remove meaningful coverage simply to lower the number. Pairwise selection and focused native coverage reduce routine CI cost while retaining an exhaustive release-validation path.
 
+### Test-failure diagnostics
+
+Existing pytest steps emit JUnit XML and small reproduction context artifacts retained for seven days, with separate names per matrix/native job. The quality job also retains its individual regression reports. Context records the actual tested SHA (including PR merge revisions), head/base, interpreter, tool versions, and run/attempt; it does not dump the environment. A 120-second per-test traceback timer diagnoses stalls without stopping or retrying tests. Reports upload after success or failure when context exists and the job is not cancelled; hard termination, early setup failure, or a still-hung session can leave reports missing or incomplete. Documentation-only matrix jobs produce no reports. Follow [test diagnostics](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/TEST_DIAGNOSTICS.md) to reproduce a failing node on the tested revision before broadening. Random failures still require the test's actual seed/input; no global replay seed is introduced.
+
 ## 10. Handle failures, review, and mark ready
 
 **Trigger:** CI feedback or review comments.
@@ -375,6 +379,12 @@ When Codex reports a finding, acknowledge it in the review thread and describe t
 A PR author cannot formally approve their own PR. This solo-maintainer repository does not require an external approval count, but does require PRs, required checks, and resolved conversations. Contributors and agents still leave the merge decision to the maintainer. If main advances again before merging, refresh and recheck; do not bypass protection.
 
 **Complete when:** latest required checks pass, acceptance criteria are met, relevant review findings are addressed, and the maintainer decides to merge.
+
+### Agent handoff or pause
+
+When transferring work or CI/review monitoring to another agent, or pausing unfinished work, the outgoing agent records a checkpoint in a dedicated PR comment (on the issue if no PR exists). Follow the [handoff template](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/AGENT_HANDOFF.md). It captures the exact revision, local recovery state, completed/pending checks, reviewed revision and findings, explicit authorization, and next owner/action. Agents write it at handoff time; no GitHub Action generates it, and ordinary development steps do not each require one.
+
+The receiving agent checks the actual worktree and live GitHub state before acting, then refreshes the checkpoint as needed. Record skipped checks explicitly and preserve uncommitted work. The checkpoint cannot grant merge authority: verify the maintainer's actual instruction and its conditions. Keep sensitive information and personal paths out of public checkpoints.
 
 ## 11. Squash merge, close ordinary work, and clean up
 

@@ -204,6 +204,12 @@ Regenerate shell completions when CLI options change. Add an issue-numbered frag
 internal changes and fixes introduced in the same unreleased version need a `.skip.md` fragment
 explaining why no release note is needed. See [fragment guidance](changelog.d/README.md).
 
+### Investigate CI failures
+
+For failures or stalled tests, use [CI test diagnostics](.github/TEST_DIAGNOSTICS.md).
+Start with the failed node and the recorded tested revision/interpreter; retain the
+original failure evidence even if a later run passes.
+
 ### Read coverage changes
 
 For code-bearing PRs, the Linux/Python 3.14 summary reports separate line/branch changes
@@ -225,6 +231,12 @@ Include `Closes #<issue-number>` (release tracking PRs use
 record local validation, and identify remaining limitations. Draft PRs may be opened early for
 discussion and CI feedback. Fix failures on the same branch and update the PR description when
 scope changes.
+
+When an agent transfers responsibility or pauses unfinished work, record an
+[agent handoff checkpoint](.github/AGENT_HANDOFF.md) on the PR, or the issue if no PR
+exists. Include the exact revision, verification and review state, authorization,
+and next action. This is not required at every normal development step; the receiving
+agent verifies current state before acting.
 
 Once focused local checks and required CI checks pass for the latest revision, mark the PR ready
 for review. The maintainer verifies acceptance criteria and resolves outstanding discussions.
