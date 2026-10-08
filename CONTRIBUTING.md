@@ -140,6 +140,10 @@ them. This includes implementation, tests, tools, and archived experiments, so c
 silently break types in unchanged callers. Ignored and untracked local prototypes are excluded.
 Documentation-only changes still run these read-only quality checks but skip pytest.
 
+For a portable focused local check, use `uv run --no-sync --offline python -m tools.qa --dry-run`,
+then repeat with explicit `--test` files/nodes. See [.github/LOCAL_QA.md](.github/LOCAL_QA.md)
+for selection, tool requirements, and checks that remain in CI.
+
 Reproduce the full CI quality checks with
 `./.venv/bin/python tools/check_quality.py --all`.
 For a focused branch check after committing, use

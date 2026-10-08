@@ -66,6 +66,9 @@
 
 ## Testing and Verification
 
+- For a portable local QA plan, run `uv run --no-sync --offline python -m tools.qa --dry-run`;
+  execute with explicit `--test` files/nodes. Read `.github/LOCAL_QA.md` for scope and limits.
+  It checks current working-tree contents, never installs/fixes/retries, and does not replace CI.
 - Use focused tests for routine development. Start with the narrowest test node or file that exercises the changed
   behavior; do not run the entire suite after every change.
 - For CI test failures, read `.github/TEST_DIAGNOSTICS.md`, inspect the first failing step and its
