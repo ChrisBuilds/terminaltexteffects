@@ -36,10 +36,13 @@ The command prints paths, reasons and argument lists before running:
 - Any changes: validate changelog fragments and generated preview. Before committing,
   this does not verify the committed branch's issue-numbered changelog decision;
   run `tools/generate_changelog.py --check --base origin/main` after committing.
-- Workflow inputs: existing all-tracked-workflow actionlint/ShellCheck helper; install
-  its external tools or use the overrides described in [CI.md](CI.md#workflow-linting).
+- Workflow inputs: all tracked workflows plus existing changed workflows (including
+  untracked files) through the actionlint/ShellCheck helper; install its external tools or
+  use the overrides described in [CI.md](CI.md#workflow-linting).
 - Runtime or completion-generator inputs: generated shell completion freshness.
-- Shipped effect inputs: existing structural effect inventory check.
+- Shipped effect modules and effect-test inputs: existing structural effect inventory
+  check. Test-file changes, including deletions, also run the inventory check so missing
+  or empty permanent test files are reported.
 - Documentation/API inputs: strict MkDocs build, using the same input classification
   helper as CI.
 

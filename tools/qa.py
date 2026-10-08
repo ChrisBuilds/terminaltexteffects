@@ -75,7 +75,9 @@ def plan(root: Path, names: list[str], tests: list[str], keyword: str | None) ->
     ):
         commands.append(("Generated shell completions", [python, "tools/generate_shell_completions.py", "--check"]))
     if any(
-        name.startswith("terminaltexteffects/effects/") or name == "tools/check_effect_inventory.py" for name in names
+        name.startswith(("terminaltexteffects/effects/", "tests/effects_tests/"))
+        or name == "tools/check_effect_inventory.py"
+        for name in names
     ):
         commands.append(("Shipped effect inventory", [python, "tools/check_effect_inventory.py"]))
     if any(needs_documentation_build(name) for name in names):

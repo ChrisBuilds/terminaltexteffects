@@ -97,6 +97,12 @@ def test_untracked_workflow_is_added_to_tracked_inventory(tmp_path: Path) -> Non
     assert workflow_command[-2:] == [".github/workflows/new.yml", ".github/workflows/tracked.yml"]
 
 
+def test_effect_test_change_triggers_inventory_check(tmp_path: Path) -> None:
+    """Changed or deleted effect tests still require structural inventory validation."""
+    commands = qa.plan(tmp_path, ["tests/effects_tests/test_example.py"], [], None)
+    assert any("tools/check_effect_inventory.py" in command for _, command in commands)
+
+
 def test_focused_nodes_and_keywords_are_literal(tmp_path: Path) -> None:
     """Shell characters and parametrized nodes remain separate arguments."""
     commands = qa.plan(tmp_path, [], ["tests/test_file.py::test_case[a b]"], "value or other")
