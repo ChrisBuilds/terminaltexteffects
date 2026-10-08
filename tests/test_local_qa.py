@@ -72,10 +72,29 @@ def test_selection_includes_staged_path_when_worktree_cancels_change(tmp_path: P
 
 def test_deleted_workflow_still_triggers_validation(tmp_path: Path) -> None:
     """Removed inputs affect selection without being passed to Python file checks."""
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)  # noqa: S607
     commands = qa.plan(tmp_path, [".github/workflows/deleted.yml", "gone.py"], [], None)
     assert any("tools/check_workflows.py" in command for _, command in commands)
     assert not any("ruff" in command for _, command in commands)
     assert not any("pytest" in command for _, command in commands)
+
+
+def test_untracked_workflow_is_added_to_tracked_inventory(tmp_path: Path) -> None:
+    """Workflow lint includes selected untracked files alongside tracked workflows."""
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)  # noqa: S607
+    subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=tmp_path, check=True)  # noqa: S607
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=tmp_path, check=True)  # noqa: S607
+    tracked = tmp_path / ".github/workflows/tracked.yml"
+    tracked.parent.mkdir(parents=True)
+    tracked.write_text("name: tracked\n")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)  # noqa: S607
+    subprocess.run(["git", "commit", "-m", "base"], cwd=tmp_path, check=True, capture_output=True)  # noqa: S607
+    untracked = tmp_path / ".github/workflows/new.yml"
+    untracked.write_text("name: new\n")
+
+    commands = qa.plan(tmp_path, [".github/workflows/new.yml"], [], None)
+    workflow_command = next(command for _, command in commands if "tools/check_workflows.py" in command)
+    assert workflow_command[-2:] == [".github/workflows/new.yml", ".github/workflows/tracked.yml"]
 
 
 def test_focused_nodes_and_keywords_are_literal(tmp_path: Path) -> None:

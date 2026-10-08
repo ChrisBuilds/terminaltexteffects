@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from tools.check_workflows import workflow_files
 from tools.classify_ci import needs_documentation_build
 from tools.run_hook import check_hygiene
 
@@ -55,8 +56,17 @@ def plan(root: Path, names: list[str], tests: list[str], keyword: str | None) ->
     if names:
         commands.append(("Changelog fragments and preview", [python, "tools/generate_changelog.py", "--check"]))
     if any(name.startswith(".github/workflows/") or name == "tools/check_workflows.py" for name in names):
+        workflow_paths = set(workflow_files(root))
+        workflow_paths.update(
+            name
+            for name in names
+            if name.startswith(".github/workflows/") and name.endswith((".yml", ".yaml")) and (root / name).is_file()
+        )
         commands.append(
-            ("All tracked workflows (actionlint/ShellCheck required)", [python, "tools/check_workflows.py"])
+            (
+                "Tracked and changed untracked workflows (actionlint/ShellCheck required)",
+                [python, "tools/check_workflows.py", *sorted(workflow_paths)],
+            )
         )
     if any(
         name.startswith("terminaltexteffects/")
