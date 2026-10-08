@@ -18,6 +18,10 @@ checkout/clean/dirty source identities; a mismatch includes file-difference name
 without file contents. Missing logs, skipped/cancelled jobs, or an installer failure
 are not successful packaging validation.
 
+Temporary source fixtures use physical paths so macOS `/var` and `/private/var`
+aliases do not change filter prefixes. Source evaluation uses read/write mode to
+materialize filtered store paths for comparisons and diagnostic inspection.
+
 Reproduce at the tested revision with `bash tools/check_nix.sh`, Nix's
 `nix-command`/`flakes` features enabled, and Python 3.10+ available. Use the locked
 input, not an unrelated local channel. Preserve the original build/runtime error

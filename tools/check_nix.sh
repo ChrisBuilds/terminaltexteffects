@@ -6,8 +6,11 @@ report_failure() {
 }
 trap 'report_failure "$LINENO" "$?"' ERR
 
-root=$(cd "$(dirname "$0")/.." && pwd)
+root=$(cd "$(dirname "$0")/.." && pwd -P)
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/tte-nix.XXXXXX")
+# macOS TMPDIR can use /var, a symlink to /private/var. Nix resolves paths
+# while importing default.nix, so filter prefixes need the same physical path.
+scratch=$(cd "$scratch" && pwd -P)
 trap 'rm -rf "$scratch"' EXIT
 cd "$root"
 
@@ -31,7 +34,7 @@ source_expression='{ source, nixpkgs }: let
   pkgs = import (builtins.toPath nixpkgs) {};
 in toString (pkgs.callPackage (builtins.toPath (source + "/default.nix")) {}).src'
 source_path() {
-  nix-instantiate --eval --strict --json --expr "$source_expression" \
+  nix-instantiate --eval --read-write-mode --strict --json --expr "$source_expression" \
     --argstr source "$1" --argstr nixpkgs "$nixpkgs" | python3 -c 'import json,sys; print(json.load(sys.stdin))'
 }
 original=$(source_path "$root")
