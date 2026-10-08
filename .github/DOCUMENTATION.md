@@ -23,6 +23,16 @@ This rebuild runs once per successful current-main push, including source-only c
 so generated API reference pages stay current. It does not rerun pytest or add matrix jobs.
 The required CI checks are unchanged by documentation deployment; deployment is a post-merge check.
 
+## Routine live verification
+
+Follow [POST_MERGE.md](POST_MERGE.md) to inspect the actual deployment step and selected
+SHA, then verify the live full-SHA banner, page content/navigation and affected assets
+with HTTP/CLI. Record checked URLs and uninspected scope. Use a browser for layout,
+styling, rendering concerns or requested visual QA; routine deployment checks do not
+require opening the maintainer's browser. HTTP checks do not prove visual correctness.
+Next-PR preparation and CI can run during these checks, but its merge waits for them
+to succeed.
+
 ## One-time cutover after the workflow PR merges
 
 1. In repository **Settings → Pages → Build and deployment**, change **Source** from

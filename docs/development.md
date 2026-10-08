@@ -410,6 +410,8 @@ For stacked PRs, merge the prerequisite only with authorization, retarget the de
 
 Refresh only the next PR to merge rather than every queued PR after each merge. Strict checking can add another normal CI cycle for an outdated branch; existing diff classification and cancellation of superseded runs limit unnecessary work. No merge queue is configured. See [branch refresh commands](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CONTRIBUTING.md#refresh-a-pr-before-merging).
 
+After merging, prepare and start CI/review for only the next candidate while the previous merge's main CI and documentation verification run. Hold the next merge until prior verification succeeds and the candidate's own latest-head checks, completed review and explicit authorization are satisfied. Queue handoffs record both gates. Marking a draft ready automatically requests Codex review here; check actual latest-head review state before a manual request, using one only when review has not started or a changed head needs re-review.
+
 Use **Squash and merge**. Review/edit the resulting commit title and body in GitHub; its defaults are not a reason to leave noisy development history. The issue branch may contain multiple commits, but main receives the reviewed combined change as one commit.
 
 Delete the merged branch. `Closes #123` closes an ordinary issue when the PR reaches the default branch. Fetch/switch to main and fast-forward locally when the worktree is safe. Synchronize locked tools after branch/lock changes.
@@ -428,7 +430,7 @@ The deployment workflow compares the tested SHA to current main, checks out that
 
 The public site follows development main, not a release tag or an independently edited `gh-pages` branch. Documentation can describe upcoming APIs while PyPI still contains an older release. A successful deployment does not publish a package.
 
-Manual documentation dispatch on main is a retry mechanism: it still requires successful push CI matching current main. It cannot bypass failed/pending CI, and dispatch from another branch is skipped. If deployment fails, the last successful site remains. Inspect the failed logs, repair through the normal PR process, and retry. Verify the public homepage, deep API pages, images, changelog, and commit banner after deployment.
+Manual documentation dispatch on main is a retry mechanism: it still requires successful push CI matching current main. It cannot bypass failed/pending CI, and dispatch from another branch is skipped. If deployment fails, the last successful site remains. Inspect the failed logs, repair through the normal PR process, and retry. Verify the public homepage, deep API pages, relevant content/navigation, affected images/changelog, and full-SHA commit banner through HTTP/CLI after deployment. Inspect the actual deployment evidence and returned page content, rather than relying on HTTP status alone. Record checked URLs, method and uninspected scope. Use a browser for layout, styling or rendering concerns, or requested visual QA; HTTP checks cannot establish rendered appearance. Routine deployment checks do not require opening the maintainer's browser.
 
 The merge handler records the main CI run/attempt, actual test scope, selected and deployed
 SHAs, and live commit-link/page inspection in the PR. If main advances, follow the newer

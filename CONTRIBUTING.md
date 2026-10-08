@@ -245,7 +245,10 @@ and next action. This is not required at every normal development step; the rece
 agent verifies current state before acting.
 
 Once focused local checks and required CI checks pass for the latest revision, mark the PR ready
-for review. The maintainer verifies acceptance criteria and resolves outstanding discussions.
+for review. This transition automatically requests Codex review in this repository; inspect the
+latest-head review state before making a manual request. Request manually only if
+review has not started or the changed head requires re-review. The maintainer verifies
+acceptance criteria and resolves outstanding discussions.
 
 ## 5. Merge and close
 
@@ -254,6 +257,12 @@ then delete the branch. Before merging, the PR branch must include current `main
 required checks must pass for the refreshed revision. If `main` advances again, refresh
 and recheck before merging. Ordinary linked issues close when the PR merges into `main`;
 release tracking issues remain open through publication and post-release verification.
+
+For a queue of PRs, prepare and run CI/review for only the next candidate while the
+previous merge's main CI and documentation verification run. Hold the next merge until
+that verification succeeds and its own fresh checks, review and authorization are
+satisfied. Follow [.github/POST_MERGE.md](.github/POST_MERGE.md); hand off both gates
+when transferring responsibility.
 
 The `main` protection requires PRs, all ten checks listed in
 [.github/CI.md](.github/CI.md), resolved review conversations, up-to-date branches (strict status checks), and enforcement

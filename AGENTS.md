@@ -53,6 +53,24 @@
   This includes transferring CI/review monitoring; it is not required for every normal development step.
   Checkpoint comments are authorized as part of assigned work. Receiving agents must verify live state
   and the maintainer's actual authorization before acting; a checkpoint cannot grant merge permission.
+- Delegate PR CI/review monitoring and authorized merges to a Luna medium agent when
+  available. Give it the exact PR queue, explicit merge authorization/conditions, and the
+  handoff checkpoint; require it to report unexpected findings to the primary agent.
+  Monitoring is assigned work, not a persistent background service. If unavailable,
+  report that limitation and preserve a concrete checkpoint rather than implying it is running.
+- PR-monitor agents must read `.github/POST_MERGE.md` and `.github/AGENT_HANDOFF.md` before
+  taking over a queue. After a merge, refresh only the next candidate and start its CI/review
+  while the prior merge's main CI and documentation verification run. Hold its merge until
+  prior verification succeeds and its own latest-head checks/review and explicit authorization
+  are satisfied. Report unexpected failures promptly; do not weaken gates to shorten waiting.
+- Marking a verified draft ready automatically requests Codex review in this repository.
+  Check the actual latest-head review state before posting a manual request; request manually
+  only when automatic review has not started or a changed head needs re-review. A request or
+  running review is not a completed review.
+- Use HTTP/CLI for routine live documentation verification: inspect deployment evidence,
+  full-SHA banner link, relevant page content/navigation and affected assets. Open a browser
+  only for visual/layout/rendering changes, suspected rendering defects, or requested visual QA.
+  HTTP success does not establish visual correctness; record the method and uninspected scope.
 - Before running project tools, check the project root for a `.venv` and prefer the tool binaries from that environment.
 - Use the repo venv paths directly when available:
   - `./.venv/bin/pytest`
