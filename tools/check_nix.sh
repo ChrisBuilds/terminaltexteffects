@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Validate the locked flake and classic package without changing the lockfile.
-set -euo pipefail
+set -Eeuo pipefail
+trap 'status=$?; printf "Nix verification failed at line %s (exit %s)\n" "$LINENO" "$status" >&2' ERR
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/tte-nix.XXXXXX")
@@ -44,8 +45,15 @@ for file in .env .coverage terminaltexteffects/local.pyc terminaltexteffects/loc
   terminaltexteffects/effects/effect_dev.py terminaltexteffects/edit.swp terminaltexteffects/edit~; do
   printf 'ignored development artifact\n' > "$scratch/dirty/$file"
 done
-test "$original" = "$(source_path "$scratch/clean")"
-test "$original" = "$(source_path "$scratch/dirty")"
+clean=$(source_path "$scratch/clean")
+dirty=$(source_path "$scratch/dirty")
+printf 'Source identities:\n  checkout: %s\n  clean: %s\n  dirty: %s\n' "$original" "$clean" "$dirty"
+if [[ "$original" != "$clean" || "$original" != "$dirty" ]]; then
+  printf 'Source identity mismatch; inspecting file differences.\n' >&2
+  diff -qr "$original" "$clean"
+  diff -qr "$original" "$dirty"
+  exit 1
+fi
 printf '\nSource identity regression fixture\n' >> "$scratch/clean/README.md"
 test "$original" != "$(source_path "$scratch/clean")"
 test -f "$original/pyproject.toml"

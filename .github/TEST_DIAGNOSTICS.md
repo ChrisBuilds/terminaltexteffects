@@ -13,7 +13,9 @@ step and retain its Actions log. Packaging checks additionally upload seven-day
 cancelled runs may not upload them. These checks do not produce JUnit/context JSON.
 The packaging log records the tested Git SHA (possibly the PR merge revision), Nix
 version, actual system identifier, and build/smoke evidence. Successful jobs also
-write a step summary. Missing logs, skipped/cancelled jobs, or an installer failure
+write a step summary. The verifier reports the failing script line and compares
+checkout/clean/dirty source identities; a mismatch includes file-difference names
+without file contents. Missing logs, skipped/cancelled jobs, or an installer failure
 are not successful packaging validation.
 
 Reproduce at the tested revision with `bash tools/check_nix.sh`, Nix's
