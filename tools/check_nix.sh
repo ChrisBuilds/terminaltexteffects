@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Validate the locked flake and classic package without changing the lockfile.
 set -Eeuo pipefail
-trap 'status=$?; printf "Nix verification failed at line %s (exit %s)\n" "$LINENO" "$status" >&2' ERR
+report_failure() {
+  printf 'Nix verification failed at line %s (exit %s)\n' "$1" "$2" >&2
+}
+trap 'report_failure "$LINENO" "$?"' ERR
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/tte-nix.XXXXXX")
@@ -48,7 +51,7 @@ done
 clean=$(source_path "$scratch/clean")
 dirty=$(source_path "$scratch/dirty")
 printf 'Source identities:\n  checkout: %s\n  clean: %s\n  dirty: %s\n' "$original" "$clean" "$dirty"
-if [[ "$original" != "$clean" || "$original" != "$dirty" ]]; then
+if ! [[ "$original" == "$clean" && "$original" == "$dirty" ]]; then
   printf 'Source identity mismatch; inspecting file differences.\n' >&2
   diff -qr "$original" "$clean"
   diff -qr "$original" "$dirty"
