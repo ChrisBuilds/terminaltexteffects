@@ -40,9 +40,10 @@ The command prints paths, reasons and argument lists before running:
   untracked files) through the actionlint/ShellCheck helper; install its external tools or
   use the overrides described in [CI.md](CI.md#workflow-linting).
 - Runtime or completion-generator inputs: generated shell completion freshness.
-- Shipped effect modules and effect-test inputs: existing structural effect inventory
-  check. Test-file changes, including deletions, also run the inventory check so missing
-  or empty permanent test files are reported.
+- Effect inventory inputs: changes under `terminaltexteffects/`, `docs/effects/`, or
+  `tests/effects_tests/`, plus `mkdocs.yml` and `tools/check_effect_inventory.py`, run the
+  structural check for CLI registration, nonempty effect docs/navigation, and permanent test
+  definitions. Test-file changes, including deletions, also detect missing or empty tests.
 - Documentation/API inputs: strict MkDocs build, using the same input classification
   helper as CI.
 
