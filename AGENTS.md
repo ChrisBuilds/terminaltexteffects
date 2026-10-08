@@ -153,6 +153,10 @@
   3.14 summary. Missing baselines are not proof of unchanged coverage; coverage percentages do not
   replace meaningful assertions or human visual QA. Workflow edits intentionally invalidate the
   historical comparison fingerprint. Follow `.github/COVERAGE.md` for comparison rules.
+- After an authorized merge, follow `.github/POST_MERGE.md` to verify exact-main push CI
+  and actual live documentation publication. Record tested/deployed SHAs, run attempts and scope;
+  report unexpected failures promptly and preserve original evidence before justified retries.
+  Superseded/skipped/cancelled runs are not passes; finish verification or record an explicit handoff.
 - Required GitHub Actions checks must pass for the latest PR revision including current `main`
   before the work is ready to merge.
   If CI is pending, report that status instead of blocking the conversation while the broad suites run.

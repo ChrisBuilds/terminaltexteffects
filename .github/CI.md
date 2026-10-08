@@ -312,3 +312,9 @@ candidate SHA. It runs Linux/Python 3.14 exhaustive automated tests, records the
 revision and reproduction metadata, and retains log/JUnit/exit-status evidence for 30 days.
 It has no push/PR trigger or publishing permissions and is not an ordinary required PR
 check. See [EXHAUSTIVE_VALIDATION.md](EXHAUSTIVE_VALIDATION.md) and the release runbook.
+
+## Post-merge verification
+
+Follow [POST_MERGE.md](POST_MERGE.md) after an authorized merge to identify the exact
+main push run, inspect actual scope, verify live documentation and record evidence. It
+explains superseded runs, justified infrastructure reruns and scoped follow-up fixes.

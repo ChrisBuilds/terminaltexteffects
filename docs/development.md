@@ -430,6 +430,14 @@ The public site follows development main, not a release tag or an independently 
 
 Manual documentation dispatch on main is a retry mechanism: it still requires successful push CI matching current main. It cannot bypass failed/pending CI, and dispatch from another branch is skipped. If deployment fails, the last successful site remains. Inspect the failed logs, repair through the normal PR process, and retry. Verify the public homepage, deep API pages, images, changelog, and commit banner after deployment.
 
+The merge handler records the main CI run/attempt, actual test scope, selected and deployed
+SHAs, and live commit-link/page inspection in the PR. If main advances, follow the newer
+tested deployment and record the superseded outcome without claiming the old run passed.
+Unexpected failures are reported promptly; preserve original evidence, retry only an
+evidence-backed infrastructure failure, and fix source problems through a scoped PR.
+Follow the [post-merge procedure](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/POST_MERGE.md)
+for commands, recovery decisions and the completion/handoff template.
+
 ## 14. Start the separate release pipeline
 
 **Trigger:** the maintainer schedules a release, not every ordinary merge.
