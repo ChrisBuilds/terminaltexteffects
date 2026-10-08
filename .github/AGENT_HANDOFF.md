@@ -23,6 +23,7 @@ but must not be the only record another agent needs.
 - Validation: <focused commands/results and tested SHA; skipped or unrun checks explicitly>
 - CI: <run links, tested SHA, completed/pending/failed checks; say when tests were skipped>
 - Review: <draft/ready, reviewed SHA, completed/pending review, unresolved finding links>
+- Queue gate: <previous merged PR/SHA, pending main CI/docs verification and run links, or none; next candidate and merge hold>
 - Authorization: <explicit maintainer instruction and source, or none; exact PR/action and conditions>
 - Next owner/action: <receiving agent or unassigned; immediate next action and blockers>
 ```
@@ -50,3 +51,14 @@ If a commit changes, distinguish old verification from checks/review of the new 
 Update the checkpoint with the verified state and next action when resuming or handing
 off. If a blocker repeats, report its concrete cause instead of treating silence as
 approval. Follow the ordinary contribution, QA, review, and merge rules.
+
+## PR-monitor queue handoff
+
+Receiving PR-monitor agents must read [POST_MERGE.md](POST_MERGE.md) before resuming.
+Carry both the next candidate's CI/review state and any previous merge's unfinished
+main CI/deployment verification. Refresh only the next candidate while the previous
+verification runs; hold its merge until both gates pass and authorization is verified.
+Record the actual latest-head Codex review state before requesting review, so ready's
+automatic trigger is not duplicated. Record whether live pages were verified through
+HTTP or browser inspection; use the browser only when visual concerns warrant it.
+A pending post-merge gate remains pending across an agent handoff.

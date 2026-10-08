@@ -7,6 +7,27 @@ or explicitly handed off using [AGENT_HANDOFF.md](AGENT_HANDOFF.md). Report unex
 failures to the primary agent/maintainer promptly; do not wait silently or declare the
 work complete while verification is pending. Avoid publishing a comment for every poll.
 
+## Monitor a queue without serial waiting
+
+After a merge, fetch main and refresh **only the next candidate** against its new SHA.
+Start that candidate's required CI and review while verifying the previous merge's
+main CI and documentation. Use separate worktrees when simultaneous work would disturb
+another checkout. Hold the next merge until the previous merge is verified and the
+candidate's own latest-head checks, completed review, resolved findings and explicit
+merge authorization are satisfied. Recheck current main immediately before merging;
+if it advanced, refresh and validate again. A failure in prior verification stops the
+next merge and must be reported, even if the next candidate is green.
+
+Mark the candidate ready after local verification and required latest-head CI pass.
+This repository automatically requests Codex review when a draft becomes ready.
+Inspect actual review status and its reviewed SHA; do not also post a manual request
+while the same head is under review or already reviewed. If automatic review does not
+start, or a changed head needs re-review, request it manually after checking live state.
+A review request or running review is not a completed clean review.
+
+Keep pending run/review links, exact revisions and the previous verification gate in
+[handoff checkpoints](AGENT_HANDOFF.md). Preparation can overlap; merge gates cannot.
+
 ## 1. Record the merge and find exact push CI
 
 From a repository checkout (or by adding `--repo ChrisBuilds/terminaltexteffects`
@@ -70,16 +91,32 @@ Confirm the **Deploy GitHub Pages** step actually succeeded, not just the build 
 Waiting for `github-pages` environment approval is pending; do not change its rules to
 bypass a required maintainer approval.
 
-Open the [public site](https://chrisbuilds.github.io/terminaltexteffects/) and inspect:
+Use HTTP/CLI checks for routine verification of the
+[public site](https://chrisbuilds.github.io/terminaltexteffects/). For example, download
+HTML without relying on a browser's cached copy:
+
+```sh
+curl --fail --location --silent --show-error --header 'Cache-Control: no-cache' \
+  https://chrisbuilds.github.io/terminaltexteffects/ --output /tmp/tte-docs-home.html
+```
+
+Inspect the returned HTML, not just the HTTP status. Fetch the relevant linked pages
+and assets separately; a homepage response does not verify their availability. Check:
 
 - The development banner's commit link: its full `/tree/<SHA>` target must match the
   actual deployed SHA (the visible banner abbreviates it to seven characters).
 - The introduction, navigation, a deep API page, and relevant changed documentation.
 - Images and changelog when affected. Record inspected pages and any uninspected scope.
 
+Record the verification method, checked URLs, expected content and full banner SHA.
+HTTP checks establish availability and returned content, not rendered appearance.
+Use a browser for changed layout, styling or rendering, a suspected visual defect,
+or explicitly requested visual QA. Routine content-only deployment checks do not
+require opening the maintainer's browser. Record any visual scope left uninspected.
+
 A local strict build does not establish live publication. If the banner is stale after
-a successful deployment, retry the page without browser cache and allow brief propagation;
-then inspect deployment evidence instead of repeatedly dispatching. The site describes
+a successful deployment, repeat the HTTP fetch with cache revalidation and allow brief
+propagation; then inspect deployment evidence instead of repeatedly dispatching. The site describes
 main development, not necessarily the published PyPI version.
 
 If main advances while building or awaiting approval, the workflow intentionally skips
@@ -136,7 +173,7 @@ supplement the public evidence. A closed linked issue does not erase outstanding
 - Main CI run / attempt / tested SHA / conclusion / actual scope and skips:
 - Superseded or failed runs and explanation (or none):
 - Docs run / attempt / actual deployed SHA / deploy-step result:
-- Live banner full SHA / inspected pages / verification time (UTC):
+- Live banner full SHA / checked URLs and content / HTTP or browser method / uninspected scope / verification time (UTC):
 - Recovery actions, original failure evidence and follow-up issue (or none):
 - Outcome: complete, or pending/failed with next owner and concrete action.
 ```
