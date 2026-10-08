@@ -42,7 +42,7 @@ in dependency-tracking issues, changelog fragments, or PRs before coordinated di
 
 ## Maintainer monitoring
 
-Maintainers follow the [security monitoring procedure](.github/SECURITY_MONITORING.md)
+Maintainers follow the [security monitoring procedure](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/SECURITY_MONITORING.md)
 for weekly and pre-release alert review, scan freshness, notification ownership and
 failure escalation. Automatic scans and a passing PR are not proof that every finding
 has been resolved. This internal maintenance cadence does not promise a response deadline
