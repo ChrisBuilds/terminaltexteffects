@@ -26,7 +26,8 @@ def changed_files(root: Path, base: str) -> list[str]:
     ancestor = git(root, "merge-base", base, "HEAD").decode().strip()
     outputs = (
         git(root, "diff", "--name-only", "--no-renames", "-z", ancestor, "HEAD", "--"),
-        git(root, "diff", "--name-only", "--no-renames", "-z", "HEAD", "--"),
+        git(root, "diff", "--cached", "--name-only", "--no-renames", "-z", "HEAD", "--"),
+        git(root, "diff", "--name-only", "--no-renames", "-z", "--"),
         git(root, "ls-files", "--others", "--exclude-standard", "-z"),
     )
     return sorted({name.decode() for output in outputs for name in output.split(b"\0") if name})

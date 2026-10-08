@@ -48,6 +48,28 @@ def test_selection_includes_all_work_states(tmp_path: Path) -> None:
     ]
 
 
+def test_selection_includes_staged_path_when_worktree_cancels_change(tmp_path: Path) -> None:
+    """A staged diff remains selected when unstaged edits restore the HEAD contents."""
+
+    def git(*args: str) -> bytes:
+        return subprocess.run(["git", *args], cwd=tmp_path, check=True, capture_output=True).stdout  # noqa: S603,S607
+
+    git("init")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "Test")
+    target = tmp_path / "docs.md"
+    target.write_text("original\n")
+    git("add", "docs.md")
+    git("commit", "-m", "base")
+    git("tag", "base")
+    target.write_text("staged version\n")
+    git("add", "docs.md")
+    target.write_text("original\n")
+
+    assert git("status", "--short").decode().strip() == "MM docs.md"
+    assert qa.changed_files(tmp_path, "base") == ["docs.md"]
+
+
 def test_deleted_workflow_still_triggers_validation(tmp_path: Path) -> None:
     """Removed inputs affect selection without being passed to Python file checks."""
     commands = qa.plan(tmp_path, [".github/workflows/deleted.yml", "gone.py"], [], None)
