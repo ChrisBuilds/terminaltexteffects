@@ -188,7 +188,9 @@ and maintenance. Keep expected behavior assertions meaningful; page rendering al
 validate APIs or commands.
 
 Run manual or visual tests when human inspection is needed. Reserve exhaustive effect-argument
-testing for pre-release validation unless diagnosing the full parameter matrix. Performance
+testing for pre-release validation unless diagnosing the full parameter matrix. Release
+preparation uses the manual [exhaustive workflow](.github/EXHAUSTIVE_VALIDATION.md)
+with an exact candidate SHA and retained evidence; it does not publish. Performance
 claims require before/after measurements and checks that seeded output and frame behavior are
 preserved, or an explanation of intentional changes.
 

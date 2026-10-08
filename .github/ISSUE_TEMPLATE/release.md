@@ -26,8 +26,8 @@ Use N/A with a reason for checks that do not apply. A checked box needs a result
 - [ ] Fragments reviewed; dated Towncrier notes assembled and fragments consumed in the release PR.
 - [ ] Changelog preview and branch decision checks pass.
 - [ ] Focused code QA passes; release-relevant existing quality findings reviewed.
-- [ ] All eight CI checks actually pass for the latest release PR revision; full test matrix ran.
-- [ ] Exhaustive effect-argument suite completed successfully; attach SHA, Python version, and log.
+- [ ] All required CI checks actually pass for the latest release PR revision; full test matrix ran.
+- [ ] Manual exhaustive workflow completed successfully on the latest candidate; record run link, candidate/workflow SHAs, Python version, exit status, inspected results/skips, and downloaded evidence (30-day retention).
 - [ ] Strict docs build and completion freshness checks pass.
 - [ ] Automated review completed; findings addressed and conversations resolved.
 
@@ -45,7 +45,7 @@ Record terminals, OS versions, selections/commands, results, and reasons for N/A
 ## Merge and artifacts
 
 - [ ] Maintainer authorized merge; release PR squash-merged.
-- [ ] Final merged commit identified and its main CI passed.
+- [ ] Final merged commit identified and its main CI passed; reviewed/merged trees compared, with exhaustive validation rerun if they differ.
 - [ ] Exact approved commit built in a clean checkout with locked tools.
 - [ ] Wheel, source archive, and source-rebuilt wheel pass artifact validation and clean-install checks.
 - [ ] Development effects absent from all archives, installed CLI, and bundled completions.

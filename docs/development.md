@@ -457,13 +457,17 @@ Open a draft release PR with **`Refs #<release-issue>`**, keeping the issue open
 
 **Purpose:** validate the release beyond routine automated pairwise tests.
 
-Required CI must execute full validation for version/packaging changes. Additionally run the dedicated exhaustive effect-argument suite:
-
-```sh
-./.venv/bin/pytest -n auto --exhaustive-effect-args --durations=20
-```
-
-Record interpreter, exact SHA, log, and exit status. An interrupted or partial run is not a pass.
+Required CI must execute full validation for version/packaging changes. Additionally,
+dispatch the manual **Exhaustive release validation** workflow from `main` with the
+release PR's exact full head SHA. It runs the complete automated effect-argument matrix
+on Linux/Python 3.14, separately from routine pairwise and platform compatibility CI.
+Agents can dispatch, monitor and investigate this run as part of release preparation.
+Record the run link, tested candidate and workflow SHAs, Python version, results/skips
+and pytest exit status; download log/JUnit/context evidence before its 30-day expiration.
+Failed, interrupted or partial runs do not complete the checklist. Candidate changes
+require new exhaustive evidence. Follow the
+[exhaustive workflow guide](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/EXHAUSTIVE_VALIDATION.md)
+for dispatch commands and evidence interpretation. Publishing remains separately approved.
 
 Human QA covers changed effects with representative small, multiline, sparse, and wide-character input; pacing/appearance; existing-color handling where relevant; truecolor/256-color/no-color; clipping/wrapping; resizing; interruption and cursor restoration. Resizing inspection does not promise live reflow. Inspect skips and exercise missing manual scenarios directly. Performance changes need controlled before/after evidence. Record a reasoned N/A for unaffected areas.
 
