@@ -32,7 +32,7 @@ The current schedule is Wednesday 06:17 UTC. Inspect both Python and Actions job
 uploaded analyses on `refs/heads/main`, not merely the workflow's overall green badge:
 
 ```sh
-gh run list --workflow codeql.yml --branch main --limit 20 \
+gh run list --all --workflow codeql.yml --branch main --limit 20 \
   --json databaseId,attempt,event,headSha,createdAt,status,conclusion,url
 gh api --paginate 'repos/ChrisBuilds/terminaltexteffects/code-scanning/analyses?ref=refs%2Fheads%2Fmain&per_page=100' \
   --jq '.[] | {created_at,commit_sha,category,error,warning,tool: .tool.name}'
