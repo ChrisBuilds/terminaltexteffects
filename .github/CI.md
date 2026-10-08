@@ -60,7 +60,8 @@ do not independently request docs; manual runs still request full validation.
 Classification regression tests run in Code quality on every run, including documentation-only
 changes. The matrix does not repeat the docs build; the separate post-merge deployment
 still rebuilds the exact tested main commit. All changes retain changelog validation.
-Documentation-only matrix and completion jobs perform a short success step so all ten required check names remain present; the whole workflow is never path-filtered.
+Documentation-only matrix, completion, and Nix jobs perform a short success step
+so check names remain present; the whole workflow is never path-filtered.
 
 New pushes cancel obsolete runs for the same branch or pull request. Each Python version
 reports separately, and a failure on one version does not cancel the other matrix jobs.
@@ -295,6 +296,47 @@ results. Examples needing files should supply temporary fixtures. Do not blanket
 installation commands, interactive snippets, demonstrations, or every Markdown fence.
 These checks supplement strict MkDocs/link validation; they do not verify visual fidelity,
 all examples, or every terminal/shell. Human visual and release QA remain necessary.
+
+## Nix packaging validation
+
+`Nix / Linux` (`ubuntu-24.04`) and `Nix / macOS` (`macos-15`) run inside the
+existing CI workflow, after Code quality. Code-bearing PRs/main pushes and manual
+dispatch execute `bash tools/check_nix.sh`; documentation-only changes retain
+lightweight success steps. Nix config/lock changes also request the strict docs
+build. A Nix job failure prevents successful CI and therefore its documentation
+deployment trigger. These two new names are **not yet required by branch
+protection**; adding them requires explicit maintainer approval. Existing required
+checks remain unchanged.
+
+The full-SHA-pinned `cachix/install-nix-action` enables `nix-command` and `flakes`.
+It needs no external cache account or write token. Standard Nix binary substitution
+remains available. Code quality runs ShellCheck on `tools/check_nix.sh` as well as
+actionlint/ShellCheck on the workflow definitions. Dependabot's existing Actions
+ecosystem entry covers the installer action pin.
+
+The verifier checks flake evaluation, explicitly builds the default package, and
+builds classic `pkgs.callPackage` against the same locked nixpkgs source. It compares
+filtered source identities for clean/dirty copies, verifies a required-source change
+alters that identity, and tests both installed CLI names outside the checkout with
+seeded piped input, expected text, and cursor restoration. It also exercises
+`nix run` and `nix shell` and confirms `flake.lock` is unchanged. It never updates
+the lock, retries a failed check, or converts errors to warnings.
+
+Logs record the tested Git SHA, actual Nix system identifier, and Nix version;
+successful jobs include a step summary. The flake advertises `x86_64-linux`,
+`aarch64-linux`, `x86_64-darwin`, and `aarch64-darwin`; each hosted runner tests only
+its reported identifier. Other architectures and human terminal rendering remain
+unverified by these jobs. This packaging smoke check supplements the Python matrix;
+it does not run the exhaustive effect-argument suite.
+
+For local reproduction, install Nix and Python 3.10+, enable the two experimental
+features, and run `bash tools/check_nix.sh` from the candidate checkout. Missing
+inputs require network access; builds populate the Nix store. The helper removes
+only its temporary fixtures/output links. To refresh nixpkgs deliberately, run
+`nix flake update nixpkgs`, rerun validation, and commit the resulting lock with a
+scoped issue/PR. The input uses the official nixpkgs unstable-channel archive.
+There is no automatic lock update or lock-age gate; freshness is not build evidence.
+See [failure diagnostics](TEST_DIAGNOSTICS.md#nix-failures) for evidence retention.
 
 ## Scheduled source and workflow security analysis
 

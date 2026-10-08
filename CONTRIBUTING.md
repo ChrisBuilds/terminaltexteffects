@@ -130,6 +130,17 @@ Workflow edits also have a read-only actionlint/ShellCheck command and an option
 `workflows` hook. Install the pinned actionlint release and ShellCheck before invoking it; see
 [workflow linting](.github/CI.md#workflow-linting). Code quality enforces this check on every run.
 
+For Nix packaging changes, run `bash tools/check_nix.sh` with Nix's `nix-command`
+and `flakes` features enabled and Python 3.10+ on PATH. It builds flake and classic
+packages using `flake.lock`, tests source filtering and installed commands outside
+the checkout, and rejects lockfile changes. It downloads missing locked inputs and
+builds into the Nix store; it does not update dependencies or publish artifacts.
+Refresh the official nixpkgs unstable-channel input deliberately with
+`nix flake update nixpkgs`, then rerun verification and commit the lockfile.
+See [Nix CI coverage](.github/CI.md#nix-packaging-validation) for hosted platforms
+and verification limits. Update this guidance and the developer guide when changing
+Nix build or CI behavior.
+
 Hooks are optional and bypassable, so successful CI checks remain the enforced merge gate.
 Code quality repeats read-only hygiene checks on files changed from the merge base; it does not
 scan unrelated legacy files. Manual dispatch on unchanged main has no changed files to check. Remove the local installation with

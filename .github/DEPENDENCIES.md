@@ -6,6 +6,13 @@ America/New_York. Routine minor and patch updates are grouped per ecosystem; rou
 remain individual PRs. Each ecosystem may have at most two open version-update PRs.
 Security updates do not count toward this limit.
 
+The Actions entry also maintains the SHA-pinned Nix installer. Dependabot does not
+update the root `flake.lock`. Refresh its official nixpkgs unstable-channel input
+deliberately with `nix flake update nixpkgs`, verify with `bash tools/check_nix.sh`,
+and use the normal scoped issue/PR process. The Nix input is separate from the uv
+dependency graph and its advisory gate; successful Nix builds are not a dependency
+security audit. No lock-age gate or automatic lock updater is configured.
+
 PRs are assigned to `ChrisBuilds` with `maintenance` and `ci` labels. Select milestones
 during triage instead of permanently binding updates to one release. Keep action
 references pinned to full commit SHAs with version comments; review the new revisions

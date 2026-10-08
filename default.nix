@@ -1,25 +1,40 @@
 {
   lib,
-  python312Packages,
+  python3Packages,
 }: let
   hatchlingDef = with builtins; (fromTOML (readFile ./pyproject.toml)).project;
 
   name = hatchlingDef.name;
 in
-  python312Packages.buildPythonApplication {
+  python3Packages.buildPythonApplication {
     pname = name;
     inherit (hatchlingDef) version;
 
-    src = builtins.path {
-      path = ./.;
+    src = lib.cleanSourceWith {
+      src = ./.;
       name = name;
+      filter = path: type: let
+        relative = lib.removePrefix (toString ./. + "/") (toString path);
+        base = baseNameOf path;
+      in
+        (builtins.elem relative ["pyproject.toml" "README.md" "LICENSE"]
+          || relative == "terminaltexteffects"
+          || lib.hasPrefix "terminaltexteffects/" relative)
+        && base != "__pycache__"
+        && !(lib.hasSuffix ".pyc" base)
+        && !(lib.hasSuffix ".pyo" base)
+        && !(lib.hasSuffix "~" base)
+        && !(lib.hasSuffix ".swp" base)
+        && base != "effect_dev.py";
     };
 
     pyproject = true;
 
-    nativeBuildInputs = [
-      python312Packages.hatchling
+    build-system = [
+      python3Packages.hatchling
     ];
+
+    pythonImportsCheck = ["terminaltexteffects"];
 
     meta = {
       inherit (hatchlingDef) description;
