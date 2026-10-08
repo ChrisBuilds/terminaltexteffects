@@ -38,6 +38,10 @@ Keep the existing `gh-pages` branch through the cutover as a fallback. Do not de
 as part of this change. A local strict build or a green PR check does not verify live deployment.
 See [GitHub's custom Pages workflow guide](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
+For each merge, follow [POST_MERGE.md](POST_MERGE.md) for exact CI/deployment run
+identification, live commit-link verification, supersession handling and a copyable record.
+A successful deployment workflow that skipped the deploy step is not publication evidence.
+
 ## Retry and recovery
 
 Manual dispatch on `main` rebuilds current main only if its push CI already succeeded.

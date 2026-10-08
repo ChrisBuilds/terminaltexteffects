@@ -117,6 +117,9 @@ address findings, resolve conversations, and rerun affected checks. The maintain
 release evidence and separately authorizes squash merging.
 
 After merging, identify the resulting release commit and wait for its `main` CI run to pass.
+Follow the [post-merge procedure](.github/POST_MERGE.md) for exact-run identification,
+live documentation verification and failure recovery; superseded runs do not establish
+a passing result for the frozen release commit.
 Changes to code, dependencies, packaging, or notes require renewed relevant QA. Preserve evidence
 from the reviewed branch and confirm the merged tree contains the reviewed changes.
 Compare reviewed and merged trees (`git diff REVIEWED_SHA MERGED_SHA --`); if they differ,

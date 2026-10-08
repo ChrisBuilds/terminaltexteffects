@@ -261,6 +261,11 @@ for administrators. These protections are configured in GitHub settings; reposit
 and templates do not enforce them. As a solo-maintainer project, mandatory external approvals
 can remain at zero while the maintainer performs the final review.
 
+After merging, the merge handler follows [.github/POST_MERGE.md](.github/POST_MERGE.md)
+to verify main CI and live documentation, record exact revision/run evidence, and handle
+superseded or failed runs. Report unexpected issues; complete verification or explicitly
+hand it off rather than treating merge as proof of post-merge success.
+
 ## Agent authorization
 
 Assigning an issue to an agent for implementation authorizes branch creation, implementation
