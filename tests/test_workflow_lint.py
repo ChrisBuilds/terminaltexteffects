@@ -36,6 +36,31 @@ def test_tracked_workflow_selection(tmp_path: Path) -> None:
     ]
 
 
+def test_tracked_workflow_selection_handles_non_utf8_index_path(tmp_path: Path) -> None:
+    """Decode raw Git index paths with filesystem semantics and skip absent files."""
+    if os.name != "posix":
+        pytest.skip("Invalid UTF-8 Git path bytes are a POSIX filename case.")
+
+    def git(*args: str, stdin_bytes: bytes | None = None) -> bytes:
+        return subprocess.run(["git", *args], cwd=tmp_path, input=stdin_bytes, check=True, capture_output=True).stdout  # noqa: S603,S607
+
+    git("init")
+    workflow = tmp_path / ".github/workflows/valid.yml"
+    workflow.parent.mkdir(parents=True)
+    workflow.write_text("name: valid\non: push\njobs: {}\n")
+    git("add", ".")
+    blob = git("hash-object", "-w", "--stdin", stdin_bytes=b"name: invalid\non: push\njobs: {}\n").strip()
+    git(
+        "update-index",
+        "--add",
+        "-z",
+        "--index-info",
+        stdin_bytes=b"100644 " + blob + b"\t.github/workflows/invalid-\xff.yml\0",
+    )
+
+    assert check_workflows.workflow_files(tmp_path) == [".github/workflows/valid.yml"]
+
+
 @pytest.mark.parametrize("tool", ["TTE_ACTIONLINT", "TTE_SHELLCHECK"])
 def test_missing_tool_fails(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tool: str

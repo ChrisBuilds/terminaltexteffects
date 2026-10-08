@@ -205,6 +205,20 @@ A successful local build verifies documentation; it does not deploy it. Strict b
 
 **Complete when:** applicable focused tests, touched-file formatting/lint/types, and generated-file checks pass. Report remaining uncertainty instead of overstating QA.
 
+### Portable local QA command
+
+Run `uv run --no-sync --offline python -m tools.qa --dry-run` to see checks selected
+from branch and working-tree changes. Add `--test tests/path.py` (repeatable) and remove
+`--dry-run` to run focused tests and relevant read-only checks. It reuses the existing
+quality, hygiene, changelog, completion, inventory, workflow and documentation tools.
+Missing tools or failed checks stop execution; tests are explicitly reported as not run
+if none are selected. Changes to the package/CLI registration, `docs/effects/`,
+`tests/effects_tests/`, `mkdocs.yml`, or the inventory checker run structural inventory
+validation. Changed workflows, including untracked files, are passed to actionlint/ShellCheck.
+CI still owns broad compatibility and integration validation.
+See the [local QA reference](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/LOCAL_QA.md)
+for selection details and platform commands.
+
 ## 5. Record the changelog decision
 
 **Trigger:** every issue implemented through a PR.

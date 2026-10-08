@@ -93,7 +93,7 @@ jobs:
         run: |
           .venv/bin/python tools/check_workflows.py
           .venv/bin/python -m pytest -q tests/test_workflow_lint.py tests/test_ci_classification.py \
-            tests/test_coverage_reporting.py tests/test_ci_diagnostics.py \
+            tests/test_coverage_reporting.py tests/test_ci_diagnostics.py tests/test_local_qa.py \
             --junitxml=test-results/workflow-regressions.xml -o junit_logging=no -o faulthandler_timeout=120
       - name: Check all tracked Python files
         run: .venv/bin/python tools/check_quality.py --all

@@ -24,7 +24,7 @@ def workflow_files(root: Path) -> list[str]:
         name
         for raw in result.stdout.split(b"\0")
         if raw
-        for name in [raw.decode("utf-8")]
+        for name in [os.fsdecode(raw)]
         if name.endswith((".yml", ".yaml")) and (root / name).is_file()
     )
 
