@@ -331,3 +331,10 @@ Check the resulting diff and latest CI. A green check against the former base is
 Strict checking may add a CI run when another PR merges first. Refresh the next PR to merge
 rather than every queued branch after each main update. Concurrency cancels superseded runs;
 documentation-only changes retain their lightweight matrix steps. No merge queue is configured.
+
+## Ongoing security maintenance
+
+The maintainer owns weekly and pre-release security health review; assigned agents follow
+[.github/SECURITY_MONITORING.md](.github/SECURITY_MONITORING.md) and report unexpected
+findings or stale/broken scans. Record both CodeQL categories, all dependency alerts and
+updater/graph evidence; a green PR does not establish current security monitoring.

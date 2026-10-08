@@ -130,6 +130,16 @@
   and ShellCheck installed (or `TTE_ACTIONLINT`/`TTE_SHELLCHECK` executable overrides). Follow
   `.github/CI.md#workflow-linting`; the optional workflow hook runs only in the manual stage.
 
+## Security Monitoring
+
+- Follow `.github/SECURITY_MONITORING.md` for weekly and pre-release security health reviews.
+  Account for both CodeQL categories, dependency alerts and updater/graph health; record exact
+  scan dates/SHAs, failures, freshness and limitations. Missing/failed API results are not clean.
+- Report unexpected findings or stale/broken monitoring promptly to the primary agent/maintainer.
+  Monitoring is assigned work, not a persistent background service. Preserve the known #154
+  disposition; new findings require independent triage. Notification settings and alert
+  dismissals require maintainer decisions.
+
 ## CodeQL Security Findings
 
 - Follow `.github/CODEQL.md` for scheduled/manual main scanning and alert triage. Current

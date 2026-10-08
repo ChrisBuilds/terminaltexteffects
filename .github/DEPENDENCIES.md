@@ -162,3 +162,10 @@ Running the updater on newer Python alone does not fix a universal lock:
 dependency metadata must describe the supported
 tooling environments. Verify the lock and GitHub alerts after merge, without assuming
 a green differential PR check clears every existing advisory.
+
+## Ongoing monitoring ownership
+
+Follow [SECURITY_MONITORING.md](SECURITY_MONITORING.md) for weekly/pre-release review,
+per-category freshness thresholds, dependency updater/graph health, notification ownership,
+escalation and the evidence template. Failed or stale scans and inaccessible security
+results are not clean findings. Maintainer-owned triage is separate from automatic scans.
