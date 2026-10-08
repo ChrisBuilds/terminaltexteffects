@@ -39,3 +39,11 @@ does not update an existing installation or publish a new package release.
 User-installed plugins and opted-in development effects execute Python code. Load only
 code you trust; external effects are not sandboxed. Do not include private exploit details
 in dependency-tracking issues, changelog fragments, or PRs before coordinated disclosure.
+
+## Maintainer monitoring
+
+Maintainers follow the [security monitoring procedure](.github/SECURITY_MONITORING.md)
+for weekly and pre-release alert review, scan freshness, notification ownership and
+failure escalation. Automatic scans and a passing PR are not proof that every finding
+has been resolved. This internal maintenance cadence does not promise a response deadline
+for private reports.

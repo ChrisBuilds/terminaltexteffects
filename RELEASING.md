@@ -86,6 +86,11 @@ This is not a routine local commit prerequisite.
 CI enforces whole-project Ruff formatting, lint, and Pyright checks on tracked Python files.
 Record any remaining release-relevant findings in the issue.
 
+Before release sign-off, complete the [security health review](.github/SECURITY_MONITORING.md):
+verify both CodeQL category uploads within the freshness window, account for security-relevant
+changes since the scan, triage open alerts and record limitations. Recheck merged release code
+before publication when candidate changes were not covered by main scans.
+
 ## 4. Complete human QA
 
 Inspect changed effects in a real terminal using representative small, multiline, sparse, and

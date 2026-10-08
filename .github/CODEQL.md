@@ -94,3 +94,10 @@ this workflow as configuration; it does not execute a privileged scan of an issu
 GitHub documents [advanced setup](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/configure-code-scanning/configuring-advanced-setup-for-code-scanning),
 [workflow options and query suites](https://docs.github.com/en/code-security/reference/code-scanning/workflow-configuration-options),
 and the [official action/build-mode permissions](https://github.com/github/codeql-action).
+
+## Ongoing monitoring ownership
+
+Follow [SECURITY_MONITORING.md](SECURITY_MONITORING.md) for weekly/pre-release review,
+per-category freshness thresholds, dependency updater/graph health, notification ownership,
+escalation and the evidence template. Failed or stale scans and inaccessible security
+results are not clean findings. Maintainer-owned triage is separate from automatic scans.

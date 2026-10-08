@@ -541,6 +541,19 @@ See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/S
 
 Native Python 3.9 testing retains an open pytest temporary-directory advisory because the upstream patched release requires Python 3.10+. The maintainer has deferred a CI wrapper: current GitHub-hosted 3.9 jobs use fresh isolated VMs, limiting the advisory's cross-user local attack scenario. Routine development uses patched modern tooling. Shared Unix hosts or persistent runners need a fresh exposure assessment; a venv alone is not a security boundary. Track the compatible upstream fix in [#154](https://github.com/ChrisBuilds/terminaltexteffects/issues/154) and follow the [dependency policy](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/DEPENDENCIES.md#runtime-and-tooling-python-support). The alert remains open; this assessment does not mean pytest is patched.
 
+### Security monitoring ownership and freshness
+
+The maintainer owns a weekly security health review after the updater and CodeQL windows,
+and another review before release sign-off. Assigned agents record both uploaded CodeQL
+categories, scanned SHAs/dates, open findings, dependency alerts and updater/graph health.
+Results older than nine days are overdue; a scan category older than fourteen days needs
+maintainer escalation. New failed attempts require investigation even with recent successful
+scans. Record uncovered security-relevant changes and rerun main analysis when needed.
+Notifications supplement this review; delivery preferences must be verified by the maintainer.
+There is no new freshness-monitoring scheduler or notification bot. Follow the
+[security monitoring procedure](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/SECURITY_MONITORING.md)
+for thresholds, commands, triage, limitations and an evidence template.
+
 ## Tool reference: what each component contributes
 
 | Component | Role | Where configured or implemented | Usual trigger |

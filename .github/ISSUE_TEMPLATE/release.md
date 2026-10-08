@@ -29,6 +29,7 @@ Use N/A with a reason for checks that do not apply. A checked box needs a result
 - [ ] All required CI checks actually pass for the latest release PR revision; full test matrix ran.
 - [ ] Manual exhaustive workflow completed successfully on the latest candidate; record run link, candidate/workflow SHAs, Python version, exit status, inspected results/skips, and downloaded evidence (30-day retention).
 - [ ] Strict docs build and completion freshness checks pass.
+- [ ] Security health review recorded: both CodeQL uploads/freshness, uncovered candidate changes, dependency alerts/updater health and tracked limitations.
 - [ ] Automated review completed; findings addressed and conversations resolved.
 
 ## Human QA
@@ -64,6 +65,7 @@ Preparation or merge approval alone does not authorize publishing.
 
 ## Publication and post-release verification
 
+- [ ] Merged release security-relevant changes covered by verified main scans; open findings/limitations reviewed.
 - [ ] Explicit publication approval recorded.
 - [ ] Remote tag points to the approved commit.
 - [ ] Exact approved wheel and source archive uploaded to PyPI.

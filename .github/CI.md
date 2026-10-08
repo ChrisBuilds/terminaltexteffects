@@ -318,3 +318,10 @@ check. See [EXHAUSTIVE_VALIDATION.md](EXHAUSTIVE_VALIDATION.md) and the release 
 Follow [POST_MERGE.md](POST_MERGE.md) after an authorized merge to identify the exact
 main push run, inspect actual scope, verify live documentation and record evidence. It
 explains superseded runs, justified infrastructure reruns and scoped follow-up fixes.
+
+## Security monitoring freshness
+
+PR gates do not replace ongoing alert and scanner health review. Follow
+[SECURITY_MONITORING.md](SECURITY_MONITORING.md) for owner responsibilities, weekly and
+pre-release checks, freshness thresholds and notification delivery verification. This
+procedure adds no workflow, required check or automatic notification service.
