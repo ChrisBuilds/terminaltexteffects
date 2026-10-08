@@ -304,3 +304,11 @@ for Python and GitHub Actions. Its initial default-query results are reviewed in
 job has security-events upload permission. There is no extra test suite or publishing step.
 PR Code quality still lints the workflow configuration. Activation, initial hosted scan
 verification, triage and dismissal rules are described in the linked guide.
+
+## Manual exhaustive release validation
+
+`exhaustive.yml` runs only on manual dispatch from main, using a required immutable
+candidate SHA. It runs Linux/Python 3.14 exhaustive automated tests, records the verified
+revision and reproduction metadata, and retains log/JUnit/exit-status evidence for 30 days.
+It has no push/PR trigger or publishing permissions and is not an ordinary required PR
+check. See [EXHAUSTIVE_VALIDATION.md](EXHAUSTIVE_VALIDATION.md) and the release runbook.

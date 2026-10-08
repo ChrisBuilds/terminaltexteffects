@@ -87,7 +87,10 @@
 - Highly parametrized effect-configuration tests use deterministic pairwise coverage by default. This covers every
   parameter value and every pair of values without running the complete Cartesian product. Do not pass
   `--exhaustive-effect-args` during normal development.
-- Reserve exhaustive effect-argument testing for pre-release validation:
+- Reserve exhaustive effect-argument testing for pre-release validation. During release
+  preparation, dispatch `exhaustive.yml` from main with the exact candidate SHA and follow
+  `.github/EXHAUSTIVE_VALIDATION.md`; record/download evidence and rerun after candidate changes.
+  This validation never authorizes publication. For explicitly requested local diagnosis:
   - `./.venv/bin/pytest -n auto --exhaustive-effect-args`
 - Broad suites, including shared-engine, pytest-infrastructure, and cross-cutting changes, run in GitHub Actions
   on PRs (including drafts), pushes to `main`, and manual dispatch. Open a draft PR to test issue-branch pushes
