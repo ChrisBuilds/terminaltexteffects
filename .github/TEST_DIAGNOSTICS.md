@@ -5,6 +5,32 @@ No additional suite, retry, timeout-failure policy, or required check is introdu
 
 ## Find the evidence
 
+### Nix failures
+
+For `Nix / Linux` or `Nix / macOS`, inspect the first failing installer or packaging
+step and retain its Actions log. Packaging checks additionally upload seven-day
+`nix-validation-Linux` / `nix-validation-macOS` log artifacts on success or failure;
+cancelled runs may not upload them. These checks do not produce JUnit/context JSON.
+The packaging log records the tested Git SHA (possibly the PR merge revision), Nix
+version, actual system identifier, and build/smoke evidence. Successful jobs also
+write a step summary. The verifier reports the failing script line and compares
+checkout/clean/dirty source identities; a mismatch includes file-difference names
+without file contents. Missing logs, skipped/cancelled jobs, or an installer failure
+are not successful packaging validation.
+
+Temporary source fixtures use physical paths so macOS `/var` and `/private/var`
+aliases do not change filter prefixes. Source evaluation uses read/write mode to
+materialize filtered store paths for comparisons and diagnostic inspection.
+
+Reproduce at the tested revision with `bash tools/check_nix.sh`, Nix's
+`nix-command`/`flakes` features enabled, and Python 3.10+ available. Use the locked
+input, not an unrelated local channel. Preserve the original build/runtime error
+before fixing source or an evidence-backed infrastructure problem; do not update
+the lock or retry to conceal the failure. See [Nix coverage](CI.md#nix-packaging-validation)
+for platform limits. Terminal rendering still needs human inspection.
+
+### Python test failures
+
 Open the failed job and its first failing step. Download its seven-day artifact:
 
 | Job | Artifact |

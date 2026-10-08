@@ -27,7 +27,17 @@ def needs_documentation_build(name: str) -> bool:
     return (
         is_documentation(name)
         or name.startswith(("terminaltexteffects/", "docs/", "overrides/"))
-        or name in {"mkdocs.yml", "pyproject.toml", "uv.lock", ".github/workflows/ci.yml", ".github/workflows/docs.yml"}
+        or name
+        in {
+            "mkdocs.yml",
+            "pyproject.toml",
+            "uv.lock",
+            "default.nix",
+            "flake.nix",
+            "flake.lock",
+            ".github/workflows/ci.yml",
+            ".github/workflows/docs.yml",
+        }
     )
 
 

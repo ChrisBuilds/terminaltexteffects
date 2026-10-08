@@ -98,21 +98,29 @@ Add it as an input to a flake:
 
 ```nix
 inputs = {
-  terminaltexteffects.url = "github:ChrisBuilds/terminaltexteffects/<optional-ref>"
-}
-````
+  terminaltexteffects.url = "github:ChrisBuilds/terminaltexteffects";
+};
+```
+
+Enable `nix-command` and `flakes` in your Nix configuration, for example with
+`experimental-features = nix-command flakes` in `~/.config/nix/nix.conf`.
 
 Create a shell with it:
 
-```nix
-nix shell github:ChrisBuilds/terminaltexteffects/<optional-ref>
+```sh
+nix shell github:ChrisBuilds/terminaltexteffects
 ```
 
 Or run it directly:
 
-```nix
-echo 'terminaltexteffects is awesome' | nix run github:ChrisBuilds/terminaltexteffects/<optional-ref> -- beams
+```sh
+echo 'terminaltexteffects is awesome' | nix run github:ChrisBuilds/terminaltexteffects -- beams
 ```
+
+These commands use development `main`. Append `/COMMIT_SHA` to select an exact
+revision, or `/release-VERSION` for a published release tag that includes Nix support
+(replace the uppercase placeholders). Flake inputs are pinned by the consumer's
+`flake.lock`; use `terminaltexteffects.packages.${pkgs.system}.default` in its outputs.
 
 </details>
 
@@ -122,6 +130,13 @@ echo 'terminaltexteffects is awesome' | nix run github:ChrisBuilds/terminaltexte
 
 Fetch the source and add it to, e.g. your shell:
 
+Save this template as `shell.nix`. Replace `COMMIT_SHA` with a full commit or an
+existing `release-VERSION` tag. Run `nix-shell` once with the empty hash, then copy
+the reported `got: sha256-...` value into `hash` and run `nix-shell` again. Repeat
+the hash update when changing `rev`. The selected `<nixpkgs>` must provide the
+modern Python build tooling used by `default.nix`; CI tests the repository's locked
+nixpkgs input, rather than an arbitrary local channel.
+
 ```nix
 let
   pkgs = import <nixpkgs> {};
@@ -129,7 +144,7 @@ let
   tte = pkgs.callPackage (pkgs.fetchFromGitHub {
     owner = "ChrisBuilds";
     repo = "terminaltexteffects";
-    rev = "<revision, e.g. main/v0.13.0/etc.>";
+    rev = "COMMIT_SHA";
     hash = ""; # Build first, put proper hash in place
   }) {};
 in

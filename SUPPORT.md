@@ -41,6 +41,18 @@ and terminal combinations may work but are not all exercised automatically. CI c
 behavior and emitted output; [release QA](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/RELEASING.md)
 includes human inspection of animation, colors, wide characters, and resizing.
 
+## Nix package coverage
+
+Development `main` has dedicated Nix build/runtime smoke checks on Ubuntu 24.04 and
+macOS 15. They test the default flake package and classic `pkgs.callPackage` against
+the same locked nixpkgs input, including both installed CLI names. Each job records
+its actual Nix system identifier; other architectures advertised by the flake are
+unverified unless exercised by a recorded job. These checks supplement the Python
+matrix and do not establish human terminal rendering correctness. Follow the root
+README's Nix examples and [Nix CI guidance](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/CI.md#nix-packaging-validation)
+for setup, lock refresh, and reproduction. Classic builds using arbitrary local
+channels may have different Python/build tooling from the tested pin.
+
 ## Terminal rendering
 
 Use a modern terminal that supports ANSI cursor movement and color sequences. On Windows,

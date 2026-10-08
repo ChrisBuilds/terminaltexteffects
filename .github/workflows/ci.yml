@@ -92,6 +92,7 @@ jobs:
           TTE_REQUIRE_ACTIONLINT: "1"
         run: |
           .venv/bin/python tools/check_workflows.py
+          shellcheck tools/check_nix.sh
           .venv/bin/python -m pytest -q tests/test_workflow_lint.py tests/test_ci_classification.py \
             tests/test_coverage_reporting.py tests/test_ci_diagnostics.py tests/test_local_qa.py \
             --junitxml=test-results/workflow-regressions.xml -o junit_logging=no -o faulthandler_timeout=120
@@ -145,6 +146,53 @@ jobs:
           path: |
             test-results/context.json
             test-results/*.xml
+          retention-days: 7
+          if-no-files-found: error
+
+  nix:
+    name: Nix / ${{ matrix.name }}
+    needs: quality
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            name: Linux
+          - os: macos-15
+            name: macOS
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Documentation-only changes
+        if: needs.quality.outputs.run_tests != 'true'
+        run: echo 'Documentation-only changes; Nix validation is not required.'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          python-version: "3.14"
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          enable_kvm: false
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: Validate locked Nix packaging and installed commands
+        id: validation
+        if: needs.quality.outputs.run_tests == 'true'
+        run: bash tools/check_nix.sh 2>&1 | tee "$RUNNER_TEMP/nix-validation.log"
+      - name: Upload Nix diagnostics
+        if: "!cancelled() && steps.validation.outcome != 'skipped' && needs.quality.outputs.run_tests == 'true'"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nix-validation-${{ matrix.name }}
+          path: ${{ runner.temp }}/nix-validation.log
           retention-days: 7
           if-no-files-found: error
 

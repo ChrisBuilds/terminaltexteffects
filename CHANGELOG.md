@@ -125,6 +125,11 @@ Detailed examples and explanations may appear in the optional
 
 ### Fixed
 
+- Filtered local Nix package sources to exclude development artifacts,
+  refreshed the pinned build tooling, and corrected Nix installation examples.
+  Linux and macOS CI now validate flake and classic package builds and
+  installed commands.
+  ([#171](https://github.com/ChrisBuilds/terminaltexteffects/issues/171))
 - Blackhole handles short text and compact canvases and uses its configured
   explosion palette. Beams emits characters as soon as progress reaches a whole
   unit; Spotlights handles zero falloff on wide continuation cells; Swarm

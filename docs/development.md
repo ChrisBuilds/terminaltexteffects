@@ -556,6 +556,30 @@ There is no new freshness-monitoring scheduler or notification bot. Follow the
 [security monitoring procedure](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/SECURITY_MONITORING.md)
 for thresholds, commands, triage, limitations and an evidence template.
 
+## Nix packaging checks
+
+The root `flake.nix`, `flake.lock`, and `default.nix` supply a Nix application
+package independently of the uv development environment. The package source includes
+runtime files and required build metadata; Git state, virtual environments, generated
+docs, caches, and development effects do not become build inputs.
+
+Run `bash tools/check_nix.sh` with Nix (`nix-command` and `flakes` enabled) and
+Python 3.10+ available. It builds both flake and classic packages against the locked
+nixpkgs revision, checks clean/dirty source identities, and exercises installed
+commands outside the checkout. Missing inputs are downloaded into the Nix store;
+the helper leaves the lockfile unchanged. `nix flake check` validates outputs but
+does not substitute for the explicit default-package build.
+
+The `Nix / Linux` and `Nix / macOS` jobs run this helper for code-bearing changes
+and manual dispatch within CI, so a failure prevents the successful-main docs
+deployment trigger. Documentation-only changes retain lightweight success steps.
+Job logs and summaries identify the tested revision, Nix version, and actual system;
+the other advertised architectures and human terminal rendering remain unverified.
+These check names await separate approval before addition to branch protection.
+Read [Nix CI coverage](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/CI.md#nix-packaging-validation)
+for reproduction and deliberate `nix flake update nixpkgs` maintenance. The existing
+Actions Dependabot entry maintains the installer pin; it does not update `flake.lock`.
+
 ## Tool reference: what each component contributes
 
 | Component | Role | Where configured or implemented | Usual trigger |
