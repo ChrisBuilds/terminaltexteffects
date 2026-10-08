@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -31,7 +32,7 @@ def changed_files(root: Path, base: str) -> list[str]:
         git(root, "diff", "--name-only", "--no-renames", "-z", "--"),
         git(root, "ls-files", "--others", "--exclude-standard", "-z"),
     )
-    return sorted({name.decode() for output in outputs for name in output.split(b"\0") if name})
+    return sorted({os.fsdecode(name) for output in outputs for name in output.split(b"\0") if name})
 
 
 def plan(root: Path, names: list[str], tests: list[str], keyword: str | None) -> list[tuple[str, list[str]]]:
@@ -75,8 +76,8 @@ def plan(root: Path, names: list[str], tests: list[str], keyword: str | None) ->
     ):
         commands.append(("Generated shell completions", [python, "tools/generate_shell_completions.py", "--check"]))
     if any(
-        name.startswith(("terminaltexteffects/effects/", "tests/effects_tests/"))
-        or name == "tools/check_effect_inventory.py"
+        name.startswith(("terminaltexteffects/", "docs/effects/", "tests/effects_tests/"))
+        or name in {"mkdocs.yml", "tools/check_effect_inventory.py"}
         for name in names
     ):
         commands.append(("Shipped effect inventory", [python, "tools/check_effect_inventory.py"]))

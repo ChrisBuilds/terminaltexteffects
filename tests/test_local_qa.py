@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from typing import TYPE_CHECKING
@@ -97,10 +98,31 @@ def test_untracked_workflow_is_added_to_tracked_inventory(tmp_path: Path) -> Non
     assert workflow_command[-2:] == [".github/workflows/new.yml", ".github/workflows/tracked.yml"]
 
 
-def test_effect_test_change_triggers_inventory_check(tmp_path: Path) -> None:
-    """Changed or deleted effect tests still require structural inventory validation."""
-    commands = qa.plan(tmp_path, ["tests/effects_tests/test_example.py"], [], None)
+@pytest.mark.parametrize(
+    "name",
+    [
+        "terminaltexteffects/effects/effect_example.py",
+        "terminaltexteffects/__main__.py",
+        "docs/effects/example.md",
+        "tests/effects_tests/test_example.py",
+        "mkdocs.yml",
+        "tools/check_effect_inventory.py",
+    ],
+)
+def test_effect_inventory_inputs_trigger_check(tmp_path: Path, name: str) -> None:
+    """Changes to every direct inventory input select the structural check."""
+    commands = qa.plan(tmp_path, [name], [], None)
     assert any("tools/check_effect_inventory.py" in command for _, command in commands)
+
+
+def test_selection_decodes_non_utf8_git_paths_with_filesystem_semantics(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Git paths with invalid UTF-8 bytes remain representable in the selected path list."""
+    outputs = iter([b"base\n", b"", b"invalid-\xff-name.txt\0", b"", b""])
+    monkeypatch.setattr(qa, "git", lambda *_args: next(outputs))
+
+    assert qa.changed_files(tmp_path, "base") == [os.fsdecode(b"invalid-\xff-name.txt")]
 
 
 def test_focused_nodes_and_keywords_are_literal(tmp_path: Path) -> None:
