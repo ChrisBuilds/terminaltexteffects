@@ -2,7 +2,7 @@
   description = "Visual effects applied to text in the terminal. ";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
     systems.url = "github:nix-systems/default";
   };
 

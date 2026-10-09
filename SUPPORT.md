@@ -15,6 +15,16 @@ Newer Python series are unverified until they join the matrix. Older releases re
 their published installation metadata; that does not imply ongoing maintenance.
 Security fixes follow the [latest-stable-release policy](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/SECURITY.md).
 
+## Developer tooling
+
+Documentation, release tooling, and QA hooks require Python 3.10+ on development `main`.
+Use Python 3.14 for the full locked development environment. This tooling requirement
+does not raise TTE's Python 3.9.2 runtime minimum; native 3.9 tests remain in CI.
+The `docs` extra supplies documentation dependencies only on Python 3.10+.
+On Python 3.9, installing that extra does not install a documentation toolchain.
+See [CONTRIBUTING.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CONTRIBUTING.md)
+for separate compatibility environments.
+
 ## Operating systems and automated coverage
 
 TTE runs on Linux, macOS, and Windows. The current automated checks cover:
@@ -30,6 +40,18 @@ describe test coverage, not minimum operating-system requirements. Other OS vers
 and terminal combinations may work but are not all exercised automatically. CI checks
 behavior and emitted output; [release QA](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/RELEASING.md)
 includes human inspection of animation, colors, wide characters, and resizing.
+
+## Nix package coverage
+
+Development `main` has dedicated Nix build/runtime smoke checks on Ubuntu 24.04 and
+macOS 15. They test the default flake package and classic `pkgs.callPackage` against
+the same locked nixpkgs input, including both installed CLI names. Each job records
+its actual Nix system identifier; other architectures advertised by the flake are
+unverified unless exercised by a recorded job. These checks supplement the Python
+matrix and do not establish human terminal rendering correctness. Follow the root
+README's Nix examples and [Nix CI guidance](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/CI.md#nix-packaging-validation)
+for setup, lock refresh, and reproduction. Classic builds using arbitrary local
+channels may have different Python/build tooling from the tested pin.
 
 ## Terminal rendering
 

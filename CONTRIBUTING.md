@@ -11,6 +11,10 @@ For compatibility and ordinary bug reports, see [SUPPORT.md](SUPPORT.md). Report
 privately as described in [SECURITY.md](SECURITY.md); keep exploit details out of public tickets,
 fragments, and PRs until coordinated disclosure.
 
+PR CI also checks newly introduced high/critical dependency vulnerabilities and verifies
+uv graph coverage; see [the dependency gate and exception policy](.github/DEPENDENCIES.md#dependency-vulnerability-gate).
+Unchanged alerts still need Dependabot triage. Do not bypass a gate failure.
+
 Dependabot's generated update PRs are the narrow exception to issue-first creation and branch
 naming. Before merging, create/link a tracking issue, complete metadata and the changelog
 decision, and require latest CI. Follow [dependency update triage](.github/DEPENDENCIES.md).
@@ -68,20 +72,39 @@ artifacts included. Local review notes in the sibling `dev_notes` workspace rema
 
 Use the repository's `.venv` tools when available. Follow the commands and focused verification
 requirements in [AGENTS.md](AGENTS.md): format touched Python files with Ruff, run focused pytest,
-then check formatting, lint, and types. Install reproducible tools with `uv sync --locked --group dev`.
+then check formatting, lint, and types. Install reproducible tools with
+`uv sync --locked --group dev --python 3.14`. Full development, documentation, release,
+and hook environments require Python 3.10+; the TTE runtime still supports Python 3.9.2+.
+For focused native 3.9 diagnosis, use a separate environment so hooks retain the primary tools:
+
+```sh
+UV_PROJECT_ENVIRONMENT=/absolute/path/to/tte-python39 uv sync --locked --no-default-groups --group test --python 3.9
+UV_PROJECT_ENVIRONMENT=/absolute/path/to/tte-python39 uv run --no-sync --no-default-groups python -m pytest tests/test_cli.py
+```
+
+Select the relevant test file or node. CI remains responsible for routine cross-version suites.
 Ruff applies safe fixes by default; apply unsafe fixes only after deliberate review. Pyright targets
 Python 3.9. Documentation-only changes need formatting or diff checks.
 
-Optional pre-commit hooks catch formatting, lint, type, and changelog problems before committing.
+Optional pre-commit hooks catch text hygiene, formatting, lint, type, and changelog problems before committing.
 Install them once per clone after syncing the locked development environment:
 
 ```bash
 uv sync --locked --group dev
-./.venv/bin/pre-commit install --allow-missing-config
+uv run --no-sync --offline python -m pre_commit install --allow-missing-config
 ```
 
-Hooks use this checkout's `.venv`, avoiding separate Ruff/Pyright versions or isolated environments
-without project dependencies. Staged Python files and stubs run safe Ruff lint fixes, Ruff formatting,
+These commands and hook entries work on POSIX and native Windows. Keep uv on `PATH` for Git
+commits, including commits made through an editor. Hooks use `uv run --no-sync --offline` to select
+the project environment without updating the lock or installing dependencies; sync locked tools
+explicitly after switching branches. They use the same Ruff/Pyright versions and project dependencies
+as CI. The `hooks` dependency group contains only pre-commit and the quality tools; `dev` includes it.
+
+Selected text files first run read-only trailing-whitespace and merge-conflict-marker checks.
+Markdown lines ending in two or more spaces retain their intentional hard breaks; blank-line
+whitespace and trailing tabs still fail. Deleted files, symlinks, and binary files are excluded.
+Checks cover the whole selected file, so existing issues in a touched file need correction.
+Staged Python files and stubs run safe Ruff lint fixes, Ruff formatting,
 then read-only Pyright with the Python 3.9 target. Related changelog files trigger fragment and preview
 validation; staged deletions and both sides of renames are included. The changelog hook copies
 its inputs and renderer from the Git index into a temporary directory, so untracked fragments
@@ -97,18 +120,40 @@ to skip hooks. Keep the development environment synced when switching branches.
 To run hooks manually on selected files:
 
 ```bash
-./.venv/bin/pre-commit run --files tools/example.py tests/test_example.py
+uv run --no-sync --offline python -m pre_commit run --files tools/example.py tests/test_example.py
 ```
 
 Use selected-file hooks for routine development. Focused pytest remains a development QA
-step; broad compatibility suites remain in CI. Hooks are optional and bypassable, so successful
-CI checks remain the enforced merge gate. Remove the local installation with
-`./.venv/bin/pre-commit uninstall`.
+step; broad compatibility suites remain in CI.
+
+Workflow edits also have a read-only actionlint/ShellCheck command and an optional manual-stage
+`workflows` hook. Install the pinned actionlint release and ShellCheck before invoking it; see
+[workflow linting](.github/CI.md#workflow-linting). Code quality enforces this check on every run.
+
+For Nix packaging changes, run `bash tools/check_nix.sh` with Nix's `nix-command`
+and `flakes` features enabled and Python 3.10+ on PATH. It builds flake and classic
+packages using `flake.lock`, tests source filtering and installed commands outside
+the checkout, and rejects lockfile changes. It downloads missing locked inputs and
+builds into the Nix store; it does not update dependencies or publish artifacts.
+Refresh the official nixpkgs unstable-channel input deliberately with
+`nix flake update nixpkgs`, then rerun verification and commit the lockfile.
+See [Nix CI coverage](.github/CI.md#nix-packaging-validation) for hosted platforms
+and verification limits. Update this guidance and the developer guide when changing
+Nix build or CI behavior.
+
+Hooks are optional and bypassable, so successful CI checks remain the enforced merge gate.
+Code quality repeats read-only hygiene checks on files changed from the merge base; it does not
+scan unrelated legacy files. Manual dispatch on unchanged main has no changed files to check. Remove the local installation with
+`uv run --no-sync --offline python -m pre_commit uninstall`.
 
 The `Code quality` CI job checks every tracked Python file, including stubs, without modifying
 them. This includes implementation, tests, tools, and archived experiments, so changes cannot
 silently break types in unchanged callers. Ignored and untracked local prototypes are excluded.
 Documentation-only changes still run these read-only quality checks but skip pytest.
+
+For a portable focused local check, use `uv run --no-sync --offline python -m tools.qa --dry-run`,
+then repeat with explicit `--test` files/nodes. See [.github/LOCAL_QA.md](.github/LOCAL_QA.md)
+for selection, tool requirements, and checks that remain in CI.
 
 Reproduce the full CI quality checks with
 `./.venv/bin/python tools/check_quality.py --all`.
@@ -119,7 +164,10 @@ GitHub Actions runs the broad default suite across supported Python versions on 
 drafts), pushes to `main`, and manual dispatch. Issue-branch pushes use the open PR's run;
 open a draft PR or use manual dispatch to check a branch without a PR. Strictly documentation-only
 changes run documentation and changelog checks, with successful required matrix check names
-without executing pytest. Code, dependency, packaging, test, and CI changes retain the full matrix.
+without executing the broad pytest matrix. Focused CI-tool regression tests still run in
+Code quality. Code, dependency, packaging, test, and CI changes retain the full matrix.
+Runtime source and dependency/configuration changes also explicitly request the strict docs
+build in Code quality, so API rendering and documentation integration are checked before merge.
 This includes shared-engine and cross-cutting changes. Broad local runs are for diagnosing
 failures or explicit requests, rather than a routine prerequisite for committing or pushing.
 Report pending CI and continue the conversation without waiting for the broad suites.
@@ -144,8 +192,16 @@ Temporary builds and environments are removed automatically. Optionally pass
 `--output-dir /path/to/empty-directory` to retain the distributions for inspection.
 This check does not publish artifacts. Documentation-only changes skip artifact validation.
 
+Selected canonical library/CLI examples are executed directly from Markdown in CI. When
+editing their marked code blocks, run `./.venv/bin/pytest -q tests/test_documented_examples.py`;
+see [executable example guidance](.github/CI.md#executable-documentation-examples) for selection
+and maintenance. Keep expected behavior assertions meaningful; page rendering alone cannot
+validate APIs or commands.
+
 Run manual or visual tests when human inspection is needed. Reserve exhaustive effect-argument
-testing for pre-release validation unless diagnosing the full parameter matrix. Performance
+testing for pre-release validation unless diagnosing the full parameter matrix. Release
+preparation uses the manual [exhaustive workflow](.github/EXHAUSTIVE_VALIDATION.md)
+with an exact candidate SHA and retained evidence; it does not publish. Performance
 claims require before/after measurements and checks that seeded output and frame behavior are
 preserved, or an explanation of intentional changes.
 
@@ -154,13 +210,31 @@ Develop unfinished effects in the repository-root `dev_effects/` directory. Run 
 The launcher opts in explicitly; normal CLI use and bundled completions remain independent
 of prototypes. Both build targets exclude development effects, and artifact validation injects
 prototypes into a temporary source copy to verify that exclusion. See the
-[development effect workflow](dev_effects/README.md) for tests and promotion into the shipped package.
+[development effect workflow and promotion checklist](dev_effects/README.md#promotion-checklist)
+for tests and promotion into the shipped package. Code quality checks the shipped inventory
+for built-in registration, docs/navigation, and permanent test definitions; completion freshness
+is checked separately. This structural gate supplements behavior tests and human visual review.
 
 Regenerate shell completions when CLI options change. Add an issue-numbered fragment in
 `changelog.d` for each change, then refresh the generated Unreleased preview with
 `./.venv/bin/python tools/generate_changelog.py`. User-facing changes need a concise note;
 internal changes and fixes introduced in the same unreleased version need a `.skip.md` fragment
 explaining why no release note is needed. See [fragment guidance](changelog.d/README.md).
+
+### Investigate CI failures
+
+For failures or stalled tests, use [CI test diagnostics](.github/TEST_DIAGNOSTICS.md).
+Start with the failed node and the recorded tested revision/interpreter; retain the
+original failure evidence even if a later run passes.
+
+### Read coverage changes
+
+For code-bearing PRs, the Linux/Python 3.14 summary reports separate line/branch changes
+against a compatible successful main run at the exact base commit, and identifies untested
+added/modified executable runtime lines. Review missing paths when adding code. The report
+is informational: a percentage drop does not fail CI, and coverage does not establish useful
+assertions or visual quality. Unavailable baselines are shown explicitly; inspect the current
+HTML artifact instead. See [coverage comparison rules](.github/COVERAGE.md#automatic-informational-comparison).
 
 ## 4. Open the pull request
 
@@ -175,20 +249,42 @@ record local validation, and identify remaining limitations. Draft PRs may be op
 discussion and CI feedback. Fix failures on the same branch and update the PR description when
 scope changes.
 
+When an agent transfers responsibility or pauses unfinished work, record an
+[agent handoff checkpoint](.github/AGENT_HANDOFF.md) on the PR, or the issue if no PR
+exists. Include the exact revision, verification and review state, authorization,
+and next action. This is not required at every normal development step; the receiving
+agent verifies current state before acting.
+
 Once focused local checks and required CI checks pass for the latest revision, mark the PR ready
-for review. The maintainer verifies acceptance criteria and resolves outstanding discussions.
+for review. This transition automatically requests Codex review in this repository; inspect the
+latest-head review state before making a manual request. Request manually only if
+review has not started or the changed head requires re-review. The maintainer verifies
+acceptance criteria and resolves outstanding discussions.
 
 ## 5. Merge and close
 
 The maintainer decides when to merge. Use squash merging for one coherent commit per issue,
-then delete the branch. Ordinary linked issues close when the PR merges into `main`;
+then delete the branch. Before merging, the PR branch must include current `main` and all
+required checks must pass for the refreshed revision. If `main` advances again, refresh
+and recheck before merging. Ordinary linked issues close when the PR merges into `main`;
 release tracking issues remain open through publication and post-release verification.
 
+For a queue of PRs, prepare and run CI/review for only the next candidate while the
+previous merge's main CI and documentation verification run. Hold the next merge until
+that verification succeeds and its own fresh checks, review and authorization are
+satisfied. Follow [.github/POST_MERGE.md](.github/POST_MERGE.md); hand off both gates
+when transferring responsibility.
+
 The `main` protection requires PRs, all ten checks listed in
-[.github/CI.md](.github/CI.md), resolved review conversations, and enforcement for
-administrators. These protections are configured in GitHub settings; repository documents
+[.github/CI.md](.github/CI.md), resolved review conversations, up-to-date branches (strict status checks), and enforcement
+for administrators. These protections are configured in GitHub settings; repository documents
 and templates do not enforce them. As a solo-maintainer project, mandatory external approvals
 can remain at zero while the maintainer performs the final review.
+
+After merging, the merge handler follows [.github/POST_MERGE.md](.github/POST_MERGE.md)
+to verify main CI and live documentation, record exact revision/run evidence, and handle
+superseded or failed runs. Report unexpected issues; complete verification or explicitly
+hand it off rather than treating merge as proof of post-merge success.
 
 ## Agent authorization
 
@@ -215,8 +311,50 @@ instead of auto-closing that issue on merge; ordinary development PRs continue t
 Preparation and merge approval do not authorize tagging or publishing. Publishing automation
 is deferred; follow the documented manual procedure with explicit maintainer authorization.
 
+## Source and workflow security findings
+
+CodeQL scans main's Python and GitHub Actions code weekly and on manual dispatch.
+This initial rollout is separate from required PR checks; review findings before deciding
+on enforcement. Follow [CodeQL triage and verification](.github/CODEQL.md) to investigate,
+create a scoped fix issue, validate remediation, and obtain maintainer review before dismissal.
+Use [SECURITY.md](SECURITY.md) for private vulnerability details.
+
 ## Public documentation
 
 The public site follows development `main` after successful main push CI, with a banner
 linking the built commit. PRs validate docs without publishing. See
 [documentation deployment](.github/DOCUMENTATION.md) for setup, local preview, and recovery.
+
+## Refresh a PR before merging
+
+Refresh the next PR intended for merge when it is behind `main`. Preserve local work, fetch,
+and merge current main into its issue branch; GitHub's **Update branch** option is an
+alternative when available:
+
+```sh
+git fetch origin
+git switch <issue-branch>
+git merge origin/main
+```
+
+Resolve conflicts deliberately and review the combined diff. For lockfile conflicts, review
+and resolve the dependency graph; regenerate the changelog preview from fragments instead
+of choosing a stale generated block. Run focused verification where the integration changed
+behavior, commit the resolution, and push the branch. The open PR starts fresh CI; wait for
+all required checks on that revision before merging. Re-running an old workflow does not
+bring an outdated branch up to date. Never bypass protection to use stale results.
+
+For stacked PRs, merge the prerequisite only with maintainer authorization, retarget its
+dependent PR to `main`, and incorporate current main after the prerequisite's squash merge.
+Check the resulting diff and latest CI. A green check against the former base is insufficient.
+
+Strict checking may add a CI run when another PR merges first. Refresh the next PR to merge
+rather than every queued branch after each main update. Concurrency cancels superseded runs;
+documentation-only changes retain their lightweight matrix steps. No merge queue is configured.
+
+## Ongoing security maintenance
+
+The maintainer owns weekly and pre-release security health review; assigned agents follow
+[.github/SECURITY_MONITORING.md](.github/SECURITY_MONITORING.md) and report unexpected
+findings or stale/broken scans. Record both CodeQL categories, all dependency alerts and
+updater/graph evidence; a green PR does not establish current security monitoring.

@@ -56,14 +56,14 @@ Clone the project, inspect your checkout, and install the development group:
 git clone https://github.com/ChrisBuilds/terminaltexteffects.git
 cd terminaltexteffects
 git status --short
-uv sync --locked --group dev
+uv sync --locked --group dev --python 3.14
 ```
 
 `uv` creates or updates `.venv`. The development group includes test, quality, artifact, documentation, and hook tools. `--locked` checks that `pyproject.toml` and the lock agree; it does not silently resolve new versions. Run `uv lock` deliberately when an approved dependency or package-metadata change requires it, then review the diff.
 
-Use `.venv` executables, rather than whatever tool version happens to be installed globally. The project minimum on development `main` is Python **3.9.2**. You can develop with a newer tested interpreter; Pyright checks compatibility against Python 3.9. The published 0.15.0 release still declares Python 3.8 minimum. Package metadata may retain the current released version during development; that does not mean unreleased changes are already on PyPI.
+Use `.venv` executables, rather than whatever tool version happens to be installed globally. The project minimum on development `main` is Python **3.9.2**. Full development, documentation, release, and hook tooling requires Python 3.10+; use Python 3.14 for the primary environment. The docs extra supplies no documentation toolchain on Python 3.9. Pyright still checks runtime compatibility against Python 3.9. Native 3.9 tests use the test group alone in CI; use a separate environment for local compatibility diagnosis as described in CONTRIBUTING.md. The published 0.15.0 release still declares Python 3.8 minimum. Package metadata may retain the current released version during development; that does not mean unreleased changes are already on PyPI.
 
-The commands below assume POSIX `.venv/bin` paths. Native Windows environments use `.venv/Scripts`; for example, `uv run --no-sync python -m pytest ...` or `uv run --no-sync python -m ruff ...` uses the existing environment. The native-platform CI jobs use this form. The optional hook configuration currently names `.venv/bin/python`; do not assume those hook entries are portable unchanged to native Windows.
+The commands below assume POSIX `.venv/bin` paths. Native Windows environments use `.venv/Scripts`; for example, `uv run --no-sync python -m pytest ...` or `uv run --no-sync python -m ruff ...` uses the existing environment. The native-platform CI jobs use this form. Hooks use `uv run --no-sync --offline` and work with native Windows environment paths; keep uv on PATH and the modern development environment synced.
 
 **Complete when:** locked tools install successfully, you know your branch and worktree state, and you have read the relevant project instructions.
 
@@ -144,7 +144,7 @@ Replace `dev` with the effect command name. The development launcher explicitly 
 
 Reviewed issue-branch prototypes may be committed; ignored personal scratch work remains local. The build configuration excludes development effects from wheel and source distributions. Artifact verification deliberately injects a prototype into a temporary build copy to check those exclusions.
 
-Promotion requires a reviewed PR moving the finished effect into the shipped package, permanent tests, documentation, regenerated completions, and a user-facing fragment. See [dev_effects/README.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/dev_effects/README.md).
+Promotion requires a reviewed PR moving the finished effect into the shipped package, permanent tests, documentation, regenerated completions, and a user-facing fragment. Follow the [promotion checklist](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/dev_effects/README.md#promotion-checklist) and run `./.venv/bin/python tools/check_effect_inventory.py` with locked development tools. Documentation and permanent tests use the command name, which may differ from the module suffix. The gate checks structural prerequisites; meaningful behavior tests, accurate examples, demo decisions, and human visual/terminal QA remain review responsibilities.
 
 ### Update completions when the CLI changes
 
@@ -192,9 +192,32 @@ For documentation-only work, use appropriate diff/format checks and a strict doc
 ./.venv/bin/python -m mkdocs build --strict
 ```
 
+For GitHub Actions workflow changes, install actionlint 1.7.12 and ShellCheck as described in
+[workflow linting](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/CI.md#workflow-linting),
+then run `./.venv/bin/python tools/check_workflows.py`. This checks workflow structure,
+expressions, job dependencies, and Bash/sh scripts without editing files. The optional
+`workflows` hook runs only when explicitly invoked with `--hook-stage manual`; ordinary
+commit hooks do not require these external tools.
+
+For the marked canonical library/CLI snippets, also run `./.venv/bin/pytest -q tests/test_documented_examples.py`. The tests execute the actual Markdown code with bounded subprocesses and semantic assertions. Preserve unique markers and standalone fences when editing; see [executable example maintenance](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/CI.md#executable-documentation-examples). This deliberately small selection does not validate every example or terminal appearance.
+
 A successful local build verifies documentation; it does not deploy it. Strict builds fail on relevant warnings/errors and configured link validation. A dependency update deserves integration checks for the tools it affects: successful lock resolution alone does not prove compatibility or safe behavior.
 
 **Complete when:** applicable focused tests, touched-file formatting/lint/types, and generated-file checks pass. Report remaining uncertainty instead of overstating QA.
+
+### Portable local QA command
+
+Run `uv run --no-sync --offline python -m tools.qa --dry-run` to see checks selected
+from branch and working-tree changes. Add `--test tests/path.py` (repeatable) and remove
+`--dry-run` to run focused tests and relevant read-only checks. It reuses the existing
+quality, hygiene, changelog, completion, inventory, workflow and documentation tools.
+Missing tools or failed checks stop execution; tests are explicitly reported as not run
+if none are selected. Changes to the package/CLI registration, `docs/effects/`,
+`tests/effects_tests/`, `mkdocs.yml`, or the inventory checker run structural inventory
+validation. Changed workflows, including untracked files, are passed to actionlint/ShellCheck.
+CI still owns broad compatibility and integration validation.
+See the [local QA reference](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/LOCAL_QA.md)
+for selection details and platform commands.
 
 ## 5. Record the changelog decision
 
@@ -237,14 +260,14 @@ git commit -m 'Fix the concrete behavior described by the issue'
 Install once per compatible clone after syncing locked tools:
 
 ```sh
-./.venv/bin/pre-commit install --allow-missing-config
+uv run --no-sync --offline python -m pre_commit install --allow-missing-config
 ```
 
-`.pre-commit-config.yaml` defines local hooks implemented through `tools/run_hook.py`. On `git commit`, staged Python files run safe Ruff lint fixes, formatting, and read-only Pyright. Changelog-related staged changes run fragment/preview validation. The changelog hook constructs a temporary snapshot from the Git index, including the renderer/configuration; untracked fragments and unstaged edits cannot make the check pass accidentally.
+`.pre-commit-config.yaml` defines local hooks implemented through `tools/run_hook.py`. Portable entries use `uv run --no-sync --offline`: uv must be on `PATH`, including in editors, and locked development tools must already be synced. Commits do not install tools or update the lock. The `hooks` dependency group supplies pre-commit, Ruff, and Pyright without documentation/artifact tooling; `dev` includes it. On `git commit`, selected text files first receive read-only trailing-whitespace and conflict-marker checks. Intentional Markdown hard breaks (two or more trailing spaces) remain valid; trailing tabs and whitespace-only lines fail. Binary files, symlinks, and deleted files are excluded. Hygiene covers whole selected files, so existing issues in a touched file require correction. Staged Python files run safe Ruff lint fixes, formatting, and read-only Pyright. Changelog-related staged changes run fragment/preview validation. The changelog hook constructs a temporary snapshot from the Git index, including the renderer/configuration; untracked fragments and unstaged edits cannot make the check pass accidentally.
 
 If a hook edits files, the commit stops: review, restage, and retry. Pre-commit sets aside unstaged tracked edits and restores them; overlapping changes can force rollback of hook edits to preserve your work. Resolve that situation deliberately. `--allow-missing-config` allows older branches without the hook configuration to skip it.
 
-Manual targeted hook invocation is available with `pre-commit run --files ...`. Hooks are optional and bypassable; they do not replace focused tests or required CI. Avoid routine `--all-files` hook runs that apply fixes outside your scope. CI uses read-only whole-project checks instead.
+Manual targeted hook invocation is available with `uv run --no-sync --offline python -m pre_commit run --files ...`. Hooks are optional and bypassable; they do not replace focused tests or required CI. Avoid routine `--all-files` hook runs that apply fixes outside your scope. CI uses read-only whole-project checks instead.
 
 **Important:** a local Git commit does not start GitHub Actions. Hooks run locally at commit time; remote CI starts on the events in step 7.
 
@@ -284,14 +307,25 @@ The workflow listens to `pull_request`, pushes to `main`, and `workflow_dispatch
 
 **Purpose:** stop downstream matrix jobs when basic quality, packaging, or changelog requirements fail.
 
-`.github/workflows/ci.yml` runs this job on Ubuntu 24.04 with Python 3.14. It checks out history, installs locked development tools, and runs:
+`.github/workflows/ci.yml` runs this job on Ubuntu 24.04 with Python 3.14. It checks out history, installs locked development tools. On PR events it also uses the pinned official dependency-review action to block
+newly introduced high/critical vulnerabilities across runtime, development, and unknown scopes.
+A companion guard checks every added/removed registry pair in both universal uv locks against
+the action's output, including conditional versions. Snapshots retry for up to 120 seconds;
+missing pairs fail rather than look clean. Push/manual events omit the differential action
+but run offline guard fixtures. This uses read-only permissions and job summaries, with no
+PR comments or added required check name. See [dependency gate limitations and exceptions](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/DEPENDENCIES.md#dependency-vulnerability-gate).
 
-1. **Classify the committed diff.** `tools/classify_ci.py` compares against the base, including deletions and both sides of renames. Recognized prose/images may skip the test matrix. Code, dependencies, package configuration, workflows, unknown paths, and YAML configuration request full tests. For example, a `mkdocs.yml` navigation change can trigger full tests even when the intent is documentation-only. Manual runs request full validation.
-2. **Read-only whole-project quality.** `tools/check_quality.py --all` checks all tracked `.py`/`.pyi` files with Ruff formatting/lint and Pyright, including unchanged callers, tests, tools, and tracked experiments. Ignored/untracked personal prototypes are outside its inventory.
-3. **Hook regressions for code-bearing changes.** Validate pre-commit configuration and run `tests/test_hooks.py`.
-4. **Artifact validation for code-bearing changes.** Run `tools/check_artifacts.py`; see below.
-5. **Changelog validation on every change.** Check fragment naming/content, preview freshness, and the committed branch's decision. Release-note consumption into a new dated section is supported.
-6. **Strict documentation build when classified as relevant.** Markdown/docs images, `mkdocs.yml`, and theme overrides request this build. The main documentation deployment later rebuilds all documentation even after source-only changes.
+The other checks are:
+
+1. **Classify the committed diff.** `tools/classify_ci.py` compares against the base, including deletions and both sides of renames. Recognized prose/images may skip the test matrix. Code, dependencies, package configuration, workflows, unknown paths, and YAML configuration request full tests. For example, a `mkdocs.yml` navigation change can trigger full tests even when the intent is documentation-only. Manual runs request full validation. Classification regressions run in Code quality even when the matrix is bypassed.
+2. **Workflow linting on every run.** CI verifies the actionlint 1.7.12 archive checksum and runs the workflow helper with required ShellCheck plus focused workflow and change-classification regression fixtures. Documentation-only changes also receive this check. Pyflakes integration is disabled explicitly; ShellCheck comes from the hosted Ubuntu image.
+3. **Read-only whole-project quality.** `tools/check_quality.py --all` checks all tracked `.py`/`.pyi` files with Ruff formatting/lint and Pyright, including unchanged callers, tests, tools, and tracked experiments. Ignored/untracked personal prototypes are outside its inventory.
+4. **Text hygiene and hook regressions.** Read-only hygiene checks cover files changed from the merge base, including documentation-only PRs. Unchanged main/manual runs have no changed files to check. For code-bearing changes, validate pre-commit configuration and run `tests/test_hooks.py`; the existing Windows job also executes real hooks using native virtual environments and the locked `hooks` group.
+5. **Shipped effect inventory on every run.** The helper and focused fixtures connect each shipped module to built-in CLI registration, matching command/config names, nonempty command-named docs, a real navigation entry, and a permanent test file with test definitions. It rejects stray shipped prototypes. This does not prove useful assertions or visual fidelity; the separate completion job verifies generated-resource freshness.
+6. **Artifact validation for code-bearing changes.** Run `tools/check_artifacts.py`; see below.
+7. **Changelog validation on every change.** Check fragment naming/content, preview freshness, and the committed branch's decision. Release-note consumption into a new dated section is supported.
+8. **Selected executable examples on every run.** `tests/test_documented_examples.py` reads the marked Python library and Bash CLI blocks directly from their public guides. Bounded subprocesses use the current environment outside the checkout and check final text plus CLI cursor restoration. The same tests run in the ordinary Linux matrix; no separate examples matrix is added.
+9. **Strict documentation build when classified as relevant.** Recognized prose, all `docs/` and theme files, runtime package changes, `mkdocs.yml`, `pyproject.toml`, `uv.lock`, and the CI/docs deployment workflows request this build explicitly. Source-only or dependency-only changes need no accompanying fragment to trigger it. Deletions and both sides of renames count. Tests-only and unrelated tool/workflow changes do not independently request it. This is one build in Code quality, not one per matrix job; the separate main deployment rebuilds the tested revision for publication.
 
 ### Why validate artifacts before a release?
 
@@ -330,11 +364,17 @@ For recognized documentation-only changes, matrix and completion jobs execute li
 
 ### Coverage and slow-test reports
 
-Only Linux/Python 3.14 instruments its existing default pytest run with pytest-cov. It measures runtime-package line and branch coverage, merges xdist results, and publishes a job summary plus `coverage-python-3.14` artifacts: JSON, XML, and browsable HTML. Artifacts last 14 days. There is no percentage threshold, external coverage service, or additional coverage-only test run.
+Only Linux/Python 3.14 instruments its existing default pytest run with pytest-cov. It measures runtime-package line and branch coverage, merges xdist results, and publishes a job summary plus `coverage-python-3.14` artifacts: JSON, XML, browsable HTML, and `context.json` measurement/provenance metadata. Artifacts last 14 days. There is no percentage threshold, external coverage service, or additional coverage-only test run.
+
+PR summaries also show informational line/branch changes against successful main CI at the exact base commit and untested added/modified executable runtime lines. Baselines require matching scope, test selection/configuration and tool versions plus successful main provenance. Missing, expired, older metadata-free or incompatible artifacts show baseline unavailable without a delta; coverage decreases do not fail CI. Changed-line analysis can still work without a baseline. The built-in token has read-only Actions access, and downloaded JSON is never executed. No PR comment bot, extra suite or coverage service is involved. Main/manual summaries do not fetch a baseline. See [coverage comparison rules](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/COVERAGE.md#automatic-informational-comparison).
 
 Download the artifact and open `html/index.html` to find missing paths. Compare complete successful runs with the same scope; changing denominators, skipped tests, or environments affects percentages. Reports after failed tests are diagnostic, not a baseline. Coverage does not prove visual fidelity or useful assertions. Arbitrary CLI subprocesses are not included by the current coverage configuration.
 
 The duration report identifies slow tests for separate investigations. Do not remove meaningful coverage simply to lower the number. Pairwise selection and focused native coverage reduce routine CI cost while retaining an exhaustive release-validation path.
+
+### Test-failure diagnostics
+
+Existing pytest steps emit JUnit XML and small reproduction context artifacts retained for seven days, with separate names per matrix/native job. The quality job also retains its individual regression reports. Context records the actual tested SHA (including PR merge revisions), head/base, interpreter, tool versions, and run/attempt; it does not dump the environment. A 120-second per-test traceback timer diagnoses stalls without stopping or retrying tests. Reports upload after success or failure when context exists and the job is not cancelled; hard termination, early setup failure, or a still-hung session can leave reports missing or incomplete. Documentation-only matrix jobs produce no reports. Follow [test diagnostics](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/TEST_DIAGNOSTICS.md) to reproduce a failing node on the tested revision before broadening. Random failures still require the test's actual seed/input; no global replay seed is introduced.
 
 ## 10. Handle failures, review, and mark ready
 
@@ -344,19 +384,33 @@ The duration report identifies slow tests for separate investigations. Do not re
 
 Open the failing job and first failing step. Distinguish a test assertion, quality error, packaging problem, missing changelog decision, dependency integration failure, and runner/infrastructure delay. A queued job has not yet produced a result. Reproduce the relevant focused check locally, fix on the same branch, push, and wait for that revision's checks. Diagnose broad suites locally when necessary; they are not a routine pre-push prerequisite.
 
-When main advances, update the branch if needed, preserving reviewed scope. Lockfile conflicts need dependency-graph review/resolution; generated-preview conflicts should be resolved from fragments using the generator. A resolver success alone cannot prove a security update safe. Recheck integration after substantive updates; stale green checks do not validate a new head.
+Before merging, the branch must include current main: GitHub enforces strict required status checks. If main advances, fetch and merge it into the next PR intended for merge (or use GitHub’s Update branch option), preserving reviewed scope. Push the refreshed revision and wait for its required checks; re-running old checks does not update the branch. Lockfile conflicts need dependency-graph review/resolution; generated-preview conflicts should be resolved from fragments using the generator. A resolver success alone cannot prove a security update safe. Recheck integration after substantive updates; stale green checks do not validate a new head.
 
 Mark the PR **ready for review** after local QA and required latest CI pass. The maintainer checks acceptance criteria, scope, docs/notes, and validation. When automated review provides feedback, read its inline findings as well as its summary. Address valid findings and resolve conversations. Automated review is advisory, not maintainer merge permission.
 
-A PR author cannot formally approve their own PR. This solo-maintainer repository does not require an external approval count, but does require PRs, required checks, and resolved conversations. Contributors and agents still leave the merge decision to the maintainer.
+When Codex reports a finding, acknowledge it in the review thread and describe the intended response. After pushing the fix, follow up in that same thread with the commit, what changed, and validation evidence, including any pending CI or re-review. If investigation shows that no change is needed, explain the reasoning and supporting evidence. Agents are authorized to post these replies as part of assigned PR work. Resolve the conversation only after addressing and verifying the finding; acknowledgment alone does not constitute approval.
+
+A PR author cannot formally approve their own PR. This solo-maintainer repository does not require an external approval count, but does require PRs, required checks, and resolved conversations. Contributors and agents still leave the merge decision to the maintainer. If main advances again before merging, refresh and recheck; do not bypass protection.
 
 **Complete when:** latest required checks pass, acceptance criteria are met, relevant review findings are addressed, and the maintainer decides to merge.
+
+### Agent handoff or pause
+
+When transferring work or CI/review monitoring to another agent, or pausing unfinished work, the outgoing agent records a checkpoint in a dedicated PR comment (on the issue if no PR exists). Follow the [handoff template](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/AGENT_HANDOFF.md). It captures the exact revision, local recovery state, completed/pending checks, reviewed revision and findings, explicit authorization, and next owner/action. Agents write it at handoff time; no GitHub Action generates it, and ordinary development steps do not each require one.
+
+The receiving agent checks the actual worktree and live GitHub state before acting, then refreshes the checkpoint as needed. Record skipped checks explicitly and preserve uncommitted work. The checkpoint cannot grant merge authority: verify the maintainer's actual instruction and its conditions. Keep sensitive information and personal paths out of public checkpoints.
 
 ## 11. Squash merge, close ordinary work, and clean up
 
 **Trigger:** explicit maintainer merge decision.
 
 **Purpose:** integrate one coherent issue as one mainline commit.
+
+For stacked PRs, merge the prerequisite only with authorization, retarget the dependent PR to main, incorporate the prerequisite’s squash merge, and revalidate its diff and latest CI. Green checks against its former base are insufficient.
+
+Refresh only the next PR to merge rather than every queued PR after each merge. Strict checking can add another normal CI cycle for an outdated branch; existing diff classification and cancellation of superseded runs limit unnecessary work. No merge queue is configured. See [branch refresh commands](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CONTRIBUTING.md#refresh-a-pr-before-merging).
+
+After merging, prepare and start CI/review for only the next candidate while the previous merge's main CI and documentation verification run. Hold the next merge until prior verification succeeds and the candidate's own latest-head checks, completed review and explicit authorization are satisfied. Queue handoffs record both gates. Marking a draft ready automatically requests Codex review here; check actual latest-head review state before a manual request, using one only when review has not started or a changed head needs re-review.
 
 Use **Squash and merge**. Review/edit the resulting commit title and body in GitHub; its defaults are not a reason to leave noisy development history. The issue branch may contain multiple commits, but main receives the reviewed combined change as one commit.
 
@@ -376,7 +430,15 @@ The deployment workflow compares the tested SHA to current main, checks out that
 
 The public site follows development main, not a release tag or an independently edited `gh-pages` branch. Documentation can describe upcoming APIs while PyPI still contains an older release. A successful deployment does not publish a package.
 
-Manual documentation dispatch on main is a retry mechanism: it still requires successful push CI matching current main. It cannot bypass failed/pending CI, and dispatch from another branch is skipped. If deployment fails, the last successful site remains. Inspect the failed logs, repair through the normal PR process, and retry. Verify the public homepage, deep API pages, images, changelog, and commit banner after deployment.
+Manual documentation dispatch on main is a retry mechanism: it still requires successful push CI matching current main. It cannot bypass failed/pending CI, and dispatch from another branch is skipped. If deployment fails, the last successful site remains. Inspect the failed logs, repair through the normal PR process, and retry. Verify the public homepage, deep API pages, relevant content/navigation, affected images/changelog, and full-SHA commit banner through HTTP/CLI after deployment. Inspect the actual deployment evidence and returned page content, rather than relying on HTTP status alone. Record checked URLs, method and uninspected scope. Use a browser for layout, styling or rendering concerns, or requested visual QA; HTTP checks cannot establish rendered appearance. Routine deployment checks do not require opening the maintainer's browser.
+
+The merge handler records the main CI run/attempt, actual test scope, selected and deployed
+SHAs, and live commit-link/page inspection in the PR. If main advances, follow the newer
+tested deployment and record the superseded outcome without claiming the old run passed.
+Unexpected failures are reported promptly; preserve original evidence, retry only an
+evidence-backed infrastructure failure, and fix source problems through a scoped PR.
+Follow the [post-merge procedure](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/POST_MERGE.md)
+for commands, recovery decisions and the completion/handoff template.
 
 ## 14. Start the separate release pipeline
 
@@ -405,13 +467,17 @@ Open a draft release PR with **`Refs #<release-issue>`**, keeping the issue open
 
 **Purpose:** validate the release beyond routine automated pairwise tests.
 
-Required CI must execute full validation for version/packaging changes. Additionally run the dedicated exhaustive effect-argument suite:
-
-```sh
-./.venv/bin/pytest -n auto --exhaustive-effect-args --durations=20
-```
-
-Record interpreter, exact SHA, log, and exit status. An interrupted or partial run is not a pass.
+Required CI must execute full validation for version/packaging changes. Additionally,
+dispatch the manual **Exhaustive release validation** workflow from `main` with the
+release PR's exact full head SHA. It runs the complete automated effect-argument matrix
+on Linux/Python 3.14, separately from routine pairwise and platform compatibility CI.
+Agents can dispatch, monitor and investigate this run as part of release preparation.
+Record the run link, tested candidate and workflow SHAs, Python version, results/skips
+and pytest exit status; download log/JUnit/context evidence before its 30-day expiration.
+Failed, interrupted or partial runs do not complete the checklist. Candidate changes
+require new exhaustive evidence. Follow the
+[exhaustive workflow guide](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/EXHAUSTIVE_VALIDATION.md)
+for dispatch commands and evidence interpretation. Publishing remains separately approved.
 
 Human QA covers changed effects with representative small, multiline, sparse, and wide-character input; pacing/appearance; existing-color handling where relevant; truecolor/256-color/no-color; clipping/wrapping; resizing; interruption and cursor restoration. Resizing inspection does not promise live reflow. Inspect skips and exercise missing manual scenarios directly. Performance changes need controlled before/after evidence. Record a reasoned N/A for unaffected areas.
 
@@ -455,13 +521,64 @@ For partial uploads, inspect the existing published file and checksum before upl
 
 Dependabot creates the PR first. Triage creates a real tracking issue, completes metadata/reviewer/milestone, puts the PR in draft while adapting it, adds the appropriate fragment, installs its locked tools, and runs relevant integration checks. Keep action references SHA-pinned. Review Python compatibility, transitive fallbacks, and release notes; a “security” label does not prove the generated dependency graph is safe. Fresh CI and explicit merge authorization remain required. There is no auto-merge bypass.
 
+The PR dependency gate blocks newly introduced high/critical findings; it does not clear unchanged alerts or audit unknown vulnerabilities. No exemptions are installed. Fix affected versions or diagnose missing graph coverage; any future exception requires explicit maintainer review and expiry enforcement.
+
 The existing `Graph Update: uv` runs provide dependency information to GitHub; they are separate from CI test jobs and from update PRs. Their success does not establish test compatibility. A documentation/release-tool update can matter to security without adding runtime dependencies to the core package.
+
+### Scheduled source and workflow analysis
+
+**Trigger:** CodeQL runs on main every Wednesday at 06:17 UTC or by manual dispatch selecting main. This initial rollout has no PR/push trigger or required merge gate.
+
+`.github/workflows/codeql.yml` uses SHA-pinned official init/analyze actions in independent Ubuntu/Python and Actions-language jobs, default security queries and `build-mode: none`. It analyzes source without another test suite, dependency installation or publishing step. Only the main-only analysis job can upload security events; PR workflows do not receive that permission. Findings appear in Security -> Code scanning.
+
+After merge, manually verify both language analyses and uploads, the scanned commit/source scope, initial findings and runtime. A successful scan is not proof of zero alerts; a failed or stale scan is not a clean result. Review source/sink traces and realistic exposure, then use the normal scoped issue/fix/PR process. Keep sensitive details private. Maintainer approval is required for dismissals or accepted risk; record evidence rather than adding blanket exclusions. Required checks, PR/push triggers and wider query suites remain separate future decisions. Dependabot maintains the pinned action references.
+
+See [CodeQL activation and triage](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/CODEQL.md) for first-run verification, failure diagnosis, alert handling and configuration maintenance.
 
 ### Security reporting and support policies
 
 Security fixes target the latest stable release; users of older releases should upgrade. GitHub private vulnerability reporting is enabled. Use the private vulnerability form for reports, avoiding public exploit details until coordinated disclosure. External plugins/prototypes execute Python and are not sandboxed.
 
 See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/SECURITY.md) for private reporting and supported releases, and [SUPPORT.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/SUPPORT.md) for Python, platform, terminal, and completion support. Update these policies when a release changes support.
+
+Native Python 3.9 testing retains an open pytest temporary-directory advisory because the upstream patched release requires Python 3.10+. The maintainer has deferred a CI wrapper: current GitHub-hosted 3.9 jobs use fresh isolated VMs, limiting the advisory's cross-user local attack scenario. Routine development uses patched modern tooling. Shared Unix hosts or persistent runners need a fresh exposure assessment; a venv alone is not a security boundary. Track the compatible upstream fix in [#154](https://github.com/ChrisBuilds/terminaltexteffects/issues/154) and follow the [dependency policy](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/DEPENDENCIES.md#runtime-and-tooling-python-support). The alert remains open; this assessment does not mean pytest is patched.
+
+### Security monitoring ownership and freshness
+
+The maintainer owns a weekly security health review after the updater and CodeQL windows,
+and another review before release sign-off. Assigned agents record both uploaded CodeQL
+categories, scanned SHAs/dates, open findings, dependency alerts and updater/graph health.
+Results older than nine days are overdue; a scan category older than fourteen days needs
+maintainer escalation. New failed attempts require investigation even with recent successful
+scans. Record uncovered security-relevant changes and rerun main analysis when needed.
+Notifications supplement this review; delivery preferences must be verified by the maintainer.
+There is no new freshness-monitoring scheduler or notification bot. Follow the
+[security monitoring procedure](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/SECURITY_MONITORING.md)
+for thresholds, commands, triage, limitations and an evidence template.
+
+## Nix packaging checks
+
+The root `flake.nix`, `flake.lock`, and `default.nix` supply a Nix application
+package independently of the uv development environment. The package source includes
+runtime files and required build metadata; Git state, virtual environments, generated
+docs, caches, and development effects do not become build inputs.
+
+Run `bash tools/check_nix.sh` with Nix (`nix-command` and `flakes` enabled) and
+Python 3.10+ available. It builds both flake and classic packages against the locked
+nixpkgs revision, checks clean/dirty source identities, and exercises installed
+commands outside the checkout. Missing inputs are downloaded into the Nix store;
+the helper leaves the lockfile unchanged. `nix flake check` validates outputs but
+does not substitute for the explicit default-package build.
+
+The `Nix / Linux` and `Nix / macOS` jobs run this helper for code-bearing changes
+and manual dispatch within CI, so a failure prevents the successful-main docs
+deployment trigger. Documentation-only changes retain lightweight success steps.
+Job logs and summaries identify the tested revision, Nix version, and actual system;
+the other advertised architectures and human terminal rendering remain unverified.
+These check names await separate approval before addition to branch protection.
+Read [Nix CI coverage](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/CI.md#nix-packaging-validation)
+for reproduction and deliberate `nix flake update nixpkgs` maintenance. The existing
+Actions Dependabot entry maintains the installer pin; it does not update `flake.lock`.
 
 ## Tool reference: what each component contributes
 
@@ -472,14 +589,19 @@ See [SECURITY.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/S
 | pytest and pytest-xdist | Behavioral tests and parallel workers | Tests, pytest settings, `tests/conftest.py` | Focused local QA; CI matrix |
 | Pairwise selection | Bound routine effect-configuration combinations | `tests/pairwise.py`, collection hook | Collection of designated tests, unless exhaustive flag supplied |
 | Ruff | Formatting and lint | `pyproject.toml` | Local QA/hooks; read-only CI |
+| actionlint and ShellCheck | Workflow structure, expressions, dependencies, Bash/sh lint | `tools/check_workflows.py`, CI binary pin | Workflow edits; every Code quality run; optional manual hook |
 | Pyright | Static typing with Python 3.9 target | `pyproject.toml` | Local QA/hooks; whole-project CI |
 | pre-commit | Staged local QA orchestration | `.pre-commit-config.yaml`, `tools/run_hook.py` | Commit after local installation, or explicit targeted invocation |
 | Towncrier and changelog helper | Fragments, generated preview, dated release assembly | `changelog.d/`, template, `tools/generate_changelog.py` | Each issue; hooks/CI; release preparation |
 | Completion generator and shtab | Bundled shell resources | `tools/generate_shell_completions.py`, runtime parser | CLI changes; completion CI |
+| Effect inventory helper | Shipped module/command, docs/navigation, permanent test presence | `tools/check_effect_inventory.py`, promotion checklist | Promotion/local QA; every Code quality run |
 | Hatchling, artifact checker, Twine | Build/validate installed distributions; approved upload | Build settings, `tools/check_artifacts.py`, release runbook | Code-bearing CI; release validation; manual publication |
+| Documented example tests | Selected actual Python/CLI snippets remain executable | `tests/test_documented_examples.py`, marked public guide blocks | Example edits; every Code quality run and default Linux matrix |
 | MkDocs, Material, mkdocstrings | Render documentation and API pages | `mkdocs.yml`, docs, theme overrides | Relevant PR checks; tested-main deployment |
-| pytest-cov | Line/branch reports | Coverage settings and Python 3.14 CI steps | One existing Linux matrix run |
+| pytest-cov and coverage reporter | Line/branch totals, informational deltas and untested changed lines | Coverage settings, `tools/report_coverage.py`, Python 3.14 CI steps | One existing Linux matrix run |
 | GitHub Actions | Hosted CI and Pages deployment | `.github/workflows/` | PR/main push/manual CI; successful-main workflow completion |
+| Dependency review and lock guard | New high/critical dependency findings and changed uv graph completeness | Pinned CI action, `tools/check_dependency_review.py` | PR CI; offline guard fixtures on every run |
+| CodeQL | Source/workflow security analysis and alerts | `.github/workflows/codeql.yml`, CodeQL triage guidance | Weekly Wednesday 06:17 UTC; manual main scan |
 | Dependabot | Proposed dependency/action updates | `.github/dependabot.yml` and repository security setting | Weekly version check or security update |
 
 Tox is no longer part of this workflow. GitHub Actions owns the interpreter matrix; uv supplies reproducible environments. No private runner or separate local matrix orchestrator is required for routine development.

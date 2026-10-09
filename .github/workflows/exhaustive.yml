@@ -1,0 +1,108 @@
+name: Exhaustive release validation
+run-name: Exhaustive / ${{ inputs.commit }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Full lowercase 40-character release-candidate commit SHA (not a branch or tag)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  exhaustive:
+    name: Exhaustive / Python 3.14
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - name: Validate immutable input and workflow source
+        env:
+          TARGET_COMMIT: ${{ inputs.commit }}
+          WORKFLOW_REF: ${{ github.ref }}
+        run: |
+          if [[ "$WORKFLOW_REF" != 'refs/heads/main' ]]; then
+            echo 'Dispatch the workflow definition from main.' >&2
+            exit 1
+          fi
+          if [[ ! "$TARGET_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'commit must be a full lowercase 40-character SHA.' >&2
+            exit 1
+          fi
+      - name: Check out the exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.commit }}
+          persist-credentials: false
+      - name: Verify and record tested revision
+        env:
+          TARGET_COMMIT: ${{ inputs.commit }}
+          WORKFLOW_COMMIT: ${{ github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$TARGET_COMMIT"
+          mkdir -p test-results
+          printf 'tested_commit=%s\nworkflow_commit=%s\n' "$TARGET_COMMIT" "$WORKFLOW_COMMIT" > test-results/revision.txt
+          {
+            echo '## Exhaustive release validation'
+            printf '\nCandidate: %s\n\nWorkflow definition: %s\n' "$TARGET_COMMIT" "$WORKFLOW_COMMIT"
+            echo 'Scope: Linux / Python 3.14, exhaustive automated suite; manual/visual tests excluded.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.14'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          cache-suffix: exhaustive-python-3.14
+      - name: Install test shells
+        run: |
+          apt_options=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install --yes zsh
+      - name: Install candidate and locked test dependencies
+        run: uv sync --locked --no-default-groups --group test --no-editable
+      - name: Record candidate reproduction context
+        env:
+          TARGET_COMMIT: ${{ inputs.commit }}
+        run: |
+          GITHUB_SHA="$TARGET_COMMIT" DIAGNOSTICS_HEAD="$TARGET_COMMIT" .venv/bin/python tools/write_test_context.py
+      - name: Run exhaustive automated suite without retries
+        env:
+          PYTEST_ADDOPTS: ''
+        run: |
+          # Preserve pytest's status through tee; never turn a partial run into a pass.
+          set +e
+          .venv/bin/python -m pytest -n auto --exhaustive-effect-args --durations=30 -m "not manual and not visual" \
+            --junitxml=test-results/exhaustive.xml -o junit_logging=no -o faulthandler_timeout=120 \
+            2>&1 | tee test-results/pytest.log
+          statuses=("${PIPESTATUS[@]}")
+          set -e
+          printf '%s\n' "${statuses[0]}" > test-results/pytest-exit-status.txt
+          printf '\nPytest exit status: %s; log writer exit status: %s.\n' \
+            "${statuses[0]}" "${statuses[1]}" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${statuses[0]}" != '0' ]]; then
+            exit "${statuses[0]}"
+          fi
+          if [[ "${statuses[1]}" != '0' ]]; then
+            exit "${statuses[1]}"
+          fi
+          test -s test-results/exhaustive.xml
+          test -s test-results/context.json
+      - name: Summarize final job state
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          printf '\nJob state before evidence upload: **%s**.\n' "$JOB_STATUS" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Missing reports, cancellation, timeout or skipped tests are not passing exhaustive evidence.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain exhaustive evidence
+        if: "!cancelled() && hashFiles('test-results/revision.txt') != ''"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: exhaustive-python-3.14-${{ inputs.commit }}
+          path: test-results/
+          retention-days: 30
+          if-no-files-found: error

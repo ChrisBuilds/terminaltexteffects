@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+env:
+  DIAGNOSTICS_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+  DIAGNOSTICS_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -43,15 +47,74 @@ jobs:
           enable-cache: true
           cache-dependency-glob: uv.lock
           cache-suffix: quality
+      - name: Review newly introduced dependency vulnerabilities
+        if: github.event_name == 'pull_request'
+        id: dependency_review
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          fail-on-scopes: runtime, development, unknown
+          license-check: false
+          vulnerability-check: true
+          warn-only: false
+          comment-summary-in-pr: never
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 120
       - name: Install package and locked development tools
         run: uv sync --locked --group dev
+      - name: Record test reproduction context
+        run: .venv/bin/python tools/write_test_context.py
+      - name: Verify dependency review lock coverage
+        if: github.event_name == 'pull_request'
+        env:
+          DEPENDENCY_BASE: ${{ github.event.pull_request.base.sha }}
+          DEPENDENCY_HEAD: ${{ github.event.pull_request.head.sha }}
+          DEPENDENCY_CHANGES: ${{ steps.dependency_review.outputs.dependency-changes }}
+        run: .venv/bin/python tools/check_dependency_review.py --base "$DEPENDENCY_BASE" --head "$DEPENDENCY_HEAD"
+      - name: Test dependency review coverage guard
+        run: |
+          .venv/bin/python -m pytest -q tests/test_dependency_review.py \
+            --junitxml=test-results/dependency-review.xml -o junit_logging=no -o faulthandler_timeout=120
+      - name: Install pinned workflow linter
+        run: |
+          archive="$RUNNER_TEMP/actionlint.tar.gz"
+          curl --fail --location --silent --show-error \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz \
+            --output "$archive"
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $archive" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/actionlint"
+          tar -xzf "$archive" -C "$RUNNER_TEMP/actionlint" actionlint
+          echo "TTE_ACTIONLINT=$RUNNER_TEMP/actionlint/actionlint" >> "$GITHUB_ENV"
+          # ShellCheck is part of the Ubuntu hosted image; require it explicitly.
+          shellcheck --version
+      - name: Check workflows and CI reporting regressions
+        env:
+          TTE_REQUIRE_ACTIONLINT: "1"
+        run: |
+          .venv/bin/python tools/check_workflows.py
+          shellcheck tools/check_nix.sh
+          .venv/bin/python -m pytest -q tests/test_workflow_lint.py tests/test_ci_classification.py \
+            tests/test_coverage_reporting.py tests/test_ci_diagnostics.py tests/test_local_qa.py \
+            --junitxml=test-results/workflow-regressions.xml -o junit_logging=no -o faulthandler_timeout=120
       - name: Check all tracked Python files
         run: .venv/bin/python tools/check_quality.py --all
+      - name: Check changed text hygiene
+        env:
+          HYGIENE_BASE: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
+        run: .venv/bin/python tools/run_hook.py hygiene --base "$HYGIENE_BASE"
       - name: Check local QA hooks
         if: steps.changes.outputs.run_tests == 'true'
+        env:
+          TTE_REQUIRE_HOOK_INTEGRATION: "1"
         run: |
           .venv/bin/pre-commit validate-config
-          .venv/bin/python -m pytest -q tests/test_hooks.py
+          .venv/bin/python -m pytest -q tests/test_hooks.py \
+            --junitxml=test-results/hooks.xml -o junit_logging=no -o faulthandler_timeout=120
+      - name: Check shipped effect promotion inventory
+        run: |
+          .venv/bin/python tools/check_effect_inventory.py
+          .venv/bin/python -m pytest -q tests/test_effect_inventory.py \
+            --junitxml=test-results/effect-inventory.xml -o junit_logging=no -o faulthandler_timeout=120
       - name: Validate release artifacts
         if: steps.changes.outputs.run_tests == 'true'
         run: .venv/bin/python tools/check_artifacts.py
@@ -65,12 +128,79 @@ jobs:
             args+=(--base "$QUALITY_BASE")
           fi
           .venv/bin/python tools/generate_changelog.py "${args[@]}"
+      - name: Execute selected documentation examples
+        env:
+          TTE_REQUIRE_DOC_EXAMPLES: "1"
+        run: |
+          .venv/bin/python -m pytest -q tests/test_documented_examples.py \
+            --junitxml=test-results/documented-examples.xml -o junit_logging=no -o faulthandler_timeout=120
       - name: Build documentation and check links
         if: steps.changes.outputs.build_docs == 'true'
         run: .venv/bin/python -m mkdocs build --strict --site-dir "$RUNNER_TEMP/docs"
 
+      - name: Upload test diagnostics
+        if: "!cancelled() && hashFiles('test-results/context.json') != ''"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-results-quality
+          path: |
+            test-results/context.json
+            test-results/*.xml
+          retention-days: 7
+          if-no-files-found: error
+
+  nix:
+    name: Nix / ${{ matrix.name }}
+    needs: quality
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            name: Linux
+          - os: macos-15
+            name: macOS
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Documentation-only changes
+        if: needs.quality.outputs.run_tests != 'true'
+        run: echo 'Documentation-only changes; Nix validation is not required.'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          python-version: "3.14"
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        if: needs.quality.outputs.run_tests == 'true'
+        with:
+          enable_kvm: false
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: Validate locked Nix packaging and installed commands
+        id: validation
+        if: needs.quality.outputs.run_tests == 'true'
+        run: bash tools/check_nix.sh 2>&1 | tee "$RUNNER_TEMP/nix-validation.log"
+      - name: Upload Nix diagnostics
+        if: "!cancelled() && steps.validation.outcome != 'skipped' && needs.quality.outputs.run_tests == 'true'"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nix-validation-${{ matrix.name }}
+          path: ${{ runner.temp }}/nix-validation.log
+          retention-days: 7
+          if-no-files-found: error
+
   tests:
     name: Python ${{ matrix.python-version }}
+    permissions:
+      contents: read
+      actions: read
     needs: quality
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -85,6 +215,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: needs.quality.outputs.run_tests == 'true'
         with:
+          # Only coverage needs the tested merge commit and its parents for source diffs.
+          fetch-depth: ${{ matrix.python-version == '3.14' && '2' || '1' }}
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         if: needs.quality.outputs.run_tests == 'true'
@@ -106,6 +238,9 @@ jobs:
       - name: Install package and locked test dependencies
         if: needs.quality.outputs.run_tests == 'true'
         run: uv sync --locked --no-default-groups --group test --no-editable
+      - name: Record test reproduction context
+        if: needs.quality.outputs.run_tests == 'true'
+        run: .venv/bin/python tools/write_test_context.py
       - name: Check installed package outside the checkout
         if: needs.quality.outputs.run_tests == 'true'
         working-directory: ${{ runner.temp }}
@@ -124,44 +259,23 @@ jobs:
               --cov-report=term-missing --cov-report=xml:coverage/coverage.xml
               --cov-report=json:coverage/coverage.json --cov-report=html:coverage/html)
           fi
-          .venv/bin/python -m pytest -n auto --durations=20 "${coverage_args[@]}"
-      - name: Summarize package line and branch coverage
+          .venv/bin/python -m pytest -n auto --durations=20 --junitxml=test-results/default-suite.xml \
+            -o junit_logging=no -o faulthandler_timeout=120 "${coverage_args[@]}"
+      - name: Summarize package coverage and informational changes
         if: >-
           !cancelled() && matrix.python-version == '3.14' &&
           needs.quality.outputs.run_tests == 'true' &&
           (steps.pytest.outcome == 'success' || hashFiles('coverage/coverage.json') != '')
         env:
           COVERAGE_REVISION: ${{ github.sha }}
+          COVERAGE_BASE: ${{ github.event.pull_request.base.sha }}
           TEST_OUTCOME: ${{ steps.pytest.outcome }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           test -s coverage/coverage.xml
           test -s coverage/html/index.html
-          .venv/bin/python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import json
-          import os
-          from pathlib import Path
-
-          report = json.loads(Path("coverage/coverage.json").read_text(encoding="utf-8"))
-          assert report["meta"]["branch_coverage"], "Branch coverage was not collected"
-          assert report["files"] and all(
-              name.startswith("terminaltexteffects/") for name in report["files"]
-          ), "Coverage must measure the runtime package only"
-          totals = report["totals"]
-          assert totals["num_statements"] > 0 and totals["num_branches"] > 0, "Empty coverage report"
-          print("## Package coverage — Linux / Python 3.14\n")
-          print(f"Tested revision: `{os.environ['COVERAGE_REVISION']}`  ")
-          print(f"Test step outcome: `{os.environ['TEST_OUTCOME']}`\n")
-          print("| Metric | Covered | Total | Coverage |")
-          print("| --- | ---: | ---: | ---: |")
-          for label, covered, total in (
-              ("Lines", totals["covered_lines"], totals["num_statements"]),
-              ("Branches", totals["covered_branches"], totals["num_branches"]),
-          ):
-              print(f"| {label} | {covered} | {total} | {100 * covered / total:.2f}% |")
-          print("\nDefault pairwise suite; manual/visual/exhaustive tests are excluded. "
-                "No percentage gate is enforced. A failed test run is diagnostic, not a baseline.")
-          print("\nDownload `coverage-python-3.14` for per-file HTML, XML, and JSON reports.")
-          PY
+          .venv/bin/python tools/report_coverage.py --base "$COVERAGE_BASE" \
+            --test-outcome "$TEST_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload package coverage reports
         if: >-
           !cancelled() && matrix.python-version == '3.14' &&
@@ -171,6 +285,17 @@ jobs:
           name: coverage-python-3.14
           path: coverage/
           retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload test diagnostics
+        if: "!cancelled() && hashFiles('test-results/context.json') != ''"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-results-python-${{ matrix.python-version }}
+          path: |
+            test-results/context.json
+            test-results/*.xml
+          retention-days: 7
           if-no-files-found: error
 
   completions:
@@ -243,6 +368,9 @@ jobs:
       - name: Install package and locked test dependencies
         if: needs.quality.outputs.run_tests == 'true'
         run: uv sync --locked --no-default-groups --group test --no-editable
+      - name: Record test reproduction context
+        if: needs.quality.outputs.run_tests == 'true'
+        run: uv run --no-sync python tools/write_test_context.py
       - name: Check installed CLI and piped input outside the checkout
         if: needs.quality.outputs.run_tests == 'true'
         run: |
@@ -286,6 +414,7 @@ jobs:
         if: needs.quality.outputs.run_tests == 'true'
         run: |
           uv run --no-sync python -m pytest -q --durations=10 \
+            --junitxml=test-results/platform.xml -o junit_logging=no -o faulthandler_timeout=120 \
             tests/engine_tests/test_terminal.py \
             tests/engine_tests/test_terminal_input.py \
             tests/engine_tests/test_terminal_unicode.py \
@@ -298,3 +427,23 @@ jobs:
             tests/test_cli.py::test_main_empty_input_is_silent_success \
             tests/test_cli.py::test_main_empty_renderable_input_exits_with_error \
             tests/test_cli.py::test_development_effects_require_explicit_opt_in
+      - name: Exercise native Windows QA hooks
+        if: needs.quality.outputs.run_tests == 'true' && runner.os == 'Windows'
+        env:
+          TTE_REQUIRE_HOOK_INTEGRATION: "1"
+        run: |
+          uv sync --locked --no-default-groups --group test --group hooks --no-editable
+          uv run --no-sync python -m pre_commit validate-config
+          uv run --no-sync python -m pytest -q tests/test_hooks.py \
+            --junitxml=test-results/windows-hooks.xml -o junit_logging=no -o faulthandler_timeout=120
+
+      - name: Upload test diagnostics
+        if: "!cancelled() && hashFiles('test-results/context.json') != ''"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-results-${{ matrix.name }}-python-3.14
+          path: |
+            test-results/context.json
+            test-results/*.xml
+          retention-days: 7
+          if-no-files-found: error

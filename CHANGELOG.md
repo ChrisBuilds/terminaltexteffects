@@ -129,6 +129,11 @@ Detailed examples and explanations may appear in the optional
 
 ### Fixed
 
+- Filtered local Nix package sources to exclude development artifacts,
+  refreshed the pinned build tooling, and corrected Nix installation examples.
+  Linux and macOS CI now validate flake and classic package builds and
+  installed commands.
+  ([#171](https://github.com/ChrisBuilds/terminaltexteffects/issues/171))
 - Blackhole handles short text and compact canvases and uses its configured
   explosion palette. Beams emits characters as soon as progress reaches a whole
   unit; Spotlights handles zero falloff on wide continuation cells; Swarm
@@ -184,6 +189,11 @@ Detailed examples and explanations may appear in the optional
 - Update idna and Pygments to address security vulnerabilities in documentation
   and release tooling.
   ([#128](https://github.com/ChrisBuilds/terminaltexteffects/issues/128))
+- Update optional documentation, release, and hook dependencies to patched
+  versions and require Python 3.10+ for that tooling. The documentation extra
+  no longer installs tools on Python 3.9. TTE runtime support remains Python
+  3.9.2+; the native Python 3.9 pytest advisory is tracked separately.
+  ([#153](https://github.com/ChrisBuilds/terminaltexteffects/issues/153))
 
 <!-- unreleased notes end -->
 
@@ -344,7 +354,7 @@ Detailed examples and explanations may appear in the optional
 
 * Highlight - Simplified effect logic by offloading to `SequenceEaser`.
 * Sweep - Simplified effect logic by offloading to `SequenceEaser`.
-* Wipe - Simplified effect logic by offloading to `SequenceEaser`. 
+* Wipe - Simplified effect logic by offloading to `SequenceEaser`.
 * Wipe - Changed default `--wipe-ease` to `IN_OUT_CIRC`.
 * Wipe - Removed `--wipe-ease-stepsize` CLI arg.
 * Colorshift - `--travel` renamed `--no-travel`. The default behavior is to travel radially.
@@ -358,7 +368,7 @@ Detailed examples and explanations may appear in the optional
 
 #### Effect Fixes (0.14.0)
 
-* Sweep - Fixed bug when second sweep direction is a grouping of a different length from the first direction. 
+* Sweep - Fixed bug when second sweep direction is a grouping of a different length from the first direction.
 * Removed mistakenly added effect dev_worm.
 
 #### Application Fixes (0.14.0)

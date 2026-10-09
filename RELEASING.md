@@ -19,7 +19,8 @@ the release being prepared from the version currently published; verify those st
 again after publication. Security fixes target the latest stable release, without older-release backports.
 Do not change the version or create a tag merely while improving this runbook.
 
-Sync locked tools with `uv sync --locked --group dev`. Keep prototypes in `dev_effects/`;
+Sync locked release tools on Python 3.10+ with `uv sync --locked --group dev --python 3.14`.
+This tool interpreter requirement does not raise the Python 3.9.2 runtime minimum. Keep prototypes in `dev_effects/`;
 promote finished effects through their own reviewed PRs before preparing the release.
 
 ## 2. Prepare the version and release notes
@@ -67,18 +68,28 @@ changelog validation, relevant strict documentation builds, and artifact validat
 changes. Documentation-only successful check names are not evidence that tests actually ran.
 Release version and packaging changes must execute the full matrix.
 
-Pre-release QA additionally runs the exhaustive effect-argument suite:
+Pre-release QA additionally dispatches the manual **Exhaustive release validation** workflow
+from `main` with the latest release-candidate full commit SHA. Follow
+[.github/EXHAUSTIVE_VALIDATION.md](.github/EXHAUSTIVE_VALIDATION.md) for CLI/UI dispatch,
+run identification, monitoring and evidence download. Agents may perform this validation
+as part of release preparation; it does not authorize publication.
 
-```sh
-./.venv/bin/pytest -n auto --exhaustive-effect-args --durations=20
-```
-
-This is separate from routine pairwise CI. Run it as a dedicated pre-release task, record the
-Python version, exact SHA, exit status, and log, and allow it to finish. It is not a routine local
-commit prerequisite. A skipped, interrupted, or partial run is not a passing exhaustive result.
+The workflow runs the complete automated exhaustive suite on Linux/Python 3.14 with
+locked test dependencies, preserving pytest's exit status and retaining log, JUnit,
+context and verified revision evidence for 30 days. Routine compatibility CI still covers
+all supported versions; human manual/visual QA remains separate. Record the exact candidate
+and workflow SHAs, run link, Python version, completion/exit status and inspected skips.
+Download evidence before expiration. Changes to the candidate require fresh exhaustive
+validation. A skipped, interrupted, timed-out or partial run is not a passing result.
+This is not a routine local commit prerequisite.
 
 CI enforces whole-project Ruff formatting, lint, and Pyright checks on tracked Python files.
 Record any remaining release-relevant findings in the issue.
+
+Before release sign-off, complete the [security health review](.github/SECURITY_MONITORING.md):
+verify both CodeQL category uploads within the freshness window, account for security-relevant
+changes since the scan, triage open alerts and record limitations. Recheck merged release code
+before publication when candidate changes were not covered by main scans.
 
 ## 4. Complete human QA
 
@@ -111,8 +122,13 @@ address findings, resolve conversations, and rerun affected checks. The maintain
 release evidence and separately authorizes squash merging.
 
 After merging, identify the resulting release commit and wait for its `main` CI run to pass.
+Follow the [post-merge procedure](.github/POST_MERGE.md) for exact-run identification,
+live documentation verification and failure recovery; superseded runs do not establish
+a passing result for the frozen release commit.
 Changes to code, dependencies, packaging, or notes require renewed relevant QA. Preserve evidence
 from the reviewed branch and confirm the merged tree contains the reviewed changes.
+Compare reviewed and merged trees (`git diff REVIEWED_SHA MERGED_SHA --`); if they differ,
+rerun exhaustive validation against the merged commit before approval. Record both SHAs.
 Freeze the chosen release commit; later commits on `main` are not automatically part of this release.
 
 ## 6. Build and approve the exact upload files

@@ -130,3 +130,21 @@ screenfetch -N | tte slide --merge
     SGR foreground/background colors, common cursor movement CSI sequences, carriage returns, and selected DEC
     private mode toggles for cursor visibility and line wrapping. Unsupported control sequences still fail fast with
     an error so they do not leak into the rendered animation.
+
+## Short reproducible CLI example
+
+Run this command in Bash (including Git Bash) or a compatible POSIX shell. It pipes literal
+input into Wipe, fixes the canvas, and disables colors and playback delay. Global options
+precede the effect name; effect options follow it. The animation ends with `Hi`.
+
+<!-- tte-example: cli-wipe -->
+```bash
+printf 'Hi' | tte --seed 16 --frame-rate 0 --no-color \
+  --canvas-width 2 --canvas-height 1 --ignore-terminal-dimensions \
+  wipe --final-gradient-stops ffffff --final-gradient-steps 1 --final-gradient-frames 1
+```
+
+This is a short integration example rather than a pacing demonstration. For normal playback,
+choose a nonzero frame rate or omit `--frame-rate`. CI executes this marked command directly
+from this page and checks rendering and cursor restoration. It does not evaluate terminal
+appearance; visual QA remains separate.

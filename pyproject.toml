@@ -17,15 +17,22 @@ terminaltexteffects = "terminaltexteffects.__main__:main"
 
 [project.optional-dependencies]
 docs = [
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.6.22",
-    "mkdocstrings-python>=1.11.1",
-    "pymdown-extensions>=10.15",
+    "mkdocs>=1.6.1; python_version >= '3.10'",
+    "mkdocs-material>=9.6.22; python_version >= '3.10'",
+    "mkdocstrings-python>=1.11.1; python_version >= '3.10'",
+    "pymdown-extensions>=11.0.1,<12; python_version >= '3.10'",
+    "requests>=2.33.0; python_version >= '3.10'",
+    "urllib3>=2.8.0; python_version >= '3.10'",
 ]
 
 [tool.uv]
-# Keep release-tool transitive dependencies above the reviewed security floor.
-constraint-dependencies = ["cryptography>=50.0.2"]
+# Security floors for optional documentation and release-tool dependencies.
+constraint-dependencies = ["cryptography>=50.0.2", "requests>=2.33.0", "urllib3>=2.8.0", "filelock>=3.20.3"]
+
+[tool.uv.dependency-groups]
+dev = { requires-python = ">=3.10" }
+artifacts = { requires-python = ">=3.10" }
+hooks = { requires-python = ">=3.10" }
 
 [tool.ruff]
 show-fixes = true
@@ -161,21 +168,25 @@ quality = [
     "pyright==1.1.414",
 ]
 test = [
-    "pytest>=8.3.5",
+    "pytest>=8.3.5,<9; python_version < '3.10'",
+    "pytest>=9.0.3; python_version >= '3.10'",
     "pytest-cov>=5.0.0",
     "pytest-xdist>=3.6.1",
     "shtab==1.12.1",
     "towncrier==26.9.0",
 ]
+hooks = [
+    { include-group = "quality" },
+    "pre-commit>=3.8",
+]
 dev = [
     { include-group = "artifacts" },
     { include-group = "test" },
-    { include-group = "quality" },
+    { include-group = "hooks" },
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.22",
     "mkdocstrings-python>=1.11.1",
-    "pre-commit>=3.8",
-    "pymdown-extensions>=10.15",
+    "pymdown-extensions>=11.0.1,<12",
 ]
 artifacts = [
     "hatchling>=1.27",
