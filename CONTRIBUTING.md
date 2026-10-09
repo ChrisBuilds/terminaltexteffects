@@ -215,6 +215,15 @@ for tests and promotion into the shipped package. Code quality checks the shippe
 for built-in registration, docs/navigation, and permanent test definitions; completion freshness
 is checked separately. This structural gate supplements behavior tests and human visual review.
 
+Community-created effects can be shared without being added to this package. TTE 0.15.0 and later
+can load released external effect modules from `${XDG_CONFIG_HOME:-~/.config}/terminaltexteffects/effects`;
+see the [application guide](https://chrisbuilds.github.io/terminaltexteffects/appguide/#community-effects)
+for installation and run instructions. To help users discover a community project, post a demo and
+source link in [TTE Effect Show and Tell](https://github.com/ChrisBuilds/terminaltexteffects/discussions/categories/tte-effect-show-and-tell).
+These listings are community sharing, not a promise of package inclusion or project endorsement.
+`TTE_DEV_EFFECTS_DIR` is for prototype modules used with an unreleased checkout; it is not needed
+to install an effect for a released TTE version.
+
 Regenerate shell completions when CLI options change. Add an issue-numbered fragment in
 `changelog.d` for each change, then refresh the generated Unreleased preview with
 `./.venv/bin/python tools/generate_changelog.py`. User-facing changes need a concise note;

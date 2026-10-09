@@ -95,10 +95,41 @@ Custom effect modules are discovered from `${XDG_CONFIG_HOME}/terminaltexteffect
 `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set. Any `.py` file in that directory that
 provides `get_effect_resources()` can register an effect command alongside the built-in effects.
 
-For prototypes kept outside the shipped package, set `TTE_DEV_EFFECTS_DIR` to a directory of
-effect modules. These modules use the same `get_effect_resources()` interface. The setting
-is explicit and does not affect bundled shell completion generation. Contributors can use
-`python -m tools.dev <effect>` from a checkout to load its `dev_effects/` directory.
+## Community effects
+
+TTE 0.15.0 and later can load community effect modules without installing them into the TTE package.
+Download or clone the effect author's source, then place the flat effect `.py` module in
+`${XDG_CONFIG_HOME:-~/.config}/terminaltexteffects/effects`. On macOS and Linux, for example:
+
+```bash title="Install a community effect module"
+mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects"
+cp path/to/community_effect.py "${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects/"
+```
+
+Install any dependencies listed by the author into the same Python environment as TTE. The module
+must expose `get_effect_resources()` and use APIs supported by the TTE version you have installed.
+Check the author's stated supported TTE version, license, and installation notes before running it;
+external effect modules execute as Python code in your environment. Then inspect its options and run it
+like a built-in effect:
+
+```bash title="Inspect and run a community effect"
+tte community-effect -h
+printf 'Hello!\n' | tte community-effect
+```
+
+Replace `community-effect` with the effect command name documented by its author.
+The effect remains hosted and maintained by its author.
+
+Browse or share projects in the [TTE Effect Show and Tell discussion category](https://github.com/ChrisBuilds/terminaltexteffects/discussions/categories/tte-effect-show-and-tell).
+Include a short demo, a source repository or public Gist, supported TTE version, installation and run
+steps, license, and maintenance status. A listing is a community sharing post; it does not mean the
+effect is bundled with TTE or endorsed by its maintainers.
+
+For prototypes in an unreleased checkout, set `TTE_DEV_EFFECTS_DIR` to a directory of effect
+modules. These modules use the same `get_effect_resources()` interface. This development-only
+setting is not available in the released 0.15.0 CLI, is explicit, and does not affect bundled
+shell completion generation. Contributors can use `python -m tools.dev <effect>` from a checkout
+to load its `dev_effects/` directory.
 
 The example below will pass the output of the `ls` command to TTE with the following options:
 
