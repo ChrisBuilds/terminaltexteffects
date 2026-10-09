@@ -63,21 +63,21 @@
         "max": 0,
         "choices": [],
         "file": false,
-        "help": "Randomly select an effect to apply"
+        "help": "Randomly select an effect to apply; with --repeat, select again for each playback."
       },
       "-R": {
         "min": 0,
         "max": 0,
         "choices": [],
         "file": false,
-        "help": "Randomly select an effect to apply"
+        "help": "Randomly select an effect to apply; with --repeat, select again for each playback."
       },
       "--repeat": {
         "min": 1,
         "max": 1,
         "choices": [],
         "file": false,
-        "help": "Play the selected effect COUNT times; 0 repeats until interrupted (default: 1)."
+        "help": "Play an effect COUNT times; with --random-effect, select anew each time (0 repeats until interrupted; default: 1)."
       },
       "--seed": {
         "min": 1,

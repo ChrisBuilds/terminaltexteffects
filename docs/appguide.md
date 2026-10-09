@@ -75,11 +75,13 @@ limit the pool with `--include-effects` and `--exclude-effects`:
 ls | tte --random-effect --seed 123 --include-effects beams decrypt rain
 ```
 
-Use `--repeat COUNT` to replay the selected effect on the same input. The default is one playback;
-`--repeat 3` plays it three times, and `--repeat 0` keeps replaying until you press Ctrl+C.
-Each playback starts a fresh effect iterator, without storing frames. With `--random-effect`, the
-effect is chosen once and that same effect is replayed. Empty input remains a no-op, and an effect
-that produces no frames stops rather than spinning indefinitely.
+Use `--repeat COUNT` to play effects in cycles against the same input. The default is one playback;
+`--repeat 3` plays three times, and `--repeat 0` keeps replaying until you press Ctrl+C.
+Each playback starts a fresh effect iterator, without storing frames. With `--random-effect`, a new
+effect is selected from the available pool for each playback, respecting `--include-effects` and
+`--exclude-effects`; the same effect may be selected consecutively. `--seed` makes the selection
+sequence repeatable. Randomly selected effects use their default configuration. Empty input remains
+a no-op, and an effect that produces no frames stops rather than spinning indefinitely.
 
 ```bash title="Repeat an animation"
 printf 'Hello!' | tte --repeat 3 wipe

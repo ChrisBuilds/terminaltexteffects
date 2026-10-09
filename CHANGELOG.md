@@ -41,9 +41,12 @@ Detailed examples and explanations may appear in the optional
 
 ### Added
 
-- Added `--repeat COUNT` to replay the selected CLI effect without buffering
-  frames. The default remains one playback; `--repeat 0` replays until
-  interrupted, and effects that yield no frames stop immediately.
+- Added `--repeat COUNT` to replay CLI effects without buffering frames. The
+  default remains one playback; `--repeat 0` replays until interrupted. With
+  `--random-effect`, each playback selects a new eligible effect using its
+  default configuration; random selection may choose the same effect
+  consecutively. Effects that produce no frames stop replay to avoid looping
+  forever.
   ([#70](https://github.com/ChrisBuilds/terminaltexteffects/issues/70))
 - Support explicitly loading development effects through `TTE_DEV_EFFECTS_DIR`,
   while excluding repository development effects from release archives.

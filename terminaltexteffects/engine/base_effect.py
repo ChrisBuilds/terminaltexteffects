@@ -183,6 +183,7 @@ class BaseEffect(ABC, Generic[T]):
             terminal_config if terminal_config is not None else TerminalConfig._build_config()
         )
         self._terminal_output_contexts: list[_TerminalOutputContext] = []
+        self._terminal_dimensions_override: tuple[int, int] | None = None
         self._pending_terminal_ref: ReferenceType[Terminal] | None = None
 
     def _build_terminal(self, terminal_dimensions: tuple[int, int] | None = None) -> Terminal:
@@ -205,7 +206,7 @@ class BaseEffect(ABC, Generic[T]):
                 output_context.terminal._terminal_height,
             )
         else:
-            terminal_dimensions = None
+            terminal_dimensions = self._terminal_dimensions_override
         terminal = (
             self._build_terminal(terminal_dimensions) if terminal_dimensions is not None else self._build_terminal()
         )

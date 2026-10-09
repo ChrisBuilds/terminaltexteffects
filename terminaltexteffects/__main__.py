@@ -9,6 +9,7 @@ import os
 import pkgutil
 import random
 import sys
+from functools import partial
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
@@ -24,7 +25,7 @@ from terminaltexteffects.utils.shell_completion import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
     from importlib.machinery import SourceFileLoader
     from types import ModuleType
 
@@ -72,13 +73,21 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
         metavar="{bash,zsh,powershell}",
         help="Print completion setup commands, or a completion script for the requested shell, and exit.",
     )
-    parser.add_argument("--random-effect", "-R", action="store_true", help="Randomly select an effect to apply")
+    parser.add_argument(
+        "--random-effect",
+        "-R",
+        action="store_true",
+        help="Randomly select an effect to apply; with --repeat, select again for each playback.",
+    )
     parser.add_argument(
         "--repeat",
         type=NonNegativeInt.type_parser,
         default=1,
         metavar="COUNT",
-        help="Play the selected effect COUNT times; 0 repeats until interrupted (default: 1).",
+        help=(
+            "Play an effect COUNT times; with --random-effect, select anew each time "
+            "(0 repeats until interrupted; default: 1)."
+        ),
     )
     parser.add_argument(
         "--seed",
@@ -214,11 +223,58 @@ def _get_version() -> str:
         return "unknown"
 
 
-def _print_replays(effect: BaseEffect, iterator: Iterator[str], terminal: Terminal, count: int) -> None:
+def _create_effect(
+    effect_name: str,
+    input_data: str,
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+    terminal_config: TerminalConfig,
+    effect_args: argparse.Namespace | None,
+) -> BaseEffect:
+    """Create an effect with the requested configuration or its defaults."""
+    effect_class, effect_config_class = effect_resource_map[effect_name]
+    effect_config = effect_config_class._build_config(effect_args)
+    return effect_class(input_data, effect_config, terminal_config)
+
+
+def _create_random_playback(
+    available_effects: list[str],
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+    input_data: str,
+    terminal_config: TerminalConfig,
+    terminal: Terminal,
+) -> tuple[BaseEffect, Iterator[str]]:
+    """Choose and create one fresh random effect using the prepared output geometry."""
+    effect_name = random.choice(available_effects)
+    effect = _create_effect(effect_name, input_data, effect_resource_map, terminal_config, None)
+    effect._terminal_dimensions_override = (terminal._terminal_width, terminal._terminal_height)
+    return effect, iter(effect)
+
+
+def _get_available_effects(
+    args: argparse.Namespace,
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+) -> list[str]:
+    """Return effect names allowed by the random-selection filters."""
+    if args.include_effects:
+        return [effect for effect in effect_resource_map if effect in args.include_effects]
+    if args.exclude_effects:
+        return [effect for effect in effect_resource_map if effect not in args.exclude_effects]
+    return list(effect_resource_map)
+
+
+def _print_replays(
+    effect: BaseEffect,
+    iterator: Iterator[str],
+    terminal: Terminal,
+    count: int,
+    next_playback_factory: Callable[[], tuple[BaseEffect, Iterator[str]]] | None = None,
+) -> None:
     """Print fresh playbacks, stopping on empty output or after `count` runs.
 
     A zero `count` repeats until interrupted. The first iterator is constructed
-    before opening terminal output so input validation remains fail-fast.
+    before opening terminal output so input validation remains fail-fast. When
+    `next_playback_factory` is provided, it creates a newly selected effect and
+    iterator for each completed playback.
     """
     completed = 0
     while True:
@@ -229,7 +285,10 @@ def _print_replays(effect: BaseEffect, iterator: Iterator[str], terminal: Termin
         completed += 1
         if not rendered or (count and completed >= count):
             return
-        iterator = iter(effect)
+        if next_playback_factory is None:
+            iterator = iter(effect)
+        else:
+            effect, iterator = next_playback_factory()
 
 
 def main() -> None:
@@ -263,30 +322,43 @@ def main() -> None:
     if not input_data.strip():
         return
 
+    available_effects: list[str] | None = None
+    selected_effect_name = args.effect
     if args.random_effect:
-        if args.include_effects:
-            available_effects = [effect for effect in effect_resource_map if effect in args.include_effects]
-        elif args.exclude_effects:
-            available_effects = [effect for effect in effect_resource_map if effect not in args.exclude_effects]
-        else:
-            available_effects = list(effect_resource_map)
+        available_effects = _get_available_effects(args, effect_resource_map)
         if not available_effects:
             print("Error: No effects available for random selection based on include/exclude filters.\n")
             sys.exit(1)
 
-        args.effect = random.choice(available_effects)
+        selected_effect_name = random.choice(available_effects)
     elif not args.effect:
         print("Error: No effect specified. Must specify an effect or use --random-effect.\n")
         sys.exit(1)
 
-    effect_class, effect_config_class = effect_resource_map[args.effect]
     terminal_config = TerminalConfig._build_config(args)
-    effect_config = effect_config_class._build_config(None if args.random_effect else args)
-    effect = effect_class(input_data, effect_config, terminal_config)
+
+    assert selected_effect_name is not None
+    effect = _create_effect(
+        selected_effect_name,
+        input_data,
+        effect_resource_map,
+        terminal_config,
+        None if args.random_effect else args,
+    )
     try:
         effect_iterator = iter(effect)
         with effect.terminal_output() as terminal:
-            _print_replays(effect, effect_iterator, terminal, args.repeat)
+            next_playback_factory: Callable[[], tuple[BaseEffect, Iterator[str]]] | None = None
+            if available_effects is not None:
+                next_playback_factory = partial(
+                    _create_random_playback,
+                    available_effects,
+                    effect_resource_map,
+                    input_data,
+                    terminal_config,
+                    terminal,
+                )
+            _print_replays(effect, effect_iterator, terminal, args.repeat, next_playback_factory)
     except (EmptyInputError, UnsupportedAnsiSequenceError) as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

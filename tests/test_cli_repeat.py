@@ -9,7 +9,9 @@ from unittest.mock import Mock
 import pytest
 
 from terminaltexteffects import __main__
-from terminaltexteffects.effects.effect_wipe import Wipe
+from terminaltexteffects.effects.effect_expand import ExpandConfig
+from terminaltexteffects.effects.effect_wipe import Wipe, WipeConfig
+from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
 
 if TYPE_CHECKING:
@@ -159,20 +161,109 @@ def test_repeat_freezes_geometry_after_resize(monkeypatch: pytest.MonkeyPatch) -
     assert iterator_geometry == [(2, 2), (2, 2)]
 
 
-def test_repeat_random_effect_selected_once(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Random replay chooses the effect once rather than choosing each cycle."""
-    choice = Mock(return_value="wipe")
-    iterator = Mock(side_effect=lambda: iter(["frame"]))
+@pytest.mark.parametrize("filter_mode", ["include", "exclude"])
+def test_random_repeat_selects_each_cycle_from_filtered_pool_with_defaults(
+    monkeypatch: pytest.MonkeyPatch,
+    filter_mode: str,
+) -> None:
+    """Random replay reselects per cycle with defaults and stable geometry."""
+    parser, full_effect_map = __main__.build_parser(include_user_effects=False)
+    expected_names = {"wipe", "expand"}
+    if filter_mode == "include":
+        filter_args = ["--include-effects", "wipe", "expand"]
+    else:
+        excluded_names = [name for name in full_effect_map if name not in expected_names]
+        filter_args = ["--exclude-effects", *excluded_names]
+    args = parser.parse_args(
+        [
+            "--seed",
+            "17",
+            "--frame-rate",
+            "0",
+            "--canvas-height",
+            "0",
+            "--repeat",
+            "3",
+            "--random-effect",
+            *filter_args,
+        ],
+    )
+    monkeypatch.setattr(__main__, "build_parsers_and_parse_args", lambda: (args, full_effect_map))
+    expected_pool = [name for name in full_effect_map if name in expected_names]
+
+    original_choice = __main__.random.choice
+    choices_by_run: list[list[tuple[tuple[str, ...], str]]] = []
+    current_choices: list[tuple[tuple[str, ...], str]] = []
+
+    def record_choice(pool: list[str]) -> str:
+        choice = original_choice(pool)
+        current_choices.append((tuple(pool), choice))
+        return choice
+
+    monkeypatch.setattr(__main__.random, "choice", record_choice)
+    original_iterator = BaseEffect.__iter__
+    iterator_batches: list[list[tuple[BaseEffect, BaseEffectIterator]]] = []
+    current_iterators: list[tuple[BaseEffect, BaseEffectIterator]] = []
+
+    def record_iterator(effect: BaseEffect) -> BaseEffectIterator:
+        iterator = original_iterator(effect)
+        current_iterators.append((effect, iterator))
+        return iterator
+
+    monkeypatch.setattr(BaseEffect, "__iter__", record_iterator)
+    size_probes = iter([(20, 2), (20, 4)])
+    monkeypatch.setattr(Terminal, "_get_terminal_dimensions", lambda *_: next(size_probes))
+    monkeypatch.setattr(Terminal, "get_piped_input", lambda: "A\nB\nC\nD")
+    prepare, restore, output = Mock(), Mock(), Mock()
+    monkeypatch.setattr(Terminal, "prep_canvas", prepare)
+    monkeypatch.setattr(Terminal, "restore_cursor", restore)
+    monkeypatch.setattr(Terminal, "print", output)
+
+    for _ in range(2):
+        current_choices = []
+        current_iterators = []
+        __main__.main()
+        choices_by_run.append(current_choices)
+        iterator_batches.append(current_iterators)
+
+    expected_configs = {"Wipe": WipeConfig._build_config(), "Expand": ExpandConfig._build_config()}
+    assert all(len(batch) == 3 for batch in choices_by_run)
+    assert choices_by_run[0] == choices_by_run[1]
+    assert all(
+        pool == tuple(expected_pool) and choice in expected_names for batch in choices_by_run for pool, choice in batch
+    )
+    assert all(
+        [type(effect).__name__.lower() for effect, _ in batch] == [choice for _, choice in choices]
+        for batch, choices in zip(iterator_batches, choices_by_run, strict=True)
+    )
+    assert all(len({id(effect) for effect, _ in batch}) == 3 for batch in iterator_batches)
+    for run_index, batch in enumerate(iterator_batches):
+        expected_height = 2 if run_index == 0 else 4
+        assert all(effect.input_data == "A\nB\nC\nD" for effect, _ in batch)
+        assert all(effect.effect_config == expected_configs[type(effect).__name__] for effect, _ in batch)
+        assert [(iterator.terminal._terminal_height, iterator.terminal.canvas.height) for _, iterator in batch] == [
+            (expected_height, expected_height)
+        ] * 3
+    assert prepare.call_count == 2
+    assert restore.call_count == 2
+    assert output.call_count > 0
+
+
+def test_random_repeat_until_interrupt_restores_cursor(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Continuous random replay selects again each cycle and restores the cursor on interruption."""
+    choice = Mock(side_effect=["wipe", "expand", KeyboardInterrupt])
+    restore = Mock()
     monkeypatch.setattr(__main__.random, "choice", choice)
-    monkeypatch.setattr(Wipe, "__iter__", iterator)
-    monkeypatch.setattr(Terminal, "get_piped_input", lambda: "Hello")
+    monkeypatch.setattr(Terminal, "get_piped_input", lambda: "A")
     monkeypatch.setattr(Terminal, "prep_canvas", Mock())
-    monkeypatch.setattr(Terminal, "restore_cursor", Mock())
+    monkeypatch.setattr(Terminal, "restore_cursor", restore)
     monkeypatch.setattr(Terminal, "print", Mock())
-    monkeypatch.setattr(sys, "argv", ["tte", "--repeat", "2", "--random-effect"])
-    __main__.main()
-    choice.assert_called_once()
-    assert iterator.call_count == 2
+    monkeypatch.setattr(sys, "argv", ["tte", "--frame-rate", "0", "--repeat", "0", "--random-effect"])
+    with pytest.raises(SystemExit) as error:
+        __main__.main()
+    assert error.value.code == 1
+    assert choice.call_count == 3
+    restore.assert_called_once()
 
 
 def test_repeat_empty_input_is_noop(monkeypatch: pytest.MonkeyPatch) -> None:
