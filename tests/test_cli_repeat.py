@@ -211,8 +211,7 @@ def test_random_repeat_selects_each_cycle_from_filtered_pool_with_defaults(
         return iterator
 
     monkeypatch.setattr(BaseEffect, "__iter__", record_iterator)
-    size_probes = iter([(20, 2), (20, 4)])
-    monkeypatch.setattr(Terminal, "_get_terminal_dimensions", lambda *_: next(size_probes))
+    monkeypatch.setattr(Terminal, "_get_terminal_dimensions", Mock(side_effect=[(20, 2), (20, 4)]))
     monkeypatch.setattr(Terminal, "get_piped_input", lambda: "A\nB\nC\nD")
     prepare, restore, output = Mock(), Mock(), Mock()
     monkeypatch.setattr(Terminal, "prep_canvas", prepare)
@@ -227,6 +226,7 @@ def test_random_repeat_selects_each_cycle_from_filtered_pool_with_defaults(
         iterator_batches.append(current_iterators)
 
     expected_configs = {"Wipe": WipeConfig._build_config(), "Expand": ExpandConfig._build_config()}
+    assert len(iterator_batches) == len(choices_by_run) == 2
     assert all(len(batch) == 3 for batch in choices_by_run)
     assert choices_by_run[0] == choices_by_run[1]
     assert all(
@@ -234,7 +234,7 @@ def test_random_repeat_selects_each_cycle_from_filtered_pool_with_defaults(
     )
     assert all(
         [type(effect).__name__.lower() for effect, _ in batch] == [choice for _, choice in choices]
-        for batch, choices in zip(iterator_batches, choices_by_run, strict=True)
+        for batch, choices in zip(iterator_batches, choices_by_run)
     )
     assert all(len({id(effect) for effect, _ in batch}) == 3 for batch in iterator_batches)
     for run_index, batch in enumerate(iterator_batches):
