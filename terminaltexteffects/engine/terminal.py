@@ -359,7 +359,13 @@ class Terminal:
 
     _active_output_terminal: typing.ClassVar[weakref.ReferenceType[Terminal] | None] = None
 
-    def __init__(self, input_data: str, config: TerminalConfig | None = None) -> None:
+    def __init__(
+        self,
+        input_data: str,
+        config: TerminalConfig | None = None,
+        *,
+        terminal_dimensions: tuple[int, int] | None = None,
+    ) -> None:
         """Initialize the Terminal.
 
         Args:
@@ -367,6 +373,10 @@ class Terminal:
                 region on a minimal one-cell canvas.
             config (TerminalConfig, optional): Configuration copied into an immutable construction-time snapshot.
                 Later mutations to the caller's configuration do not affect this terminal. Defaults to None.
+            terminal_dimensions (tuple[int, int], optional): The `terminal_dimensions` tuple provides the terminal
+                width and height instead of probing the current terminal. Used when a fresh effect iterator must match
+                an already prepared output canvas.
+                Defaults to None.
 
         """
         self.config = deepcopy(config) if config is not None else TerminalConfig._build_config()
@@ -382,7 +392,9 @@ class Terminal:
         self._wrapped_character_line_widths: list[int] | None = None
         self._wrapped_character_columns: dict[EffectCharacter, int] = {}
         self._wrapped_character_lines_width: int | None = None
-        self._terminal_width, self._terminal_height = self._get_terminal_dimensions()
+        self._terminal_width, self._terminal_height = (
+            terminal_dimensions if terminal_dimensions is not None else self._get_terminal_dimensions()
+        )
         self.canvas = canvas_module.Canvas(*self._get_canvas_dimensions())
         if not self.config.ignore_terminal_dimensions:
             self.canvas_column_offset, self.canvas_row_offset = self._calc_canvas_offsets()

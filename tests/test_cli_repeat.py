@@ -73,6 +73,32 @@ def test_repeat_infinite_interrupt_restores_cursor(monkeypatch: pytest.MonkeyPat
     restore.assert_called_once()
 
 
+def test_repeat_iterator_creation_interrupt_restores_cursor(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An interruption while creating the next iterator still restores the terminal."""
+    original_iterator = Wipe.__iter__
+    iterator_count = 0
+    restore = Mock()
+
+    def create_iterator(effect: Wipe) -> Iterator[str]:
+        nonlocal iterator_count
+        iterator_count += 1
+        if iterator_count == 2:
+            raise KeyboardInterrupt
+        return original_iterator(effect)
+
+    monkeypatch.setattr(Wipe, "__iter__", create_iterator)
+    monkeypatch.setattr(Terminal, "get_piped_input", lambda: "Hello")
+    monkeypatch.setattr(Terminal, "prep_canvas", Mock())
+    monkeypatch.setattr(Terminal, "restore_cursor", restore)
+    monkeypatch.setattr(Terminal, "print", Mock())
+    monkeypatch.setattr(sys, "argv", ["tte", "--repeat", "0", "--frame-rate", "0", "wipe"])
+    with pytest.raises(SystemExit) as error:
+        __main__.main()
+    assert error.value.code == 1
+    assert iterator_count == 2
+    restore.assert_called_once()
+
+
 def test_repeat_zero_frames_stops(monkeypatch: pytest.MonkeyPatch) -> None:
     """An empty plugin iterator cannot cause an infinite busy loop."""
     iterator = Mock(side_effect=[iter([]), AssertionError("unexpected replay")])
@@ -91,9 +117,11 @@ def test_repeat_real_wipe(monkeypatch: pytest.MonkeyPatch) -> None:
     playbacks: list[list[str]] = []
 
     def record_iterator(effect: Wipe) -> Iterator[str]:
-        frames = list(original_iterator(effect))
+        frames: list[str] = []
         playbacks.append(frames)
-        return iter(frames)
+        for frame in original_iterator(effect):
+            frames.append(frame)
+            yield frame
 
     output = Mock()
     monkeypatch.setattr(Wipe, "__iter__", record_iterator)
@@ -107,6 +135,28 @@ def test_repeat_real_wipe(monkeypatch: pytest.MonkeyPatch) -> None:
     assert playbacks[0]
     assert playbacks[0] == playbacks[1]
     assert output.call_count == sum(map(len, playbacks))
+
+
+def test_repeat_freezes_geometry_after_resize(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Replay frames keep the prepared canvas dimensions after terminal resize."""
+    original_iterator = Wipe.__iter__
+    iterator_geometry: list[tuple[int, int]] = []
+    size_probes = iter([(20, 2), (20, 4)])
+
+    def record_iterator(effect: Wipe) -> Iterator[str]:
+        iterator = original_iterator(effect)
+        iterator_geometry.append((iterator.terminal._terminal_height, iterator.terminal.canvas.height))
+        return iterator
+
+    monkeypatch.setattr(Wipe, "__iter__", record_iterator)
+    monkeypatch.setattr(Terminal, "_get_terminal_dimensions", lambda *_: next(size_probes))
+    monkeypatch.setattr(Terminal, "get_piped_input", lambda: "a\nb\nc\nd")
+    monkeypatch.setattr(Terminal, "prep_canvas", Mock())
+    monkeypatch.setattr(Terminal, "restore_cursor", Mock())
+    monkeypatch.setattr(Terminal, "print", Mock())
+    monkeypatch.setattr(sys, "argv", ["tte", "--canvas-height", "0", "--frame-rate", "0", "--repeat", "2", "wipe"])
+    __main__.main()
+    assert iterator_geometry == [(2, 2), (2, 2)]
 
 
 def test_repeat_random_effect_selected_once(monkeypatch: pytest.MonkeyPatch) -> None:
