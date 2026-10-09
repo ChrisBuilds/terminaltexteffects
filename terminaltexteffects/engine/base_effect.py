@@ -38,7 +38,9 @@ class _TerminalOutputContext:
     """Track a terminal staged for one active output context.
 
     The first iterator created inside the context consumes `terminal`. Further
-    iterators remain fresh and build their own terminal graphs.
+    iterators remain fresh and build their own terminal graphs using the same
+    terminal dimensions, so their frames stay compatible with the prepared output
+    canvas if the terminal is resized during playback.
     """
 
     terminal: Terminal
@@ -181,11 +183,12 @@ class BaseEffect(ABC, Generic[T]):
             terminal_config if terminal_config is not None else TerminalConfig._build_config()
         )
         self._terminal_output_contexts: list[_TerminalOutputContext] = []
+        self._terminal_dimensions_override: tuple[int, int] | None = None
         self._pending_terminal_ref: ReferenceType[Terminal] | None = None
 
-    def _build_terminal(self) -> Terminal:
-        """Build a fresh terminal from the effect's current input and configuration."""
-        return Terminal(self.input_data, self.terminal_config)
+    def _build_terminal(self, terminal_dimensions: tuple[int, int] | None = None) -> Terminal:
+        """Build a fresh terminal, optionally using a prepared output context's dimensions."""
+        return Terminal(self.input_data, self.terminal_config, terminal_dimensions=terminal_dimensions)
 
     def _acquire_terminal(self) -> Terminal:
         """Return a staged output terminal when available, otherwise build a fresh one.
@@ -198,7 +201,15 @@ class BaseEffect(ABC, Generic[T]):
             if output_context.available_to_iterator:
                 output_context.available_to_iterator = False
                 return output_context.terminal
-        terminal = self._build_terminal()
+            terminal_dimensions = (
+                output_context.terminal._terminal_width,
+                output_context.terminal._terminal_height,
+            )
+        else:
+            terminal_dimensions = self._terminal_dimensions_override
+        terminal = (
+            self._build_terminal(terminal_dimensions) if terminal_dimensions is not None else self._build_terminal()
+        )
         self._pending_terminal_ref = ref(terminal)
         return terminal
 
