@@ -45,8 +45,11 @@ def _external_effect_files(directory: Path, prefix: str) -> Iterator[tuple[Path,
         yield plugin_file, prefix + plugin_file.stem
 
 
-def _load_external_module(plugin_file: Path, module_name: str) -> ModuleType:
+def _load_external_module(plugin_file: Path, module_name: str, alias: str | None = None) -> ModuleType:
     """Load a flat external module without altering the import path.
+
+    When `alias` is given, the module is also registered under that name before it executes, so it
+    can import itself by that name. Both names are removed if execution fails.
 
     The source is compiled on every load instead of using cached bytecode. A `.pyc` is reused when
     the source size and whole-second modification time match, so an edit within the same second
@@ -63,6 +66,8 @@ def _load_external_module(plugin_file: Path, module_name: str) -> ModuleType:
     module = importlib.util.module_from_spec(spec)
     # Dataclasses and other import-time machinery look the module up in `sys.modules`.
     sys.modules[module_name] = module
+    if alias is not None:
+        sys.modules[alias] = module
     try:
         # Flat .py paths resolve to SourceFileLoader; typeshed also permits legacy loaders.
         loader = cast("SourceFileLoader", spec.loader)
@@ -70,6 +75,8 @@ def _load_external_module(plugin_file: Path, module_name: str) -> ModuleType:
         exec(code, module.__dict__)  # noqa: S102 - executing the effect module is the purpose of this loader.
     except BaseException:
         sys.modules.pop(module_name, None)
+        if alias is not None and sys.modules.get(alias) is module:
+            del sys.modules[alias]
         raise
     return module
 
@@ -113,8 +120,9 @@ def _validate_user_effect_resources(
 def _sibling_import_name(stem: str) -> str | None:
     """Return the bare name a user module may also be imported by, or `None` if claiming it is unsafe.
 
-    Earlier-loaded files in the custom effects directory have always been importable by their bare
-    file stem. That name is only claimed when no loaded or installed module already uses it.
+    Files in the custom effects directory have always been importable by their bare file stem, both
+    by themselves and by files loaded after them. That name is only claimed when no loaded or
+    installed module already uses it.
     """
     if not stem.isidentifier() or stem in sys.modules:
         return None
@@ -144,9 +152,7 @@ def _register_user_effect(
     sibling_name = _sibling_import_name(plugin_file.stem)
     module: ModuleType | None = None
     try:
-        module = _load_external_module(plugin_file, module_name)
-        if sibling_name is not None:
-            sys.modules[sibling_name] = module
+        module = _load_external_module(plugin_file, module_name, sibling_name)
         if hasattr(module, "get_effect_resources"):
             effect_cmd, effect_class, config_class = _validate_user_effect_resources(
                 module.get_effect_resources(),

@@ -559,6 +559,49 @@ def test_user_plugin_sibling_name_does_not_claim_installed_module(
         sys.modules.pop("plugin_uses_json", None)
 
 
+def test_user_plugin_can_import_itself_by_file_name(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A plugin can import itself by its bare file name while it is executing."""
+    _write_plugin(
+        tmp_path,
+        "tte_self_import.py",
+        "import sys\nimport tte_self_import\nassert tte_self_import is sys.modules[__name__]\n"
+        + _plugin_config_source("selfimport"),
+    )
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    try:
+        _, effect_resource_map = __main__.build_parser()
+
+        assert "selfimport" in effect_resource_map
+        assert capsys.readouterr().err == ""
+    finally:
+        sys.modules.pop("tte_self_import", None)
+
+
+def test_user_plugin_failing_during_import_releases_its_sibling_name(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A plugin that fails while executing does not stay importable by its bare file name."""
+    _write_plugin(
+        tmp_path,
+        "tte_failing_import.py",
+        "import sys\nassert 'tte_failing_import' in sys.modules\nraise RuntimeError('import failed')",
+    )
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    __main__.build_parser()
+
+    assert "RuntimeError: import failed" in capsys.readouterr().err
+    assert "tte_failing_import" not in sys.modules
+    assert "_tte_user_tte_failing_import" not in sys.modules
+
+
 def test_failed_user_plugin_releases_its_sibling_name(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
