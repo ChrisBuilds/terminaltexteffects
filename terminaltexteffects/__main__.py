@@ -33,27 +33,21 @@ if TYPE_CHECKING:
     from terminaltexteffects.engine.base_effect import BaseEffect
 
 
-_USER_EFFECT_MODULE_PREFIX = "_tte_user_"
 _DEV_EFFECT_MODULE_PREFIX = "_tte_dev_"
 
 
-def _external_effect_files(directory: Path, prefix: str) -> Iterator[tuple[Path, str]]:
-    """Yield flat external module paths and their prefixed module names in deterministic order."""
+def _external_effect_files(directory: Path, prefix: str = "") -> Iterator[tuple[Path, str]]:
+    """Yield flat external module paths and their module names in deterministic order."""
     for plugin_file in sorted(directory.glob("*.py")):
         if plugin_file.name == "__init__.py":
             continue
         yield plugin_file, prefix + plugin_file.stem
 
 
-def _load_external_module(plugin_file: Path, module_name: str, alias: str | None = None) -> ModuleType:
+def _load_external_module(plugin_file: Path, module_name: str) -> ModuleType:
     """Load a flat external module without altering the import path.
 
-    When `alias` is given, the module is also registered under that name before it executes, so it
-    can import itself by that name. Both names are removed if execution fails.
-
-    The source is compiled on every load instead of using cached bytecode. A `.pyc` is reused when
-    the source size and whole-second modification time match, so an edit within the same second
-    could otherwise run stale code when effects are rediscovered in one process.
+    If execution fails, `sys.modules` is restored to the entry it held for `module_name` before loading.
 
     Raises:
         ImportError: If no module specification can be created for `plugin_file`.
@@ -64,21 +58,23 @@ def _load_external_module(plugin_file: Path, module_name: str, alias: str | None
         msg = f"Unable to create a module specification for {plugin_file}"
         raise ImportError(msg)
     module = importlib.util.module_from_spec(spec)
-    # Dataclasses and other import-time machinery look the module up in `sys.modules`.
+    previous_module = sys.modules.get(module_name)
     sys.modules[module_name] = module
-    if alias is not None:
-        sys.modules[alias] = module
     try:
         # Flat .py paths resolve to SourceFileLoader; typeshed also permits legacy loaders.
-        loader = cast("SourceFileLoader", spec.loader)
-        code = loader.source_to_code(loader.get_data(str(plugin_file)), str(plugin_file))
-        exec(code, module.__dict__)  # noqa: S102 - executing the effect module is the purpose of this loader.
+        cast("SourceFileLoader", spec.loader).exec_module(module)
     except BaseException:
-        sys.modules.pop(module_name, None)
-        if alias is not None and sys.modules.get(alias) is module:
-            del sys.modules[alias]
+        _restore_module(module_name, previous_module)
         raise
     return module
+
+
+def _restore_module(module_name: str, previous_module: ModuleType | None) -> None:
+    """Restore the `sys.modules` entry that `module_name` held before an external module was loaded."""
+    if previous_module is None:
+        sys.modules.pop(module_name, None)
+    else:
+        sys.modules[module_name] = previous_module
 
 
 def _validate_user_effect_resources(
@@ -86,9 +82,6 @@ def _validate_user_effect_resources(
     effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
 ) -> tuple[str, type[BaseEffect], type[BaseConfig]]:
     """Validate user effect resources before any parser state is changed.
-
-    The config class populates a disposable subparser collection, so option errors are raised
-    before the real parser receives a partially populated effect command.
 
     Raises:
         TypeError: If the resources are not an effect command name and two classes.
@@ -112,47 +105,24 @@ def _validate_user_effect_resources(
     if parser_command != effect_cmd:
         msg = f"Effect command {effect_cmd!r} does not match parser command {parser_command!r}"
         raise ValueError(msg)
-    disposable_subparsers = argparse.ArgumentParser(add_help=False).add_subparsers()
-    config_class._populate_parser(disposable_subparsers)
     return effect_cmd, effect_class, config_class
 
 
-def _sibling_import_name(plugin_file: Path) -> str | None:
-    """Return the bare name a user module may also be imported by, or `None` if claiming it is unsafe.
+def _populate_user_effect_parser(config_class: type[BaseConfig], subparsers: argparse._SubParsersAction) -> None:
+    """Populate a user effect's subparser once, removing the partial command if population fails.
 
-    Files in the custom effects directory have always been importable by their bare file stem, both
-    by themselves and by files loaded after them. That name is only claimed when no loaded or
-    installed module already uses it. A module found on the import path is acceptable when it is
-    `plugin_file` itself, as happens when the effects directory is on `sys.path`.
+    `_populate_parser` creates the subparser before adding options, so a failure part way through
+    would otherwise leave a listed command with no registered effect.
     """
-    stem = plugin_file.stem
-    if not stem.isidentifier() or stem in sys.modules:
-        return None
+    previous_choices = dict(subparsers.choices)
+    previous_choice_actions = list(subparsers._choices_actions)
     try:
-        spec = importlib.util.find_spec(stem)
-    except (ImportError, ValueError):
-        return None
-    if spec is not None and not _is_same_file(spec.origin, plugin_file):
-        return None
-    return stem
-
-
-def _is_same_file(origin: str | None, plugin_file: Path) -> bool:
-    """Return whether a module spec origin refers to `plugin_file`."""
-    if origin is None:
-        return False
-    try:
-        return Path(origin).samefile(plugin_file)
-    except OSError:
-        return False
-
-
-def _release_sibling_import_names() -> None:
-    """Remove bare-name aliases left by an earlier discovery so rediscovery imports current files."""
-    for name, module in list(sys.modules.items()):
-        module_name = getattr(module, "__name__", None)
-        if isinstance(module_name, str) and module_name.startswith(_USER_EFFECT_MODULE_PREFIX) and name != module_name:
-            del sys.modules[name]
+        config_class._populate_parser(subparsers)
+    except BaseException:
+        subparsers.choices.clear()
+        subparsers.choices.update(previous_choices)
+        subparsers._choices_actions[:] = previous_choice_actions
+        raise
 
 
 def _register_user_effect(
@@ -162,22 +132,19 @@ def _register_user_effect(
     effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
 ) -> None:
     """Register one user effect plugin, or skip it with a warning if it fails to load or register."""
-    sibling_name = _sibling_import_name(plugin_file)
-    module: ModuleType | None = None
+    previous_module = sys.modules.get(module_name)
     try:
-        module = _load_external_module(plugin_file, module_name, sibling_name)
+        module = _load_external_module(plugin_file, module_name)
         if hasattr(module, "get_effect_resources"):
             effect_cmd, effect_class, config_class = _validate_user_effect_resources(
                 module.get_effect_resources(),
                 effect_resource_map,
             )
-            config_class._populate_parser(subparsers)
+            _populate_user_effect_parser(config_class, subparsers)
             effect_resource_map[effect_cmd] = (effect_class, config_class)
     # SystemExit is a plugin failure here: a plugin calling `sys.exit()` must not end the CLI.
     except (Exception, SystemExit) as exc:  # noqa: BLE001
-        sys.modules.pop(module_name, None)
-        if sibling_name is not None and module is not None and sys.modules.get(sibling_name) is module:
-            del sys.modules[sibling_name]
+        _restore_module(module_name, previous_module)
         detail = f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__
         print(f"Warning: Skipping user effect plugin '{plugin_file}': {detail}", file=sys.stderr)
 
@@ -325,8 +292,7 @@ def build_parser(
 
     plugins_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "terminaltexteffects" / "effects"
     if include_user_effects:
-        _release_sibling_import_names()
-        for plugin_file, module_name in _external_effect_files(plugins_dir, _USER_EFFECT_MODULE_PREFIX):
+        for plugin_file, module_name in _external_effect_files(plugins_dir):
             _register_user_effect(plugin_file, module_name, subparsers, effect_resource_map)
         development_dir = os.environ.get("TTE_DEV_EFFECTS_DIR")
         if development_dir is not None:

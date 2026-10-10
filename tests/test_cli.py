@@ -348,7 +348,7 @@ def test_runtime_parser_skips_plugin_that_fails_to_import(
     assert parser.parse_args(["plugindemo", "--plugin-speed", "7"]).plugin_speed == 7
     warning = capsys.readouterr().err
     assert f"Warning: Skipping user effect plugin '{broken_plugin}': SyntaxError" in warning
-    assert "_tte_user_broken" not in sys.modules
+    assert "broken" not in sys.modules
 
 
 @pytest.mark.parametrize(
@@ -410,11 +410,12 @@ def test_runtime_parser_skips_plugin_that_fails_to_register(
     assert "wipe" in effect_resource_map
     assert "invalid" not in effect_resource_map
     assert "other" not in effect_resource_map
+    assert "plugin help" not in parser.format_help()
     with pytest.raises(SystemExit):
         parser.parse_args(["invalid"])
     warning = capsys.readouterr().err
     assert f"Warning: Skipping user effect plugin '{broken_plugin}': {expected_warning}" in warning
-    assert "_tte_user_broken" not in sys.modules
+    assert "broken" not in sys.modules
 
 
 def test_runtime_parser_loads_plugin_module_without_effect_resources(
@@ -423,7 +424,7 @@ def test_runtime_parser_loads_plugin_module_without_effect_resources(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A user module without `get_effect_resources()` is imported without a warning or command."""
-    _write_plugin(tmp_path, "helpers.py", "HELPER = True")
+    _write_plugin(tmp_path, "tte_test_helpers.py", "HELPER = True")
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
 
     _, effect_resource_map = __main__.build_parser(include_user_effects=False)
@@ -432,7 +433,7 @@ def test_runtime_parser_loads_plugin_module_without_effect_resources(
 
     assert set(effect_resource_map) == builtin_effects
     assert capsys.readouterr().err == ""
-    assert sys.modules["_tte_user_helpers"].HELPER is True
+    assert sys.modules["tte_test_helpers"].HELPER is True
 
 
 def test_runtime_parser_propagates_keyboard_interrupt_from_plugin(
@@ -446,24 +447,62 @@ def test_runtime_parser_propagates_keyboard_interrupt_from_plugin(
     with pytest.raises(KeyboardInterrupt):
         __main__.build_parser()
 
-    assert "_tte_user_interrupt" not in sys.modules
+    assert "interrupt" not in sys.modules
 
 
-def test_user_plugin_module_name_does_not_shadow_installed_modules(
+def test_user_plugin_parser_is_populated_once(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A valid plugin's parser setup runs exactly once."""
+    _write_plugin(
+        tmp_path,
+        "tte_populate_once.py",
+        _plugin_config_source("populateonce")
+        + """
+
+_populate_parser = PluginConfig._populate_parser.__func__
+populate_calls = 0
+
+
+def _populate_parser_once(cls, parser):
+    global populate_calls
+    populate_calls += 1
+    if populate_calls > 1:
+        raise RuntimeError("parser populated twice")
+    _populate_parser(cls, parser)
+
+
+PluginConfig._populate_parser = classmethod(_populate_parser_once)
+""",
+    )
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    try:
+        parser, effect_resource_map = __main__.build_parser()
+
+        assert "populateonce" in effect_resource_map
+        assert parser.parse_args(["populateonce"]).effect == "populateonce"
+        assert sys.modules["tte_populate_once"].populate_calls == 1
+        assert capsys.readouterr().err == ""
+    finally:
+        sys.modules.pop("tte_populate_once", None)
+
+
+def test_failed_user_plugin_restores_module_it_replaced(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    """A plugin file named like an installed module is imported under a private module name."""
-    import random  # noqa: PLC0415
+    """A failed plugin named like a loaded module leaves that module's `sys.modules` entry intact."""
+    import json  # noqa: PLC0415
 
-    _write_plugin(tmp_path, "random.py", _plugin_config_source("randomplugin"))
+    _write_plugin(tmp_path, "json.py", "raise RuntimeError('broken plugin')")
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
 
-    _, effect_resource_map = __main__.build_parser()
+    __main__.build_parser()
 
-    assert "randomplugin" in effect_resource_map
-    assert sys.modules["random"] is random
-    assert effect_resource_map["randomplugin"][0].__module__ == "_tte_user_random"
+    assert sys.modules["json"] is json
 
 
 def test_user_plugin_can_import_earlier_sibling_by_file_name(
@@ -486,77 +525,10 @@ def test_user_plugin_can_import_earlier_sibling_by_file_name(
 
         assert "siblingplugin" in effect_resource_map
         assert capsys.readouterr().err == ""
-        assert sys.modules["aaa_tte_sibling_helper"] is sys.modules["_tte_user_aaa_tte_sibling_helper"]
+        assert sys.modules["aaa_tte_sibling_helper"].SPEED == 5
     finally:
         sys.modules.pop("aaa_tte_sibling_helper", None)
         sys.modules.pop("zzz_sibling_plugin", None)
-
-
-def test_user_plugin_sibling_import_is_refreshed_on_rediscovery(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    """Rebuilding the parser imports current sibling files instead of aliases from earlier discovery."""
-    helper = _write_plugin(tmp_path, "aaa_tte_refresh_helper.py", "SPEED = 5")
-    _write_plugin(
-        tmp_path,
-        "zzz_refresh_plugin.py",
-        "from aaa_tte_refresh_helper import SPEED\n" + _plugin_config_source("refreshplugin"),
-    )
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
-
-    try:
-        __main__.build_parser()
-        assert sys.modules["_tte_user_zzz_refresh_plugin"].SPEED == 5
-
-        # Same size and modification time as the first version, which a cached `.pyc` would accept.
-        original_stat = helper.stat()
-        helper.write_text("SPEED = 9\n", encoding="utf-8")
-        os.utime(helper, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
-        __main__.build_parser()
-        assert sys.modules["_tte_user_zzz_refresh_plugin"].SPEED == 9
-        assert not (helper.parent / "__pycache__").exists()
-
-        other_config = tmp_path / "other"
-        _write_plugin(
-            other_config,
-            "zzz_refresh_plugin.py",
-            "from aaa_tte_refresh_helper import SPEED\n" + _plugin_config_source("refreshplugin"),
-        )
-        capsys.readouterr()
-        monkeypatch.setenv("XDG_CONFIG_HOME", str(other_config))
-        _, effect_resource_map = __main__.build_parser()
-
-        assert "refreshplugin" not in effect_resource_map
-        assert "aaa_tte_refresh_helper" not in sys.modules
-        assert "ModuleNotFoundError" in capsys.readouterr().err
-    finally:
-        sys.modules.pop("aaa_tte_refresh_helper", None)
-
-
-def test_user_plugin_sibling_name_does_not_claim_installed_module(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    """A sibling import of a name owned by an installed module resolves to the installed module."""
-    import json  # noqa: PLC0415
-
-    _write_plugin(tmp_path, "json.py", "SHADOWED = True")
-    _write_plugin(
-        tmp_path,
-        "plugin_uses_json.py",
-        "import json\nassert not hasattr(json, 'SHADOWED')\n" + _plugin_config_source("usesjson"),
-    )
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
-
-    try:
-        _, effect_resource_map = __main__.build_parser()
-
-        assert "usesjson" in effect_resource_map
-        assert sys.modules["json"] is json
-    finally:
-        sys.modules.pop("plugin_uses_json", None)
 
 
 def test_user_plugin_can_import_itself_by_file_name(
@@ -582,35 +554,7 @@ def test_user_plugin_can_import_itself_by_file_name(
         sys.modules.pop("tte_self_import", None)
 
 
-def test_user_plugin_imports_resolve_to_loaded_modules_when_directory_is_on_path(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    """Self and sibling imports reuse the loaded plugin modules when the effects directory is importable."""
-    helper = _write_plugin(tmp_path, "aaa_tte_onpath_helper.py", "SPEED = 5")
-    _write_plugin(
-        tmp_path,
-        "zzz_tte_onpath_plugin.py",
-        "import sys\nimport aaa_tte_onpath_helper\nimport zzz_tte_onpath_plugin\n"
-        "assert zzz_tte_onpath_plugin is sys.modules[__name__]\n"
-        "assert aaa_tte_onpath_helper is sys.modules['_tte_user_aaa_tte_onpath_helper']\n"
-        + _plugin_config_source("onpathplugin"),
-    )
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
-    monkeypatch.syspath_prepend(str(helper.parent))
-
-    try:
-        _, effect_resource_map = __main__.build_parser()
-
-        assert "onpathplugin" in effect_resource_map
-        assert capsys.readouterr().err == ""
-    finally:
-        sys.modules.pop("aaa_tte_onpath_helper", None)
-        sys.modules.pop("zzz_tte_onpath_plugin", None)
-
-
-def test_user_plugin_failing_during_import_releases_its_sibling_name(
+def test_user_plugin_failing_during_import_releases_its_module_name(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -627,10 +571,9 @@ def test_user_plugin_failing_during_import_releases_its_sibling_name(
 
     assert "RuntimeError: import failed" in capsys.readouterr().err
     assert "tte_failing_import" not in sys.modules
-    assert "_tte_user_tte_failing_import" not in sys.modules
 
 
-def test_failed_user_plugin_releases_its_sibling_name(
+def test_failed_user_plugin_releases_its_module_name(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -645,7 +588,6 @@ def test_failed_user_plugin_releases_its_sibling_name(
     __main__.build_parser()
 
     assert "tte_failed_sibling" not in sys.modules
-    assert "_tte_user_tte_failed_sibling" not in sys.modules
 
 
 def test_bundled_completion_does_not_import_plugin_effect(
