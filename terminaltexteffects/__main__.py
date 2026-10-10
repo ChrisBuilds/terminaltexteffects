@@ -33,19 +33,120 @@ if TYPE_CHECKING:
     from terminaltexteffects.engine.base_effect import BaseEffect
 
 
-def _external_effect_modules(directory: Path, prefix: str = "") -> Iterator[ModuleType]:
-    """Load flat external modules deterministically without altering the import path."""
+_DEV_EFFECT_MODULE_PREFIX = "_tte_dev_"
+
+
+def _external_effect_files(directory: Path, prefix: str = "") -> Iterator[tuple[Path, str]]:
+    """Yield flat external module paths and their module names in deterministic order."""
     for plugin_file in sorted(directory.glob("*.py")):
         if plugin_file.name == "__init__.py":
             continue
-        module_name = prefix + plugin_file.stem
-        spec = importlib.util.spec_from_file_location(module_name, plugin_file)
-        if spec and spec.loader:
-            module = importlib.util.module_from_spec(spec)
-            sys.modules[module_name] = module
-            # Flat .py paths resolve to SourceFileLoader; typeshed also permits legacy loaders.
-            cast("SourceFileLoader", spec.loader).exec_module(module)
-            yield module
+        yield plugin_file, prefix + plugin_file.stem
+
+
+def _load_external_module(plugin_file: Path, module_name: str) -> ModuleType:
+    """Load a flat external module without altering the import path.
+
+    If execution fails, `sys.modules` is restored to the entry it held for `module_name` before loading.
+
+    Raises:
+        ImportError: If no module specification can be created for `plugin_file`.
+
+    """
+    spec = importlib.util.spec_from_file_location(module_name, plugin_file)
+    if spec is None or spec.loader is None:
+        msg = f"Unable to create a module specification for {plugin_file}"
+        raise ImportError(msg)
+    module = importlib.util.module_from_spec(spec)
+    previous_module = sys.modules.get(module_name)
+    sys.modules[module_name] = module
+    try:
+        # Flat .py paths resolve to SourceFileLoader; typeshed also permits legacy loaders.
+        cast("SourceFileLoader", spec.loader).exec_module(module)
+    except BaseException:
+        _restore_module(module_name, previous_module)
+        raise
+    return module
+
+
+def _restore_module(module_name: str, previous_module: ModuleType | None) -> None:
+    """Restore the `sys.modules` entry that `module_name` held before an external module was loaded."""
+    if previous_module is None:
+        sys.modules.pop(module_name, None)
+    else:
+        sys.modules[module_name] = previous_module
+
+
+def _validate_user_effect_resources(
+    resources: object,
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+) -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Validate user effect resources before any parser state is changed.
+
+    Raises:
+        TypeError: If the resources are not an effect command name and two classes.
+        ValueError: If the command is empty, already registered, or differs from the parser command.
+
+    """
+    if not isinstance(resources, (tuple, list)) or len(resources) != 3:
+        msg = "get_effect_resources() must return (effect command, effect class, config class)"
+        raise TypeError(msg)
+    effect_cmd, effect_class, config_class = resources
+    if not isinstance(effect_cmd, str) or not effect_cmd:
+        msg = "Effect command must be a non-empty string"
+        raise ValueError(msg)
+    if not isinstance(effect_class, type) or not isinstance(config_class, type):
+        msg = "Effect and config resources must be classes"
+        raise TypeError(msg)
+    if effect_cmd in effect_resource_map:
+        msg = f"Duplicate effect command detected: {effect_cmd}"
+        raise ValueError(msg)
+    parser_command = getattr(getattr(config_class, "parser_spec", None), "name", None)
+    if parser_command != effect_cmd:
+        msg = f"Effect command {effect_cmd!r} does not match parser command {parser_command!r}"
+        raise ValueError(msg)
+    return effect_cmd, effect_class, config_class
+
+
+def _populate_user_effect_parser(config_class: type[BaseConfig], subparsers: argparse._SubParsersAction) -> None:
+    """Populate a user effect's subparser once, removing the partial command if population fails.
+
+    `_populate_parser` creates the subparser before adding options, so a failure part way through
+    would otherwise leave a listed command with no registered effect.
+    """
+    previous_choices = dict(subparsers.choices)
+    previous_choice_actions = list(subparsers._choices_actions)
+    try:
+        config_class._populate_parser(subparsers)
+    except BaseException:
+        subparsers.choices.clear()
+        subparsers.choices.update(previous_choices)
+        subparsers._choices_actions[:] = previous_choice_actions
+        raise
+
+
+def _register_user_effect(
+    plugin_file: Path,
+    module_name: str,
+    subparsers: argparse._SubParsersAction,
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+) -> None:
+    """Register one user effect plugin, or skip it with a warning if it fails to load or register."""
+    previous_module = sys.modules.get(module_name)
+    try:
+        module = _load_external_module(plugin_file, module_name)
+        if hasattr(module, "get_effect_resources"):
+            effect_cmd, effect_class, config_class = _validate_user_effect_resources(
+                module.get_effect_resources(),
+                effect_resource_map,
+            )
+            _populate_user_effect_parser(config_class, subparsers)
+            effect_resource_map[effect_cmd] = (effect_class, config_class)
+    # SystemExit is a plugin failure here: a plugin calling `sys.exit()` must not end the CLI.
+    except (Exception, SystemExit) as exc:  # noqa: BLE001
+        _restore_module(module_name, previous_module)
+        detail = f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__
+        print(f"Warning: Skipping user effect plugin '{plugin_file}': {detail}", file=sys.stderr)
 
 
 def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
@@ -127,6 +228,10 @@ def build_parser(
     CLI parser together with a mapping of effect command names to their effect
     and config classes.
 
+    A user effect module in the XDG config effects directory that fails to import or register is
+    skipped with a warning on standard error. Failures in built-in and development effect modules
+    are raised.
+
     Args:
         include_user_effects: Whether to load external effects, including opted-in development effects.
 
@@ -135,7 +240,7 @@ def build_parser(
             mapping of effect names to their classes and configurations.
 
     Raises:
-        ValueError: If two discovered effect modules register the same effect command.
+        ValueError: If built-in or development effect modules register the same effect command.
 
     """
     parser = _build_global_parser()
@@ -187,16 +292,16 @@ def build_parser(
 
     plugins_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "terminaltexteffects" / "effects"
     if include_user_effects:
-        for module in _external_effect_modules(plugins_dir):
-            _register_effect_from_module(module)
+        for plugin_file, module_name in _external_effect_files(plugins_dir):
+            _register_user_effect(plugin_file, module_name, subparsers, effect_resource_map)
         development_dir = os.environ.get("TTE_DEV_EFFECTS_DIR")
         if development_dir is not None:
             directory = Path(development_dir).expanduser().resolve()
             if not development_dir or not directory.is_dir():
                 msg = f"TTE_DEV_EFFECTS_DIR must name an existing directory: {development_dir!r}"
                 raise ValueError(msg)
-            for module in _external_effect_modules(directory, "_tte_dev_"):
-                _register_effect_from_module(module)
+            for plugin_file, module_name in _external_effect_files(directory, _DEV_EFFECT_MODULE_PREFIX):
+                _register_effect_from_module(_load_external_module(plugin_file, module_name))
 
     return parser, effect_resource_map
 
