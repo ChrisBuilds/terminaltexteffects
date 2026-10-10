@@ -59,6 +59,9 @@ Detailed examples and explanations may appear in the optional
   vulnerability-reporting route and guidance on Python, platforms, terminals,
   and shell completion.
   ([#129](https://github.com/ChrisBuilds/terminaltexteffects/issues/129))
+- Added guidance for installing released community effect modules and sharing
+  them in TTE Effect Show and Tell.
+  ([#173](https://github.com/ChrisBuilds/terminaltexteffects/issues/173))
 - Added `CharacterOrder` and `CharacterOrderArg` for shared flat and grouped
   retrieval. Retrieval also supports `reverse=True`, optional serpentine group
   traversal, and explicit off-canvas selection.

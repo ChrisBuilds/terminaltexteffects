@@ -281,6 +281,8 @@ OR
   * Completion scripts cover built-in effects only; options from custom effect plugins are not included.
 * Add custom effect modules to `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set.
   * Any `.py` file in that directory that provides `get_effect_resources()` can register an effect command alongside the built-in effects.
+  * For a released TTE install, place the effect module there and install any dependencies into the same Python environment as TTE. Then run it with `tte <effect> -h` and `tte <effect>`.
+    Effect source remains in its contributor's repository or Gist. See [Community Effects](https://github.com/ChrisBuilds/terminaltexteffects/discussions/categories/tte-effect-show-and-tell) to discover and share projects. The loader is supported by TTE 0.15.0 and later.
 * TTE is not a full terminal emulator, but it parses common fetch-style input including SGR foreground/background colors, cursor movement CSI sequences, carriage returns, and selected DEC private mode toggles.
   * Unsupported control sequences fail fast with an error so they do not leak into the rendered animation.
 
