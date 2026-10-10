@@ -120,6 +120,14 @@ def _sibling_import_name(stem: str) -> str | None:
     return stem
 
 
+def _release_sibling_import_names() -> None:
+    """Remove bare-name aliases left by an earlier discovery so rediscovery imports current files."""
+    for name, module in list(sys.modules.items()):
+        module_name = getattr(module, "__name__", None)
+        if isinstance(module_name, str) and module_name.startswith(_USER_EFFECT_MODULE_PREFIX) and name != module_name:
+            del sys.modules[name]
+
+
 def _register_user_effect(
     plugin_file: Path,
     module_name: str,
@@ -292,6 +300,7 @@ def build_parser(
 
     plugins_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "terminaltexteffects" / "effects"
     if include_user_effects:
+        _release_sibling_import_names()
         for plugin_file, module_name in _external_effect_files(plugins_dir, _USER_EFFECT_MODULE_PREFIX):
             _register_user_effect(plugin_file, module_name, subparsers, effect_resource_map)
         development_dir = os.environ.get("TTE_DEV_EFFECTS_DIR")

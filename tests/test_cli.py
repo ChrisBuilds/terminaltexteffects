@@ -492,6 +492,45 @@ def test_user_plugin_can_import_earlier_sibling_by_file_name(
         sys.modules.pop("zzz_sibling_plugin", None)
 
 
+def test_user_plugin_sibling_import_is_refreshed_on_rediscovery(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Rebuilding the parser imports current sibling files instead of aliases from earlier discovery."""
+    helper = _write_plugin(tmp_path, "aaa_tte_refresh_helper.py", "SPEED = 5")
+    _write_plugin(
+        tmp_path,
+        "zzz_refresh_plugin.py",
+        "from aaa_tte_refresh_helper import SPEED\n" + _plugin_config_source("refreshplugin"),
+    )
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    try:
+        __main__.build_parser()
+        assert sys.modules["_tte_user_zzz_refresh_plugin"].SPEED == 5
+
+        helper.write_text("SPEED = 9\n", encoding="utf-8")
+        __main__.build_parser()
+        assert sys.modules["_tte_user_zzz_refresh_plugin"].SPEED == 9
+
+        other_config = tmp_path / "other"
+        _write_plugin(
+            other_config,
+            "zzz_refresh_plugin.py",
+            "from aaa_tte_refresh_helper import SPEED\n" + _plugin_config_source("refreshplugin"),
+        )
+        capsys.readouterr()
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(other_config))
+        _, effect_resource_map = __main__.build_parser()
+
+        assert "refreshplugin" not in effect_resource_map
+        assert "aaa_tte_refresh_helper" not in sys.modules
+        assert "ModuleNotFoundError" in capsys.readouterr().err
+    finally:
+        sys.modules.pop("aaa_tte_refresh_helper", None)
+
+
 def test_user_plugin_sibling_name_does_not_claim_installed_module(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
