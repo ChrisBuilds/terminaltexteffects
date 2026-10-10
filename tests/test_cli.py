@@ -582,6 +582,34 @@ def test_user_plugin_can_import_itself_by_file_name(
         sys.modules.pop("tte_self_import", None)
 
 
+def test_user_plugin_imports_resolve_to_loaded_modules_when_directory_is_on_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Self and sibling imports reuse the loaded plugin modules when the effects directory is importable."""
+    helper = _write_plugin(tmp_path, "aaa_tte_onpath_helper.py", "SPEED = 5")
+    _write_plugin(
+        tmp_path,
+        "zzz_tte_onpath_plugin.py",
+        "import sys\nimport aaa_tte_onpath_helper\nimport zzz_tte_onpath_plugin\n"
+        "assert zzz_tte_onpath_plugin is sys.modules[__name__]\n"
+        "assert aaa_tte_onpath_helper is sys.modules['_tte_user_aaa_tte_onpath_helper']\n"
+        + _plugin_config_source("onpathplugin"),
+    )
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.syspath_prepend(str(helper.parent))
+
+    try:
+        _, effect_resource_map = __main__.build_parser()
+
+        assert "onpathplugin" in effect_resource_map
+        assert capsys.readouterr().err == ""
+    finally:
+        sys.modules.pop("aaa_tte_onpath_helper", None)
+        sys.modules.pop("zzz_tte_onpath_plugin", None)
+
+
 def test_user_plugin_failing_during_import_releases_its_sibling_name(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

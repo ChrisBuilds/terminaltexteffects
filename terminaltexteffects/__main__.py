@@ -117,21 +117,34 @@ def _validate_user_effect_resources(
     return effect_cmd, effect_class, config_class
 
 
-def _sibling_import_name(stem: str) -> str | None:
+def _sibling_import_name(plugin_file: Path) -> str | None:
     """Return the bare name a user module may also be imported by, or `None` if claiming it is unsafe.
 
     Files in the custom effects directory have always been importable by their bare file stem, both
     by themselves and by files loaded after them. That name is only claimed when no loaded or
-    installed module already uses it.
+    installed module already uses it. A module found on the import path is acceptable when it is
+    `plugin_file` itself, as happens when the effects directory is on `sys.path`.
     """
+    stem = plugin_file.stem
     if not stem.isidentifier() or stem in sys.modules:
         return None
     try:
-        if importlib.util.find_spec(stem) is not None:
-            return None
+        spec = importlib.util.find_spec(stem)
     except (ImportError, ValueError):
         return None
+    if spec is not None and not _is_same_file(spec.origin, plugin_file):
+        return None
     return stem
+
+
+def _is_same_file(origin: str | None, plugin_file: Path) -> bool:
+    """Return whether a module spec origin refers to `plugin_file`."""
+    if origin is None:
+        return False
+    try:
+        return Path(origin).samefile(plugin_file)
+    except OSError:
+        return False
 
 
 def _release_sibling_import_names() -> None:
@@ -149,7 +162,7 @@ def _register_user_effect(
     effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
 ) -> None:
     """Register one user effect plugin, or skip it with a warning if it fails to load or register."""
-    sibling_name = _sibling_import_name(plugin_file.stem)
+    sibling_name = _sibling_import_name(plugin_file)
     module: ModuleType | None = None
     try:
         module = _load_external_module(plugin_file, module_name, sibling_name)
