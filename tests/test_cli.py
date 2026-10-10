@@ -362,6 +362,11 @@ def test_runtime_parser_skips_plugin_that_fails_to_import(
             id="wrong-shape",
         ),
         pytest.param(
+            "def get_effect_resources():\n    return '', object, object",
+            "ValueError: Effect command must be a non-empty string",
+            id="empty-command",
+        ),
+        pytest.param(
             "def get_effect_resources():\n    return 'invalid', 'effect', 'config'",
             "TypeError: Effect and config resources must be classes",
             id="not-classes",
@@ -410,6 +415,24 @@ def test_runtime_parser_skips_plugin_that_fails_to_register(
     warning = capsys.readouterr().err
     assert f"Warning: Skipping user effect plugin '{broken_plugin}': {expected_warning}" in warning
     assert "_tte_user_broken" not in sys.modules
+
+
+def test_runtime_parser_loads_plugin_module_without_effect_resources(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A user module without `get_effect_resources()` is imported without a warning or command."""
+    _write_plugin(tmp_path, "helpers.py", "HELPER = True")
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    _, effect_resource_map = __main__.build_parser(include_user_effects=False)
+    builtin_effects = set(effect_resource_map)
+    _, effect_resource_map = __main__.build_parser()
+
+    assert set(effect_resource_map) == builtin_effects
+    assert capsys.readouterr().err == ""
+    assert sys.modules["_tte_user_helpers"].HELPER is True
 
 
 def test_runtime_parser_propagates_keyboard_interrupt_from_plugin(
