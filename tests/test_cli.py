@@ -466,6 +466,74 @@ def test_user_plugin_module_name_does_not_shadow_installed_modules(
     assert effect_resource_map["randomplugin"][0].__module__ == "_tte_user_random"
 
 
+def test_user_plugin_can_import_earlier_sibling_by_file_name(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A multi-file custom effect can import a helper file that loads before it."""
+    _write_plugin(tmp_path, "aaa_tte_sibling_helper.py", "SPEED = 5")
+    _write_plugin(
+        tmp_path,
+        "zzz_sibling_plugin.py",
+        "from aaa_tte_sibling_helper import SPEED\n" + _plugin_config_source("siblingplugin"),
+    )
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delitem(sys.modules, "aaa_tte_sibling_helper", raising=False)
+
+    try:
+        _, effect_resource_map = __main__.build_parser()
+
+        assert "siblingplugin" in effect_resource_map
+        assert capsys.readouterr().err == ""
+        assert sys.modules["aaa_tte_sibling_helper"] is sys.modules["_tte_user_aaa_tte_sibling_helper"]
+    finally:
+        sys.modules.pop("aaa_tte_sibling_helper", None)
+        sys.modules.pop("zzz_sibling_plugin", None)
+
+
+def test_user_plugin_sibling_name_does_not_claim_installed_module(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """A sibling import of a name owned by an installed module resolves to the installed module."""
+    import json  # noqa: PLC0415
+
+    _write_plugin(tmp_path, "json.py", "SHADOWED = True")
+    _write_plugin(
+        tmp_path,
+        "plugin_uses_json.py",
+        "import json\nassert not hasattr(json, 'SHADOWED')\n" + _plugin_config_source("usesjson"),
+    )
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    try:
+        _, effect_resource_map = __main__.build_parser()
+
+        assert "usesjson" in effect_resource_map
+        assert sys.modules["json"] is json
+    finally:
+        sys.modules.pop("plugin_uses_json", None)
+
+
+def test_failed_user_plugin_releases_its_sibling_name(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """A plugin skipped after import does not stay importable by its bare file name."""
+    _write_plugin(
+        tmp_path,
+        "tte_failed_sibling.py",
+        "def get_effect_resources():\n    raise RuntimeError('registration failed')",
+    )
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    __main__.build_parser()
+
+    assert "tte_failed_sibling" not in sys.modules
+    assert "_tte_user_tte_failed_sibling" not in sys.modules
+
+
 def test_bundled_completion_does_not_import_plugin_effect(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

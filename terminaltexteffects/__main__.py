@@ -104,6 +104,22 @@ def _validate_user_effect_resources(
     return effect_cmd, effect_class, config_class
 
 
+def _sibling_import_name(stem: str) -> str | None:
+    """Return the bare name a user module may also be imported by, or `None` if claiming it is unsafe.
+
+    Earlier-loaded files in the custom effects directory have always been importable by their bare
+    file stem. That name is only claimed when no loaded or installed module already uses it.
+    """
+    if not stem.isidentifier() or stem in sys.modules:
+        return None
+    try:
+        if importlib.util.find_spec(stem) is not None:
+            return None
+    except (ImportError, ValueError):
+        return None
+    return stem
+
+
 def _register_user_effect(
     plugin_file: Path,
     module_name: str,
@@ -111,8 +127,12 @@ def _register_user_effect(
     effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
 ) -> None:
     """Register one user effect plugin, or skip it with a warning if it fails to load or register."""
+    sibling_name = _sibling_import_name(plugin_file.stem)
+    module: ModuleType | None = None
     try:
         module = _load_external_module(plugin_file, module_name)
+        if sibling_name is not None:
+            sys.modules[sibling_name] = module
         if hasattr(module, "get_effect_resources"):
             effect_cmd, effect_class, config_class = _validate_user_effect_resources(
                 module.get_effect_resources(),
@@ -123,6 +143,8 @@ def _register_user_effect(
     # SystemExit is a plugin failure here: a plugin calling `sys.exit()` must not end the CLI.
     except (Exception, SystemExit) as exc:  # noqa: BLE001
         sys.modules.pop(module_name, None)
+        if sibling_name is not None and module is not None and sys.modules.get(sibling_name) is module:
+            del sys.modules[sibling_name]
         detail = f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__
         print(f"Warning: Skipping user effect plugin '{plugin_file}': {detail}", file=sys.stderr)
 
