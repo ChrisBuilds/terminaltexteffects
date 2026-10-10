@@ -510,9 +510,13 @@ def test_user_plugin_sibling_import_is_refreshed_on_rediscovery(
         __main__.build_parser()
         assert sys.modules["_tte_user_zzz_refresh_plugin"].SPEED == 5
 
+        # Same size and modification time as the first version, which a cached `.pyc` would accept.
+        original_stat = helper.stat()
         helper.write_text("SPEED = 9\n", encoding="utf-8")
+        os.utime(helper, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
         __main__.build_parser()
         assert sys.modules["_tte_user_zzz_refresh_plugin"].SPEED == 9
+        assert not (helper.parent / "__pycache__").exists()
 
         other_config = tmp_path / "other"
         _write_plugin(

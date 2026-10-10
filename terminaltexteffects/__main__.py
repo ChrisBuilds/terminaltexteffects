@@ -48,6 +48,10 @@ def _external_effect_files(directory: Path, prefix: str) -> Iterator[tuple[Path,
 def _load_external_module(plugin_file: Path, module_name: str) -> ModuleType:
     """Load a flat external module without altering the import path.
 
+    The source is compiled on every load instead of using cached bytecode. A `.pyc` is reused when
+    the source size and whole-second modification time match, so an edit within the same second
+    could otherwise run stale code when effects are rediscovered in one process.
+
     Raises:
         ImportError: If no module specification can be created for `plugin_file`.
 
@@ -61,7 +65,9 @@ def _load_external_module(plugin_file: Path, module_name: str) -> ModuleType:
     sys.modules[module_name] = module
     try:
         # Flat .py paths resolve to SourceFileLoader; typeshed also permits legacy loaders.
-        cast("SourceFileLoader", spec.loader).exec_module(module)
+        loader = cast("SourceFileLoader", spec.loader)
+        code = loader.source_to_code(loader.get_data(str(plugin_file)), str(plugin_file))
+        exec(code, module.__dict__)  # noqa: S102 - executing the effect module is the purpose of this loader.
     except BaseException:
         sys.modules.pop(module_name, None)
         raise
