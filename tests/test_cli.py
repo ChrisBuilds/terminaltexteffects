@@ -294,6 +294,155 @@ def test_runtime_parser_includes_plugin_effect(
     assert "plugindemo" in effect_resource_map
 
 
+def _write_plugin(tmp_path: Path, filename: str, source: str) -> Path:
+    """Write a user effect plugin into the temporary XDG config directory and return its path."""
+    plugin_dir = tmp_path / "terminaltexteffects" / "effects"
+    plugin_dir.mkdir(parents=True, exist_ok=True)
+    plugin_file = plugin_dir / filename
+    plugin_file.write_text(source.strip() + "\n", encoding="utf-8")
+    return plugin_file
+
+
+def _plugin_config_source(command: str, effect_cmd: str | None = None, options: str = "") -> str:
+    """Return plugin source whose config parser command is `command`."""
+    return f"""
+from dataclasses import dataclass
+
+from terminaltexteffects.engine.base_config import BaseConfig
+from terminaltexteffects.utils import argutils
+
+
+class PluginEffect:
+    pass
+
+
+@dataclass
+class PluginConfig(BaseConfig):
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
+        name={command!r},
+        help="plugin help",
+        description="plugin description",
+        epilog="plugin epilog",
+    )
+{options}
+
+
+def get_effect_resources():
+    return {effect_cmd or command!r}, PluginEffect, PluginConfig
+"""
+
+
+def test_runtime_parser_skips_plugin_that_fails_to_import(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A user plugin that cannot be imported is skipped without hiding other effects."""
+    _write_demo_plugin(tmp_path)
+    broken_plugin = _write_plugin(tmp_path, "broken.py", "def broken(:")
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    parser, effect_resource_map = __main__.build_parser()
+
+    assert "wipe" in effect_resource_map
+    assert parser.parse_args(["plugindemo", "--plugin-speed", "7"]).plugin_speed == 7
+    warning = capsys.readouterr().err
+    assert f"Warning: Skipping user effect plugin '{broken_plugin}': SyntaxError" in warning
+    assert "_tte_user_broken" not in sys.modules
+
+
+@pytest.mark.parametrize(
+    ("source", "expected_warning"),
+    [
+        pytest.param("import sys\nsys.exit(3)", "SystemExit: 3", id="system-exit"),
+        pytest.param("raise RuntimeError('import failed')", "RuntimeError: import failed", id="import-error"),
+        pytest.param(
+            "def get_effect_resources():\n    return 'invalid', object",
+            "TypeError: get_effect_resources() must return",
+            id="wrong-shape",
+        ),
+        pytest.param(
+            "def get_effect_resources():\n    return 'invalid', 'effect', 'config'",
+            "TypeError: Effect and config resources must be classes",
+            id="not-classes",
+        ),
+        pytest.param(
+            _plugin_config_source("wipe"),
+            "ValueError: Duplicate effect command detected: wipe",
+            id="duplicate-builtin",
+        ),
+        pytest.param(
+            _plugin_config_source("invalid", effect_cmd="other"),
+            "ValueError: Effect command 'other' does not match parser command 'invalid'",
+            id="mismatched-command",
+        ),
+        pytest.param(
+            _plugin_config_source(
+                "invalid",
+                options=(
+                    "    first: int = argutils.ArgSpec(name='--same', default=1, type=int)\n"
+                    "    second: int = argutils.ArgSpec(name='--same', default=2, type=int)"
+                ),
+            ),
+            "ArgumentError",
+            id="conflicting-options",
+        ),
+    ],
+)
+def test_runtime_parser_skips_plugin_that_fails_to_register(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    source: str,
+    expected_warning: str,
+) -> None:
+    """A failed user plugin leaves no partial command and keeps built-in effects available."""
+    broken_plugin = _write_plugin(tmp_path, "broken.py", source)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    parser, effect_resource_map = __main__.build_parser()
+
+    assert "wipe" in effect_resource_map
+    assert "invalid" not in effect_resource_map
+    assert "other" not in effect_resource_map
+    with pytest.raises(SystemExit):
+        parser.parse_args(["invalid"])
+    warning = capsys.readouterr().err
+    assert f"Warning: Skipping user effect plugin '{broken_plugin}': {expected_warning}" in warning
+    assert "_tte_user_broken" not in sys.modules
+
+
+def test_runtime_parser_propagates_keyboard_interrupt_from_plugin(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Interrupting plugin discovery still stops the CLI."""
+    _write_plugin(tmp_path, "interrupt.py", "raise KeyboardInterrupt")
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    with pytest.raises(KeyboardInterrupt):
+        __main__.build_parser()
+
+    assert "_tte_user_interrupt" not in sys.modules
+
+
+def test_user_plugin_module_name_does_not_shadow_installed_modules(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """A plugin file named like an installed module is imported under a private module name."""
+    import random  # noqa: PLC0415
+
+    _write_plugin(tmp_path, "random.py", _plugin_config_source("randomplugin"))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    _, effect_resource_map = __main__.build_parser()
+
+    assert "randomplugin" in effect_resource_map
+    assert sys.modules["random"] is random
+    assert effect_resource_map["randomplugin"][0].__module__ == "_tte_user_random"
+
+
 def test_bundled_completion_does_not_import_plugin_effect(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

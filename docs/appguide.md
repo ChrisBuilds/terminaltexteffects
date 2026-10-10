@@ -94,6 +94,8 @@ tte -i banner.txt --repeat 0 beams
 Custom effect modules are discovered from `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or
 `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set. Any `.py` file in that directory that
 provides `get_effect_resources()` can register an effect command alongside the built-in effects.
+If a custom effect module fails to import or register, TTE prints a warning naming the file to standard
+error, skips that module, and keeps the built-in effects and other valid custom effects available.
 
 For prototypes kept outside the shipped package, set `TTE_DEV_EFFECTS_DIR` to a directory of
 effect modules. These modules use the same `get_effect_resources()` interface. The setting
