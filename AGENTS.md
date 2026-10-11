@@ -63,10 +63,9 @@
   while the prior merge's main CI and documentation verification run. Hold its merge until
   prior verification succeeds and its own latest-head checks/review and explicit authorization
   are satisfied. Report unexpected failures promptly; do not weaken gates to shorten waiting.
-- After post-merge verification, prune the merged PR's branches per `.github/POST_MERGE.md#6-prune-merged-branches`:
-  delete its local branch and any review worktree, and for same-repository PRs confirm GitHub deleted
-  the remote head branch. Delete only branches whose PRs merged or closed, and a local branch only when
-  its tip matches the PR's head commit; leave open PRs, contributor forks, `main`, and `gh-pages` alone.
+- After post-merge verification, delete the merged PR's local branch and review worktree
+  per `.github/POST_MERGE.md#6-prune-merged-branches`. GitHub deletes the remote head branch;
+  report any that remains rather than deleting it.
 - Marking a verified draft ready automatically requests Codex review in this repository.
   Check the actual latest-head review state before posting a manual request; request manually
   only when automatic review has not started or a changed head needs re-review. A request or

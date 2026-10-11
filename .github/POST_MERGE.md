@@ -175,7 +175,7 @@ supplement the public evidence. A closed linked issue does not erase outstanding
 - Docs run / attempt / actual deployed SHA / deploy-step result:
 - Live banner full SHA / checked URLs and content / HTTP or browser method / uninspected scope / verification time (UTC):
 - Recovery actions, original failure evidence and follow-up issue (or none):
-- Branch cleanup (local branch, review worktree, remote head branch):
+- Branch cleanup (local branch, review worktree, any remaining remote branch reported):
 - Outcome: complete, or pending/failed with next owner and concrete action.
 ```
 
@@ -186,58 +186,12 @@ sensitive exploit details out of public records.
 
 ## 6. Prune merged branches
 
-After verification completes (or is handed off), remove the merged PR's leftovers so
-stale branches do not accumulate. The repository deletes a PR's head branch on GitHub
-when it merges; local branches, review worktrees and fetched contributor branches remain.
+After verification completes (or is handed off), delete the local branch you created or
+fetched for the merged PR and remove its review worktree, if any. Work from the worktree
+that has `main` checked out, and check a worktree for uncommitted work before removing it.
+Squash merges make merged branches look unmerged to git, so use `git branch -D` once the
+PR shows as merged.
 
-Run cleanup from the worktree that has `main` checked out, not from the review worktree
-being removed. Git refuses to switch to `main` while another worktree has it checked
-out, so use `git worktree list` to find that worktree and work there. Switch to `main`
-only when no worktree has it checked out.
-
-```sh
-gh pr view PR_NUMBER --json state,headRefName,headRefOid,isCrossRepository,headRepositoryOwner
-git worktree list                     # find the main worktree and this PR's review worktrees
-cd MAIN_WORKTREE_PATH                 # or `git switch main` when no worktree has main
-git pull --ff-only
-git worktree remove WORKTREE_PATH     # only if it has no uncommitted work
-git rev-parse --verify refs/heads/LOCAL_BRANCH   # must equal headRefOid before deleting
-git branch -D LOCAL_BRANCH            # squash merges leave the branch unmerged to git
-git fetch --prune                     # drop stale remote-tracking refs
-git ls-remote --exit-code origin refs/heads/HEAD_BRANCH   # same-repository PRs only; exit 2 = gone
-```
-
-Identify the local branch by commit, not by name. `LOCAL_BRANCH` is the branch you
-created or fetched for this PR (for example `pr/OWNER/NUMBER` for a contributor PR).
-Delete it only if its tip equals the PR's `headRefOid`. A matching name alone can
-belong to unrelated work, and a different tip means unpushed or unrelated commits;
-investigate instead of deleting. Resolve the fully qualified `refs/heads/` ref: a bare
-name resolves a same-named tag first, while `git branch -D` deletes the branch.
-
-For a same-repository PR (`isCrossRepository` false), confirm the head branch left
-`origin`. `git fetch --prune` does not report a remote branch that still exists, so
-query the fully qualified ref: `ls-remote` patterns also match ref tails, and a bare
-`HEAD_BRANCH` would match `refs/heads/other/HEAD_BRANCH`. Exit status 2 confirms the
-branch is gone. If it prints the ref, GitHub kept the branch, and it may since have
-received new work or been reused for another PR. Delete it only when the printed commit
-equals `headRefOid` and `gh pr list --head HEAD_BRANCH --state open` is empty, and only
-with a lease that rejects the deletion if the branch has moved since that check:
-
-```sh
-git push --force-with-lease=refs/heads/HEAD_BRANCH:HEAD_REF_OID origin :refs/heads/HEAD_BRANCH
-```
-
-A `rejected (stale info)` result means the branch changed; leave it and report it.
-Otherwise leave any branch that fails these checks and report it. Record the outcome
-in the post-merge comment.
-
-A cross-repository PR's head lives in the contributor's fork (`headRepositoryOwner`).
-It is not on `origin` and is not ours to delete. Remove only the local copy, after
-the commit check above.
-
-Delete a branch only when its PR is merged or closed. Squash merges make merged branches
-look unmerged to `git cherry` and `git branch -d`, so decide from the PR state, not commit
-ancestry. Never delete `main`, branches with open PRs, or `gh-pages` (retiring it is a
-maintainer decision). Check `git worktree list` and uncommitted work before removing a
-worktree. When pruning older leftovers, list each branch with its PR number and state.
-Record the cleanup in the post-merge comment.
+GitHub deletes the PR's head branch on merge. If a remote branch remains, report it to
+the maintainer instead of deleting it. Never delete `main`, `gh-pages`, or a branch with
+an open PR. Record the cleanup in the post-merge comment.

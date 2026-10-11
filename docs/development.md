@@ -441,10 +441,8 @@ evidence-backed infrastructure failure, and fix source problems through a scoped
 Follow the [post-merge procedure](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/POST_MERGE.md)
 for commands, recovery decisions and the completion/handoff template.
 
-After verification completes or is handed off, prune the merged PR's local branch and
-review worktrees, and for same-repository PRs confirm the remote head branch is gone.
-Delete only branches whose PRs merged or closed, and a local branch only when its tip
-matches the PR's head commit. Work from the worktree that has `main` checked out. See
+After verification completes or is handed off, delete the merged PR's local branch and
+review worktree, and report any remote branch GitHub did not delete. See
 [branch cleanup](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/POST_MERGE.md#6-prune-merged-branches).
 
 ## 14. Start the separate release pipeline
