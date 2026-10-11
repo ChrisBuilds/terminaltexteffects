@@ -94,6 +94,36 @@ tte -i banner.txt --repeat 0 beams
 Custom effect modules are discovered from `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or
 `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set. Any `.py` file in that directory that
 provides `get_effect_resources()` can register an effect command alongside the built-in effects.
+If a custom effect module fails to import or register, TTE prints a warning naming the file to standard
+error, skips that module, and keeps the built-in effects and other valid custom effects available.
+Each module is imported under its file name, so custom effect modules can import themselves and earlier-loaded
+sibling files by name. A file named like a standard-library or installed module, such as `random.py`, is skipped
+with a warning instead of replacing that module; rename the file to load it.
+These skip-with-warning protections are part of development toward 0.16.0. In the published 0.15.0 package,
+a custom effect module that fails to import or register stops `tte` from starting, and a module named like an
+installed module can replace it.
+
+For prototypes in an unreleased checkout, set `TTE_DEV_EFFECTS_DIR` to a directory of effect
+modules. These modules use the same `get_effect_resources()` interface. This development-only
+setting is not available in the released 0.15.0 CLI, is explicit, and does not affect bundled
+shell completion generation. Contributors can use `python -m tools.dev <effect>` from a checkout
+to load its `dev_effects/` directory.
+
+The example below will pass the output of the `ls` command to TTE with the following options:
+
+* *Global* options:
+    - Text will be wrapped if wider than the terminal.
+    - Tabs will be replaced with 4 spaces.
+
+* *Effect* options:
+    - Use the [slide](./effects/slide.md) effect.
+    - Merge the groups.
+    - Set movement-speed to 2.
+    - Group by column.
+
+```bash title="TTE argument specification example"
+ls | tte --wrap-text --tab-width 4 slide --merge --movement-speed 2 --grouping column
+```
 
 ## Community effects
 
@@ -118,34 +148,14 @@ printf 'Hello!\n' | tte community-effect
 ```
 
 Replace `community-effect` with the effect command name documented by its author.
+On TTE 0.15.0, a module that fails to load stops `tte` from starting; remove it from the effects
+directory to restore the built-in effects.
 The effect remains hosted and maintained by its author.
 
 Browse or share projects in the [TTE Effect Show and Tell discussion category](https://github.com/ChrisBuilds/terminaltexteffects/discussions/categories/tte-effect-show-and-tell).
 Include a short demo, a source repository or public Gist, supported TTE version, installation and run
 steps, license, and maintenance status. A listing is a community sharing post; it does not mean the
 effect is bundled with TTE or endorsed by its maintainers.
-
-For prototypes in an unreleased checkout, set `TTE_DEV_EFFECTS_DIR` to a directory of effect
-modules. These modules use the same `get_effect_resources()` interface. This development-only
-setting is not available in the released 0.15.0 CLI, is explicit, and does not affect bundled
-shell completion generation. Contributors can use `python -m tools.dev <effect>` from a checkout
-to load its `dev_effects/` directory.
-
-The example below will pass the output of the `ls` command to TTE with the following options:
-
-* *Global* options:
-    - Text will be wrapped if wider than the terminal.
-    - Tabs will be replaced with 4 spaces.
-
-* *Effect* options:
-    - Use the [slide](./effects/slide.md) effect.
-    - Merge the groups.
-    - Set movement-speed to 2.
-    - Group by column.
-
-```bash title="TTE argument specification example"
-ls | tte --wrap-text --tab-width 4 slide --merge --movement-speed 2 --grouping column
-```
 
 ## Example Usage
 
