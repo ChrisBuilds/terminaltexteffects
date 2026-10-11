@@ -196,20 +196,33 @@ out, so use `git worktree list` to find that worktree and work there. Switch to 
 only when no worktree has it checked out.
 
 ```sh
-gh pr view PR_NUMBER --json state,headRefName
+gh pr view PR_NUMBER --json state,headRefName,headRefOid,isCrossRepository,headRepositoryOwner
 git worktree list                     # find the main worktree and this PR's review worktrees
 cd MAIN_WORKTREE_PATH                 # or `git switch main` when no worktree has main
 git pull --ff-only
 git worktree remove WORKTREE_PATH     # only if it has no uncommitted work
-git branch -D HEAD_BRANCH             # squash merges leave the branch unmerged to git
+git rev-parse LOCAL_BRANCH            # must equal headRefOid before deleting
+git branch -D LOCAL_BRANCH            # squash merges leave the branch unmerged to git
 git fetch --prune                     # drop stale remote-tracking refs
-git ls-remote --exit-code --heads origin HEAD_BRANCH   # exit status 2 means the branch is gone
+git ls-remote --exit-code origin refs/heads/HEAD_BRANCH   # same-repository PRs only; exit 2 = gone
 ```
 
-`git fetch --prune` does not report a remote branch that still exists. Use the
-`git ls-remote` check: exit status 2 confirms the remote head branch is gone. If it
-prints a ref, GitHub kept the branch. Delete it only if its PR is merged or closed,
-and record that in the post-merge comment.
+Identify the local branch by commit, not by name. `LOCAL_BRANCH` is the branch you
+created or fetched for this PR (for example `pr/OWNER/NUMBER` for a contributor PR).
+Delete it only if its tip equals the PR's `headRefOid`. A matching name alone can
+belong to unrelated work, and a different tip means unpushed or unrelated commits;
+investigate instead of deleting.
+
+For a same-repository PR (`isCrossRepository` false), confirm the head branch left
+`origin`. `git fetch --prune` does not report a remote branch that still exists, so
+query the fully qualified ref: `ls-remote` patterns also match ref tails, and a bare
+`HEAD_BRANCH` would match `refs/heads/other/HEAD_BRANCH`. Exit status 2 confirms the
+branch is gone. If it prints the ref, GitHub kept the branch. Delete it only if its PR
+is merged or closed, and record that in the post-merge comment.
+
+A cross-repository PR's head lives in the contributor's fork (`headRepositoryOwner`).
+It is not on `origin` and is not ours to delete. Remove only the local copy, after
+the commit check above.
 
 Delete a branch only when its PR is merged or closed. Squash merges make merged branches
 look unmerged to `git cherry` and `git branch -d`, so decide from the PR state, not commit
