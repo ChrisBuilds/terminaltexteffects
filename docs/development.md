@@ -20,9 +20,10 @@ flowchart TD
     PR --> Quality[8. CI quality, changelog, artifact, and relevant docs checks]
     Quality --> Matrix[9. Python, native-platform, and completion jobs]
     Matrix --> Review[10. Mark ready; address review and verify latest checks]
-    Review --> Merge[11. Maintainer squash-merges and deletes the branch]
+    Review --> Merge[11. Maintainer squash-merges the PR]
     Merge --> MainCI[12. Push CI validates main]
     MainCI --> Docs[13. Deploy documentation for current tested main]
+    Docs --> Cleanup[After verification, prune merged branches and worktrees]
     MainCI --> Prep[14. Prepare a release issue and PR when scheduled]
     Prep --> ReleaseQA[15. Exhaustive, visual, performance, and artifact QA]
     ReleaseQA --> ReleaseMerge[16. Review and merge release preparation]
@@ -400,7 +401,7 @@ When transferring work or CI/review monitoring to another agent, or pausing unfi
 
 The receiving agent checks the actual worktree and live GitHub state before acting, then refreshes the checkpoint as needed. Record skipped checks explicitly and preserve uncommitted work. The checkpoint cannot grant merge authority: verify the maintainer's actual instruction and its conditions. Keep sensitive information and personal paths out of public checkpoints.
 
-## 11. Squash merge, close ordinary work, and clean up
+## 11. Squash merge and close ordinary work
 
 **Trigger:** explicit maintainer merge decision.
 
@@ -414,7 +415,7 @@ After merging, prepare and start CI/review for only the next candidate while the
 
 Use **Squash and merge**. Review/edit the resulting commit title and body in GitHub; its defaults are not a reason to leave noisy development history. The issue branch may contain multiple commits, but main receives the reviewed combined change as one commit.
 
-Delete the merged branch. `Closes #123` closes an ordinary issue when the PR reaches the default branch. Fetch/switch to main and fast-forward locally when the worktree is safe. Synchronize locked tools after branch/lock changes.
+GitHub deletes the PR's remote head branch when it merges. `Closes #123` closes an ordinary issue when the PR reaches the default branch. Fetch/switch to main and fast-forward locally when the worktree is safe. Synchronize locked tools after branch/lock changes. Prune the local branch and review worktrees after main validation and deployment (steps 12–13).
 
 An ordinary issue is complete after its work is merged and required follow-up is accounted for. Its changes may still be unreleased. A release tracking issue remains open beyond its PR merge.
 
@@ -439,6 +440,10 @@ Unexpected failures are reported promptly; preserve original evidence, retry onl
 evidence-backed infrastructure failure, and fix source problems through a scoped PR.
 Follow the [post-merge procedure](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/POST_MERGE.md)
 for commands, recovery decisions and the completion/handoff template.
+
+After verification completes or is handed off, delete the merged PR's local branch and
+review worktree, and report any remote branch GitHub did not delete. See
+[branch cleanup](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/.github/POST_MERGE.md#6-prune-merged-branches).
 
 ## 14. Start the separate release pipeline
 

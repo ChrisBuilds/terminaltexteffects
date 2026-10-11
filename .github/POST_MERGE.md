@@ -175,6 +175,7 @@ supplement the public evidence. A closed linked issue does not erase outstanding
 - Docs run / attempt / actual deployed SHA / deploy-step result:
 - Live banner full SHA / checked URLs and content / HTTP or browser method / uninspected scope / verification time (UTC):
 - Recovery actions, original failure evidence and follow-up issue (or none):
+- Branch cleanup (local branch, review worktree, any remaining remote branch reported):
 - Outcome: complete, or pending/failed with next owner and concrete action.
 ```
 
@@ -182,3 +183,15 @@ Do not mark complete until main integration and live publication are verified, o
 explicit handoff records the unresolved outcome and owner. A handoff transfers the work;
 it does not turn pending/failed checks into passes. Keep credentials, private paths and
 sensitive exploit details out of public records.
+
+## 6. Prune merged branches
+
+After verification completes (or is handed off), delete the local branch you created or
+fetched for the merged PR and remove its review worktree, if any. Work from the worktree
+that has `main` checked out, and check a worktree for uncommitted work before removing it.
+Squash merges make merged branches look unmerged to git, so use `git branch -D` once the
+PR shows as merged.
+
+GitHub deletes the PR's head branch on merge. If a remote branch remains, report it to
+the maintainer instead of deleting it. Never delete `main`, `gh-pages`, or a branch with
+an open PR. Record the cleanup in the post-merge comment.
