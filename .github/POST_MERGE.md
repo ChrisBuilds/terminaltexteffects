@@ -201,7 +201,7 @@ git worktree list                     # find the main worktree and this PR's rev
 cd MAIN_WORKTREE_PATH                 # or `git switch main` when no worktree has main
 git pull --ff-only
 git worktree remove WORKTREE_PATH     # only if it has no uncommitted work
-git rev-parse LOCAL_BRANCH            # must equal headRefOid before deleting
+git rev-parse --verify refs/heads/LOCAL_BRANCH   # must equal headRefOid before deleting
 git branch -D LOCAL_BRANCH            # squash merges leave the branch unmerged to git
 git fetch --prune                     # drop stale remote-tracking refs
 git ls-remote --exit-code origin refs/heads/HEAD_BRANCH   # same-repository PRs only; exit 2 = gone
@@ -211,14 +211,17 @@ Identify the local branch by commit, not by name. `LOCAL_BRANCH` is the branch y
 created or fetched for this PR (for example `pr/OWNER/NUMBER` for a contributor PR).
 Delete it only if its tip equals the PR's `headRefOid`. A matching name alone can
 belong to unrelated work, and a different tip means unpushed or unrelated commits;
-investigate instead of deleting.
+investigate instead of deleting. Resolve the fully qualified `refs/heads/` ref: a bare
+name resolves a same-named tag first, while `git branch -D` deletes the branch.
 
 For a same-repository PR (`isCrossRepository` false), confirm the head branch left
 `origin`. `git fetch --prune` does not report a remote branch that still exists, so
 query the fully qualified ref: `ls-remote` patterns also match ref tails, and a bare
 `HEAD_BRANCH` would match `refs/heads/other/HEAD_BRANCH`. Exit status 2 confirms the
-branch is gone. If it prints the ref, GitHub kept the branch. Delete it only if its PR
-is merged or closed, and record that in the post-merge comment.
+branch is gone. If it prints the ref, GitHub kept the branch, and it may since have
+received new work or been reused for another PR. Delete it only when the printed commit
+equals `headRefOid` and `gh pr list --head HEAD_BRANCH --state open` is empty.
+Otherwise leave it and report it. Record either outcome in the post-merge comment.
 
 A cross-repository PR's head lives in the contributor's fork (`headRepositoryOwner`).
 It is not on `origin` and is not ours to delete. Remove only the local copy, after
