@@ -1178,7 +1178,9 @@ def test_completion_requests_skip_broken_prototypes(
     assert "wipe" in effects
 
 
-@pytest.mark.parametrize("effect_option", ["--print", "--p"])
+# `--pr` abbreviates only `--print-completion` among global options; `--p` also matches `--play`, which
+# argparse before Python 3.12 rejects as ambiguous even after the effect subcommand.
+@pytest.mark.parametrize("effect_option", ["--print", "--pr"])
 def test_prototype_options_do_not_disable_discovery(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
