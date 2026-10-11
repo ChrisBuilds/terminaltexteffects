@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import os
 import random
+import struct
 import sys
+import zlib
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
@@ -15,12 +18,13 @@ from terminaltexteffects.effects.effect_matrix import Matrix, MatrixConfig
 from terminaltexteffects.effects.effect_thunderstorm import Thunderstorm, ThunderstormConfig
 from terminaltexteffects.effects.effect_wipe import Wipe
 from terminaltexteffects.engine import terminal as terminal_module
-from terminaltexteffects.engine._recording import RecordingHeader, RecordingReader, RecordingWriter
+from terminaltexteffects.engine._recording import MAGIC, RecordingHeader, RecordingReader, RecordingWriter
 from terminaltexteffects.engine.base_effect import BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.utils import ansitools
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
 pytestmark = [pytest.mark.smoke]
@@ -188,6 +192,18 @@ def test_record_rejects_invalid_options(
 ) -> None:
     """Infinite repeats and unthrottled frame rates cannot be recorded."""
     assert message in _run_error(monkeypatch, capsys, "--record", str(tmp_path / "out.tterec"), *arguments)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_record_reports_unsupported_input(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    """Input the engine rejects fails the recording with an error and leaves no file."""
+    monkeypatch.setattr(Terminal, "get_piped_input", lambda: "Hello\x1b]0;title\x07")
+    error = _run_error(monkeypatch, capsys, "--record", str(tmp_path / "out.tterec"), "wipe")
+    assert "Unsupported ANSI/control sequence" in error
     assert list(tmp_path.iterdir()) == []
 
 
@@ -381,6 +397,49 @@ def test_play_validates_every_recording_before_output(
     error = _run_error(monkeypatch, capsys, "--play", str(tmp_path))
     assert "b.tterec: File is not a TerminalTextEffects recording." in error
     printed.assert_not_called()
+
+
+def _write_bad_frame_recording(path: Path) -> None:
+    header = json.dumps({"tte_version": "test", "width": 1, "height": 1, "frame_rate": 30}).encode()
+    segment = json.dumps({"effect": "test"}).encode()
+    frame = b"\x1b[2J"
+    records = b"".join(
+        struct.pack("<cI", tag, len(data)) + data for tag, data in ((b"H", header), (b"S", segment), (b"F", frame))
+    )
+    path.write_bytes(MAGIC + b"\x01" + zlib.compress(records))
+
+
+@pytest.mark.parametrize(
+    ("replacement", "message"),
+    [
+        (lambda path: _write_recording(path, ["AB"], width=2), "a.tterec: Recording changed after validation."),
+        (_write_bad_frame_recording, "a.tterec: Frame contains an unsupported control"),
+    ],
+)
+@pytest.mark.usefixtures("terminal_size")
+def test_play_reports_recording_replaced_after_validation(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    replacement: Callable[[Path], object],
+    message: str,
+) -> None:
+    """A recording replaced between validation and playback fails with its path and restores the terminal."""
+    path = _write_recording(tmp_path / "a.tterec", ["A"])
+    original_validate = __main__._validate_recordings
+
+    def validate_then_replace(paths: list[Path]) -> dict[Path, RecordingHeader]:
+        headers = original_validate(paths)
+        replacement(path)
+        return headers
+
+    monkeypatch.setattr(__main__, "_validate_recordings", validate_then_replace)
+    with pytest.raises(SystemExit) as exit_info:
+        _run(monkeypatch, "--play", str(path), "--frame-rate", "0")
+    assert exit_info.value.code == 1
+    output = capsys.readouterr()
+    assert message in output.err
+    assert output.out.endswith(ansitools.show_cursor() + "\n")
 
 
 @pytest.mark.parametrize(

@@ -100,6 +100,21 @@ def test_writer_rejects_unplayable_frames(tmp_path: Path) -> None:
     assert not path.exists()
 
 
+def test_writer_rejects_oversized_frame(tmp_path: Path) -> None:
+    """Frames larger than the canvas size limit cannot be recorded."""
+    header = RecordingHeader(tte_version="test", width=1, height=1, frame_rate=30)
+    path = tmp_path / "out.tterec"
+
+    def record_oversized_frame() -> None:
+        with RecordingWriter(path, header) as writer:
+            writer.begin_segment("effect")
+            writer.write_frame("x" * (header.max_frame_bytes + 1))
+
+    with pytest.raises(RecordingError, match="the limit for this canvas"):
+        record_oversized_frame()
+    assert not path.exists()
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX permission bits")
 def test_writer_honors_umask(tmp_path: Path) -> None:
     """Recordings get ordinary file permissions rather than private temporary-file permissions."""
@@ -281,6 +296,19 @@ def test_reader_rejects_trailing_data(tmp_path: Path) -> None:
     with RecordingWriter(path, HEADER) as writer:
         writer.begin_segment("effect")
     path.write_bytes(path.read_bytes() + b"extra")
+    with pytest.raises(RecordingError, match="unexpected data after its end record"):
+        _read_all(path)
+
+
+def test_reader_rejects_records_after_end(tmp_path: Path) -> None:
+    """Records following the end record are rejected."""
+    path = _write_raw(
+        tmp_path / "bad.tterec",
+        _header_record(),
+        _record(b"S", {"effect": "x"}),
+        _record(b"E", {"frame_count": 0}),
+        _record(b"S", {"effect": "y"}),
+    )
     with pytest.raises(RecordingError, match="unexpected data after its end record"):
         _read_all(path)
 
