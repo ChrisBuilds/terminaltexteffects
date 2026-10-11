@@ -184,11 +184,17 @@ class BaseEffect(ABC, Generic[T]):
         )
         self._terminal_output_contexts: list[_TerminalOutputContext] = []
         self._terminal_dimensions_override: tuple[int, int] | None = None
+        self._frame_clock = False
         self._pending_terminal_ref: ReferenceType[Terminal] | None = None
 
     def _build_terminal(self, terminal_dimensions: tuple[int, int] | None = None) -> Terminal:
         """Build a fresh terminal, optionally using a prepared output context's dimensions."""
-        return Terminal(self.input_data, self.terminal_config, terminal_dimensions=terminal_dimensions)
+        return Terminal(
+            self.input_data,
+            self.terminal_config,
+            terminal_dimensions=terminal_dimensions,
+            frame_clock=self._frame_clock,
+        )
 
     def _acquire_terminal(self) -> Terminal:
         """Return a staged output terminal when available, otherwise build a fresh one.

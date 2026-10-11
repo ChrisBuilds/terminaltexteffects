@@ -82,4 +82,22 @@ characters outside the grid or canvas are omitted. The method supports the same 
 selection flags as `get_characters_grouped()` and preserves selection order within each cell.
 Pass `reverse=True` to reverse both the cell sequence and each cell's internal sequence.
 
+## Effect Clock
+
+Effects that measure a phase in seconds should read `terminal.clock()` instead of calling `time.time()` or
+`time.monotonic()` directly:
+
+```python
+self.phase_start = self.terminal.clock()
+...
+if self.terminal.clock() - self.phase_start >= self.config.phase_seconds:
+    self.phase = "next"
+```
+
+During live output, `clock()` returns `time.monotonic()`. When `tte --record` renders frames ahead of time,
+the terminal uses a frame clock that advances by `1 / frame_rate` per frame, so a phase lasts the same
+number of frames as it would live and recordings are reproducible with `--seed`. When an effect reads wall-clock
+time directly, a recorded phase runs for that many seconds of rendering time instead, so its length in frames
+depends on rendering speed and is usually far longer than intended.
+
 ::: terminaltexteffects.engine.terminal.Terminal

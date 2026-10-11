@@ -176,6 +176,41 @@
         "file": false,
         "help": "Space-separated list of Effects to exclude when randomly selecting an effect"
       },
+      "--record": {
+        "min": 1,
+        "max": 1,
+        "choices": [],
+        "file": true,
+        "help": "Render the effect without displaying it and save the frames to FILE (use the .tterec extension). Requires --frame-rate greater than 0, which becomes the playback rate."
+      },
+      "--play": {
+        "min": 1,
+        "max": 1,
+        "choices": [],
+        "file": true,
+        "help": "Play a recording file, or every .tterec file in a directory in filename order, without running the effects. No effect or input is required."
+      },
+      "--hold": {
+        "min": 1,
+        "max": 1,
+        "choices": [],
+        "file": false,
+        "help": "With --play, hold the last frame for SECONDS between recordings and repeats (default: 0)."
+      },
+      "--shuffle": {
+        "min": 0,
+        "max": 0,
+        "choices": [],
+        "file": false,
+        "help": "With --play on a directory, play recordings in random order (reproducible with --seed)."
+      },
+      "--alt-screen": {
+        "min": 0,
+        "max": 0,
+        "choices": [],
+        "file": false,
+        "help": "With --play, display in the terminal's alternate screen and restore the original screen when playback ends."
+      },
       "--tab-width": {
         "min": 1,
         "max": 1,

@@ -9,7 +9,6 @@ Classes:
 from __future__ import annotations
 
 import random
-import time
 from dataclasses import dataclass
 
 from terminaltexteffects import Animation, Color, ColorPair, Coord, EffectCharacter, Gradient, Terminal
@@ -435,7 +434,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
         self.rain_complete = False
         self.phase = "rain"
         self.build()
-        self.rain_start = time.time()
+        self.rain_start = self.terminal.clock()
 
     @staticmethod
     def _has_input_colors(character: EffectCharacter) -> bool:
@@ -553,7 +552,7 @@ class MatrixIterator(BaseEffectIterator[MatrixConfig]):
             if (
                 self.phase == "rain"
                 and self.config.rain_time > 0
-                and time.time() - self.rain_start > self.config.rain_time
+                and self.terminal.clock() - self.rain_start > self.config.rain_time
             ):
                 self.rain_complete = True
                 self.phase = "fill"

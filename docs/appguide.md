@@ -91,6 +91,56 @@ printf 'Hello!' | tte --repeat 3 wipe
 tte -i banner.txt --repeat 0 beams
 ```
 
+### Recording and playback
+
+Use `--record FILE` to render an effect once and save its frames, then `--play` to replay them without
+running the effect again. Playback uses far less CPU than rendering, which suits screensavers, background
+displays, and slower hardware that cannot render an effect at full frame rate. Recordings use the `.tterec`
+extension.
+
+```bash title="Record an effect, then play it until Ctrl+C"
+tte -i banner.txt --record banner.tterec --canvas-width 0 --canvas-height 0 matrix
+tte --play banner.tterec --repeat 0
+```
+
+Recording renders frames as fast as possible and shows nothing; it prints a one-line summary to standard
+error when it finishes. `--frame-rate` must be greater than `0` and becomes the playback rate. Effect
+phases measured in seconds, such as `matrix --rain-time` and `thunderstorm --storm-time`, last the same
+number of frames as they would live, so a recording plays for the intended length. Random choices are
+captured as they occur; pass `--seed` to make a recording reproducible. `--repeat COUNT` and
+`--random-effect` record a sequence of playbacks into one file; `--repeat 0` is not accepted when recording.
+An interrupted or failed recording leaves no partial file, and an existing file at the path is replaced only
+when recording completes.
+
+A recording stores only the canvas. Canvas size, text anchoring, and color options such as `--xterm-colors`
+and `--no-color` are fixed when recording. Set `--canvas-width` and `--canvas-height` explicitly, or use `0`
+to match the terminal at recording time, so the recording does not depend on the input size.
+
+`--play PATH` takes a recording file or a directory. For a directory, every top-level `.tterec` file plays
+in filename order; other files and subdirectories are ignored. No effect name or input is needed, and
+standard input is not read. Every recording is fully validated before anything is shown, and any invalid
+recording is an error. Playback options:
+
+- `--repeat COUNT` repeats the file or directory (`0` repeats until Ctrl+C).
+- `--frame-rate` overrides the recorded frame rate; `0` plays as fast as possible.
+- `--hold SECONDS` keeps the last frame of each recording on screen before the next recording or repeat.
+- `--shuffle` plays a directory in random order, reshuffled each repeat; `--seed` makes the order repeatable.
+- `--alt-screen` plays in the terminal's alternate screen, like full-screen programs such as `less`, and
+  restores the original screen and scrollback when playback ends.
+- `--anchor-canvas` positions the recording in the terminal. Recordings of different sizes in one directory
+  share a canvas sized to the largest, each anchored within it.
+
+Playback exits with an error if the terminal is smaller than the recorded canvas. Recordings are treated
+as untrusted input: playback writes only text and color (SGR) sequences, and rejects any recording that
+contains other control or escape sequences, or that is corrupt, truncated, or oversized.
+
+```bash title="Background display from a directory of recordings"
+tte --play ~/recordings --repeat 0 --shuffle --hold 5 --alt-screen
+```
+
+Recording and playback are part of development toward 0.16.0 and are not available in the published 0.15.0
+package.
+
 Custom effect modules are discovered from `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or
 `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is unset, empty, or a relative path. Any `.py` file in that directory that
 provides `get_effect_resources()` can register an effect command alongside the built-in effects.

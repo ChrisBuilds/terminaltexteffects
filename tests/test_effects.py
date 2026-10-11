@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from itertools import count
 from pathlib import Path
-from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Literal
 
 import pytest
 
 from terminaltexteffects.effects import effect_colorshift, effect_matrix, effect_thunderstorm
+from terminaltexteffects.engine.terminal import Terminal
 from terminaltexteffects.utils.exceptions import EmptyInputError
 
 if TYPE_CHECKING:
@@ -24,10 +24,8 @@ MIXED_LAYOUT_STYLE_SEQUENCE_INPUT = TEST_INPUT_DIR / "mixed_layout_style_sequenc
 @pytest.fixture
 def advance_timed_effect_clocks(monkeypatch: pytest.MonkeyPatch) -> None:
     """Advance timed effects by a frame per clock read during smoke tests."""
-    matrix_ticks = count()
-    thunderstorm_ticks = count()
-    monkeypatch.setattr(effect_matrix, "time", SimpleNamespace(time=lambda: next(matrix_ticks) / 20))
-    monkeypatch.setattr(effect_thunderstorm, "time", SimpleNamespace(monotonic=lambda: next(thunderstorm_ticks) / 20))
+    ticks = count()
+    monkeypatch.setattr(Terminal, "clock", lambda _self: next(ticks) / 20)
 
 
 def _shorten_visual_effect(effect_instance: BaseEffect[Any]) -> None:

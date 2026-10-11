@@ -7,6 +7,8 @@ Functions:
     dec_restore_cursor_position() -> str: Restore the cursor position using DEC sequence.
     hide_cursor() -> str: Hide the cursor.
     show_cursor() -> str: Show the cursor.
+    enter_alternate_screen() -> str: Switch to a cleared alternate screen with the cursor at the top-left.
+    exit_alternate_screen() -> str: Return from the alternate screen to the original screen.
     move_cursor_up(y: int) -> str: Move the cursor up y lines.
     reset_all() -> str: Reset all formatting.
     apply_bold() -> str: Apply bold formatting.
@@ -60,6 +62,28 @@ def show_cursor() -> str:
 
     """
     return "\033[?25h"
+
+
+def enter_alternate_screen() -> str:
+    """Switch to the alternate screen buffer, clear it, and move the cursor to the top-left.
+
+    The original screen contents and cursor position are restored by `exit_alternate_screen()`.
+
+    Returns:
+        str: ANSI escape code
+
+    """
+    return "\033[?1049h\033[H"
+
+
+def exit_alternate_screen() -> str:
+    """Return from the alternate screen buffer to the original screen.
+
+    Returns:
+        str: ANSI escape code
+
+    """
+    return "\033[?1049l"
 
 
 def move_cursor_up(y: int) -> str:

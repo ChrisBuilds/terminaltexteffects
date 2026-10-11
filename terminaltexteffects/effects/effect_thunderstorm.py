@@ -10,7 +10,6 @@ Classes:
 from __future__ import annotations
 
 import random
-import time
 import typing
 from dataclasses import dataclass
 
@@ -200,7 +199,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         self.flashing: bool = False
         self.strike_branch_chance = 0.05
         self.phase: str = "pre-storm"
-        self.storm_start_time = time.monotonic()
+        self.storm_start_time = self.terminal.clock()
         self.build()
 
     @staticmethod
@@ -379,7 +378,7 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
         # setup a reference character callback to indicate when the pre-storm fade has completed
         def fade_complete(*_: typing.Any) -> None:
             self.phase = "storm"
-            self.storm_start_time = time.monotonic()
+            self.storm_start_time = self.terminal.clock()
 
         reference_char = all_chars[0]
         reference_char.event_handler.register_event(
@@ -708,7 +707,9 @@ class ThunderstormIterator(BaseEffectIterator[ThunderstormConfig]):
                 for char in self.pending_glow_chars:
                     self.active_characters.add(char)
                 self.pending_glow_chars.clear()
-                if (time.monotonic() - self.storm_start_time) >= self.config.storm_time and not self.strike_in_progress:
+                if (
+                    self.terminal.clock() - self.storm_start_time
+                ) >= self.config.storm_time and not self.strike_in_progress:
                     self.post_storm_text_fade_in()
                     self.phase = "complete"
             self.update()

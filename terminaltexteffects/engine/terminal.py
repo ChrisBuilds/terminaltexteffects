@@ -354,6 +354,8 @@ class Terminal:
             Get the formatted output string based on the current terminal state.
         print:
             Prints the current terminal state to stdout while preserving the cursor position.
+        clock:
+            Return the effect clock, in seconds, for time-based effect phases.
 
     """
 
@@ -365,6 +367,7 @@ class Terminal:
         config: TerminalConfig | None = None,
         *,
         terminal_dimensions: tuple[int, int] | None = None,
+        frame_clock: bool = False,
     ) -> None:
         """Initialize the Terminal.
 
@@ -377,10 +380,18 @@ class Terminal:
                 width and height instead of probing the current terminal. Used when a fresh effect iterator must match
                 an already prepared output canvas.
                 Defaults to None.
+            frame_clock (bool, optional): Advance `clock()` by one frame period per rendered frame instead of
+                reading wall-clock time, and never sleep to enforce the frame rate. Frames are produced as fast as
+                possible while time-based effect phases keep their configured duration in frames. Requires a
+                configured frame rate greater than `0`. Defaults to False.
+
+        Raises:
+            ValueError: If `frame_clock` is enabled while the configured frame rate is `0`.
 
         """
         self.config = deepcopy(config) if config is not None else TerminalConfig._build_config()
         self.config._freeze()
+        self._initialize_frame_timing(frame_clock=frame_clock)
         self._character_ownership_token = weakref.ref(self)
         self._output_prepared = False
         self._next_character_id = 0
@@ -444,9 +455,17 @@ class Terminal:
         self._fill_character_id_start = self._next_character_id
         self._next_character_id += self.canvas.width * self.canvas.height - len(self._input_occupied_cell_indexes)
         self._initialize_render_state()
-        self._frame_rate = self.config.frame_rate
-        self._last_time_printed = time.monotonic()
         self._update_terminal_state()
+
+    def _initialize_frame_timing(self, *, frame_clock: bool) -> None:
+        """Initialize frame-rate enforcement and the effect clock."""
+        if frame_clock and self.config.frame_rate == 0:
+            msg = "frame_clock requires a frame rate greater than 0."
+            raise ValueError(msg)
+        self._frame_rate = self.config.frame_rate
+        self._frame_clock = frame_clock
+        self._frames_elapsed = 0
+        self._last_time_printed = time.monotonic()
 
     def _initialize_render_state(self) -> None:
         """Initialize visible-character ordering and reusable blank output rows."""
@@ -1646,13 +1665,33 @@ class Terminal:
         sys.stdout.write(output_string)
         sys.stdout.flush()
 
+    def clock(self) -> float:
+        """Return the effect clock, in seconds.
+
+        Effects should measure time-based phases, such as a duration in seconds, with this clock rather than
+        reading wall-clock time directly. During live output the clock is `time.monotonic()`. When the terminal
+        was built with `frame_clock` enabled, the clock starts at `0.0` and advances by `1 / frame_rate` for each
+        frame, so phase durations stay the same when frames are rendered ahead of time.
+
+        Returns:
+            float: Current clock value in seconds. Only differences between values are meaningful.
+
+        """
+        if self._frame_clock:
+            return self._frames_elapsed / self._frame_rate
+        return time.monotonic()
+
     def enforce_framerate(self) -> None:
         """Enforce the frame rate set in the terminal config.
 
         Frame rate is enforced by sleeping if the time since the last frame is shorter than the expected frame delay.
         If the configured frame rate is `0`, frame rate limiting is disabled and this method returns immediately.
+        When the terminal uses a frame clock, this method advances `clock()` by one frame without sleeping.
         """
         if self._frame_rate == 0:
+            return
+        if self._frame_clock:
+            self._frames_elapsed += 1
             return
         frame_delay = 1 / self._frame_rate
         if (time_since_last_print := time.monotonic() - self._last_time_printed) < frame_delay:

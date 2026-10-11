@@ -62,6 +62,17 @@ Detailed examples and explanations may appear in the optional
 - Added guidance for installing released community effect modules and sharing
   them in TTE Effect Show and Tell.
   ([#173](https://github.com/ChrisBuilds/terminaltexteffects/issues/173))
+- Added `tte --record FILE` to render an effect once and save its frames, and
+  `tte --play PATH` to replay a recording or a directory of `.tterec`
+  recordings without running the effect, for screensavers and background
+  displays. Playback supports `--repeat`, `--frame-rate`, `--hold`,
+  `--shuffle`, `--alt-screen`, and `--anchor-canvas`, and rejects recordings
+  containing escape sequences other than color.
+  ([#186](https://github.com/ChrisBuilds/terminaltexteffects/issues/186))
+- Added `Terminal.clock()` for effects that time phases in seconds. Matrix
+  `--rain-time` and Thunderstorm `--storm-time` use it, so recorded phases last
+  the same number of frames as live ones.
+  ([#186](https://github.com/ChrisBuilds/terminaltexteffects/issues/186))
 - Added `CharacterOrder` and `CharacterOrderArg` for shared flat and grouped
   retrieval. Retrieval also supports `reverse=True`, optional serpentine group
   traversal, and explicit off-canvas selection.
