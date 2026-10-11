@@ -220,8 +220,16 @@ query the fully qualified ref: `ls-remote` patterns also match ref tails, and a 
 `HEAD_BRANCH` would match `refs/heads/other/HEAD_BRANCH`. Exit status 2 confirms the
 branch is gone. If it prints the ref, GitHub kept the branch, and it may since have
 received new work or been reused for another PR. Delete it only when the printed commit
-equals `headRefOid` and `gh pr list --head HEAD_BRANCH --state open` is empty.
-Otherwise leave it and report it. Record either outcome in the post-merge comment.
+equals `headRefOid` and `gh pr list --head HEAD_BRANCH --state open` is empty, and only
+with a lease that rejects the deletion if the branch has moved since that check:
+
+```sh
+git push --force-with-lease=refs/heads/HEAD_BRANCH:HEAD_REF_OID origin :refs/heads/HEAD_BRANCH
+```
+
+A `rejected (stale info)` result means the branch changed; leave it and report it.
+Otherwise leave any branch that fails these checks and report it. Record the outcome
+in the post-merge comment.
 
 A cross-repository PR's head lives in the contributor's fork (`headRepositoryOwner`).
 It is not on `origin` and is not ours to delete. Remove only the local copy, after
