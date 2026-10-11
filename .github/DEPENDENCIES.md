@@ -161,9 +161,12 @@ configuration; it does not patch pytest. See the
 Use the patched modern development environment for routine local tests. Reassess
 native 3.9 test execution on shared Unix hosts or persistent/self-hosted runners
 with untrusted local users; a virtual environment alone does not isolate filesystem
-access. Keep #154 and the alert open while monitoring for a compatible upstream
-patch. Do not add a wrapper, fork, dismissal, or advisory allowlist solely to remove
-the warning. Revisit this decision if runner isolation or Python support changes.
+access. Python 3.9 is end-of-life and no compatible upstream patch is expected, so
+the resolution is dropping Python 3.9 in 0.17.0
+([#184](https://github.com/ChrisBuilds/terminaltexteffects/issues/184)). Keep #154 and
+the alert open until the alert closes as fixed after that change. Do not add a wrapper,
+fork, dismissal, or advisory allowlist solely to remove the warning. Revisit this
+decision if runner isolation or the Python support plan changes.
 
 Running the updater on newer Python alone does not fix a universal lock:
 dependency metadata must describe the supported

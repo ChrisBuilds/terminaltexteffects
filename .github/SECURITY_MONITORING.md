@@ -114,8 +114,11 @@ The native 3.9 pytest dependency remains affected; the patched upstream line req
 Python 3.10+. A security-update resolution failure for this constraint is known, not proof
 that the whole updater is healthy or that other failures may be ignored.
 
-At each review, check for a compatible upstream fix, changes to the advisory, and changes
-to support/runner exposure. Keep the alert and issue open until remediation is verified.
+Python 3.9 is end-of-life, and no compatible upstream fix is expected. Remediation is
+dropping Python 3.9 in 0.17.0 ([#184](https://github.com/ChrisBuilds/terminaltexteffects/issues/184)).
+At each review until then, check for changes to the advisory and to support/runner
+exposure; re-checking for an upstream backport is not required. Keep the alert and issue
+open until the alert closes as fixed after #184.
 Follow [DEPENDENCIES.md](DEPENDENCIES.md#runtime-and-tooling-python-support) for the approved
 no-wrapper disposition and reassessment on shared Unix/persistent runners. Do not dismiss,
 allowlist, fork, add a workaround or raise runtime support solely to clear the dashboard.
