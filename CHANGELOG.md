@@ -151,6 +151,11 @@ Detailed examples and explanations may appear in the optional
   file; plugins can still import themselves and earlier-loaded sibling files by
   file name.
   ([#178](https://github.com/ChrisBuilds/terminaltexteffects/issues/178))
+- Custom effect plugins are discovered from
+  `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is empty or a
+  relative path, instead of from a directory relative to the current working
+  directory.
+  ([#182](https://github.com/ChrisBuilds/terminaltexteffects/issues/182))
 - Blackhole handles short text and compact canvases and uses its configured
   explosion palette. Beams emits characters as soon as progress reaches a whole
   unit; Spotlights handles zero falloff on wide continuation cells; Swarm

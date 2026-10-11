@@ -92,7 +92,7 @@ tte -i banner.txt --repeat 0 beams
 ```
 
 Custom effect modules are discovered from `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or
-`~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set. Any `.py` file in that directory that
+`~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is unset, empty, or a relative path. Any `.py` file in that directory that
 provides `get_effect_resources()` can register an effect command alongside the built-in effects.
 If a custom effect module fails to import or register, TTE prints a warning naming the file to standard
 error, skips that module, and keeps the built-in effects and other valid custom effects available.
@@ -136,8 +136,8 @@ mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects"
 cp path/to/community_effect.py "${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects/"
 ```
 
-If `XDG_CONFIG_HOME` is set to an empty value, unset it or set it to a real directory first; TTE does not
-fall back to `~/.config` for an empty value.
+On TTE 0.15.0, an empty `XDG_CONFIG_HOME` does not fall back to `~/.config`; unset it or set it to a real
+directory before installing.
 
 Install any dependencies listed by the author into the same Python environment as TTE. The module
 must expose `get_effect_resources()` and use APIs supported by the TTE version you have installed.
