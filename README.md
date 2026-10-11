@@ -279,7 +279,7 @@ OR
   * To enable completions for future shells, add the relevant command above to your shell startup file such as `~/.bashrc` or `~/.zshrc`. For PowerShell 7+, add its activation command to `$PROFILE`.
   * On Windows, use Windows Terminal for rendering and PowerShell 7 for these completions. Windows PowerShell 5.1 is not supported by this script.
   * Completion scripts cover built-in effects only; options from custom effect plugins are not included.
-* Add custom effect modules to `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set.
+* Add custom effect modules to `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is unset, empty, or a relative path.
   * Any `.py` file in that directory that provides `get_effect_resources()` can register an effect command alongside the built-in effects.
   * Files named like a standard-library or installed module, such as `random.py`, are skipped with a warning; rename them to load them. Skipping invalid or module-shadowing plugins is part of development toward 0.16.0; in the published 0.15.0 package, a plugin that fails to import stops `tte` from starting, and a plugin named like an installed module can replace it.
   * For a released TTE install (0.15.0 and later), place the effect module there and install any dependencies into the same Python environment as TTE. Then run it with `tte <effect> -h` and `tte <effect>`.

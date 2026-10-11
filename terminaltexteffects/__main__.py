@@ -40,6 +40,17 @@ _DEV_EFFECT_MODULE_PREFIX = "_tte_dev_"
 _USER_PLUGIN_MODULES: weakref.WeakSet[ModuleType] = weakref.WeakSet()
 
 
+def _user_effects_dir() -> Path:
+    """Return the user effects directory under the XDG config home.
+
+    Per the XDG Base Directory specification, an unset, empty, or relative `XDG_CONFIG_HOME`
+    falls back to `~/.config`.
+    """
+    config_home = os.environ.get("XDG_CONFIG_HOME", "")
+    config_dir = Path(config_home) if config_home and Path(config_home).is_absolute() else Path.home() / ".config"
+    return config_dir / "terminaltexteffects" / "effects"
+
+
 def _external_effect_files(directory: Path, prefix: str = "") -> Iterator[tuple[Path, str]]:
     """Yield flat external module paths and their module names in deterministic order."""
     for plugin_file in sorted(directory.glob("*.py")):
@@ -352,9 +363,8 @@ def build_parser(
         module = importlib.import_module(module_info.name)
         _register_effect_from_module(module)
 
-    plugins_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "terminaltexteffects" / "effects"
     if include_user_effects:
-        for plugin_file, module_name in _external_effect_files(plugins_dir):
+        for plugin_file, module_name in _external_effect_files(_user_effects_dir()):
             _register_user_effect(plugin_file, module_name, subparsers, effect_resource_map)
         development_dir = os.environ.get("TTE_DEV_EFFECTS_DIR")
         if development_dir is not None:
