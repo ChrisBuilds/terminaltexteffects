@@ -175,6 +175,7 @@ supplement the public evidence. A closed linked issue does not erase outstanding
 - Docs run / attempt / actual deployed SHA / deploy-step result:
 - Live banner full SHA / checked URLs and content / HTTP or browser method / uninspected scope / verification time (UTC):
 - Recovery actions, original failure evidence and follow-up issue (or none):
+- Branch cleanup (local branch, review worktree, remote head branch):
 - Outcome: complete, or pending/failed with next owner and concrete action.
 ```
 
@@ -182,3 +183,25 @@ Do not mark complete until main integration and live publication are verified, o
 explicit handoff records the unresolved outcome and owner. A handoff transfers the work;
 it does not turn pending/failed checks into passes. Keep credentials, private paths and
 sensitive exploit details out of public records.
+
+## 6. Prune merged branches
+
+After verification completes (or is handed off), remove the merged PR's leftovers so
+stale branches do not accumulate. The repository deletes a PR's head branch on GitHub
+when it merges; local branches, review worktrees and fetched contributor branches remain.
+
+```sh
+gh pr view PR_NUMBER --json state,headRefName
+git switch main && git pull --ff-only
+git worktree list                     # remove review worktrees for this PR
+git worktree remove WORKTREE_PATH     # only if it has no uncommitted work
+git branch -D HEAD_BRANCH             # squash merges leave the branch unmerged to git
+git fetch --prune                     # confirm origin/HEAD_BRANCH is gone
+```
+
+Delete a branch only when its PR is merged or closed. Squash merges make merged branches
+look unmerged to `git cherry` and `git branch -d`, so decide from the PR state, not commit
+ancestry. Never delete `main`, branches with open PRs, or `gh-pages` (retiring it is a
+maintainer decision). Check `git worktree list` and uncommitted work before removing a
+worktree. When pruning older leftovers, list each branch with its PR number and state.
+Record the cleanup in the post-merge comment.
