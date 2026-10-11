@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import importlib.machinery
 import importlib.util
 import os
 import pkgutil
 import random
 import sys
+import weakref
 from functools import partial
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -34,6 +36,8 @@ if TYPE_CHECKING:
 
 
 _DEV_EFFECT_MODULE_PREFIX = "_tte_dev_"
+# User plugin modules registered by this process, which later user plugin discovery may replace.
+_USER_PLUGIN_MODULES: weakref.WeakSet[ModuleType] = weakref.WeakSet()
 
 
 def _external_effect_files(directory: Path, prefix: str = "") -> Iterator[tuple[Path, str]]:
@@ -67,6 +71,62 @@ def _load_external_module(plugin_file: Path, module_name: str) -> ModuleType:
         _restore_module(module_name, previous_module)
         raise
     return module
+
+
+def _is_origin_of(origin: object, plugin_file: Path) -> bool:
+    """Return whether a module specification origin names `plugin_file`."""
+    return isinstance(origin, str) and Path(origin).resolve() == plugin_file.resolve()
+
+
+def _has_other_module_spec(plugin_file: Path, module_name: str) -> bool:
+    """Return whether an import finder resolves `module_name` to a module other than `plugin_file`.
+
+    The plugin's own directory is excluded from the import path search, so a plugin directory placed
+    before site-packages on `sys.path` does not hide a same-named installed module.
+    """
+    plugin_dir = plugin_file.parent.resolve()
+    search_path = [
+        entry for entry in sys.path if not (isinstance(entry, str) and Path(entry or ".").resolve() == plugin_dir)
+    ]
+    for finder in sys.meta_path:
+        if finder is importlib.machinery.PathFinder:
+            spec = importlib.machinery.PathFinder.find_spec(module_name, search_path)
+        else:
+            find_spec = getattr(finder, "find_spec", None)
+            spec = find_spec(module_name, None) if find_spec is not None else None
+        if spec is not None and not _is_origin_of(spec.origin, plugin_file):
+            return True
+    return False
+
+
+def _check_user_module_name(plugin_file: Path, module_name: str) -> None:
+    """Ensure a user plugin's bare module name does not belong to another module.
+
+    A module already in `sys.modules` may be replaced only if it was loaded from `plugin_file` or
+    registered as a user plugin, so rediscovery reloads current file contents. Otherwise no import
+    finder may resolve the name to another module, searching past `plugin_file` itself when its
+    directory is on `sys.path`. A dotted file stem is checked by its top-level name, since
+    registering it could otherwise replace an installed submodule.
+
+    Raises:
+        ImportError: If `module_name` belongs to a loaded or importable module other than `plugin_file`.
+
+    """
+    loaded_module = sys.modules.get(module_name)
+    if loaded_module is not None:
+        loaded_spec = getattr(loaded_module, "__spec__", None)
+        conflict = loaded_module not in _USER_PLUGIN_MODULES and not _is_origin_of(
+            getattr(loaded_spec, "origin", None),
+            plugin_file,
+        )
+    elif "." in module_name:
+        top_level_name = module_name.partition(".")[0]
+        conflict = top_level_name in sys.modules or importlib.util.find_spec(top_level_name) is not None
+    else:
+        conflict = _has_other_module_spec(plugin_file, module_name)
+    if conflict:
+        msg = f"Module name {module_name!r} is already used by an installed or loaded module; rename the file"
+        raise ImportError(msg)
 
 
 def _restore_module(module_name: str, previous_module: ModuleType | None) -> None:
@@ -134,7 +194,9 @@ def _register_user_effect(
     """Register one user effect plugin, or skip it with a warning if it fails to load or register."""
     previous_module = sys.modules.get(module_name)
     try:
+        _check_user_module_name(plugin_file, module_name)
         module = _load_external_module(plugin_file, module_name)
+        _USER_PLUGIN_MODULES.add(module)
         if hasattr(module, "get_effect_resources"):
             effect_cmd, effect_class, config_class = _validate_user_effect_resources(
                 module.get_effect_resources(),
