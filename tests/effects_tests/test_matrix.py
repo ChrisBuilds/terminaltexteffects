@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from itertools import count
-from types import SimpleNamespace
 from typing import Literal, cast
 
 import pytest
 
 from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects import effect_matrix
-from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.utils.graphics import Color, ColorPair
 
 
@@ -18,7 +17,7 @@ from terminaltexteffects.utils.graphics import Color, ColorPair
 def advance_matrix_clock(monkeypatch: pytest.MonkeyPatch) -> None:
     """Advance Matrix's rain clock by one frame without waiting for wall time."""
     ticks = count()
-    monkeypatch.setattr(effect_matrix, "time", SimpleNamespace(time=lambda: next(ticks) / 20))
+    monkeypatch.setattr(Terminal, "clock", lambda _self: next(ticks) / 20)
 
 
 def _make_terminal_config(

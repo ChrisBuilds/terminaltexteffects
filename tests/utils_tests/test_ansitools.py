@@ -27,6 +27,16 @@ def test_show_cursor() -> None:
     assert ansitools.show_cursor() == "\033[?25h"
 
 
+def test_enter_alternate_screen() -> None:
+    """Switch to the alternate screen and home the cursor."""
+    assert ansitools.enter_alternate_screen() == "\033[?1049h\033[H"
+
+
+def test_exit_alternate_screen() -> None:
+    """Return to the original screen."""
+    assert ansitools.exit_alternate_screen() == "\033[?1049l"
+
+
 def test_move_cursor_up() -> None:
     """Return a relative cursor-up sequence."""
     assert ansitools.move_cursor_up(5) == "\033[5A"

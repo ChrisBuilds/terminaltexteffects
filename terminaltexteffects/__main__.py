@@ -3,22 +3,35 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import importlib.machinery
 import importlib.util
+import math
 import os
 import pkgutil
 import random
+import shutil
 import sys
+import time
 import weakref
+from dataclasses import dataclass
 from functools import partial
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, NoReturn, cast
 
 import terminaltexteffects.effects
+from terminaltexteffects.engine._recording import (
+    RECORDING_SUFFIX,
+    RecordingError,
+    RecordingHeader,
+    RecordingReader,
+    RecordingWriter,
+)
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.utils.argutils import NonNegativeInt
+from terminaltexteffects.utils import ansitools
+from terminaltexteffects.utils.argutils import NonNegativeFloat, NonNegativeInt
 from terminaltexteffects.utils.exceptions import EmptyInputError, UnsupportedAnsiSequenceError
 from terminaltexteffects.utils.shell_completion import (
     get_completion_instructions,
@@ -222,6 +235,23 @@ def _register_user_effect(
         print(f"Warning: Skipping user effect plugin '{plugin_file}': {detail}", file=sys.stderr)
 
 
+_MAX_HOLD_SECONDS = 86400.0
+
+
+def _hold_seconds(arg: str) -> float:
+    """Parse a finite `--hold` duration from 0 to `_MAX_HOLD_SECONDS` seconds.
+
+    Raises:
+        argparse.ArgumentTypeError: If the value is not a number in range.
+
+    """
+    seconds = NonNegativeFloat.type_parser(arg)
+    if not math.isfinite(seconds) or seconds > _MAX_HOLD_SECONDS:
+        msg = f"invalid value: '{arg}' is not a number from 0 to {_MAX_HOLD_SECONDS:g}."
+        raise argparse.ArgumentTypeError(msg)
+    return seconds
+
+
 def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
     """Build global options independently of effect discovery."""
     parser = argparse.ArgumentParser(
@@ -281,6 +311,50 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
         type=str,
         nargs="+",
         help="Space-separated list of Effects to exclude when randomly selecting an effect",
+    )
+
+    recording_group = parser.add_argument_group("Recording and playback")
+    record_play_group = recording_group.add_mutually_exclusive_group()
+    record_play_group.add_argument(
+        "--record",
+        type=Path,
+        metavar="FILE",
+        help=(
+            f"Render the effect without displaying it and save the frames to FILE (use the {RECORDING_SUFFIX} "
+            "extension). Requires --frame-rate greater than 0, which becomes the playback rate."
+        ),
+    )
+    record_play_group.add_argument(
+        "--play",
+        type=Path,
+        metavar="PATH",
+        help=(
+            f"Play a recording file, or every {RECORDING_SUFFIX} file in a directory in filename order, without "
+            "running the effects. No effect or input is required."
+        ),
+    )
+    recording_group.add_argument(
+        "--hold",
+        type=_hold_seconds,
+        default=0.0,
+        metavar="SECONDS",
+        help=(
+            f"With --play, hold the last frame for SECONDS (0 to {_MAX_HOLD_SECONDS:g}) between recordings and "
+            "repeats (default: 0)."
+        ),
+    )
+    recording_group.add_argument(
+        "--shuffle",
+        action="store_true",
+        help="With --play on a directory, play recordings in random order (reproducible with --seed).",
+    )
+    recording_group.add_argument(
+        "--alt-screen",
+        action="store_true",
+        help=(
+            "With --play, display in the terminal's alternate screen and restore the original screen when "
+            "playback ends."
+        ),
     )
 
     # Future: add a CLI argument for a default text color so dynamic color-handling effects can use
@@ -468,6 +542,436 @@ def _print_replays(
             effect, iterator = next_playback_factory()
 
 
+def _record_playbacks(
+    path: Path,
+    effect_name: str,
+    effect: BaseEffect,
+    count: int,
+    next_playback_factory: Callable[[tuple[int, int]], tuple[str, BaseEffect]] | None = None,
+) -> tuple[RecordingHeader, int, int]:
+    """Render `count` playbacks with a frame clock and write them to a recording.
+
+    Every playback uses the canvas geometry resolved for the first one. When
+    `next_playback_factory` is provided, it creates a newly selected effect for each
+    playback after the first. Empty output ends the recording early, as it does for
+    live repeats.
+
+    Returns:
+        tuple[RecordingHeader, int, int]: The recording header, frame count, and segment count.
+
+    """
+    effect._frame_clock = True
+    iterator = iter(effect)
+    terminal = iterator.terminal
+    header = RecordingHeader(
+        tte_version=_get_version(),
+        width=terminal.visible_right,
+        height=terminal.visible_top,
+        frame_rate=terminal.config.frame_rate,
+    )
+    terminal_dimensions = (terminal._terminal_width, terminal._terminal_height)
+    effect._terminal_dimensions_override = terminal_dimensions
+    segments = 0
+    with RecordingWriter(path, header) as writer:
+        while True:
+            writer.begin_segment(effect_name)
+            segments += 1
+            rendered = False
+            for frame in iterator:
+                writer.write_frame(frame)
+                rendered = True
+            if not rendered or segments >= count:
+                break
+            if next_playback_factory is not None:
+                effect_name, effect = next_playback_factory(terminal_dimensions)
+            iterator = iter(effect)
+        frame_count = writer.frame_count
+    return header, frame_count, segments
+
+
+def _create_random_recording(
+    available_effects: list[str],
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+    input_data: str,
+    terminal_config: TerminalConfig,
+    terminal_dimensions: tuple[int, int],
+) -> tuple[str, BaseEffect]:
+    """Choose and create one fresh random effect for recording with the recorded geometry."""
+    effect_name = random.choice(available_effects)
+    effect = _create_effect(effect_name, input_data, effect_resource_map, terminal_config, None)
+    effect._frame_clock = True
+    effect._terminal_dimensions_override = terminal_dimensions
+    return effect_name, effect
+
+
+def _find_recordings(path: Path) -> list[Path]:
+    """Return the recording at `path`, or the top-level recordings in a directory sorted by filename.
+
+    Raises:
+        RecordingError: If `path` does not exist, a directory cannot be read, or it contains no recordings.
+
+    """
+    if path.is_dir():
+        try:
+            recordings = sorted(
+                (child for child in path.iterdir() if child.suffix == RECORDING_SUFFIX and child.is_file()),
+                key=lambda child: child.name,
+            )
+        except OSError as error:
+            msg = f"Cannot read recording directory {str(path)!r}: {error.strerror or error}."
+            raise RecordingError(msg) from error
+        if not recordings:
+            msg = f"No {RECORDING_SUFFIX} recordings found in directory: {str(path)!r}."
+            raise RecordingError(msg)
+        return recordings
+    if not path.is_file():
+        msg = f"Recording not found: {str(path)!r}."
+        raise RecordingError(msg)
+    return [path]
+
+
+# Recordings up to this size are held in memory, verified by digest, and replayed without per-frame checks.
+# Larger recordings are only header-checked on later passes; every frame is validated again as it streams, so a
+# replacement with another valid recording plays, and late corruption can show earlier frames before failing.
+_MAX_VERIFIED_RECORDING_BYTES = 256 * 1024 * 1024
+
+
+@dataclass(frozen=True)
+class _ValidatedRecording:
+    """A recording that passed complete validation before playback.
+
+    Attributes:
+        header (RecordingHeader): The recording header.
+        digest (bytes | None): SHA-256 digest of the validated file, or `None` when the file is too large to hold
+            in memory and must be validated again on every pass.
+
+    """
+
+    header: RecordingHeader
+    digest: bytes | None
+
+
+def _validate_recordings(paths: list[Path]) -> dict[Path, _ValidatedRecording]:
+    """Read every recording completely so invalid files fail before playback starts.
+
+    Raises:
+        RecordingError: If any recording is invalid; the message names the file.
+
+    """
+    return {path: _validate_recording(path) for path in paths}
+
+
+def _validate_recording(path: Path) -> _ValidatedRecording:
+    """Read and validate one recording completely.
+
+    Raises:
+        RecordingError: If the recording is invalid; the message names the file.
+
+    """
+    try:
+        data = _read_verifiable_recording(path)
+        with RecordingReader(path, data) as reader:
+            reader.validate()
+            return _ValidatedRecording(reader.header, None if data is None else hashlib.sha256(data).digest())
+    except RecordingError as error:
+        msg = f"{path}: {error.message}"
+        raise RecordingError(msg) from error
+
+
+def _read_verifiable_recording(path: Path) -> bytes | None:
+    """Return the bytes of a recording small enough to verify by digest, or `None` for a larger one.
+
+    Raises:
+        RecordingError: If the file cannot be read.
+
+    """
+    try:
+        if path.stat().st_size > _MAX_VERIFIED_RECORDING_BYTES:
+            return None
+        return path.read_bytes()
+    except OSError as error:
+        msg = f"Cannot read recording {str(path)!r}: {error.strerror or error}."
+        raise RecordingError(msg) from error
+
+
+def _open_validated_recording(path: Path, recording: _ValidatedRecording) -> tuple[RecordingReader, bool]:
+    """Open a validated recording for playback.
+
+    A recording verified by digest is replayed from the exact bytes that were validated, so its frames need no
+    further checks. A larger recording is read from disk, and its frames are validated again as they play.
+
+    Returns:
+        tuple[RecordingReader, bool]: The reader, and whether its frames must be validated during playback.
+
+    Raises:
+        RecordingError: If the recording cannot be read or changed after validation; the message names the file.
+
+    """
+    changed = RecordingError(f"{path}: Recording changed after validation.")
+    if recording.digest is not None:
+        data = _read_verifiable_recording(path)
+        if data is None or hashlib.sha256(data).digest() != recording.digest:
+            raise changed
+        return RecordingReader(path, data), False
+    try:
+        reader = RecordingReader(path)
+    except RecordingError as error:
+        msg = f"{path}: {error.message}"
+        raise RecordingError(msg) from error
+    if reader.header != recording.header:
+        reader.close()
+        raise changed
+    return reader, True
+
+
+def _anchor_offsets(anchor: str, spare_columns: int, spare_rows: int) -> tuple[int, int]:
+    """Return column and row offsets, counted from the left and bottom, that place content at `anchor`.
+
+    This mirrors the canvas anchoring used for live output.
+    """
+    column_offset = row_offset = 0
+    if anchor in ("s", "n", "c"):
+        column_offset = spare_columns // 2
+    elif anchor in ("se", "e", "ne"):
+        column_offset = spare_columns
+    if anchor in ("w", "e", "c"):
+        row_offset = spare_rows // 2
+    elif anchor in ("nw", "n", "ne"):
+        row_offset = spare_rows
+    return column_offset, row_offset
+
+
+class _FrameLayout:
+    """Place recorded frames on the prepared playback canvas."""
+
+    def __init__(self, header: RecordingHeader, terminal: Terminal, canvas_size: tuple[int, int]) -> None:
+        canvas_width, canvas_height = canvas_size
+        inner_column, inner_row = _anchor_offsets(
+            terminal.config.anchor_canvas,
+            canvas_width - header.width,
+            canvas_height - header.height,
+        )
+        column_offset = terminal.canvas_column_offset + inner_column
+        bottom_rows = terminal.canvas_row_offset + inner_row
+        self._identity = column_offset == 0 and bottom_rows == 0 and terminal.visible_top == header.height
+        self._identity = self._identity and terminal.visible_right == header.width
+        self._prefix = " " * column_offset
+        self._suffix = " " * (terminal.visible_right - column_offset - header.width)
+        blank_row = " " * terminal.visible_right
+        self._top_rows = [blank_row] * (terminal.visible_top - bottom_rows - header.height)
+        self._bottom_rows = [blank_row] * bottom_rows
+
+    def place(self, frame: str) -> str:
+        """Return `frame` padded to the playback canvas."""
+        if self._identity:
+            return frame
+        rows = [self._prefix + row + self._suffix for row in frame.split("\n")]
+        return "\n".join(self._top_rows + rows + self._bottom_rows)
+
+
+class _FramePacer:
+    """Pace frames on a fixed monotonic schedule."""
+
+    def __init__(self, frame_rate: int) -> None:
+        self._period = 1 / frame_rate if frame_rate else 0.0
+        self._next_frame_time: float | None = None
+
+    def wait(self) -> None:
+        """Sleep until the next frame is due.
+
+        The schedule restarts when playback falls more than a frame behind, so a
+        stall is not followed by a burst of unpaced frames.
+        """
+        if not self._period:
+            return
+        now = time.monotonic()
+        if self._next_frame_time is None or now - self._next_frame_time > self._period:
+            self._next_frame_time = now
+        elif self._next_frame_time > now:
+            time.sleep(self._next_frame_time - now)
+        self._next_frame_time += self._period
+
+
+def _explicit_frame_rate(argv: list[str]) -> int | None:
+    """Return the `--frame-rate` value given on the command line, or `None` when it was omitted."""
+    probe = argparse.ArgumentParser(add_help=False)
+    probe.add_argument("--frame-rate", type=NonNegativeInt.type_parser, default=None)
+    known_args, _ = probe.parse_known_args(argv)
+    return cast("int | None", known_args.frame_rate)
+
+
+def _play_recordings(args: argparse.Namespace, frame_rate_override: int | None) -> None:
+    """Validate and play the recordings selected by `--play`.
+
+    Raises:
+        RecordingError: If a recording is invalid or the terminal is smaller than the recorded canvas.
+
+    """
+    paths = _find_recordings(args.play)
+    recordings = _validate_recordings(paths)
+    canvas_size = (
+        max(recording.header.width for recording in recordings.values()),
+        max(recording.header.height for recording in recordings.values()),
+    )
+    terminal_width, terminal_height = shutil.get_terminal_size()
+    if canvas_size[0] > terminal_width or canvas_size[1] > terminal_height:
+        msg = (
+            f"Recording canvas is {canvas_size[0]}x{canvas_size[1]} but the terminal is "
+            f"{terminal_width}x{terminal_height}. Enlarge the terminal to play it."
+        )
+        raise RecordingError(msg)
+    terminal_config = TerminalConfig._build_config(args)
+    terminal_config.canvas_width, terminal_config.canvas_height = canvas_size
+    terminal_config.ignore_terminal_dimensions = False
+    terminal_config.wrap_text = False
+    terminal_config.frame_rate = 0
+    terminal = Terminal("", terminal_config, terminal_dimensions=(terminal_width, terminal_height))
+    layouts = {path: _FrameLayout(recording.header, terminal, canvas_size) for path, recording in recordings.items()}
+
+    if args.alt_screen:
+        sys.stdout.write(ansitools.enter_alternate_screen())
+    try:
+        terminal.prep_canvas()
+        completed = 0
+        while True:
+            order = list(paths)
+            if args.shuffle:
+                random.shuffle(order)
+            pass_rendered = False
+            for index, path in enumerate(order):
+                rendered = _play_recording(path, recordings[path], layouts[path], terminal, frame_rate_override)
+                pass_rendered = pass_rendered or rendered
+                last_of_pass = index == len(order) - 1
+                if rendered and args.hold and not (last_of_pass and args.repeat and completed + 1 >= args.repeat):
+                    time.sleep(args.hold)
+            completed += 1
+            # A pass without frames would otherwise repeat at full speed, unlike live replay.
+            if not pass_rendered or (args.repeat and completed >= args.repeat):
+                return
+    finally:
+        # Recorded frames are untrusted; never leave their text attributes active in the shell.
+        sys.stdout.write(ansitools.reset_all())
+        if args.alt_screen:
+            terminal.restore_cursor("")
+            sys.stdout.write(ansitools.exit_alternate_screen())
+            sys.stdout.flush()
+        else:
+            terminal.restore_cursor()
+
+
+def _play_recording(
+    path: Path,
+    recording: _ValidatedRecording,
+    layout: _FrameLayout,
+    terminal: Terminal,
+    frame_rate_override: int | None,
+) -> bool:
+    """Play one validated recording on the prepared terminal.
+
+    Returns:
+        bool: Whether the recording rendered any frames.
+
+    Raises:
+        RecordingError: If the recording changed after validation or is invalid; the message names the file.
+
+    """
+    reader, validate_frames = _open_validated_recording(path, recording)
+    rendered = False
+    with reader:
+        pacer = _FramePacer(reader.header.frame_rate if frame_rate_override is None else frame_rate_override)
+        try:
+            for frame in reader.frames(validate_frames=validate_frames):
+                pacer.wait()
+                terminal.print(layout.place(frame))
+                rendered = True
+        except RecordingError as error:
+            msg = f"{path}: {error.message}"
+            raise RecordingError(msg) from error
+    return rendered
+
+
+def _exit_with_error(message: str) -> NoReturn:
+    """Print an error message to standard error and exit with status `1`."""
+    print(f"Error: {message}", file=sys.stderr)
+    sys.exit(1)
+
+
+def _run_playback(args: argparse.Namespace) -> None:
+    """Run `--play`, exiting with status `1` on invalid options, recordings, or interruption."""
+    if args.effect or args.random_effect or args.input_file:
+        _exit_with_error("--play cannot be combined with an effect, --random-effect, or --input-file.")
+    try:
+        _play_recordings(args, _explicit_frame_rate(sys.argv[1:]))
+    except RecordingError as error:
+        _exit_with_error(error.message)
+    except KeyboardInterrupt:
+        sys.exit(1)
+
+
+def _check_recording_options(args: argparse.Namespace) -> None:
+    """Exit with status `1` when playback-only or recording options are used incorrectly."""
+    if args.hold or args.shuffle or args.alt_screen:
+        _exit_with_error("--hold, --shuffle, and --alt-screen require --play.")
+    if args.record is not None:
+        if args.repeat == 0:
+            _exit_with_error("--record cannot be combined with --repeat 0.")
+        if args.frame_rate == 0:
+            _exit_with_error("--record requires --frame-rate greater than 0.")
+
+
+def _run_recording(
+    args: argparse.Namespace,
+    effect_name: str,
+    effect: BaseEffect,
+    available_effects: list[str] | None,
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+    input_data: str,
+) -> None:
+    """Run `--record` and report the result, exiting with status `1` on failure or interruption."""
+    next_recording_factory: Callable[[tuple[int, int]], tuple[str, BaseEffect]] | None = None
+    if available_effects is not None:
+        next_recording_factory = partial(
+            _create_random_recording,
+            available_effects,
+            effect_resource_map,
+            input_data,
+            effect.terminal_config,
+        )
+    try:
+        header, frame_count, segments = _record_playbacks(
+            args.record,
+            effect_name,
+            effect,
+            args.repeat,
+            next_recording_factory,
+        )
+    except (EmptyInputError, UnsupportedAnsiSequenceError, RecordingError) as e:
+        _exit_with_error(str(e))
+    except OSError as e:
+        _exit_with_error(f"Cannot write recording {str(args.record)!r}: {e.strerror or e}.")
+    except KeyboardInterrupt:
+        sys.exit(1)
+    print(
+        f"Recorded {frame_count} frames in {segments} segment{'s' if segments != 1 else ''} "
+        f"({header.width}x{header.height} at {header.frame_rate} fps) to {args.record}",
+        file=sys.stderr,
+    )
+
+
+def _read_input(args: argparse.Namespace) -> str:
+    """Return text from `--input-file` or piped standard input, exiting with status `1` if the file cannot be read."""
+    if not args.input_file:
+        return Terminal.get_piped_input()
+    try:
+        return Path(args.input_file).read_text(encoding="UTF-8")
+    except FileNotFoundError:
+        print(f"File not found: {args.input_file}")
+        sys.exit(1)
+    except Exception as e:  # noqa: BLE001
+        print(f"Error reading file: {args.input_file} - {e}")
+        sys.exit(1)
+
+
 def main() -> None:
     """Run the terminaltexteffects command line interface.
 
@@ -485,17 +989,11 @@ def main() -> None:
         return
     if args.seed is not None:
         random.seed(args.seed)
-    if args.input_file:
-        try:
-            input_data = Path(args.input_file).read_text(encoding="UTF-8")
-        except FileNotFoundError:
-            print(f"File not found: {args.input_file}")
-            sys.exit(1)
-        except Exception as e:  # noqa: BLE001
-            print(f"Error reading file: {args.input_file} - {e}")
-            sys.exit(1)
-    else:
-        input_data = Terminal.get_piped_input()
+    if args.play is not None:
+        _run_playback(args)
+        return
+    _check_recording_options(args)
+    input_data = _read_input(args)
     if not input_data.strip():
         return
 
@@ -513,6 +1011,9 @@ def main() -> None:
         sys.exit(1)
 
     terminal_config = TerminalConfig._build_config(args)
+    if args.record is not None:
+        # Record the canvas alone; playback anchors it within the terminal.
+        terminal_config.ignore_terminal_dimensions = True
 
     assert selected_effect_name is not None
     effect = _create_effect(
@@ -522,6 +1023,9 @@ def main() -> None:
         terminal_config,
         None if args.random_effect else args,
     )
+    if args.record is not None:
+        _run_recording(args, selected_effect_name, effect, available_effects, effect_resource_map, input_data)
+        return
     try:
         effect_iterator = iter(effect)
         with effect.terminal_output() as terminal:

@@ -22,6 +22,9 @@ COMPLETION_PATHS = {
     "powershell": COMPLETION_DIR / "tte.ps1",
 }
 
+# Options whose values are filesystem paths.
+_FILE_OPTIONS = frozenset({"--input-file", "--record", "--play"})
+
 _COMPLETION_CHOICES_BY_TYPE = {
     argutils.CharacterOrderArg.type_parser: argutils.CharacterOrderArg.COMPLETION_CHOICES,
     argutils.CharacterGroupArg.type_parser: argutils.CharacterGroupArg.COMPLETION_CHOICES,
@@ -40,7 +43,7 @@ def _configure_completers(
 ) -> None:
     """Add generation-only completion metadata to selected parser actions."""
     for action in parser._actions:
-        if "--input-file" in action.option_strings:
+        if _FILE_OPTIONS.intersection(action.option_strings):
             action.complete = shtab.FILE  # type: ignore[attr-defined]
         elif "--print-completion" in action.option_strings:
             action.choices = SUPPORTED_SHELLS
@@ -112,7 +115,7 @@ def parser_metadata(parser: argparse.ArgumentParser) -> dict[str, object]:
             "min": minimum,
             "max": maximum,
             "choices": [str(value) for value in action.choices] if action.choices is not None else [],
-            "file": "--input-file" in action.option_strings,
+            "file": bool(_FILE_OPTIONS.intersection(action.option_strings)),
             "help": action.help or action.dest,
         }
         for name in action.option_strings:
