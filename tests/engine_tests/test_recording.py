@@ -115,6 +115,23 @@ def test_writer_rejects_oversized_frame(tmp_path: Path) -> None:
     assert not path.exists()
 
 
+def test_writer_removes_temporary_file_when_header_write_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failure while writing the preamble or header leaves no temporary file behind."""
+    original_write_record = RecordingWriter._write_record
+
+    def failing_write_record(self: RecordingWriter, tag: bytes, data: bytes) -> None:
+        original_write_record(self, tag, data)
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(RecordingWriter, "_write_record", failing_write_record)
+    with pytest.raises(OSError, match="No space left on device"):
+        RecordingWriter(tmp_path / "out.tterec", HEADER)
+    assert list(tmp_path.iterdir()) == []
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX permission bits")
 def test_writer_honors_umask(tmp_path: Path) -> None:
     """Recordings get ordinary file permissions rather than private temporary-file permissions."""
@@ -131,14 +148,30 @@ def test_writer_honors_umask(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     "frame",
     [
-        "abc\n\x1b[0m",
+        "abc\n\x1b[0mabc\x1b[0m",
         "a\x1b[1;38;5;196mb\x1b[0mc\nabc",
-        "😀\nabc",
+        "😀a\n界 ",
     ],
 )
 def test_validate_frame_accepts_text_and_sgr(frame: str) -> None:
-    """Printable text and SGR sequences are safe to replay."""
-    validate_frame(frame, 2)
+    """Printable text and SGR sequences filling the canvas width are safe to replay."""
+    validate_frame(frame, 3, 2)
+
+
+@pytest.mark.parametrize(
+    ("frame", "match"),
+    [
+        ("abcd\nabc", "4 cells wide; expected 3"),
+        ("abc\nab", "2 cells wide; expected 3"),
+        ("abc\n\x1b[31m\x1b[0m", "0 cells wide; expected 3"),
+        ("abc\n界界", "4 cells wide; expected 3"),
+        ("abc\nab\u0301", "cannot be displayed on its own"),
+    ],
+)
+def test_validate_frame_rejects_rows_not_matching_canvas_width(frame: str, match: str) -> None:
+    """Every row must render exactly the recorded canvas width, so playback cannot wrap or leave stale cells."""
+    with pytest.raises(RecordingError, match=match):
+        validate_frame(frame, 3, 2)
 
 
 @pytest.mark.parametrize(
@@ -160,14 +193,14 @@ def test_validate_frame_accepts_text_and_sgr(frame: str) -> None:
 def test_validate_frame_rejects_control_and_escape_sequences(frame: str) -> None:
     """Any control or escape sequence other than SGR is rejected."""
     with pytest.raises(RecordingError, match="unsupported control or escape sequence"):
-        validate_frame(frame, 2)
+        validate_frame(frame, 3, 2)
 
 
 @pytest.mark.parametrize("frame", ["abc", "a\nb\nc"])
 def test_validate_frame_rejects_wrong_row_count(frame: str) -> None:
     """Frames must have exactly the recorded number of rows."""
     with pytest.raises(RecordingError, match="expected 2"):
-        validate_frame(frame, 2)
+        validate_frame(frame, 3, 2)
 
 
 @pytest.mark.parametrize(

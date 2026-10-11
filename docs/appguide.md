@@ -132,7 +132,9 @@ recording is an error. Playback options:
 
 Playback exits with an error if the terminal is smaller than the recorded canvas. Recordings are treated
 as untrusted input: playback writes only text and color (SGR) sequences, and rejects any recording that
-contains other control or escape sequences, or that is corrupt, truncated, or oversized.
+contains other control or escape sequences, has rows that do not exactly fill the recorded canvas width, or
+is corrupt, truncated, or oversized. Text attributes are reset when playback ends. A recording that changes
+on disk after validation stops playback with an error rather than being shown unchecked.
 
 ```bash title="Background display from a directory of recordings"
 tte --play ~/recordings --repeat 0 --shuffle --hold 5 --alt-screen

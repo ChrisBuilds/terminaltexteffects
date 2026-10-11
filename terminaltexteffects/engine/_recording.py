@@ -7,16 +7,18 @@ payload:
 
 - `H` (once, first): JSON header with `tte_version`, `width`, `height`, and `frame_rate`.
 - `S`: JSON segment metadata with the `effect` name. Each effect playback in the recording starts a segment.
-- `F`: UTF-8 frame text, `height` rows joined by newlines. Rows contain printable text and SGR sequences only.
+- `F`: UTF-8 frame text, `height` rows joined by newlines. Rows contain printable text and SGR sequences only,
+  and each row is exactly `width` terminal cells wide.
 - `E` (once, last): JSON trailer with the total `frame_count`, used to detect truncated files.
 
 Recordings are untrusted input whose bytes are written to the terminal, so `RecordingReader` validates every
-record, bounds every payload size before decompressing it, and rejects any escape or control sequence other than
-SGR.
+record, bounds every payload size before decompressing it, rejects any escape or control sequence other than
+SGR, and rejects rows that do not exactly fill the canvas width.
 """
 
 from __future__ import annotations
 
+import io
 import json
 import re
 import secrets
@@ -25,7 +27,9 @@ import zlib
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, BinaryIO, cast
 
+from terminaltexteffects.utils.exceptions import InvalidSymbolError
 from terminaltexteffects.utils.exceptions.base_terminaltexteffects_exception import TerminalTextEffectsError
+from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -45,8 +49,9 @@ _HEADER_TAG = b"H"
 _SEGMENT_TAG = b"S"
 _FRAME_TAG = b"F"
 _END_TAG = b"E"
-# Any C0/C1 control character other than newline and ESC, or an ESC that does not start an SGR sequence.
-_UNSAFE_FRAME_TEXT = re.compile(r"[\x00-\x09\x0b-\x1a\x1c-\x1f\x7f-\x9f]|\x1b(?!\[[0-9;]*m)")
+_SGR_SEQUENCE = re.compile(r"\x1b\[[0-9;]*m")
+# After SGR sequences are removed, any remaining C0/C1 control character other than newline, including ESC, is unsafe.
+_CONTROL_CHARACTER = re.compile(r"[\x00-\x09\x0b-\x1f\x7f-\x9f]")
 
 
 class RecordingError(TerminalTextEffectsError):
@@ -102,25 +107,56 @@ class RecordingHeader:
         return min(self.width * self.height * _MAX_BYTES_PER_CELL + self.height, MAX_FRAME_BYTES)
 
 
-def validate_frame(frame: str, height: int) -> None:
-    """Check that frame text is safe to write to a terminal and has the expected row count.
+def _text_cell_width(text: str) -> int:
+    """Return the terminal-cell width of row text that contains no escape sequences.
+
+    Raises:
+        RecordingError: If the text contains a code point that cannot occupy its own terminal cells.
+
+    """
+    width = len(text)
+    if text.isascii():
+        return width
+    # Rows repeat a few distinct symbols, so measure each distinct non-ASCII symbol once.
+    try:
+        for symbol in set(text):
+            if not symbol.isascii():
+                width += (get_symbol_cell_width(symbol) - 1) * text.count(symbol)
+    except InvalidSymbolError as error:
+        msg = f"Frame row contains a symbol that cannot be displayed on its own: {error.symbol!r}."
+        raise RecordingError(msg) from error
+    return width
+
+
+def validate_frame(frame: str, width: int, height: int) -> None:
+    """Check that frame text is safe to write to a terminal and fills exactly the recorded canvas.
 
     Args:
         frame (str): Frame text with rows joined by newlines.
+        width (int): Expected width of every row, in terminal cells.
         height (int): Expected number of rows.
 
     Raises:
-        RecordingError: If the frame contains a control or escape sequence other than SGR, or has the wrong
-            number of rows.
+        RecordingError: If the frame contains a control or escape sequence other than SGR, has the wrong number of
+            rows, or has a row that is not exactly `width` cells wide.
 
     """
-    unsafe = _UNSAFE_FRAME_TEXT.search(frame)
+    # A valid SGR sequence contains exactly one ESC, at its start, so removing them removes only the ESCs that
+    # begin valid SGR sequences. Every other ESC and control character remains to be rejected.
+    text = _SGR_SEQUENCE.sub("", frame)
+    unsafe = _CONTROL_CHARACTER.search(text)
     if unsafe is not None:
-        msg = f"Frame contains an unsupported control or escape sequence: {frame[unsafe.start() : unsafe.end() + 8]!r}."
+        msg = f"Frame contains an unsupported control or escape sequence: {text[unsafe.start() : unsafe.end() + 8]!r}."
         raise RecordingError(msg)
-    if frame.count("\n") != height - 1:
-        msg = f"Frame has {frame.count(chr(10)) + 1} rows; expected {height}."
+    rows = text.split("\n")
+    if len(rows) != height:
+        msg = f"Frame has {len(rows)} rows; expected {height}."
         raise RecordingError(msg)
+    for row in rows:
+        row_width = _text_cell_width(row)
+        if row_width != width:
+            msg = f"Frame row is {row_width} cells wide; expected {width}."
+            raise RecordingError(msg)
 
 
 class RecordingWriter:
@@ -146,16 +182,20 @@ class RecordingWriter:
         self._file: BinaryIO = self._temporary_path.open("xb")
         self._compressor = zlib.compressobj(6)
         self._closed = False
-        self._file.write(MAGIC + bytes((FORMAT_VERSION,)))
-        self._write_json(
-            _HEADER_TAG,
-            {
-                "tte_version": header.tte_version,
-                "width": header.width,
-                "height": header.height,
-                "frame_rate": header.frame_rate,
-            },
-        )
+        try:
+            self._file.write(MAGIC + bytes((FORMAT_VERSION,)))
+            self._write_json(
+                _HEADER_TAG,
+                {
+                    "tte_version": header.tte_version,
+                    "width": header.width,
+                    "height": header.height,
+                    "frame_rate": header.frame_rate,
+                },
+            )
+        except BaseException:
+            self.abort()
+            raise
 
     def __enter__(self) -> RecordingWriter:
         """Return this writer."""
@@ -192,11 +232,11 @@ class RecordingWriter:
             RecordingError: If the frame cannot be played back safely or exceeds the frame size limit.
 
         """
-        validate_frame(frame, self.header.height)
         data = frame.encode("utf-8")
         if len(data) > self.header.max_frame_bytes:
             msg = f"Frame is {len(data)} bytes; the limit for this canvas is {self.header.max_frame_bytes} bytes."
             raise RecordingError(msg)
+        validate_frame(frame, self.header.width, self.header.height)
         self._write_record(_FRAME_TAG, data)
         self.frame_count += 1
 
@@ -287,7 +327,8 @@ class RecordingReader:
     """Read and validate a recording file.
 
     The header is read and validated on construction. `frames()` streams the frames, validating each record as it
-    is read, so a recording of any length plays back in constant memory.
+    is read, so a recording of any length plays back in constant memory. A reader can also read recording bytes
+    already held in memory, such as bytes whose digest matches a previously validated recording.
 
     Attributes:
         path (Path): Recording file being read.
@@ -296,11 +337,12 @@ class RecordingReader:
 
     """
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, data: bytes | None = None) -> None:
         """Open a recording and read its header.
 
         Args:
-            path (Path): Recording file to read.
+            path (Path): Recording file to read, or the file `data` was read from.
+            data (bytes | None, optional): Recording bytes to read instead of opening `path`. Defaults to None.
 
         Raises:
             RecordingError: If the file cannot be read or does not start with a valid recording header.
@@ -308,11 +350,14 @@ class RecordingReader:
         """
         self.path = path
         self.segments: list[str] = []
-        try:
-            self._file: BinaryIO = path.open("rb")
-        except OSError as error:
-            msg = f"Cannot read recording {str(path)!r}: {error.strerror or error}."
-            raise RecordingError(msg) from error
+        if data is not None:
+            self._file: BinaryIO = io.BytesIO(data)
+        else:
+            try:
+                self._file = path.open("rb")
+            except OSError as error:
+                msg = f"Cannot read recording {str(path)!r}: {error.strerror or error}."
+                raise RecordingError(msg) from error
         try:
             self.header = self._read_header()
         except BaseException:
@@ -336,8 +381,13 @@ class RecordingReader:
         """Close the recording file."""
         self._file.close()
 
-    def frames(self) -> Iterator[str]:
-        """Yield each validated frame in order.
+    def frames(self, *, validate_frames: bool = True) -> Iterator[str]:
+        """Yield each frame in order.
+
+        Args:
+            validate_frames (bool, optional): Check each frame's content with `validate_frame()`. Pass `False` only
+                for bytes already known to match a recording that was validated completely, such as by digest.
+                Record structure and size limits are always checked. Defaults to True.
 
         Raises:
             RecordingError: If a record is malformed, a frame is unsafe or oversized, or the recording is truncated.
@@ -357,7 +407,8 @@ class RecordingReader:
                 except UnicodeDecodeError as error:
                     msg = "Recording frame is not valid UTF-8."
                     raise RecordingError(msg) from error
-                validate_frame(frame, self.header.height)
+                if validate_frames:
+                    validate_frame(frame, self.header.width, self.header.height)
                 frame_count += 1
                 yield frame
             elif tag == _END_TAG:

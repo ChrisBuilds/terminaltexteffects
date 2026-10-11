@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import importlib.machinery
 import importlib.util
@@ -13,6 +14,7 @@ import shutil
 import sys
 import time
 import weakref
+from dataclasses import dataclass
 from functools import partial
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -603,7 +605,26 @@ def _find_recordings(path: Path) -> list[Path]:
     return [path]
 
 
-def _validate_recordings(paths: list[Path]) -> dict[Path, RecordingHeader]:
+# Recordings up to this size are held in memory, verified by digest, and replayed without per-frame checks.
+_MAX_VERIFIED_RECORDING_BYTES = 256 * 1024 * 1024
+
+
+@dataclass(frozen=True)
+class _ValidatedRecording:
+    """A recording that passed complete validation before playback.
+
+    Attributes:
+        header (RecordingHeader): The recording header.
+        digest (bytes | None): SHA-256 digest of the validated file, or `None` when the file is too large to hold
+            in memory and must be validated again on every pass.
+
+    """
+
+    header: RecordingHeader
+    digest: bytes | None
+
+
+def _validate_recordings(paths: list[Path]) -> dict[Path, _ValidatedRecording]:
     """Read every recording completely so invalid files fail before playback starts.
 
     Raises:
@@ -613,20 +634,67 @@ def _validate_recordings(paths: list[Path]) -> dict[Path, RecordingHeader]:
     return {path: _validate_recording(path) for path in paths}
 
 
-def _validate_recording(path: Path) -> RecordingHeader:
-    """Read one recording completely and return its header.
+def _validate_recording(path: Path) -> _ValidatedRecording:
+    """Read and validate one recording completely.
 
     Raises:
         RecordingError: If the recording is invalid; the message names the file.
 
     """
     try:
-        with RecordingReader(path) as reader:
+        data = _read_verifiable_recording(path)
+        with RecordingReader(path, data) as reader:
             reader.validate()
-            return reader.header
+            return _ValidatedRecording(reader.header, None if data is None else hashlib.sha256(data).digest())
     except RecordingError as error:
         msg = f"{path}: {error.message}"
         raise RecordingError(msg) from error
+
+
+def _read_verifiable_recording(path: Path) -> bytes | None:
+    """Return the bytes of a recording small enough to verify by digest, or `None` for a larger one.
+
+    Raises:
+        RecordingError: If the file cannot be read.
+
+    """
+    try:
+        if path.stat().st_size > _MAX_VERIFIED_RECORDING_BYTES:
+            return None
+        return path.read_bytes()
+    except OSError as error:
+        msg = f"Cannot read recording {str(path)!r}: {error.strerror or error}."
+        raise RecordingError(msg) from error
+
+
+def _open_validated_recording(path: Path, recording: _ValidatedRecording) -> tuple[RecordingReader, bool]:
+    """Open a validated recording for playback.
+
+    A recording verified by digest is replayed from the exact bytes that were validated, so its frames need no
+    further checks. A larger recording is read from disk, and its frames are validated again as they play.
+
+    Returns:
+        tuple[RecordingReader, bool]: The reader, and whether its frames must be validated during playback.
+
+    Raises:
+        RecordingError: If the recording cannot be read or changed after validation; the message names the file.
+
+    """
+    changed = RecordingError(f"{path}: Recording changed after validation.")
+    if recording.digest is not None:
+        data = _read_verifiable_recording(path)
+        if data is None or hashlib.sha256(data).digest() != recording.digest:
+            raise changed
+        return RecordingReader(path, data), False
+    try:
+        reader = RecordingReader(path)
+    except RecordingError as error:
+        msg = f"{path}: {error.message}"
+        raise RecordingError(msg) from error
+    if reader.header != recording.header:
+        reader.close()
+        raise changed
+    return reader, True
 
 
 def _anchor_offsets(anchor: str, spare_columns: int, spare_rows: int) -> tuple[int, int]:
@@ -713,10 +781,10 @@ def _play_recordings(args: argparse.Namespace, frame_rate_override: int | None) 
 
     """
     paths = _find_recordings(args.play)
-    headers = _validate_recordings(paths)
+    recordings = _validate_recordings(paths)
     canvas_size = (
-        max(header.width for header in headers.values()),
-        max(header.height for header in headers.values()),
+        max(recording.header.width for recording in recordings.values()),
+        max(recording.header.height for recording in recordings.values()),
     )
     terminal_width, terminal_height = shutil.get_terminal_size()
     if canvas_size[0] > terminal_width or canvas_size[1] > terminal_height:
@@ -731,7 +799,7 @@ def _play_recordings(args: argparse.Namespace, frame_rate_override: int | None) 
     terminal_config.wrap_text = False
     terminal_config.frame_rate = 0
     terminal = Terminal("", terminal_config, terminal_dimensions=(terminal_width, terminal_height))
-    layouts = {path: _FrameLayout(header, terminal, canvas_size) for path, header in headers.items()}
+    layouts = {path: _FrameLayout(recording.header, terminal, canvas_size) for path, recording in recordings.items()}
 
     if args.alt_screen:
         sys.stdout.write(ansitools.enter_alternate_screen())
@@ -743,16 +811,14 @@ def _play_recordings(args: argparse.Namespace, frame_rate_override: int | None) 
             if args.shuffle:
                 random.shuffle(order)
             for index, path in enumerate(order):
-                with RecordingReader(path) as reader:
-                    if reader.header != headers[path]:
-                        msg = f"{path}: Recording changed after validation."
-                        raise RecordingError(msg)
+                reader, validate_frames = _open_validated_recording(path, recordings[path])
+                with reader:
                     pacer = _FramePacer(
                         reader.header.frame_rate if frame_rate_override is None else frame_rate_override
                     )
                     layout = layouts[path]
                     try:
-                        for frame in reader.frames():
+                        for frame in reader.frames(validate_frames=validate_frames):
                             pacer.wait()
                             terminal.print(layout.place(frame))
                     except RecordingError as error:
@@ -765,6 +831,8 @@ def _play_recordings(args: argparse.Namespace, frame_rate_override: int | None) 
             if args.repeat and completed >= args.repeat:
                 return
     finally:
+        # Recorded frames are untrusted; never leave their text attributes active in the shell.
+        sys.stdout.write(ansitools.reset_all())
         if args.alt_screen:
             terminal.restore_cursor("")
             sys.stdout.write(ansitools.exit_alternate_screen())

@@ -17,6 +17,7 @@ from terminaltexteffects import __main__
 from terminaltexteffects.effects.effect_matrix import Matrix, MatrixConfig
 from terminaltexteffects.effects.effect_thunderstorm import Thunderstorm, ThunderstormConfig
 from terminaltexteffects.effects.effect_wipe import Wipe
+from terminaltexteffects.engine import _recording as recording_module
 from terminaltexteffects.engine import terminal as terminal_module
 from terminaltexteffects.engine._recording import MAGIC, RecordingHeader, RecordingReader, RecordingWriter
 from terminaltexteffects.engine.base_effect import BaseEffectIterator
@@ -413,7 +414,7 @@ def _write_bad_frame_recording(path: Path) -> None:
     ("replacement", "message"),
     [
         (lambda path: _write_recording(path, ["AB"], width=2), "a.tterec: Recording changed after validation."),
-        (_write_bad_frame_recording, "a.tterec: Frame contains an unsupported control"),
+        (_write_bad_frame_recording, "a.tterec: Recording changed after validation."),
     ],
 )
 @pytest.mark.usefixtures("terminal_size")
@@ -428,10 +429,10 @@ def test_play_reports_recording_replaced_after_validation(
     path = _write_recording(tmp_path / "a.tterec", ["A"])
     original_validate = __main__._validate_recordings
 
-    def validate_then_replace(paths: list[Path]) -> dict[Path, RecordingHeader]:
-        headers = original_validate(paths)
+    def validate_then_replace(paths: list[Path]) -> dict[Path, __main__._ValidatedRecording]:
+        recordings = original_validate(paths)
         replacement(path)
-        return headers
+        return recordings
 
     monkeypatch.setattr(__main__, "_validate_recordings", validate_then_replace)
     with pytest.raises(SystemExit) as exit_info:
@@ -439,7 +440,49 @@ def test_play_reports_recording_replaced_after_validation(
     assert exit_info.value.code == 1
     output = capsys.readouterr()
     assert message in output.err
-    assert output.out.endswith(ansitools.show_cursor() + "\n")
+    assert output.out.endswith(ansitools.reset_all() + ansitools.show_cursor() + "\n")
+
+
+@pytest.mark.usefixtures("terminal_size")
+def test_play_large_recording_validates_frames_during_playback(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    """Recordings too large to verify by digest have every frame validated again as they play."""
+    monkeypatch.setattr(__main__, "_MAX_VERIFIED_RECORDING_BYTES", 0)
+    path = _write_recording(tmp_path / "a.tterec", ["A"])
+    original_validate = __main__._validate_recordings
+
+    def validate_then_replace(paths: list[Path]) -> dict[Path, __main__._ValidatedRecording]:
+        recordings = original_validate(paths)
+        _write_bad_frame_recording(path)
+        return recordings
+
+    monkeypatch.setattr(__main__, "_validate_recordings", validate_then_replace)
+    error = _run_error(monkeypatch, capsys, "--play", str(path), "--frame-rate", "0")
+    assert "a.tterec: Frame contains an unsupported control or escape sequence" in error
+
+
+@pytest.mark.usefixtures("terminal_size")
+def test_play_verified_recording_skips_repeated_frame_checks(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    printed: Mock,
+) -> None:
+    """Frames are validated once before playback, not again on each repeat of a verified recording."""
+    path = _write_recording(tmp_path / "a.tterec", ["A", "B", "C"])
+    checked: list[str] = []
+    original_validate_frame = recording_module.validate_frame
+
+    def counting_validate_frame(frame: str, width: int, height: int) -> None:
+        checked.append(frame)
+        original_validate_frame(frame, width, height)
+
+    monkeypatch.setattr(recording_module, "validate_frame", counting_validate_frame)
+    _run(monkeypatch, "--play", str(path), "--frame-rate", "0", "--repeat", "3")
+    assert checked == ["A", "B", "C"]
+    assert _printed_frames(printed) == ["A", "B", "C"] * 3
 
 
 @pytest.mark.parametrize(
@@ -472,9 +515,27 @@ def test_play_alt_screen_enters_and_restores(
     _run(monkeypatch, "--play", str(path), "--frame-rate", "0", "--alt-screen")
     output = capsys.readouterr().out
     assert output.startswith(ansitools.enter_alternate_screen() + ansitools.hide_cursor())
-    assert output.endswith(ansitools.show_cursor() + ansitools.exit_alternate_screen())
+    assert output.endswith(ansitools.reset_all() + ansitools.show_cursor() + ansitools.exit_alternate_screen())
     assert "A" in output
     assert "B" in output
+
+
+@pytest.mark.parametrize("alt_screen", [False, True])
+@pytest.mark.usefixtures("terminal_size")
+def test_play_resets_text_attributes_left_by_recording(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    alt_screen: bool,  # noqa: FBT001
+) -> None:
+    """A final frame that leaves SGR attributes active is followed by a reset before control returns."""
+    path = _write_recording(tmp_path / "a.tterec", ["\x1b[31mA"])
+    arguments = ["--play", str(path), "--frame-rate", "0"]
+    if alt_screen:
+        arguments.append("--alt-screen")
+    _run(monkeypatch, *arguments)
+    output = capsys.readouterr().out
+    assert output.rindex(ansitools.reset_all()) > output.rindex("\x1b[31mA")
 
 
 @pytest.mark.parametrize("alt_screen", [False, True])
@@ -506,7 +567,7 @@ def test_play_interrupt_restores_terminal(
     assert error.value.code == 1
     output = capsys.readouterr().out
     expected_end = ansitools.show_cursor() + (ansitools.exit_alternate_screen() if alt_screen else "\n")
-    assert output.endswith(expected_end)
+    assert output.endswith(ansitools.reset_all() + expected_end)
 
 
 @pytest.fixture
