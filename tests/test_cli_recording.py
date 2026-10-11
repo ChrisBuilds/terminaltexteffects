@@ -450,31 +450,9 @@ def test_play_interrupt_restores_terminal(
     assert output.endswith(expected_end)
 
 
-def _phase_frames(iterator: object, phase: str) -> int:
-    count = 0
-    for _ in iterator:  # type: ignore[attr-defined]
-        if iterator.phase == phase:  # type: ignore[attr-defined]
-            count += 1
-        elif count:
-            break
-    return count
-
-
-@pytest.mark.parametrize(
-    ("effect_class", "config_class", "option", "phase"),
-    [
-        (Matrix, MatrixConfig, "rain_time", "rain"),
-        (Thunderstorm, ThunderstormConfig, "storm_time", "storm"),
-    ],
-)
-def test_timed_effect_phases_follow_frame_clock(
-    monkeypatch: pytest.MonkeyPatch,
-    effect_class: type[Matrix | Thunderstorm],
-    config_class: type[MatrixConfig | ThunderstormConfig],
-    option: str,
-    phase: str,
-) -> None:
-    """Seconds-based phases last seconds x frame rate frames however fast frames are rendered."""
+@pytest.fixture
+def fast_wall_clock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Advance wall-clock time 100 seconds per read, so any wall-clock phase would end at once."""
     wall_time = [0.0]
 
     def fast_monotonic() -> float:
@@ -482,11 +460,49 @@ def test_timed_effect_phases_follow_frame_clock(
         return wall_time[0]
 
     monkeypatch.setattr(terminal_module.time, "monotonic", fast_monotonic)
+
+
+def _frame_clock_effect(
+    effect_class: type[Matrix | Thunderstorm],
+    config_class: type[MatrixConfig | ThunderstormConfig],
+    option: str,
+) -> Matrix | Thunderstorm:
+    random.seed(0)
     effect_config = config_class._build_config()
     setattr(effect_config, option, 1)
     terminal_config = TerminalConfig._build_config()
     terminal_config.frame_rate = 20
     effect = effect_class(INPUT, effect_config, terminal_config)  # type: ignore[arg-type]
     effect._frame_clock = True
-    frames = _phase_frames(iter(effect), phase)
-    assert 20 <= frames <= 22
+    return effect
+
+
+@pytest.mark.usefixtures("fast_wall_clock")
+def test_matrix_rain_follows_frame_clock() -> None:
+    """Rain lasts `rain_time` x frame rate frames however fast frames are rendered."""
+    iterator = iter(_frame_clock_effect(Matrix, MatrixConfig, "rain_time"))
+    rain_frames = 0
+    for _ in iterator:
+        if iterator.phase != "rain":  # type: ignore[attr-defined]
+            break
+        rain_frames += 1
+    assert 20 <= rain_frames <= 22
+
+
+@pytest.mark.usefixtures("fast_wall_clock")
+def test_thunderstorm_storm_follows_frame_clock() -> None:
+    """The storm lasts at least `storm_time` x frame rate frames and ends once no strike is in progress.
+
+    A lightning strike in progress at the deadline finishes before the storm ends, so only the lower bound
+    is fixed.
+    """
+    iterator = iter(_frame_clock_effect(Thunderstorm, ThunderstormConfig, "storm_time"))
+    storm_frames = 0
+    for _ in iterator:
+        if iterator.phase == "storm":  # type: ignore[attr-defined]
+            storm_frames += 1
+        elif storm_frames:
+            break
+    assert storm_frames >= 20
+    assert iterator.terminal.clock() - iterator.storm_start_time >= 1  # type: ignore[attr-defined]
+    assert not iterator.strike_in_progress  # type: ignore[attr-defined]
