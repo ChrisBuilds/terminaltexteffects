@@ -608,14 +608,18 @@ def _find_recordings(path: Path) -> list[Path]:
     """Return the recording at `path`, or the top-level recordings in a directory sorted by filename.
 
     Raises:
-        RecordingError: If `path` does not exist or a directory contains no recordings.
+        RecordingError: If `path` does not exist, a directory cannot be read, or it contains no recordings.
 
     """
     if path.is_dir():
-        recordings = sorted(
-            (child for child in path.iterdir() if child.suffix == RECORDING_SUFFIX and child.is_file()),
-            key=lambda child: child.name,
-        )
+        try:
+            recordings = sorted(
+                (child for child in path.iterdir() if child.suffix == RECORDING_SUFFIX and child.is_file()),
+                key=lambda child: child.name,
+            )
+        except OSError as error:
+            msg = f"Cannot read recording directory {str(path)!r}: {error.strerror or error}."
+            raise RecordingError(msg) from error
         if not recordings:
             msg = f"No {RECORDING_SUFFIX} recordings found in directory: {str(path)!r}."
             raise RecordingError(msg)

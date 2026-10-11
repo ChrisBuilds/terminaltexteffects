@@ -25,7 +25,7 @@ from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.utils import ansitools
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
     from pathlib import Path
 
 pytestmark = [pytest.mark.smoke]
@@ -527,6 +527,21 @@ def test_play_verified_recording_skips_repeated_frame_checks(
     _run(monkeypatch, "--play", str(path), "--frame-rate", "0", "--repeat", "3")
     assert checked == ["A", "B", "C"]
     assert _printed_frames(printed) == ["A", "B", "C"] * 3
+
+
+def test_play_reports_unreadable_directory(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    """A directory that cannot be listed fails with a concise error instead of a traceback."""
+
+    def denied_iterdir(_self: Path) -> Iterator[Path]:
+        raise PermissionError(13, "Permission denied")
+
+    monkeypatch.setattr(type(tmp_path), "iterdir", denied_iterdir)
+    error = _run_error(monkeypatch, capsys, "--play", str(tmp_path))
+    assert f"Cannot read recording directory {str(tmp_path)!r}: Permission denied." in error
 
 
 @pytest.mark.parametrize(
