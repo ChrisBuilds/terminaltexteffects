@@ -7,6 +7,7 @@ import hashlib
 import importlib
 import importlib.machinery
 import importlib.util
+import math
 import os
 import pkgutil
 import random
@@ -234,6 +235,23 @@ def _register_user_effect(
         print(f"Warning: Skipping user effect plugin '{plugin_file}': {detail}", file=sys.stderr)
 
 
+_MAX_HOLD_SECONDS = 86400.0
+
+
+def _hold_seconds(arg: str) -> float:
+    """Parse a finite `--hold` duration from 0 to `_MAX_HOLD_SECONDS` seconds.
+
+    Raises:
+        argparse.ArgumentTypeError: If the value is not a number in range.
+
+    """
+    seconds = NonNegativeFloat.type_parser(arg)
+    if not math.isfinite(seconds) or seconds > _MAX_HOLD_SECONDS:
+        msg = f"invalid value: '{arg}' is not a number from 0 to {_MAX_HOLD_SECONDS:g}."
+        raise argparse.ArgumentTypeError(msg)
+    return seconds
+
+
 def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
     """Build global options independently of effect discovery."""
     parser = argparse.ArgumentParser(
@@ -317,10 +335,13 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
     )
     recording_group.add_argument(
         "--hold",
-        type=NonNegativeFloat.type_parser,
+        type=_hold_seconds,
         default=0.0,
         metavar="SECONDS",
-        help="With --play, hold the last frame for SECONDS between recordings and repeats (default: 0).",
+        help=(
+            f"With --play, hold the last frame for SECONDS (0 to {_MAX_HOLD_SECONDS:g}) between recordings and "
+            "repeats (default: 0)."
+        ),
     )
     recording_group.add_argument(
         "--shuffle",
@@ -606,6 +627,8 @@ def _find_recordings(path: Path) -> list[Path]:
 
 
 # Recordings up to this size are held in memory, verified by digest, and replayed without per-frame checks.
+# Larger recordings are only header-checked on later passes; every frame is validated again as it streams, so a
+# replacement with another valid recording plays, and late corruption can show earlier frames before failing.
 _MAX_VERIFIED_RECORDING_BYTES = 256 * 1024 * 1024
 
 
@@ -810,25 +833,16 @@ def _play_recordings(args: argparse.Namespace, frame_rate_override: int | None) 
             order = list(paths)
             if args.shuffle:
                 random.shuffle(order)
+            pass_rendered = False
             for index, path in enumerate(order):
-                reader, validate_frames = _open_validated_recording(path, recordings[path])
-                with reader:
-                    pacer = _FramePacer(
-                        reader.header.frame_rate if frame_rate_override is None else frame_rate_override
-                    )
-                    layout = layouts[path]
-                    try:
-                        for frame in reader.frames(validate_frames=validate_frames):
-                            pacer.wait()
-                            terminal.print(layout.place(frame))
-                    except RecordingError as error:
-                        msg = f"{path}: {error.message}"
-                        raise RecordingError(msg) from error
+                rendered = _play_recording(path, recordings[path], layouts[path], terminal, frame_rate_override)
+                pass_rendered = pass_rendered or rendered
                 last_of_pass = index == len(order) - 1
-                if args.hold and not (last_of_pass and args.repeat and completed + 1 >= args.repeat):
+                if rendered and args.hold and not (last_of_pass and args.repeat and completed + 1 >= args.repeat):
                     time.sleep(args.hold)
             completed += 1
-            if args.repeat and completed >= args.repeat:
+            # A pass without frames would otherwise repeat at full speed, unlike live replay.
+            if not pass_rendered or (args.repeat and completed >= args.repeat):
                 return
     finally:
         # Recorded frames are untrusted; never leave their text attributes active in the shell.
@@ -839,6 +853,37 @@ def _play_recordings(args: argparse.Namespace, frame_rate_override: int | None) 
             sys.stdout.flush()
         else:
             terminal.restore_cursor()
+
+
+def _play_recording(
+    path: Path,
+    recording: _ValidatedRecording,
+    layout: _FrameLayout,
+    terminal: Terminal,
+    frame_rate_override: int | None,
+) -> bool:
+    """Play one validated recording on the prepared terminal.
+
+    Returns:
+        bool: Whether the recording rendered any frames.
+
+    Raises:
+        RecordingError: If the recording changed after validation or is invalid; the message names the file.
+
+    """
+    reader, validate_frames = _open_validated_recording(path, recording)
+    rendered = False
+    with reader:
+        pacer = _FramePacer(reader.header.frame_rate if frame_rate_override is None else frame_rate_override)
+        try:
+            for frame in reader.frames(validate_frames=validate_frames):
+                pacer.wait()
+                terminal.print(layout.place(frame))
+                rendered = True
+        except RecordingError as error:
+            msg = f"{path}: {error.message}"
+            raise RecordingError(msg) from error
+    return rendered
 
 
 def _exit_with_error(message: str) -> NoReturn:

@@ -302,6 +302,50 @@ def test_play_hold_between_recordings_and_repeats(monkeypatch: pytest.MonkeyPatc
     assert [call.args[0] for call in sleep.call_args_list] == [1.5, 1.5, 1.5]
 
 
+@pytest.mark.usefixtures("terminal_size")
+def test_play_stops_repeating_when_a_pass_has_no_frames(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    printed: Mock,
+) -> None:
+    """Endless repeats of recordings without frames end instead of spinning, as live replay does."""
+    path = _write_recording(tmp_path / "empty.tterec", [])
+    opened = Mock(wraps=__main__._open_validated_recording)
+    monkeypatch.setattr(__main__, "_open_validated_recording", opened)
+    _run(monkeypatch, "--play", str(path), "--repeat", "0")
+    printed.assert_not_called()
+    assert opened.call_count == 1
+
+
+@pytest.mark.usefixtures("terminal_size", "printed")
+def test_play_hold_skips_recordings_without_frames(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """--hold follows only recordings that showed a frame."""
+    _write_recording(tmp_path / "a.tterec", [])
+    _write_recording(tmp_path / "b.tterec", ["B"])
+    _write_recording(tmp_path / "c.tterec", ["C"])
+    sleep = Mock()
+    monkeypatch.setattr(__main__.time, "sleep", sleep)
+    _run(monkeypatch, "--play", str(tmp_path), "--frame-rate", "0", "--hold", "2")
+    assert [call.args[0] for call in sleep.call_args_list] == [2.0]
+
+
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf", "-1", "86400.5", "1e300", "abc"])
+def test_hold_rejects_values_outside_finite_range(capsys: pytest.CaptureFixture[str], value: str) -> None:
+    """--hold accepts only finite durations from 0 to 86400 seconds, rejected at parse time."""
+    parser, _ = __main__.build_parser(include_user_effects=False)
+    with pytest.raises(SystemExit) as error:
+        parser.parse_args(["--play", "x.tterec", "--hold", value])
+    assert error.value.code == 2
+    assert "--hold" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(("value", "expected"), [("0", 0.0), ("2.5", 2.5), ("86400", 86400.0)])
+def test_hold_accepts_finite_range(value: str, expected: float) -> None:
+    """--hold accepts 0 through 86400 seconds."""
+    parser, _ = __main__.build_parser(include_user_effects=False)
+    assert parser.parse_args(["--play", "x.tterec", "--hold", value]).hold == expected
+
+
 @pytest.mark.usefixtures("terminal_size", "printed")
 def test_play_uses_recorded_frame_rate_unless_overridden(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Playback paces at the recorded rate by default and at --frame-rate when given."""

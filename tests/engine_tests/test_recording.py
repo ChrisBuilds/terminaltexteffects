@@ -158,6 +158,16 @@ def test_validate_frame_accepts_text_and_sgr(frame: str) -> None:
     validate_frame(frame, 3, 2)
 
 
+def test_validate_frame_measures_high_diversity_rows() -> None:
+    """Rows with many distinct wide and narrow symbols are measured correctly in one pass."""
+    wide = "".join(chr(0x4E00 + index) for index in range(2000))
+    narrow = "".join(chr(0x0100 + index) for index in range(96))
+    row = wide + narrow
+    validate_frame(f"{row}\n{row}", 4096, 2)
+    with pytest.raises(RecordingError, match="4096 cells wide; expected 4095"):
+        validate_frame(row, 4095, 1)
+
+
 @pytest.mark.parametrize(
     ("frame", "match"),
     [

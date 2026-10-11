@@ -24,6 +24,7 @@ import re
 import secrets
 import struct
 import zlib
+from collections import Counter
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, BinaryIO, cast
 
@@ -117,11 +118,11 @@ def _text_cell_width(text: str) -> int:
     width = len(text)
     if text.isascii():
         return width
-    # Rows repeat a few distinct symbols, so measure each distinct non-ASCII symbol once.
+    # Count symbols in one linear pass, then measure each distinct non-ASCII symbol once.
     try:
-        for symbol in set(text):
+        for symbol, count in Counter(text).items():
             if not symbol.isascii():
-                width += (get_symbol_cell_width(symbol) - 1) * text.count(symbol)
+                width += (get_symbol_cell_width(symbol) - 1) * count
     except InvalidSymbolError as error:
         msg = f"Frame row contains a symbol that cannot be displayed on its own: {error.symbol!r}."
         raise RecordingError(msg) from error

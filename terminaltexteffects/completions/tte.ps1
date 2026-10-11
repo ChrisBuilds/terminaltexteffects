@@ -195,7 +195,7 @@
         "max": 1,
         "choices": [],
         "file": false,
-        "help": "With --play, hold the last frame for SECONDS between recordings and repeats (default: 0)."
+        "help": "With --play, hold the last frame for SECONDS (0 to 86400) between recordings and repeats (default: 0)."
       },
       "--shuffle": {
         "min": 0,

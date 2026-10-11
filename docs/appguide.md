@@ -123,7 +123,8 @@ recording is an error. Playback options:
 
 - `--repeat COUNT` repeats the file or directory (`0` repeats until Ctrl+C).
 - `--frame-rate` overrides the recorded frame rate; `0` plays as fast as possible.
-- `--hold SECONDS` keeps the last frame of each recording on screen before the next recording or repeat.
+- `--hold SECONDS` keeps the last frame of each recording on screen before the next recording or repeat
+  (0 to 86400 seconds).
 - `--shuffle` plays a directory in random order, reshuffled each repeat; `--seed` makes the order repeatable.
 - `--alt-screen` plays in the terminal's alternate screen, like full-screen programs such as `less`, and
   restores the original screen and scrollback when playback ends.
@@ -134,7 +135,11 @@ Playback exits with an error if the terminal is smaller than the recorded canvas
 as untrusted input: playback writes only text and color (SGR) sequences, and rejects any recording that
 contains other control or escape sequences, has rows that do not exactly fill the recorded canvas width, or
 is corrupt, truncated, or oversized. Text attributes are reset when playback ends. A recording that changes
-on disk after validation stops playback with an error rather than being shown unchecked.
+on disk after validation stops playback with an error. Recordings larger than 256 MiB are not held in memory;
+on later passes each of their frames is checked again as it plays. A replacement with another valid
+recording with the same canvas size, frame rate, and TTE version therefore plays without an error, and one
+that is corrupt near its end can show earlier frames before playback stops. Playback ends early when a pass
+contains no frames.
 
 ```bash title="Background display from a directory of recordings"
 tte --play ~/recordings --repeat 0 --shuffle --hold 5 --alt-screen
