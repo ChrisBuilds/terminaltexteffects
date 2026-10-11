@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import importlib.machinery
 import importlib.util
 import os
 import pkgutil
@@ -77,14 +78,35 @@ def _is_origin_of(origin: object, plugin_file: Path) -> bool:
     return isinstance(origin, str) and Path(origin).resolve() == plugin_file.resolve()
 
 
+def _has_other_module_spec(plugin_file: Path, module_name: str) -> bool:
+    """Return whether an import finder resolves `module_name` to a module other than `plugin_file`.
+
+    The plugin's own directory is excluded from the import path search, so a plugin directory placed
+    before site-packages on `sys.path` does not hide a same-named installed module.
+    """
+    plugin_dir = plugin_file.parent.resolve()
+    search_path = [
+        entry for entry in sys.path if not (isinstance(entry, str) and Path(entry or ".").resolve() == plugin_dir)
+    ]
+    for finder in sys.meta_path:
+        if finder is importlib.machinery.PathFinder:
+            spec = importlib.machinery.PathFinder.find_spec(module_name, search_path)
+        else:
+            find_spec = getattr(finder, "find_spec", None)
+            spec = find_spec(module_name, None) if find_spec is not None else None
+        if spec is not None and not _is_origin_of(spec.origin, plugin_file):
+            return True
+    return False
+
+
 def _check_user_module_name(plugin_file: Path, module_name: str) -> None:
     """Ensure a user plugin's bare module name does not belong to another module.
 
     A module already in `sys.modules` may be replaced only if it was loaded from `plugin_file` or
-    registered as a user plugin, so rediscovery reloads current file contents. Otherwise the name
-    must not resolve through the import path, except to `plugin_file` itself when its directory is
-    on `sys.path`. A dotted file stem is checked by its top-level name, since registering it could
-    otherwise replace an installed submodule.
+    registered as a user plugin, so rediscovery reloads current file contents. Otherwise no import
+    finder may resolve the name to another module, searching past `plugin_file` itself when its
+    directory is on `sys.path`. A dotted file stem is checked by its top-level name, since
+    registering it could otherwise replace an installed submodule.
 
     Raises:
         ImportError: If `module_name` belongs to a loaded or importable module other than `plugin_file`.
@@ -101,8 +123,7 @@ def _check_user_module_name(plugin_file: Path, module_name: str) -> None:
         top_level_name = module_name.partition(".")[0]
         conflict = top_level_name in sys.modules or importlib.util.find_spec(top_level_name) is not None
     else:
-        spec = importlib.util.find_spec(module_name)
-        conflict = spec is not None and not _is_origin_of(spec.origin, plugin_file)
+        conflict = _has_other_module_spec(plugin_file, module_name)
     if conflict:
         msg = f"Module name {module_name!r} is already used by an installed or loaded module; rename the file"
         raise ImportError(msg)

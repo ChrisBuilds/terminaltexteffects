@@ -647,6 +647,30 @@ def test_user_plugin_cannot_shadow_existing_module(
     assert not hasattr(importlib.import_module(module_name.partition(".")[0]), "SHADOW")
 
 
+def test_user_plugin_on_sys_path_cannot_shadow_later_installed_module(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A plugin directory placed before site-packages on `sys.path` cannot hide a same-named installed module."""
+    site_dir = tmp_path / "site-packages"
+    site_dir.mkdir()
+    (site_dir / "tte_installed_module.py").write_text("INSTALLED = True\n", encoding="utf-8")
+    plugin_file = _write_plugin(tmp_path, "tte_installed_module.py", "SHADOW = True\n")
+    monkeypatch.syspath_prepend(str(site_dir))
+    monkeypatch.syspath_prepend(str(plugin_file.parent))
+    monkeypatch.delitem(sys.modules, "tte_installed_module", raising=False)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    __main__.build_parser()
+
+    assert "tte_installed_module" not in sys.modules
+    warning = capsys.readouterr().err
+    assert f"Warning: Skipping user effect plugin '{plugin_file}': ImportError: Module name 'tte_installed_module'" in (
+        warning
+    )
+
+
 def test_user_plugin_failing_during_import_releases_its_module_name(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
