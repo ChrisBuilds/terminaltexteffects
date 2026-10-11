@@ -202,8 +202,14 @@ cd MAIN_WORKTREE_PATH                 # or `git switch main` when no worktree ha
 git pull --ff-only
 git worktree remove WORKTREE_PATH     # only if it has no uncommitted work
 git branch -D HEAD_BRANCH             # squash merges leave the branch unmerged to git
-git fetch --prune                     # confirm origin/HEAD_BRANCH is gone
+git fetch --prune                     # drop stale remote-tracking refs
+git ls-remote --exit-code --heads origin HEAD_BRANCH   # exit status 2 means the branch is gone
 ```
+
+`git fetch --prune` does not report a remote branch that still exists. Use the
+`git ls-remote` check: exit status 2 confirms the remote head branch is gone. If it
+prints a ref, GitHub kept the branch. Delete it only if its PR is merged or closed,
+and record that in the post-merge comment.
 
 Delete a branch only when its PR is merged or closed. Squash merges make merged branches
 look unmerged to `git cherry` and `git branch -d`, so decide from the PR state, not commit
