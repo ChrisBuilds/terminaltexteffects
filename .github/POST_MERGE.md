@@ -190,10 +190,16 @@ After verification completes (or is handed off), remove the merged PR's leftover
 stale branches do not accumulate. The repository deletes a PR's head branch on GitHub
 when it merges; local branches, review worktrees and fetched contributor branches remain.
 
+Run cleanup from the worktree that has `main` checked out, not from the review worktree
+being removed. Git refuses to switch to `main` while another worktree has it checked
+out, so use `git worktree list` to find that worktree and work there. Switch to `main`
+only when no worktree has it checked out.
+
 ```sh
 gh pr view PR_NUMBER --json state,headRefName
-git switch main && git pull --ff-only
-git worktree list                     # remove review worktrees for this PR
+git worktree list                     # find the main worktree and this PR's review worktrees
+cd MAIN_WORKTREE_PATH                 # or `git switch main` when no worktree has main
+git pull --ff-only
 git worktree remove WORKTREE_PATH     # only if it has no uncommitted work
 git branch -D HEAD_BRANCH             # squash merges leave the branch unmerged to git
 git fetch --prune                     # confirm origin/HEAD_BRANCH is gone
