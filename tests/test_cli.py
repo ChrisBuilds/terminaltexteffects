@@ -294,6 +294,49 @@ def test_runtime_parser_includes_plugin_effect(
     assert "plugindemo" in effect_resource_map
 
 
+@pytest.mark.parametrize("config_home", [None, "", "relative-config"])
+def test_user_effects_dir_falls_back_for_unset_empty_or_relative_config_home(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    config_home: str | None,
+) -> None:
+    """An unset, empty, or relative `XDG_CONFIG_HOME` should use `~/.config`, per the XDG specification."""
+    home = tmp_path / "home"
+    monkeypatch.setattr(__main__.Path, "home", lambda: home)
+    if config_home is None:
+        monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    else:
+        monkeypatch.setenv("XDG_CONFIG_HOME", config_home)
+
+    assert __main__._user_effects_dir() == home / ".config" / "terminaltexteffects" / "effects"
+
+
+def test_user_effects_dir_uses_absolute_config_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """An absolute `XDG_CONFIG_HOME` should be used as the config home."""
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    assert __main__._user_effects_dir() == tmp_path / "terminaltexteffects" / "effects"
+
+
+def test_runtime_parser_discovers_home_plugin_with_empty_config_home(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """An empty `XDG_CONFIG_HOME` should discover plugins from `~/.config`, not the working directory."""
+    home = tmp_path / "home"
+    _write_demo_plugin(home / ".config")
+    cwd_plugin_dir = tmp_path / "cwd"
+    _write_plugin(cwd_plugin_dir, "cwd_plugin.py", _plugin_config_source("cwdplugin"))
+    monkeypatch.setattr(__main__.Path, "home", lambda: home)
+    monkeypatch.setenv("XDG_CONFIG_HOME", "")
+    monkeypatch.chdir(cwd_plugin_dir)
+
+    _, effect_resource_map = __main__.build_parser()
+
+    assert "plugindemo" in effect_resource_map
+    assert "cwdplugin" not in effect_resource_map
+
+
 def _write_plugin(tmp_path: Path, filename: str, source: str) -> Path:
     """Write a user effect plugin into the temporary XDG config directory and return its path."""
     plugin_dir = tmp_path / "terminaltexteffects" / "effects"
