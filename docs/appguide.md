@@ -136,6 +136,9 @@ mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects"
 cp path/to/community_effect.py "${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects/"
 ```
 
+If `XDG_CONFIG_HOME` is set to an empty value, unset it or set it to a real directory first; TTE does not
+fall back to `~/.config` for an empty value.
+
 Install any dependencies listed by the author into the same Python environment as TTE. The module
 must expose `get_effect_resources()` and use APIs supported by the TTE version you have installed.
 Check the author's stated supported TTE version, license, and installation notes before running it;
