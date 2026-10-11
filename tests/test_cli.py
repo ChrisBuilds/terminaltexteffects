@@ -505,19 +505,23 @@ def test_failed_user_plugin_restores_module_it_replaced(
     assert sys.modules["json"] is json
 
 
+@pytest.mark.parametrize("on_sys_path", [False, True], ids=["isolated", "on-sys-path"])
 def test_user_plugin_can_import_earlier_sibling_by_file_name(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
+    on_sys_path: bool,  # noqa: FBT001
 ) -> None:
     """A multi-file custom effect can import a helper file that loads before it."""
-    _write_plugin(tmp_path, "aaa_tte_sibling_helper.py", "SPEED = 5")
+    helper = _write_plugin(tmp_path, "aaa_tte_sibling_helper.py", "SPEED = 5")
     _write_plugin(
         tmp_path,
         "zzz_sibling_plugin.py",
         "from aaa_tte_sibling_helper import SPEED\n" + _plugin_config_source("siblingplugin"),
     )
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    if on_sys_path:
+        monkeypatch.syspath_prepend(str(helper.parent))
     monkeypatch.delitem(sys.modules, "aaa_tte_sibling_helper", raising=False)
 
     try:
@@ -531,19 +535,23 @@ def test_user_plugin_can_import_earlier_sibling_by_file_name(
         sys.modules.pop("zzz_sibling_plugin", None)
 
 
+@pytest.mark.parametrize("on_sys_path", [False, True], ids=["isolated", "on-sys-path"])
 def test_user_plugin_can_import_itself_by_file_name(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
+    on_sys_path: bool,  # noqa: FBT001
 ) -> None:
     """A plugin can import itself by its bare file name while it is executing."""
-    _write_plugin(
+    plugin_file = _write_plugin(
         tmp_path,
         "tte_self_import.py",
         "import sys\nimport tte_self_import\nassert tte_self_import is sys.modules[__name__]\n"
         + _plugin_config_source("selfimport"),
     )
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    if on_sys_path:
+        monkeypatch.syspath_prepend(str(plugin_file.parent))
 
     try:
         _, effect_resource_map = __main__.build_parser()
@@ -552,6 +560,91 @@ def test_user_plugin_can_import_itself_by_file_name(
         assert capsys.readouterr().err == ""
     finally:
         sys.modules.pop("tte_self_import", None)
+
+
+def test_user_plugin_rediscovery_loads_current_file_contents(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Rebuilding the parser in one process reloads a plugin's current file contents."""
+    plugin_file = _write_plugin(tmp_path, "tte_rediscovered.py", "VERSION = 1")
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.delitem(sys.modules, "tte_rediscovered", raising=False)
+
+    try:
+        __main__.build_parser()
+        assert sys.modules["tte_rediscovered"].VERSION == 1
+
+        plugin_file.write_text("VERSION = 2\n", encoding="utf-8")
+        # Bytecode caches validate by size and whole-second mtime; mark the same-size edit as newer.
+        modified_time = plugin_file.stat().st_mtime + 2
+        os.utime(plugin_file, (modified_time, modified_time))
+        __main__.build_parser()
+
+        assert sys.modules["tte_rediscovered"].VERSION == 2
+        assert capsys.readouterr().err == ""
+    finally:
+        sys.modules.pop("tte_rediscovered", None)
+
+
+def test_user_plugin_replaces_same_named_plugin_from_another_directory(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A user plugin may replace a same-named plugin that discovery loaded from another directory."""
+    monkeypatch.delitem(sys.modules, "tte_moved_plugin", raising=False)
+    try:
+        for version in (1, 2):
+            config_home = tmp_path / f"config-{version}"
+            _write_plugin(config_home, "tte_moved_plugin.py", f"VERSION = {version}")
+            monkeypatch.setenv("XDG_CONFIG_HOME", str(config_home))
+            __main__.build_parser()
+            loaded_version = sys.modules["tte_moved_plugin"].VERSION
+            assert loaded_version == version
+        assert capsys.readouterr().err == ""
+    finally:
+        sys.modules.pop("tte_moved_plugin", None)
+
+
+@pytest.mark.parametrize(
+    ("filename", "module_name"),
+    [
+        pytest.param("random.py", "random", id="loaded-stdlib"),
+        pytest.param("tabnanny.py", "tabnanny", id="unloaded-stdlib"),
+        pytest.param("tte_installed_module.py", "tte_installed_module", id="unloaded-installed"),
+        pytest.param("tte_installed_module.sub.py", "tte_installed_module.sub", id="dotted-installed"),
+    ],
+)
+def test_user_plugin_cannot_shadow_existing_module(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    filename: str,
+    module_name: str,
+) -> None:
+    """A plugin named like a loaded or importable module is skipped without replacing that module."""
+    site_dir = tmp_path / "site-packages"
+    site_dir.mkdir()
+    (site_dir / "tte_installed_module.py").write_text("INSTALLED = True\n", encoding="utf-8")
+    monkeypatch.syspath_prepend(str(site_dir))
+    for name in ("tabnanny", "tte_installed_module", "tte_installed_module.sub"):
+        monkeypatch.delitem(sys.modules, name, raising=False)
+    previous_module = sys.modules.get(module_name)
+    plugin_file = _write_plugin(tmp_path, filename, "SHADOW = True\n" + _plugin_config_source("shadowplugin"))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    _, effect_resource_map = __main__.build_parser()
+
+    assert "shadowplugin" not in effect_resource_map
+    assert "wipe" in effect_resource_map
+    assert sys.modules.get(module_name) is previous_module
+    warning = capsys.readouterr().err
+    assert f"Warning: Skipping user effect plugin '{plugin_file}': ImportError: Module name {module_name!r}" in warning
+    assert "rename the file" in warning
+    importlib.invalidate_caches()
+    assert not hasattr(importlib.import_module(module_name.partition(".")[0]), "SHADOW")
 
 
 def test_user_plugin_failing_during_import_releases_its_module_name(

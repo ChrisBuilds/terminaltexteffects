@@ -96,6 +96,9 @@ Custom effect modules are discovered from `${XDG_CONFIG_HOME}/terminaltexteffect
 provides `get_effect_resources()` can register an effect command alongside the built-in effects.
 If a custom effect module fails to import or register, TTE prints a warning naming the file to standard
 error, skips that module, and keeps the built-in effects and other valid custom effects available.
+Each module is imported under its file name, so custom effect modules can import themselves and earlier-loaded
+sibling files by name. A file named like a standard-library or installed module, such as `random.py`, is skipped
+with a warning instead of replacing that module; rename the file to load it.
 
 For prototypes kept outside the shipped package, set `TTE_DEV_EFFECTS_DIR` to a directory of
 effect modules. These modules use the same `get_effect_resources()` interface. The setting

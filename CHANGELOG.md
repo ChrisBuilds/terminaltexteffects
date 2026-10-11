@@ -142,6 +142,12 @@ Detailed examples and explanations may appear in the optional
   are skipped with a warning naming the file, without hiding built-in effects
   or other valid plugins. Reported by @tusharmalpani20.
   ([#176](https://github.com/ChrisBuilds/terminaltexteffects/issues/176))
+- A custom effect plugin named like a standard-library or installed module,
+  such as `random.py`, no longer replaces that module for built-in effects and
+  other plugins. The plugin is skipped with a warning asking you to rename the
+  file; plugins can still import themselves and earlier-loaded sibling files by
+  file name.
+  ([#178](https://github.com/ChrisBuilds/terminaltexteffects/issues/178))
 - Blackhole handles short text and compact canvases and uses its configured
   explosion palette. Beams emits characters as soon as progress reaches a whole
   unit; Spotlights handles zero falloff on wide continuation cells; Swarm

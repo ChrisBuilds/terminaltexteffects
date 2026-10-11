@@ -281,6 +281,7 @@ OR
   * Completion scripts cover built-in effects only; options from custom effect plugins are not included.
 * Add custom effect modules to `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or `~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is not set.
   * Any `.py` file in that directory that provides `get_effect_resources()` can register an effect command alongside the built-in effects.
+  * Files named like a standard-library or installed module, such as `random.py`, are skipped with a warning; rename them to load them.
 * TTE is not a full terminal emulator, but it parses common fetch-style input including SGR foreground/background colors, cursor movement CSI sequences, carriage returns, and selected DEC private mode toggles.
   * Unsupported control sequences fail fast with an error so they do not leak into the rendered animation.
 
