@@ -54,7 +54,7 @@ def _write_recording(path: Path, frames: list[str], width: int = 1, height: int 
 
 
 def _read_frames(path: Path) -> tuple[RecordingHeader, list[str], list[str]]:
-    with RecordingReader(path) as reader:
+    with RecordingReader(path, keep_segment_names=True) as reader:
         frames = list(reader.frames())
         return reader.header, frames, reader.segments
 

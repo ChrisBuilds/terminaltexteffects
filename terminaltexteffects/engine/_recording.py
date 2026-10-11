@@ -334,23 +334,29 @@ class RecordingReader:
     Attributes:
         path (Path): Recording file being read.
         header (RecordingHeader): Validated recording header.
-        segments (list[str]): Effect names of the segments read so far by `frames()`.
+        segment_count (int): Number of segments read so far by `frames()`.
+        segments (list[str]): Effect names of the segments read so far by `frames()`, collected only when the
+            reader was created with `keep_segment_names=True`. Untrusted recordings may contain any number of
+            segments, so names are not retained by default.
 
     """
 
-    def __init__(self, path: Path, data: bytes | None = None) -> None:
+    def __init__(self, path: Path, data: bytes | None = None, *, keep_segment_names: bool = False) -> None:
         """Open a recording and read its header.
 
         Args:
             path (Path): Recording file to read, or the file `data` was read from.
             data (bytes | None, optional): Recording bytes to read instead of opening `path`. Defaults to None.
+            keep_segment_names (bool, optional): Collect segment effect names in `segments`. Defaults to False.
 
         Raises:
             RecordingError: If the file cannot be read or does not start with a valid recording header.
 
         """
         self.path = path
+        self.segment_count = 0
         self.segments: list[str] = []
+        self._keep_segment_names = keep_segment_names
         if data is not None:
             self._file: BinaryIO = io.BytesIO(data)
         else:
@@ -398,9 +404,12 @@ class RecordingReader:
         while True:
             tag, data = self._read_record(self.header.max_frame_bytes)
             if tag == _SEGMENT_TAG:
-                self.segments.append(cast("str", self._parse_json(data, {"effect": str})["effect"]))
+                effect_name = cast("str", self._parse_json(data, {"effect": str})["effect"])
+                self.segment_count += 1
+                if self._keep_segment_names:
+                    self.segments.append(effect_name)
             elif tag == _FRAME_TAG:
-                if not self.segments:
+                if not self.segment_count:
                     msg = "Recording frame appears before any segment."
                     raise RecordingError(msg)
                 try:

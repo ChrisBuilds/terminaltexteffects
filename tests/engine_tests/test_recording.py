@@ -61,12 +61,29 @@ def test_round_trip_preserves_frames_and_segments(tmp_path: Path) -> None:
         writer.write_frame(frames[1])
         writer.begin_segment("second")
         writer.write_frame(frames[2])
-    with RecordingReader(path) as reader:
+    with RecordingReader(path, keep_segment_names=True) as reader:
         assert reader.header == HEADER
         assert list(reader.frames()) == frames
         assert reader.segments == ["first", "second"]
+        assert reader.segment_count == 2
     with RecordingReader(path) as reader:
         assert reader.validate() == 3
+
+
+def test_reader_counts_segments_without_retaining_names_by_default(tmp_path: Path) -> None:
+    """Validation keeps constant memory however many segment records an untrusted recording contains."""
+    segment = _record(b"S", {"effect": "x"})
+    count = 100_000
+    path = _write_raw(
+        tmp_path / "segments.tterec",
+        _header_record(),
+        segment * count,
+        _record(b"E", {"frame_count": 0}),
+    )
+    with RecordingReader(path) as reader:
+        assert reader.validate() == 0
+        assert reader.segment_count == count
+        assert reader.segments == []
 
 
 def test_writer_discards_partial_recording_on_error(tmp_path: Path) -> None:
