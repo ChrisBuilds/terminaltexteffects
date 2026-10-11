@@ -129,7 +129,7 @@ ls | tte --wrap-text --tab-width 4 slide --merge --movement-speed 2 --grouping c
 
 TTE 0.15.0 and later can load community effect modules without installing them into the TTE package.
 Download or clone the effect author's source, then place the flat effect `.py` module in
-`${XDG_CONFIG_HOME:-~/.config}/terminaltexteffects/effects`. On macOS and Linux, for example:
+`${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects`. On macOS and Linux, for example:
 
 ```bash title="Install a community effect module"
 mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects"

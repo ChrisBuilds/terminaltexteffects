@@ -216,7 +216,7 @@ for built-in registration, docs/navigation, and permanent test definitions; comp
 is checked separately. This structural gate supplements behavior tests and human visual review.
 
 Community-created effects can be shared without being added to this package. TTE 0.15.0 and later
-can load released external effect modules from `${XDG_CONFIG_HOME:-~/.config}/terminaltexteffects/effects`;
+can load released external effect modules from `${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects`;
 see the [application guide](https://chrisbuilds.github.io/terminaltexteffects/appguide/#community-effects)
 for installation and run instructions. To help users discover a community project, post a demo and
 source link in [TTE Effect Show and Tell](https://github.com/ChrisBuilds/terminaltexteffects/discussions/categories/tte-effect-show-and-tell).
