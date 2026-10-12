@@ -96,7 +96,11 @@ def release_notes(changelog: str, version: str) -> str:
         raise ValueError(message)
     body = changelog[heading.end() :]
     following = re.search(r"^## ", body, re.MULTILINE)
-    return (body[: following.start()] if following else body).strip()
+    notes = (body[: following.start()] if following else body).strip()
+    if not notes:
+        message = f"The CHANGELOG.md section for {version} is empty."
+        raise ValueError(message)
+    return notes
 
 
 def main() -> int:

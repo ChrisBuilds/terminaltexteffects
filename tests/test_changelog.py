@@ -137,3 +137,6 @@ def test_release_notes_extracts_one_dated_section() -> None:
     assert changelog.release_notes(text, "0.16.0") == "### Fixed\n\n- A fix."
     with pytest.raises(ValueError, match=r"no dated section for 0\.17\.0"):
         changelog.release_notes(text, "0.17.0")
+    empty = text.replace("### Fixed\n\n- A fix.\n\n", "")
+    with pytest.raises(ValueError, match=r"section for 0\.16\.0 is empty"):
+        changelog.release_notes(empty, "0.16.0")
