@@ -29,13 +29,13 @@ Mark items that don't apply as N/A with a reason.
 
 Terminals, platforms, and notes:
 
-## Merge, artifacts, and publication
+## Merge and publication
 
 - [ ] Release PR merged; `main` CI passes for the merged commit; merged tree matches the reviewed commit.
-- [ ] `tools/check_artifacts.py` passed on the release commit; wheel and sdist checksums recorded below.
-- [ ] Publication approved (version, commit, tag, files):
-- [ ] Tag `release-<version>` pushed to the approved commit.
-- [ ] Wheel and sdist uploaded to PyPI; GitHub release created.
-- [ ] Fresh PyPI install verified on the minimum supported Python.
+- [ ] TestPyPI dry run of the release workflow succeeded (run link:), if the workflow changed since the last release.
+- [ ] Publication approved (version, commit):
+- [ ] Tag `release-<version>` pushed; build job passed; checksums recorded below.
+- [ ] `pypi` environment approved; PyPI upload and GitHub release succeeded (run link:).
+- [ ] Fresh PyPI install verified on the minimum supported Python; attestations shown on PyPI.
 
 Checksums and links:

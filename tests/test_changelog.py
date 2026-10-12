@@ -126,3 +126,17 @@ def test_release_assembly_preserves_history_and_satisfies_decision(changelog_pro
     assert changelog.render_preview(changelog_project) == changelog.EMPTY_PREVIEW
     commit_changes(changelog_project)
     changelog.validate_decision(changelog_project, "main")
+
+
+def test_release_notes_extracts_one_dated_section() -> None:
+    """GitHub release notes are the matching dated section only."""
+    text = (
+        f"# Changelog\n\n{changelog.RELEASE_START}\n\n## 0.16.0 - 2026-11-01\n\n### Fixed\n\n- A fix.\n\n"
+        "## 0.15.0\n\nOld notes.\n"
+    )
+    assert changelog.release_notes(text, "0.16.0") == "### Fixed\n\n- A fix."
+    with pytest.raises(ValueError, match=r"no dated section for 0\.17\.0"):
+        changelog.release_notes(text, "0.17.0")
+    empty = text.replace("### Fixed\n\n- A fix.\n\n", "")
+    with pytest.raises(ValueError, match=r"section for 0\.16\.0 is empty"):
+        changelog.release_notes(empty, "0.16.0")

@@ -88,12 +88,35 @@ def insert_preview(changelog: str, preview: str) -> str:
     return changelog.replace(RELEASE_START, f"{RELEASE_START}\n\n{preview.strip()}\n", 1)
 
 
+def release_notes(changelog: str, version: str) -> str:
+    """Return the body of the dated `## <version> - <date>` section, without its heading."""
+    heading = re.search(rf"^## {re.escape(version)} - [0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$", changelog, re.MULTILINE)
+    if heading is None:
+        message = f"CHANGELOG.md has no dated section for {version}."
+        raise ValueError(message)
+    body = changelog[heading.end() :]
+    following = re.search(r"^## ", body, re.MULTILINE)
+    notes = (body[: following.start()] if following else body).strip()
+    if not notes:
+        message = f"The CHANGELOG.md section for {version} is empty."
+        raise ValueError(message)
+    return notes
+
+
 def main() -> int:
     """Validate fragments, optionally require a changelog decision, or print the preview."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", help="Require an added fragment in committed changes since this Git base.")
     parser.add_argument("--preview", action="store_true", help="Print the rendered Unreleased section.")
+    parser.add_argument("--release-notes", metavar="VERSION", help="Print the dated section for VERSION.")
     args = parser.parse_args()
+    if args.release_notes:
+        try:
+            print(release_notes((ROOT / "CHANGELOG.md").read_text(encoding="utf-8"), args.release_notes))
+        except ValueError as error:
+            print(error, file=sys.stderr)
+            return 1
+        return 0
     try:
         validate_fragments(ROOT / "changelog.d")
         if args.base:
