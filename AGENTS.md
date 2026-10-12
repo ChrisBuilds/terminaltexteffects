@@ -37,10 +37,11 @@ Prefer the repository virtualenv: `./.venv/bin/pytest`, `./.venv/bin/ruff`, `./.
 
 ## Reviews
 
-When Codex reports a finding, reply in its thread with your intended response. After pushing a fix,
-reply again with the commit and validation. If no change is needed, explain why. Resolve the thread
-only after the finding is addressed. When re-review keeps producing findings, review the whole PR
-yourself before requesting another round.
+Judge each Codex finding on its merits before changing anything. Fix real correctness, security, or
+data-loss problems. For unlikely edge cases, or ones already caught by a human step or a later
+failure, reply with a short reason and resolve the thread instead of adding code, tests, or process.
+After pushing a fix, reply with the commit and validation. When re-review keeps producing findings,
+review the whole PR yourself for real defects, and stop requesting rounds once only minor points remain.
 
 ## After merge
 
