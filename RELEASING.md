@@ -3,8 +3,8 @@
 Track each release in an issue created from the
 [release template](.github/ISSUE_TEMPLATE/release.md), and record evidence there as you go.
 Preparing a release authorizes preparation and QA only. Merging the release PR needs the
-maintainer's instruction. Tagging and uploading need explicit approval naming the version, commit,
-and tag.
+maintainer's instruction. Pushing the release tag needs explicit approval naming the version and
+commit, and publishing waits for the maintainer's approval in the `pypi` environment.
 
 ## 1. Prepare the release branch
 
@@ -69,37 +69,47 @@ squash merge, confirm that `main` CI passes for the merged commit and that the m
 what you reviewed (`git diff REVIEWED_SHA MERGED_SHA`). If they differ, rerun the exhaustive suite.
 That merged commit is the release commit.
 
-## 5. Build and approve artifacts
+## 5. Tag and publish
 
-In a clean checkout of the release commit, after syncing tools:
-
-```sh
-./.venv/bin/python tools/check_artifacts.py --output-dir /absolute/path/to/release-artifacts
-shasum -a 256 /absolute/path/to/release-artifacts/terminaltexteffects-X.Y.Z{-py3-none-any.whl,.tar.gz}
-```
-
-This validates the wheel, the sdist, and a wheel rebuilt from the sdist, including clean installs and
-exclusion of development effects. Upload only the top-level wheel and sdist, not `from-sdist/`.
-Record their checksums in the issue, then get publication approval naming the version, commit, tag
-(`release-X.Y.Z`), and files.
-
-## 6. Publish
+Publishing is automated by [`release.yml`](.github/workflows/release.yml) using PyPI Trusted
+Publishing; no API token is involved. Tagging needs the maintainer's publication approval naming the
+version and commit.
 
 ```sh
-git tag -a release-X.Y.Z <approved-sha> -m 'Release X.Y.Z'
+git tag -a release-X.Y.Z <release-sha> -m 'Release X.Y.Z'
 git push origin refs/tags/release-X.Y.Z
-./.venv/bin/twine upload /absolute/path/to/release-artifacts/terminaltexteffects-X.Y.Z{-py3-none-any.whl,.tar.gz}
 ```
 
-Keep PyPI credentials out of commands and logs. Create the GitHub release from the tag, using the
-dated changelog section as the notes.
+The workflow checks that the tag matches the `pyproject.toml` version and points to a commit on
+`main`, then builds and validates the wheel and sdist with `tools/check_artifacts.py` (including
+clean installs and exclusion of development effects). The run summary lists their SHA-256 checksums.
 
-## 7. Verify and close
+The **Publish to PyPI** job then waits for approval in the `pypi` environment. Review the build
+job's result and checksums, record the checksums in the release issue, and approve. The job uploads
+both files with provenance attestations, and a final job creates the GitHub release from the tag with
+the dated changelog section as notes.
+
+**Dry run:** run the workflow manually from `main` (`gh workflow run release.yml --ref main`). It
+builds `X.Y.Z.devN` and, after approval in the `testpypi` environment, publishes it to TestPyPI. Do
+this before the first automated release and after changing the workflow.
+
+## 6. Verify and close
 
 Install `terminaltexteffects==X.Y.Z` from PyPI into a fresh environment on the minimum supported
 Python. Check `tte --version`, both CLI names, a short effect run, and the library import. Confirm the
-PyPI page and the GitHub release, then close the release issue.
+PyPI page shows the attestations and the GitHub release exists, then close the release issue.
 
-If an upload partly fails, compare what's on PyPI with the recorded checksums and upload only the
-missing file. Never re-upload a rebuilt file under the same version. If a release is broken, ship a
-patch release; never move a published tag.
+If the build job fails, nothing was published. Fix the problem through a PR, have the maintainer
+delete the unpublished tag (the "Protect published release tags" ruleset blocks tag deletion, so it
+must be disabled briefly), and tag the fixed commit. If publishing fails partway, rerun the failed jobs in the same run: it re-uploads that run's
+artifact and skips files already on PyPI. Never publish a rebuilt file under an existing version. If
+a release is broken, ship a patch release; never move a published tag.
+
+## One-time setup
+
+- PyPI → terminaltexteffects → Publishing → add a GitHub trusted publisher: owner `ChrisBuilds`,
+  repository `terminaltexteffects`, workflow `release.yml`, environment `pypi`. Add the same on
+  TestPyPI with environment `testpypi`.
+- GitHub → Settings → Environments: create `pypi` and `testpypi`, each with the maintainer as a
+  required reviewer and deployments limited to `release-*` tags (`pypi`) or `main` (`testpypi`).
+- After the first automated release, delete the old PyPI API token.
