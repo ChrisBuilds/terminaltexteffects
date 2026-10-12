@@ -124,8 +124,38 @@ jobs:
           path: dist/
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
-          # A rerun uploads this run's same artifact, so files already on PyPI are identical.
-          skip-existing: true
+          # The first attempt fails loudly on duplicates; a rerun may finish a partial upload.
+          skip-existing: ${{ github.run_attempt != 1 }}
+      - name: Verify PyPI files match this run's artifacts
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import time
+          import urllib.request
+
+          url = f"https://pypi.org/pypi/terminaltexteffects/{os.environ['VERSION']}/json"
+          local = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in pathlib.Path("dist").iterdir()}
+          remote = {}
+          for _ in range(10):  # PyPI's JSON API can lag a newly uploaded release.
+              try:
+                  with urllib.request.urlopen(url, timeout=20) as response:
+                      remote = {item["filename"]: item["digests"]["sha256"] for item in json.load(response)["urls"]}
+              except OSError as error:
+                  print(f"Waiting for PyPI: {error}")
+              if local.keys() <= remote.keys():
+                  break
+              time.sleep(15)
+          missing = sorted(local.keys() - remote.keys())
+          mismatched = sorted(name for name in local.keys() & remote.keys() if local[name] != remote[name])
+          if missing or mismatched:
+              raise SystemExit(f"PyPI files differ from this run's artifacts. Missing: {missing}; mismatched: {mismatched}")
+          print("PyPI files match this run's artifacts:", ", ".join(sorted(local)))
+          PY
 
   github-release:
     name: Create GitHub release

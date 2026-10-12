@@ -101,8 +101,10 @@ PyPI page shows the attestations and the GitHub release exists, then close the r
 
 If the build job fails, nothing was published. Fix the problem through a PR, have the maintainer
 delete the unpublished tag (the "Protect published release tags" ruleset blocks tag deletion, so it
-must be disabled briefly), and tag the fixed commit. If publishing fails partway, rerun the failed jobs in the same run: it re-uploads that run's
-artifact and skips files already on PyPI. Never publish a rebuilt file under an existing version. If
+must be disabled briefly), and tag the fixed commit. If publishing fails partway, rerun the failed jobs in the same run: reruns skip files already
+on PyPI, and the job then verifies that every file on PyPI matches the run's artifacts by SHA-256, so
+a mismatch fails before the GitHub release is created. Never publish a rebuilt file under an existing
+version. If
 a release is broken, ship a patch release; never move a published tag.
 
 ## One-time setup
