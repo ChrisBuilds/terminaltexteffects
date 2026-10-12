@@ -130,6 +130,14 @@ recording is an error. Playback options:
   restores the original screen and scrollback when playback ends.
 - `--anchor-canvas` positions the recording in the terminal. Recordings of different sizes in one directory
   share a canvas sized to the largest, each anchored within it.
+- `--seed`, `--reuse-canvas`, `--no-eol`, and `--no-restore-cursor` work as they do for live effects.
+
+Options fixed when a recording is made cannot be used with `--play`, and are rejected with an error naming
+them: `--canvas-width`, `--canvas-height`, `--anchor-text`, `--xterm-colors`, `--no-color`,
+`--terminal-background-color`, `--existing-color-handling`, `--tab-width`, `--wrap-text`, and
+`--ignore-terminal-dimensions`. The effect-selection filters `--include-effects` and `--exclude-effects` are
+rejected too. An effect name, `--random-effect`, and `--input-file` cannot be combined with `--play`. To
+change any of these, record again.
 
 Playback exits with an error if the terminal is smaller than the recorded canvas. Recordings are treated
 as untrusted input: playback writes only text and color (SGR) sequences, and rejects any recording that
