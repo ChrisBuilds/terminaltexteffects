@@ -71,6 +71,13 @@ Detailed examples and explanations may appear in the optional
   seconds with the new `Terminal.clock()`, which Matrix `--rain-time` and
   Thunderstorm `--storm-time` now use so recorded phases last as long as live
   ones. ([#186](https://github.com/ChrisBuilds/terminaltexteffects/issues/186))
+- `--hold SECONDS` and `--alt-screen` also work for live effects, not only
+  `--play`. `--hold` keeps the final frame of every playback or recording on
+  screen, including the last one, before continuing or exiting, and
+  `--alt-screen` runs output in the terminal's alternate screen and restores
+  the original screen afterward. `--shuffle` still requires `--play`, and
+  `--hold` and `--alt-screen` cannot be combined with `--record`.
+  ([#189](https://github.com/ChrisBuilds/terminaltexteffects/issues/189))
 - Added `CharacterOrder` and `CharacterOrderArg` for shared flat and grouped
   retrieval. Retrieval also supports `reverse=True`, optional serpentine group
   traversal, and explicit off-canvas selection.

@@ -91,6 +91,17 @@ printf 'Hello!' | tte --repeat 3 wipe
 tte -i banner.txt --repeat 0 beams
 ```
 
+Use `--hold SECONDS` (0 to 86400) to keep the final frame of each playback on screen before the next playback
+starts or `tte` exits, including after a single or final playback. No hold follows a playback that produced no
+frames. Use `--alt-screen` to run in the terminal's alternate screen, like full-screen programs such as `less`;
+the original screen and scrollback are restored when output ends, including after an error or Ctrl+C. The
+final frame is not left in the terminal afterward, so combine it with `--hold` to keep the finished frame
+visible first. These options suit continuous displays:
+
+```bash title="Full-screen rotating effects with a pause on each result"
+tte -i banner.txt --repeat 0 --random-effect --hold 5 --alt-screen
+```
+
 ### Recording and playback
 
 Use `--record FILE` to render an effect once and save its frames, then `--play` to replay them without
@@ -123,11 +134,11 @@ recording is an error. Playback options:
 
 - `--repeat COUNT` repeats the file or directory (`0` repeats until Ctrl+C).
 - `--frame-rate` overrides the recorded frame rate; `0` plays as fast as possible.
-- `--hold SECONDS` keeps the last frame of each recording on screen before the next recording or repeat
-  (0 to 86400 seconds).
+- `--hold SECONDS` keeps the last frame of each recording on screen before the next recording, repeat, or exit,
+  including after the final recording (0 to 86400 seconds). Recordings without frames are not held.
 - `--shuffle` plays a directory in random order, reshuffled each repeat; `--seed` makes the order repeatable.
-- `--alt-screen` plays in the terminal's alternate screen, like full-screen programs such as `less`, and
-  restores the original screen and scrollback when playback ends.
+- `--alt-screen` plays in the terminal's alternate screen and restores the original screen and scrollback when
+  playback ends, as it does for live effects.
 - `--anchor-canvas` positions the recording in the terminal. Recordings of different sizes in one directory
   share a canvas sized to the largest, each anchored within it.
 - `--seed`, `--reuse-canvas`, `--no-eol`, and `--no-restore-cursor` work as they do for live effects.

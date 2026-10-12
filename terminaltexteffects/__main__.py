@@ -15,6 +15,7 @@ import shutil
 import sys
 import time
 import weakref
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import partial
 from importlib.metadata import PackageNotFoundError, version
@@ -40,7 +41,7 @@ from terminaltexteffects.utils.shell_completion import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable, Generator, Iterator
     from importlib.machinery import SourceFileLoader
     from types import ModuleType
 
@@ -339,8 +340,8 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
         default=0.0,
         metavar="SECONDS",
         help=(
-            f"With --play, hold the last frame for SECONDS (0 to {_MAX_HOLD_SECONDS:g}) between recordings and "
-            "repeats (default: 0)."
+            f"Hold the final frame of each effect playback or recording for SECONDS (0 to {_MAX_HOLD_SECONDS:g}) "
+            "before continuing or exiting (default: 0)."
         ),
     )
     recording_group.add_argument(
@@ -352,8 +353,8 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
         "--alt-screen",
         action="store_true",
         help=(
-            "With --play, display in the terminal's alternate screen and restore the original screen when "
-            "playback ends."
+            "Display output in the terminal's alternate screen and restore the original screen when it ends. "
+            "The final frame is not left in the terminal; combine with --hold to keep it visible first."
         ),
     )
 
@@ -513,19 +514,38 @@ def _get_available_effects(
     return list(effect_resource_map)
 
 
+@contextmanager
+def _alternate_screen(*, enabled: bool) -> Generator[None, None, None]:
+    """Show output in the terminal's alternate screen when `enabled`, restoring the original screen afterward.
+
+    Text attributes are reset before leaving, including when the block raises or is interrupted.
+    """
+    if not enabled:
+        yield
+        return
+    sys.stdout.write(ansitools.enter_alternate_screen())
+    try:
+        yield
+    finally:
+        sys.stdout.write(ansitools.reset_all() + ansitools.exit_alternate_screen())
+        sys.stdout.flush()
+
+
 def _print_replays(
     effect: BaseEffect,
     iterator: Iterator[str],
     terminal: Terminal,
     count: int,
     next_playback_factory: Callable[[], tuple[BaseEffect, Iterator[str]]] | None = None,
+    hold: float = 0.0,
 ) -> None:
     """Print fresh playbacks, stopping on empty output or after `count` runs.
 
     A zero `count` repeats until interrupted. The first iterator is constructed
     before opening terminal output so input validation remains fail-fast. When
     `next_playback_factory` is provided, it creates a newly selected effect and
-    iterator for each completed playback.
+    iterator for each completed playback. A nonzero `hold` keeps the final frame of
+    each playback that rendered frames on screen for `hold` seconds, including the last.
     """
     completed = 0
     while True:
@@ -534,7 +554,11 @@ def _print_replays(
             terminal.print(frame)
             rendered = True
         completed += 1
-        if not rendered or (count and completed >= count):
+        if not rendered:
+            return
+        if hold:
+            time.sleep(hold)
+        if count and completed >= count:
             return
         if next_playback_factory is None:
             iterator = iter(effect)
@@ -862,35 +886,30 @@ def _play_recordings(args: argparse.Namespace, frame_rate_override: int | None) 
     terminal = Terminal("", terminal_config, terminal_dimensions=(terminal_width, terminal_height))
     layouts = {path: _FrameLayout(recording.header, terminal, canvas_size) for path, recording in recordings.items()}
 
-    if args.alt_screen:
-        sys.stdout.write(ansitools.enter_alternate_screen())
-    try:
-        terminal.prep_canvas()
-        completed = 0
-        while True:
-            order = list(paths)
-            if args.shuffle:
-                random.shuffle(order)
-            pass_rendered = False
-            for index, path in enumerate(order):
-                rendered = _play_recording(path, recordings[path], layouts[path], terminal, frame_rate_override)
-                pass_rendered = pass_rendered or rendered
-                last_of_pass = index == len(order) - 1
-                if rendered and args.hold and not (last_of_pass and args.repeat and completed + 1 >= args.repeat):
-                    time.sleep(args.hold)
-            completed += 1
-            # A pass without frames would otherwise repeat at full speed, unlike live replay.
-            if not pass_rendered or (args.repeat and completed >= args.repeat):
-                return
-    finally:
-        # Recorded frames are untrusted; never leave their text attributes active in the shell.
-        sys.stdout.write(ansitools.reset_all())
-        if args.alt_screen:
-            terminal.restore_cursor("")
-            sys.stdout.write(ansitools.exit_alternate_screen())
-            sys.stdout.flush()
-        else:
-            terminal.restore_cursor()
+    with _alternate_screen(enabled=args.alt_screen):
+        try:
+            terminal.prep_canvas()
+            completed = 0
+            while True:
+                order = list(paths)
+                if args.shuffle:
+                    random.shuffle(order)
+                pass_rendered = False
+                for path in order:
+                    rendered = _play_recording(path, recordings[path], layouts[path], terminal, frame_rate_override)
+                    pass_rendered = pass_rendered or rendered
+                    if rendered and args.hold:
+                        time.sleep(args.hold)
+                completed += 1
+                # A pass without frames would otherwise repeat at full speed, unlike live replay.
+                if not pass_rendered or (args.repeat and completed >= args.repeat):
+                    return
+        finally:
+            # Recorded frames are untrusted; never leave their text attributes active in the shell. Leaving the
+            # alternate screen resets them as well.
+            if not args.alt_screen:
+                sys.stdout.write(ansitools.reset_all())
+            terminal.restore_cursor("" if args.alt_screen else "\n")
 
 
 def _play_recording(
@@ -952,9 +971,15 @@ def _run_playback(args: argparse.Namespace) -> None:
 
 def _check_recording_options(args: argparse.Namespace) -> None:
     """Exit with status `1` when playback-only or recording options are used incorrectly."""
-    if args.hold or args.shuffle or args.alt_screen:
-        _exit_with_error("--hold, --shuffle, and --alt-screen require --play.")
+    if args.shuffle:
+        _exit_with_error("--shuffle requires --play.")
     if args.record is not None:
+        given = _options_given(sys.argv[1:])
+        display_options = [given[dest] for dest in ("hold", "alt_screen") if dest in given]
+        if display_options:
+            _exit_with_error(
+                f"{_join_names(display_options)} cannot be combined with --record, which displays nothing."
+            )
         if args.repeat == 0:
             _exit_with_error("--record cannot be combined with --repeat 0.")
         if args.frame_rate == 0:
@@ -1070,7 +1095,8 @@ def main() -> None:
         return
     try:
         effect_iterator = iter(effect)
-        with effect.terminal_output() as terminal:
+        end_symbol = "" if args.alt_screen else "\n"
+        with _alternate_screen(enabled=args.alt_screen), effect.terminal_output(end_symbol) as terminal:
             next_playback_factory: Callable[[], tuple[BaseEffect, Iterator[str]]] | None = None
             if available_effects is not None:
                 next_playback_factory = partial(
@@ -1081,7 +1107,7 @@ def main() -> None:
                     terminal_config,
                     terminal,
                 )
-            _print_replays(effect, effect_iterator, terminal, args.repeat, next_playback_factory)
+            _print_replays(effect, effect_iterator, terminal, args.repeat, next_playback_factory, hold=args.hold)
     except (EmptyInputError, UnsupportedAnsiSequenceError) as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
