@@ -1,214 +1,107 @@
-# Release runbook
+# Releasing
 
-Use this procedure for each release. Copy the [release checklist](.github/ISSUE_TEMPLATE/release.md)
-into a release issue and record evidence there. The issue tracks the release branch, PR,
-exact commits tested, QA results, artifacts, approval, and publication links.
+Track each release in an issue created from the
+[release template](.github/ISSUE_TEMPLATE/release.md), and record evidence there as you go.
+Preparing a release authorizes preparation and QA only. Merging the release PR needs the
+maintainer's instruction. Tagging and uploading need explicit approval naming the version, commit,
+and tag.
 
-Preparing a release authorizes preparation and QA. Merging requires the maintainer's
-instruction; tagging, PyPI upload, and publishing a GitHub release require explicit
-publication approval for the version and commit. A green CI run does not grant that approval.
+## 1. Prepare the release branch
 
-## 1. Open the release issue and branch
+Branch from current `main` as `release/<issue-number>-<version>`. Promote any finished effects in
+their own PRs first. Then:
 
-Start from current `main` and use `release/<issue-number>-<version>` for the branch.
-Record the intended version, release date, Python support, included issues, and any
-migration instructions. The next planned release is 0.16.0 with Python 3.9.2 minimum.
-Update [SUPPORT.md](SUPPORT.md) for the new release's requirements and completion features,
-and [SECURITY.md](SECURITY.md) for the newly supported stable version. Clearly distinguish
-the release being prepared from the version currently published; verify those statements
-again after publication. Security fixes target the latest stable release, without older-release backports.
-Do not change the version or create a tag merely while improving this runbook.
+1. Set `[project].version` in `pyproject.toml`, then run `uv lock` and `uv sync --locked --group dev`.
+2. Update [SUPPORT.md](SUPPORT.md) for the new release's Python and platform requirements.
+3. Review pending fragments for accuracy, duplicates, and migration notes, then assemble the notes:
 
-Sync locked release tools on Python 3.10+ with `uv sync --locked --group dev --python 3.14`.
-This tool interpreter requirement does not raise the Python 3.9.2 runtime minimum. Keep prototypes in `dev_effects/`;
-promote finished effects through their own reviewed PRs before preparing the release.
+   ```sh
+   ./.venv/bin/towncrier build --draft --version X.Y.Z --date YYYY-MM-DD
+   ./.venv/bin/python tools/generate_changelog.py --clear
+   ./.venv/bin/towncrier build --yes --version X.Y.Z --date YYYY-MM-DD
+   ./.venv/bin/python tools/generate_changelog.py
+   ```
 
-## 2. Prepare the version and release notes
+4. Commit the version, lockfile, dated changelog section, and consumed fragments together. Release
+   PRs don't add a fragment of their own. Check the result with
+   `./.venv/bin/python tools/generate_changelog.py --check --base origin/main`.
 
-Update `[project].version` in `pyproject.toml` to the intended release version, then run
-`uv lock` to refresh project metadata in `uv.lock`, followed by
-`uv sync --locked --group dev` to refresh the editable installation and its version metadata.
-Keep `requires-python`, supported-version CI, and compatibility documentation consistent.
-Use the following commands with the actual version and publication date:
+## 2. Automated QA
 
-```sh
-./.venv/bin/towncrier build --draft --version 0.16.0 --date YYYY-MM-DD
-```
+Open a draft PR with `Refs #<release-issue>`. All required CI checks must pass on the latest commit,
+including the full test matrix.
 
-Review pending fragments for accuracy, duplicates, breaking changes, and migration guidance.
-The template omits internal skip reasons from published notes. Keep the original format of
-history before 0.16.0; new releases use the configured Towncrier sections.
+Run the exhaustive effect-argument suite against the PR's head commit. It uses the workflow from
+`main` and the code from the given full SHA:
 
 ```sh
-./.venv/bin/python tools/generate_changelog.py --clear
-./.venv/bin/towncrier build --yes --version 0.16.0 --date YYYY-MM-DD
-./.venv/bin/python tools/generate_changelog.py
+sha=$(gh pr view <release-pr> --json headRefOid --jq .headRefOid)
+gh workflow run exhaustive.yml --ref main -f commit="$sha"
+gh run list --workflow exhaustive.yml --limit 3
 ```
 
-Commit the version, lockfile, dated release section, and consumed fragments together.
-Release preparation consumes existing fragments; it does not need a new release fragment.
-After committing, verify with:
+Record the run link and result in the release issue. Rerun it if the candidate changes. Check
+**Security → Code scanning** and **Dependabot alerts** for untriaged findings, and run a CodeQL scan
+(`gh workflow run codeql.yml --ref main`) if security-relevant code changed since the last scan.
+
+## 3. Human QA
+
+Automated tests can't judge how an animation looks. In a real terminal, inspect each changed effect
+for:
+
+- appearance, pacing, and the final text;
+- small, multiline, sparse, and wide-character input;
+- color modes (truecolor, `--xterm-colors`, `--no-color`) and existing-color handling;
+- narrow and wide terminals, wrapping, interruption, and cursor restoration.
+
+Focused visual tests help:
 
 ```sh
-./.venv/bin/python tools/generate_changelog.py --check --base origin/main
+./.venv/bin/pytest -s -m visual tests/test_effects.py -k '<Effect>'
+./.venv/bin/pytest -s -m manual tests/test_effects.py -k '<Effect>'
 ```
 
-If the publication date changes, update the new dated release heading through the release
-PR and rerun checks. Do not modify already published release history.
+The canvas-anchoring manual test is skipped; exercise anchoring directly with the CLI. Record the
+terminals and platforms you checked, and mark anything not applicable as N/A with a reason.
 
-## 3. Open the release PR and complete automated QA
+## 4. Merge
 
-Open a draft PR with `Refs #<release-issue>`, keeping the tracking issue open until
-publication and post-release verification finish. Link the checklist, describe the release scope,
-and record the head SHA. Follow the usual focused local QA for changed code and resolve every
-required CI failure. Required checks are listed in [.github/CI.md](.github/CI.md).
+Mark the PR ready, address review findings, and get the maintainer's merge instruction. After the
+squash merge, confirm that `main` CI passes for the merged commit and that the merged tree matches
+what you reviewed (`git diff REVIEWED_SHA MERGED_SHA`). If they differ, rerun the exhaustive suite.
+That merged commit is the release commit.
 
-The default CI matrix covers Python 3.9–3.14, shell completions, whole-project formatting/lint/types,
-changelog validation, relevant strict documentation builds, and artifact validation for code-bearing
-changes. Documentation-only successful check names are not evidence that tests actually ran.
-Release version and packaging changes must execute the full matrix.
+## 5. Build and approve artifacts
 
-Pre-release QA additionally dispatches the manual **Exhaustive release validation** workflow
-from `main` with the latest release-candidate full commit SHA. Follow
-[.github/EXHAUSTIVE_VALIDATION.md](.github/EXHAUSTIVE_VALIDATION.md) for CLI/UI dispatch,
-run identification, monitoring and evidence download. Agents may perform this validation
-as part of release preparation; it does not authorize publication.
-
-The workflow runs the complete automated exhaustive suite on Linux/Python 3.14 with
-locked test dependencies, preserving pytest's exit status and retaining log, JUnit,
-context and verified revision evidence for 30 days. Routine compatibility CI still covers
-all supported versions; human manual/visual QA remains separate. Record the exact candidate
-and workflow SHAs, run link, Python version, completion/exit status and inspected skips.
-Download evidence before expiration. Changes to the candidate require fresh exhaustive
-validation. A skipped, interrupted, timed-out or partial run is not a passing result.
-This is not a routine local commit prerequisite.
-
-CI enforces whole-project Ruff formatting, lint, and Pyright checks on tracked Python files.
-Record any remaining release-relevant findings in the issue.
-
-Before release sign-off, complete the [security health review](.github/SECURITY_MONITORING.md):
-verify both CodeQL category uploads within the freshness window, account for security-relevant
-changes since the scan, triage open alerts and record limitations. Recheck merged release code
-before publication when candidate changes were not covered by main scans.
-
-## 4. Complete human QA
-
-Inspect changed effects in a real terminal using representative small, multiline, sparse, and
-wide-character inputs. Compare pacing and appearance with the intended behavior. Check ANSI
-styles and colors, `ignore`/`always`/`dynamic` existing-color handling where relevant, truecolor,
-XTerm colors, and no-color output. Check narrow/wide terminals, clipping/wrapping, interruption,
-and cursor restoration. Test resizing for regressions; this is not a promise of live reflow.
-
-Use focused visual selections, without parallel workers and with output capture disabled:
-
-```sh
-./.venv/bin/pytest -s -m visual tests/test_effects.py -k 'Wipe'
-./.venv/bin/pytest -s -m manual tests/test_effects.py -k 'Wipe'
-```
-
-Replace `Wipe` with relevant effect names; record the terminals and platforms inspected.
-Inspect skips: the canvas-anchoring manual test is currently marked skipped, so exercise
-those scenarios directly with the CLI rather than counting them as verified.
-
-For performance changes, attach before/after measurements with fixed seeds and frame/output
-invariants, or explain intentional visual changes. Use the documented
-[performance workflow](docs/performance.md). For unaffected areas, record a reasoned N/A
-rather than claiming a test was performed. Human inspection cannot be replaced by green CI.
-
-## 5. Review, merge, and verify the final commit
-
-When QA passes on the latest revision, mark the PR ready. Wait for automated review to finish,
-address findings, resolve conversations, and rerun affected checks. The maintainer reviews the
-release evidence and separately authorizes squash merging.
-
-After merging, identify the resulting release commit and wait for its `main` CI run to pass.
-Follow the [post-merge procedure](.github/POST_MERGE.md) for exact-run identification,
-live documentation verification and failure recovery; superseded runs do not establish
-a passing result for the frozen release commit.
-Changes to code, dependencies, packaging, or notes require renewed relevant QA. Preserve evidence
-from the reviewed branch and confirm the merged tree contains the reviewed changes.
-Compare reviewed and merged trees (`git diff REVIEWED_SHA MERGED_SHA --`); if they differ,
-rerun exhaustive validation against the merged commit before approval. Record both SHAs.
-Freeze the chosen release commit; later commits on `main` are not automatically part of this release.
-
-## 6. Build and approve the exact upload files
-
-Check out the chosen merged commit in a clean, separate checkout and sync its locked development
-tools. Build and validate into a new empty directory outside the checkout:
+In a clean checkout of the release commit, after syncing tools:
 
 ```sh
 ./.venv/bin/python tools/check_artifacts.py --output-dir /absolute/path/to/release-artifacts
+shasum -a 256 /absolute/path/to/release-artifacts/terminaltexteffects-X.Y.Z{-py3-none-any.whl,.tar.gz}
 ```
 
-This checks the direct wheel, source archive, and wheel rebuilt from that archive, including
-clean installs outside the checkout and prototype exclusion. Retained output contains a direct
-wheel and source archive at its root, plus a verification-only wheel in `from-sdist/`.
+This validates the wheel, the sdist, and a wheel rebuilt from the sdist, including clean installs and
+exclusion of development effects. Upload only the top-level wheel and sdist, not `from-sdist/`.
+Record their checksums in the issue, then get publication approval naming the version, commit, tag
+(`release-X.Y.Z`), and files.
 
-Record the full commit SHA, version, filenames, validation result, and SHA-256 checksums in the
-release issue. Review metadata, README rendering, CLI help/version, and packaged files.
-Select only the direct wheel and source archive for publication; do not upload the rebuilt duplicate.
-Generate a checksum file for the two selected upload files, for example on macOS/Linux:
+## 6. Publish
 
 ```sh
-shasum -a 256 /absolute/path/to/release-artifacts/terminaltexteffects-0.16.0-py3-none-any.whl \
-  /absolute/path/to/release-artifacts/terminaltexteffects-0.16.0.tar.gz \
-  > /absolute/path/to/release-artifacts/SHA256SUMS
+git tag -a release-X.Y.Z <approved-sha> -m 'Release X.Y.Z'
+git push origin refs/tags/release-X.Y.Z
+./.venv/bin/twine upload /absolute/path/to/release-artifacts/terminaltexteffects-X.Y.Z{-py3-none-any.whl,.tar.gz}
 ```
 
-Keep those exact tested files unchanged through approval and upload. Rebuilding requires renewed
-artifact validation and new recorded checksums.
+Keep PyPI credentials out of commands and logs. Create the GitHub release from the tag, using the
+dated changelog section as the notes.
 
-Obtain explicit publication approval naming the version, commit, tag, and selected artifacts.
-Use the existing `release-<version>` tag convention, for example `release-0.16.0`.
-Verify the tag and PyPI version do not already exist before approving a new release.
+## 7. Verify and close
 
-## 7. Publish after approval
+Install `terminaltexteffects==X.Y.Z` from PyPI into a fresh environment on the minimum supported
+Python. Check `tte --version`, both CLI names, a short effect run, and the library import. Confirm the
+PyPI page and the GitHub release, then close the release issue.
 
-Use the approved commit and artifacts, not the current moving branch tip. Tag the exact commit:
-
-```sh
-release_commit=REPLACE_WITH_APPROVED_FULL_SHA
-git tag -a release-0.16.0 "$release_commit" -m 'Release 0.16.0'
-git push origin refs/tags/release-0.16.0
-```
-
-Confirm the remote tag resolves to the approved commit. Tag pushes currently do not run CI;
-the recorded final-commit validation is required before pushing the tag.
-
-Authenticate Twine using the maintainer's existing PyPI credential mechanism. Keep credentials
-out of commits, command arguments, and release logs. Upload the two selected files explicitly:
-
-```sh
-./.venv/bin/twine upload --repository-url https://upload.pypi.org/legacy/ \
-  /absolute/path/to/release-artifacts/terminaltexteffects-0.16.0-py3-none-any.whl \
-  /absolute/path/to/release-artifacts/terminaltexteffects-0.16.0.tar.gz
-```
-
-Use the actual validated filenames. Twine uploads prebuilt files; do not rebuild during upload.
-See [PyPA's packaging flow](https://packaging.python.org/en/latest/flow/).
-Create a GitHub release from the existing tag using the same dated changelog section, attach
-selected artifacts and checksums, review its draft, then publish under the recorded approval.
-Do not auto-generate a second, divergent release-note history.
-
-## 8. Verify publication and close the issue
-
-Install the exact version from PyPI into a fresh environment outside the repository, without
-editable installs or development-effect settings. Verify package and effect imports,
-`tte --version`, both CLI entry points, and a short effect invocation. Test the minimum supported
-Python version and confirm package metadata and published file checksums match the approved files.
-
-Check the PyPI description/license, GitHub tag and notes, and public documentation links/version.
-The site follows development `main` after successful push CI; it is not a versioned release site.
-Verify the deployed commit banner, release notes, and relevant API pages using the
-[deployment guide](.github/DOCUMENTATION.md). A strict local build does not publish the site.
-Record the deployed commit or link an explicit follow-up before sign-off.
-Attach publication URLs and verification evidence, then complete the release issue checklist and close the tracking issue.
-
-## Failed or incomplete publication
-
-If upload succeeds for only one file, inspect PyPI and compare the existing file with the
-approved checksum before uploading only the missing artifact. Do not use `--skip-existing`
-to conceal uncertainty or upload a rebuilt replacement under the same version.
-If a published release is broken, stop promotion, document the impact, and prepare a new patch
-release; evaluate PyPI yanking separately with maintainer approval. Preserve published tags and
-artifacts rather than moving a tag or silently rewriting release history.
+If an upload partly fails, compare what's on PyPI with the recorded checksums and upload only the
+missing file. Never re-upload a rebuilt file under the same version. If a release is broken, ship a
+patch release; never move a published tag.

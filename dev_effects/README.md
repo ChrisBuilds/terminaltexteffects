@@ -64,20 +64,7 @@ behavioral decisions:
 
 ## Automated inventory gate
 
-Code quality runs `tools/check_effect_inventory.py` against the shipped package and checks:
-
-- Every `effect_*.py` module appears in built-in registration, and registered effects have
-  shipped modules. Development/plugin discovery is disabled. A stray `effect_dev.py` fails.
-- CLI subcommands agree with effect-resource command names.
-- Each command has a nonempty `docs/effects/<command>.md`, a page entry under MkDocs `nav`,
-  and `tests/effects_tests/test_<command>.py` defining a top-level test or Test-class method.
-
-Tests/docs are named by command; the module suffix may differ (for example
-`effect_random_sequence.py` registers `randomsequence`). Navigation is parsed as YAML,
-not searched as text. The helper is read-only and uses the locked development environment.
-The existing required Shell completions check verifies generated resources separately.
-
-This gate checks structure, not test assertions, actual test collection/execution, correctness
-of prose, demo quality, or visual fidelity. Focused tests, broad CI, strict docs, artifact
-validation, and human review remain required. Development prototypes need not satisfy this
-shipped-effect inventory until promoted.
+CI runs `tools/check_effect_inventory.py`, which checks that every shipped `effect_*.py` module is
+registered and has a matching command, a nonempty `docs/effects/<command>.md` page listed in the
+MkDocs navigation, and a `tests/effects_tests/test_<command>.py` file with tests. It checks structure
+only; it doesn't judge test quality or visual correctness.
