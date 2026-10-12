@@ -792,12 +792,46 @@ class _FramePacer:
         self._next_frame_time += self._period
 
 
-def _explicit_frame_rate(argv: list[str]) -> int | None:
-    """Return the `--frame-rate` value given on the command line, or `None` when it was omitted."""
-    probe = argparse.ArgumentParser(add_help=False)
-    probe.add_argument("--frame-rate", type=NonNegativeInt.type_parser, default=None)
+# Global options rejected with `--play`: canvas, text, input, and color handling are fixed when a recording is
+# made, and effect-selection filters apply only to running effects.
+_PLAYBACK_REJECTED_OPTIONS = (
+    "canvas_width",
+    "canvas_height",
+    "anchor_text",
+    "xterm_colors",
+    "no_color",
+    "terminal_background_color",
+    "existing_color_handling",
+    "tab_width",
+    "wrap_text",
+    "ignore_terminal_dimensions",
+    "include_effects",
+    "exclude_effects",
+)
+
+
+def _options_given(argv: list[str]) -> dict[str, str]:
+    """Return the global options present on the command line, mapping each destination to its option name.
+
+    Every default is suppressed, so only options actually given appear, including abbreviated and
+    `--option=value` forms and options given their default value.
+    """
+    probe = _build_global_parser(add_help=False)
+    option_names: dict[str, str] = {}
+    for action in probe._actions:
+        action.default = argparse.SUPPRESS
+        if action.option_strings:
+            option_names[action.dest] = max(action.option_strings, key=len)
+    probe.add_argument("effect_arguments", nargs=argparse.REMAINDER)
     known_args, _ = probe.parse_known_args(argv)
-    return cast("int | None", known_args.frame_rate)
+    return {dest: option_names[dest] for dest in vars(known_args) if dest in option_names}
+
+
+def _join_names(names: list[str]) -> str:
+    """Join names as an English list, such as `a, b, and c`."""
+    if len(names) <= 2:
+        return " and ".join(names)
+    return f"{', '.join(names[:-1])}, and {names[-1]}"
 
 
 def _play_recordings(args: argparse.Namespace, frame_rate_override: int | None) -> None:
@@ -900,8 +934,16 @@ def _run_playback(args: argparse.Namespace) -> None:
     """Run `--play`, exiting with status `1` on invalid options, recordings, or interruption."""
     if args.effect or args.random_effect or args.input_file:
         _exit_with_error("--play cannot be combined with an effect, --random-effect, or --input-file.")
+    given = _options_given(sys.argv[1:])
+    rejected = [given[dest] for dest in _PLAYBACK_REJECTED_OPTIONS if dest in given]
+    if rejected:
+        _exit_with_error(
+            f"{_join_names(rejected)} cannot be used with --play; canvas, text, color, and effect-selection "
+            "options are fixed when a recording is made."
+        )
+    frame_rate_override = cast("int", args.frame_rate) if "frame_rate" in given else None
     try:
-        _play_recordings(args, _explicit_frame_rate(sys.argv[1:]))
+        _play_recordings(args, frame_rate_override)
     except RecordingError as error:
         _exit_with_error(error.message)
     except KeyboardInterrupt:

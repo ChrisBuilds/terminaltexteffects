@@ -250,6 +250,102 @@ def test_playback_option_conflicts(
     assert message in _run_error(monkeypatch, capsys, *arguments)
 
 
+@pytest.fixture
+def unreachable_recordings(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Fail the test if playback looks for recordings."""
+
+    def fail(_path: Path) -> list[Path]:
+        msg = "rejected options must fail before any recording is read"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(__main__, "_find_recordings", fail)
+
+
+@pytest.mark.parametrize(
+    ("arguments", "option"),
+    [
+        (("--canvas-width", "80"), "--canvas-width"),
+        (("--canvas-height", "24"), "--canvas-height"),
+        (("--anchor-text", "c"), "--anchor-text"),
+        (("--xterm-colors",), "--xterm-colors"),
+        (("--no-color",), "--no-color"),
+        (("--terminal-background-color", "000000"), "--terminal-background-color"),
+        (("--existing-color-handling", "always"), "--existing-color-handling"),
+        (("--tab-width", "8"), "--tab-width"),
+        (("--wrap-text",), "--wrap-text"),
+        (("--ignore-terminal-dimensions",), "--ignore-terminal-dimensions"),
+        (("--include-effects", "wipe"), "--include-effects"),
+        (("--exclude-effects", "wipe"), "--exclude-effects"),
+        (("--anchor-t", "c"), "--anchor-text"),
+        (("--canvas-width=-1",), "--canvas-width"),
+        (("--existing-color-handling=ignore",), "--existing-color-handling"),
+        (("--no-c",), "--no-color"),
+    ],
+)
+@pytest.mark.usefixtures("unreachable_recordings")
+def test_play_rejects_recording_time_options(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    arguments: tuple[str, ...],
+    option: str,
+) -> None:
+    """Options fixed when a recording is made fail with --play, even abbreviated or given their default value."""
+    with pytest.raises(SystemExit) as error:
+        _run(monkeypatch, "--play", "x.tterec", *arguments)
+    assert error.value.code == 1
+    output = capsys.readouterr()
+    assert output.err == (
+        f"Error: {option} cannot be used with --play; canvas, text, color, and effect-selection options are "
+        "fixed when a recording is made.\n"
+    )
+    assert output.out == ""
+
+
+@pytest.mark.usefixtures("unreachable_recordings")
+def test_play_rejection_names_every_option(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    """All offending options are named together."""
+    error = _run_error(
+        monkeypatch,
+        capsys,
+        "--play",
+        "x.tterec",
+        "--no-color",
+        "--anchor-text",
+        "c",
+        "--canvas-width",
+        "10",
+    )
+    assert "Error: --canvas-width, --anchor-text, and --no-color cannot be used with --play" in error
+
+
+@pytest.mark.usefixtures("terminal_size")
+def test_play_accepts_playback_options(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, printed: Mock) -> None:
+    """Options that playback honors remain accepted with --play."""
+    path = _write_recording(tmp_path / "a.tterec", ["A"])
+    _run(
+        monkeypatch,
+        "--play",
+        str(path),
+        "--frame-rate",
+        "0",
+        "--anchor-canvas",
+        "c",
+        "--reuse-canvas",
+        "--no-eol",
+        "--no-restore-cursor",
+        "--seed",
+        "1",
+        "--repeat",
+        "1",
+        "--hold",
+        "0",
+        "--shuffle",
+    )
+    (frame,) = _printed_frames(printed)
+    # A 1x1 canvas centered in 80x24: 39 columns from the left and 11 blank rows below.
+    assert frame.split("\n") == [" " * 39 + "A", *[" " * 40] * 11]
+
+
 @pytest.mark.usefixtures("piped_input", "terminal_size")
 def test_play_round_trip_matches_recording(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, printed: Mock) -> None:
     """Playback prints every recorded frame, placed on the anchored canvas."""
