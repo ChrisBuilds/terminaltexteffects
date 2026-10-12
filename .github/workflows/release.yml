@@ -140,7 +140,9 @@ jobs:
           import urllib.request
 
           url = f"https://pypi.org/pypi/terminaltexteffects/{os.environ['VERSION']}/json"
-          local = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in pathlib.Path("dist").iterdir()}
+          # Only distributions: the publish action also writes `*.publish.attestation` files into dist/.
+          dists = [*pathlib.Path("dist").glob("*.whl"), *pathlib.Path("dist").glob("*.tar.gz")]
+          local = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in dists}
           remote = {}
           for _ in range(10):  # PyPI's JSON API can lag a newly uploaded release.
               try:
