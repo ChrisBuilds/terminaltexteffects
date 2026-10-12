@@ -17,14 +17,12 @@ their own PRs first. Then:
 
    ```sh
    ./.venv/bin/towncrier build --draft --version X.Y.Z --date YYYY-MM-DD
-   ./.venv/bin/python tools/generate_changelog.py --clear
    ./.venv/bin/towncrier build --yes --version X.Y.Z --date YYYY-MM-DD
-   ./.venv/bin/python tools/generate_changelog.py
    ```
 
 4. Commit the version, lockfile, dated changelog section, and consumed fragments together. Release
-   PRs don't add a fragment of their own. Check the result with
-   `./.venv/bin/python tools/generate_changelog.py --check --base origin/main`.
+   PRs don't add a fragment of their own; consuming fragments into a dated section satisfies
+   CI's changelog check. Verify with `./.venv/bin/python tools/changelog.py --base origin/main`.
 
 ## 2. Automated QA
 

@@ -49,8 +49,7 @@ behavioral decisions:
   useful or explain why it is deferred; keep any referenced demo assets valid.
 - [ ] Regenerate Bash, Zsh, and PowerShell completions using
   `./.venv/bin/python tools/generate_shell_completions.py`, then run its `--check` mode.
-- [ ] Add an issue-numbered user-facing fragment (normally `.added.md`) and regenerate the
-  Unreleased preview. A newly shipped effect is not an internal-only skip.
+- [ ] Add a user-facing changelog fragment (normally `.added.md`).
 - [ ] Run focused effect tests, formatting, lint, and Pyright, plus
   `./.venv/bin/python tools/check_effect_inventory.py` and a strict docs build.
 - [ ] Verify release artifacts include the promoted module while other development effects

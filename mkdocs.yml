@@ -43,6 +43,9 @@ markdown_extensions:
   - attr_list
   - def_list
 
+hooks:
+  - tools/mkdocs_changelog.py
+
 nav:
   - Intro to TTE: index.md
   - Changelog: changelog.md

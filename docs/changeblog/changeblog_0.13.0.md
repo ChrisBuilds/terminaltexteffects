@@ -10,7 +10,7 @@ This release features two brand new effects, [Smoke](../showroom.md#smoke) and [
 
 ---
 
-Despite my intention, life stuff caused this update to take far longer than necessary. To address the unpredictability of the universe, I am going to make updates much smaller and more frequent. 
+Despite my intention, life stuff caused this update to take far longer than necessary. To address the unpredictability of the universe, I am going to make updates much smaller and more frequent.
 
 ### Yer a ScreenSaver, Harry
 
@@ -85,7 +85,7 @@ Burn has been upgraded with a more realistic burn pattern and new smoke particle
 
 #### LaserEtch
 
-Laseretch has a new, and default, etch pattern, in addition to the existing patterns. The laser travels around the input text rather than only moving in rows/columns/diagonals. 
+Laseretch has a new, and default, etch pattern, in addition to the existing patterns. The laser travels around the input text rather than only moving in rows/columns/diagonals.
 
 ![LaserEtch](../img/effects_demos/laseretch_demo.gif)
 
@@ -96,7 +96,7 @@ Laseretch has a new, and default, etch pattern, in addition to the existing patt
 
 As a bit of background, I have an older project called [TerminalMaze](https://github.com/ChrisBuilds/terminalmaze) which is the primordial soup from which many of the TTE concepts emerged. TerminalMaze has a very different animation mechanism and features a DSL for describing animations via TOML config. None of this is properly documented at this time. I hope to create a nice README for it in the near future.
 
-TerminalMaze uses various Minimum Spanning-Tree algorithms to build mazes in the terminal. The nodes in the graph are animated based on the current activity of the algorithm. For example, below you will see a visualization of the recursive backtracker algorithm. When the algorithm links a node into the graph, the node glows bright greenish-white with a gradient toward green. When the algorithm pops the node off it's stack, the color is returned to white. 
+TerminalMaze uses various Minimum Spanning-Tree algorithms to build mazes in the terminal. The nodes in the graph are animated based on the current activity of the algorithm. For example, below you will see a visualization of the recursive backtracker algorithm. When the algorithm links a node into the graph, the node glows bright greenish-white with a gradient toward green. When the algorithm pops the node off it's stack, the color is returned to white.
 
 There are examples of many algorithms below, with unique animations corresponding to the algorithm's decision logic.
 
@@ -183,7 +183,7 @@ TTE will now launch faster as a result of the changes in Config/Terminal/Argumen
 
 #### Framerate Reduced
 
-TTE has always set the target framerate to 100FPS. This framerate was chosen arbitrarily during initial development and I mostly forgot about it. This framerate is unnecessarily high and leaves little time for the effects to do more complicated work between frames. It has been adjusted to 60FPS and all effects have had animation frames and movement speeds adjusted for visual parity with 100FPS. This should result in smoother animation on slower machines for effects which do a lot of dynamic work during the run. 
+TTE has always set the target framerate to 100FPS. This framerate was chosen arbitrarily during initial development and I mostly forgot about it. This framerate is unnecessarily high and leaves little time for the effects to do more complicated work between frames. It has been adjusted to 60FPS and all effects have had animation frames and movement speeds adjusted for visual parity with 100FPS. This should result in smoother animation on slower machines for effects which do a lot of dynamic work during the run.
 
 ### Moving Forward
 

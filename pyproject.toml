@@ -146,11 +146,6 @@ directory = "security"
 name = "Security"
 showcontent = true
 
-[[tool.towncrier.type]]
-directory = "skip"
-name = "Skip reasons"
-showcontent = true
-
 [tool.hatch.build.targets.sdist]
 exclude = ["docs/**", "tests/**", "/dev_effects/**", "/terminaltexteffects/effects/effect_dev.py"]
 
@@ -174,10 +169,14 @@ test = [
     "pytest-xdist>=3.6.1",
     "shtab==1.12.1",
     "towncrier==26.9.0",
+    "diff-cover>=10.6.0; python_version >= '3.10'",
 ]
 hooks = [
     { include-group = "quality" },
     "pre-commit>=3.8",
+    "pre-commit-hooks>=6",
+    "actionlint-py==1.7.12.25",
+    "shellcheck-py==0.11.0.1",
 ]
 dev = [
     { include-group = "artifacts" },

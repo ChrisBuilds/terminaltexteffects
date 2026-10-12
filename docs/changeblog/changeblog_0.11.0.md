@@ -206,7 +206,7 @@ terminal dimensions.
 : The terminal dimensions are based on your terminal emulator. TTE discovers the dimensions of your terminal emulator by
 calling  `shutil.get_terminal_size()`. Should there an issue occur that prevents terminal dimension discovery, a fallback
 of `(80, 24)` is used.
-  
+
 : In the image above, you can see the terminal as the black area on the left and right edges. This indicates the Canvas
 width is less than the terminal width, and the Canvas was anchored to the center.
 
@@ -238,7 +238,7 @@ the Canvas will be sized to the minimum bounding box that would contain all of t
 ??? "How Input Text is Processed"
 
     - Whitespace characters to the right of the last non-whitespace character in a given line are stripped.
-    - Empty lines are preserved. 
+    - Empty lines are preserved.
     - Whitespace to the left of a non-whitespace character is preserved.
     - Tabs are converted to four spaces, and the tab width can be specified using the `--tab-width` option.
 
@@ -348,14 +348,14 @@ documenting the unfortunate amputation of the *cowsay* cow.
 
 ``` bash
 $ echo "The cow misses legs!" | cowsay | tte --no-color swarm
- ______________________     
-< The cow misses legs! >    
- ----------------------     
-        \   ^__^            
-         \  (oo)\_______    
+ ______________________  
+< The cow misses legs! >  
+ ----------------------  
+        \   ^__^  
+         \  (oo)\_______  
             (__)\       )\/\
-                ||----w |   
-                ||          
+                ||----w |  
+                ||  
 ```
 
 I'm happy to report that the bug was found and fixed, returning the cow to its intended state.

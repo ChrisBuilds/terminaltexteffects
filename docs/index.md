@@ -5,7 +5,7 @@
 ## What is TTE?
 
 TerminalTextEffects (TTE) is a terminal visual effects engine. TTE can be installed as a system application to produce effects in your terminal, or as a Python library to enable effects within your Python scripts/applications. TTE includes a growing library of built-in effects which showcase the engine's features. These features include:
-  
+
   * Xterm 256 / RGB hex color support
   * Complex character movement via Paths, Waypoints, and
    motion easing, with support for quadratic/cubic bezier curves.
