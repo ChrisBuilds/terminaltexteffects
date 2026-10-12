@@ -10,7 +10,7 @@
 Python 3.9.0 and 3.9.1 are unsupported for development `main` and the planned 0.16.0
 release. Use a current patch release of a supported Python series.
 
-CI currently tests the latest patch releases of Python 3.9 through 3.14 on Linux.
+CI currently tests the latest patch releases of Python 3.9 through 3.15 on Linux.
 Newer Python series are unverified until they join the matrix. Older releases retain
 their published installation metadata; that does not imply ongoing maintenance.
 Security fixes follow the [latest-stable-release policy](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/SECURITY.md).
@@ -21,7 +21,7 @@ TTE runs on Linux, macOS, and Windows. The current automated checks cover:
 
 | Platform | Coverage |
 | --- | --- |
-| Linux, Ubuntu 24.04 | Default test suite on Python 3.9–3.14 |
+| Linux, Ubuntu 24.04 | Default test suite on Python 3.9–3.15 |
 | macOS, macOS 15 | Focused terminal/ANSI/Unicode, configuration, CLI, and PowerShell completion tests on Python 3.14 |
 | Windows, Windows Server 2025 runner | The same focused native-platform checks on Python 3.14 |
 
