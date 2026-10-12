@@ -1,12 +1,16 @@
+# Version updates run monthly; security updates open as soon as an advisory applies.
 version: 2
 updates:
   - package-ecosystem: uv
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: "09:00"
       timezone: America/New_York
+    # Skip releases newer than this; security updates are not delayed.
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
     open-pull-requests-limit: 2
     assignees: [ChrisBuilds]
     labels: [maintenance, ci, no-changelog]
@@ -24,10 +28,13 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: "09:00"
       timezone: America/New_York
+    # Skip releases newer than this; security updates are not delayed.
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
     open-pull-requests-limit: 2
     assignees: [ChrisBuilds]
     labels: [maintenance, ci, no-changelog]
