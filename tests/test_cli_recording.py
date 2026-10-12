@@ -244,6 +244,18 @@ def test_play_rejects_record_combination(capsys: pytest.CaptureFixture[str]) -> 
             "Error: --alt-screen cannot be combined with --record, which displays nothing.",
         ),
         (
+            ("--record", "out.tterec", "--hold", "0", "wipe"),
+            "Error: --hold cannot be combined with --record, which displays nothing.",
+        ),
+        (
+            ("--record", "out.tterec", "--hold=0", "wipe"),
+            "Error: --hold cannot be combined with --record, which displays nothing.",
+        ),
+        (
+            ("--record", "out.tterec", "--alt-s", "wipe"),
+            "Error: --alt-screen cannot be combined with --record, which displays nothing.",
+        ),
+        (
             ("--record", "out.tterec", "--hold", "1", "--alt-screen", "wipe"),
             "Error: --hold and --alt-screen cannot be combined with --record, which displays nothing.",
         ),
@@ -258,6 +270,20 @@ def test_playback_option_conflicts(
 ) -> None:
     """Playback-only and display options are rejected where they do not apply."""
     assert message in _run_error(monkeypatch, capsys, *arguments)
+
+
+@pytest.mark.parametrize(
+    ("arguments", "expected"),
+    [
+        (["--record", "x.tterec", "--hold", "0", "wipe"], {"record", "hold"}),
+        (["--record", "x.tterec", "--frame-rate", "30", "matrix", "--rain-time", "2"], {"record", "frame_rate"}),
+        (["--record", "x.tterec", "plugindemo", "--hold", "3"], {"record"}),
+        (["--record", "x.tterec", "plugindemo", "--alt-screen"], {"record"}),
+    ],
+)
+def test_options_given_ignores_options_after_the_effect(arguments: list[str], expected: set[str]) -> None:
+    """Only global options before the effect name count; an effect's own same-named options do not."""
+    assert set(__main__._options_given(arguments)) == expected
 
 
 @pytest.fixture

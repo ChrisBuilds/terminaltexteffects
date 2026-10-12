@@ -974,7 +974,8 @@ def _check_recording_options(args: argparse.Namespace) -> None:
     if args.shuffle:
         _exit_with_error("--shuffle requires --play.")
     if args.record is not None:
-        display_options = [name for name, given in (("--hold", args.hold), ("--alt-screen", args.alt_screen)) if given]
+        given = _options_given(sys.argv[1:])
+        display_options = [given[dest] for dest in ("hold", "alt_screen") if dest in given]
         if display_options:
             _exit_with_error(
                 f"{_join_names(display_options)} cannot be combined with --record, which displays nothing."
