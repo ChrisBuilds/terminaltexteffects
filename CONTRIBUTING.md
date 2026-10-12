@@ -129,7 +129,7 @@ manual dispatch. Every run executes the full workflow:
 | Job | Checks |
 | --- | --- |
 | Code quality | pre-commit hooks on all files; changelog fragments and decision; dependency review (PRs); effect inventory; documented examples; strict docs build; wheel/sdist build and install checks |
-| Python 3.9 – 3.14 | Default test suite on Linux; 3.14 also reports coverage and untested changed lines (informational) |
+| Python 3.9 – 3.15 | Default test suite on Linux; 3.14 also reports coverage and untested changed lines (informational) |
 | Windows / macOS, Python 3.14 | Native CLI, terminal, config, and PowerShell completion tests |
 | Shell completions | Committed completion scripts are current |
 | Nix / Linux, Nix / macOS | Flake and classic package builds and CLI smoke tests; on PRs only when `flake.*`, `default.nix`, `pyproject.toml`, `tools/check_nix.sh`, or `ci.yml` change |
