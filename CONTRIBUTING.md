@@ -153,7 +153,7 @@ local branch and any worktree you created for it.
 ## Dependencies and security
 
 Dependabot opens grouped monthly PRs for `uv.lock` and GitHub Actions, skipping releases younger than
-a week (two weeks for major versions); security updates arrive
+a week (two weeks for major Python versions); security updates arrive
 separately. They arrive labeled `maintenance`, `ci`, and `no-changelog`; review the release notes,
 add a fragment and remove the label if users are affected, and merge once CI passes. Review major
 upgrades individually. Keep actions pinned to full commit SHAs.

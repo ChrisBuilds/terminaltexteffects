@@ -33,8 +33,7 @@ updates:
       timezone: America/New_York
     # Skip releases newer than this; security updates are not delayed.
     cooldown:
-      default-days: 7
-      semver-major-days: 14
+      default-days: 7  # GitHub Actions does not support per-SemVer cooldowns.
     open-pull-requests-limit: 2
     assignees: [ChrisBuilds]
     labels: [maintenance, ci, no-changelog]
