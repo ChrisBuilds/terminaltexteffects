@@ -151,9 +151,13 @@ jobs:
                   break
               time.sleep(15)
           missing = sorted(local.keys() - remote.keys())
+          unexpected = sorted(remote.keys() - local.keys())
           mismatched = sorted(name for name in local.keys() & remote.keys() if local[name] != remote[name])
-          if missing or mismatched:
-              raise SystemExit(f"PyPI files differ from this run's artifacts. Missing: {missing}; mismatched: {mismatched}")
+          if missing or unexpected or mismatched:
+              raise SystemExit(
+                  "PyPI files differ from this run's artifacts. "
+                  f"Missing: {missing}; unexpected: {unexpected}; mismatched: {mismatched}"
+              )
           print("PyPI files match this run's artifacts:", ", ".join(sorted(local)))
           PY
 
