@@ -46,9 +46,9 @@ markdown_extensions:
 nav:
   - Intro to TTE: index.md
   - Changelog: changelog.md
-  - Contributing to TTE: development.md
   - Support and Compatibility: support.md
   - Security Policy: security.md
+  - Contributing: https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CONTRIBUTING.md
   - ChangeBlog:
     - changeblog/changeblog.md
     - changeblog/changeblog_0.15.0.md

@@ -22,7 +22,7 @@ note is needed. Skip reasons are checked but omitted from release output.
 
 Commit the fragment and refreshed `CHANGELOG.md` preview together. Never edit the
 generated Unreleased preview directly. Published entries are assembled in a
-release-preparation PR; see [the release procedure](../CONTRIBUTING.md#release-notes).
+release-preparation PR; see [the release procedure](../RELEASING.md).
 
 The `+0160-*` orphan fragments migrate work that predates the issue-based process.
 They intentionally have no invented issue references. Use real issue numbers for new work.

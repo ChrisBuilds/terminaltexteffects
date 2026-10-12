@@ -15,7 +15,7 @@ Closes #<!-- issue number -->
 
 ## Review checklist
 
-- [ ] Assignee, labels, and release milestone match the linked issue; Project remains unset.
+- [ ] Assignee, labels, and release milestone match the linked issue.
 - [ ] The linked issue's acceptance criteria are met.
 - [ ] Changes stay within the agreed scope.
 - [ ] Relevant documentation and generated completions are current.
