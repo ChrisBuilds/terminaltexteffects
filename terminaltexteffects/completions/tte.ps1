@@ -195,7 +195,7 @@
         "max": 1,
         "choices": [],
         "file": false,
-        "help": "With --play, hold the last frame for SECONDS (0 to 86400) between recordings and repeats (default: 0)."
+        "help": "Hold the final frame of each effect playback or recording for SECONDS (0 to 86400) before continuing or exiting (default: 0)."
       },
       "--shuffle": {
         "min": 0,
@@ -209,7 +209,7 @@
         "max": 0,
         "choices": [],
         "file": false,
-        "help": "With --play, display in the terminal's alternate screen and restore the original screen when playback ends."
+        "help": "Display output in the terminal's alternate screen and restore the original screen when it ends. The final frame is not left in the terminal; combine with --hold to keep it visible first."
       },
       "--tab-width": {
         "min": 1,

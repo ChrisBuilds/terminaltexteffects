@@ -13,6 +13,7 @@ from terminaltexteffects.effects.effect_expand import ExpandConfig
 from terminaltexteffects.effects.effect_wipe import Wipe, WipeConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal
+from terminaltexteffects.utils import ansitools
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -274,3 +275,111 @@ def test_repeat_empty_input_is_noop(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "argv", ["tte", "--repeat", "0", "wipe"])
     __main__.main()
     iterator.assert_not_called()
+
+
+@pytest.fixture
+def live_events(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, object]]:
+    """Record live frame output and hold sleeps in order, without terminal cursor control."""
+    events: list[tuple[str, object]] = []
+    monkeypatch.setattr(Terminal, "get_piped_input", lambda: "Hello")
+    monkeypatch.setattr(Terminal, "prep_canvas", Mock())
+    monkeypatch.setattr(Terminal, "restore_cursor", Mock())
+    monkeypatch.setattr(Terminal, "print", lambda _self, frame: events.append(("print", frame)))
+    monkeypatch.setattr(__main__.time, "sleep", lambda seconds: events.append(("sleep", seconds)))
+    return events
+
+
+@pytest.mark.parametrize("count", [None, 1, 3])
+def test_live_hold_after_every_playback(
+    monkeypatch: pytest.MonkeyPatch,
+    live_events: list[tuple[str, object]],
+    count: int | None,
+) -> None:
+    """--hold keeps the final frame of every live playback on screen, including a single or last playback."""
+    monkeypatch.setattr(Wipe, "__iter__", Mock(side_effect=lambda: iter(["first", "last"])))
+    repeat = [] if count is None else ["--repeat", str(count)]
+    monkeypatch.setattr(sys, "argv", ["tte", "--hold", "2.5", *repeat, "wipe"])
+    __main__.main()
+    playback = [("print", "first"), ("print", "last"), ("sleep", 2.5)]
+    assert live_events == playback * (count or 1)
+
+
+def test_live_hold_between_random_effects(
+    monkeypatch: pytest.MonkeyPatch, live_events: list[tuple[str, object]]
+) -> None:
+    """--hold follows each randomly selected effect."""
+    monkeypatch.setattr(__main__.random, "choice", Mock(side_effect=["wipe", "expand"]))
+    monkeypatch.setattr(sys, "argv", ["tte", "--frame-rate", "0", "--hold", "1", "--repeat", "2", "--random-effect"])
+    __main__.main()
+    sleep_positions = [index for index, (kind, _) in enumerate(live_events) if kind == "sleep"]
+    assert len(sleep_positions) == 2
+    assert sleep_positions[-1] == len(live_events) - 1
+    assert live_events[sleep_positions[0] + 1][0] == "print"
+
+
+def test_live_hold_skipped_without_frames(
+    monkeypatch: pytest.MonkeyPatch, live_events: list[tuple[str, object]]
+) -> None:
+    """No hold follows a playback that rendered no frames."""
+    monkeypatch.setattr(Wipe, "__iter__", Mock(side_effect=lambda: iter([])))
+    monkeypatch.setattr(sys, "argv", ["tte", "--hold", "3", "--repeat", "0", "wipe"])
+    __main__.main()
+    assert live_events == []
+
+
+def test_live_alt_screen_real_wipe(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    """--alt-screen wraps live output in the alternate screen and restores the screen, cursor, and attributes."""
+    monkeypatch.setattr(Terminal, "get_piped_input", lambda: "Hello")
+    monkeypatch.setattr(sys, "argv", ["tte", "--frame-rate", "0", "--alt-screen", "wipe"])
+    __main__.main()
+    output = capsys.readouterr().out
+    assert output.startswith(ansitools.enter_alternate_screen() + ansitools.hide_cursor())
+    assert output.endswith(ansitools.show_cursor() + ansitools.reset_all() + ansitools.exit_alternate_screen())
+
+
+def test_live_alt_screen_holds_final_frame_before_leaving(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With --hold, the final frame stays visible before the alternate screen closes."""
+    events: list[str] = []
+    monkeypatch.setattr(Terminal, "get_piped_input", lambda: "Hello")
+    monkeypatch.setattr(__main__.time, "sleep", lambda _seconds: events.append("sleep"))
+    original_exit = ansitools.exit_alternate_screen
+
+    def recording_exit() -> str:
+        events.append("exit")
+        return original_exit()
+
+    monkeypatch.setattr(__main__.ansitools, "exit_alternate_screen", recording_exit)
+    monkeypatch.setattr(sys, "argv", ["tte", "--frame-rate", "0", "--alt-screen", "--hold", "4", "wipe"])
+    __main__.main()
+    assert events == ["sleep", "exit"]
+
+
+@pytest.mark.parametrize("interrupt_during", ["frames", "hold"])
+def test_live_alt_screen_interrupt_restores_screen(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    interrupt_during: str,
+) -> None:
+    """Ctrl+C during live frames or a hold exits with status 1 after leaving the alternate screen."""
+    monkeypatch.setattr(Terminal, "get_piped_input", lambda: "Hello")
+    original_print = Terminal.print
+    calls = 0
+
+    def interrupting_print(self: Terminal, frame: str) -> None:
+        nonlocal calls
+        calls += 1
+        if interrupt_during == "frames" and calls == 2:
+            raise KeyboardInterrupt
+        original_print(self, frame)
+
+    def interrupting_sleep(_seconds: float) -> None:
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(Terminal, "print", interrupting_print)
+    monkeypatch.setattr(__main__.time, "sleep", interrupting_sleep)
+    monkeypatch.setattr(sys, "argv", ["tte", "--frame-rate", "0", "--alt-screen", "--hold", "5", "wipe"])
+    with pytest.raises(SystemExit) as error:
+        __main__.main()
+    assert error.value.code == 1
+    output = capsys.readouterr().out
+    assert output.endswith(ansitools.show_cursor() + ansitools.reset_all() + ansitools.exit_alternate_screen())

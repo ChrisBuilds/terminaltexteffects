@@ -234,9 +234,19 @@ def test_play_rejects_record_combination(capsys: pytest.CaptureFixture[str]) -> 
         (("--play", "x.tterec", "wipe"), "--play cannot be combined"),
         (("--play", "x.tterec", "--random-effect"), "--play cannot be combined"),
         (("--play", "x.tterec", "-i", "input.txt"), "--play cannot be combined"),
-        (("--hold", "1", "wipe"), "require --play"),
-        (("--shuffle", "wipe"), "require --play"),
-        (("--alt-screen", "wipe"), "require --play"),
+        (("--shuffle", "wipe"), "Error: --shuffle requires --play."),
+        (
+            ("--record", "out.tterec", "--hold", "1", "wipe"),
+            "Error: --hold cannot be combined with --record, which displays nothing.",
+        ),
+        (
+            ("--record", "out.tterec", "--alt-screen", "wipe"),
+            "Error: --alt-screen cannot be combined with --record, which displays nothing.",
+        ),
+        (
+            ("--record", "out.tterec", "--hold", "1", "--alt-screen", "wipe"),
+            "Error: --hold and --alt-screen cannot be combined with --record, which displays nothing.",
+        ),
     ],
 )
 @pytest.mark.usefixtures("piped_input")
@@ -246,7 +256,7 @@ def test_playback_option_conflicts(
     arguments: tuple[str, ...],
     message: str,
 ) -> None:
-    """Playback options are rejected where they do not apply."""
+    """Playback-only and display options are rejected where they do not apply."""
     assert message in _run_error(monkeypatch, capsys, *arguments)
 
 
@@ -388,14 +398,14 @@ def test_play_shuffle_is_reproducible_with_seed(monkeypatch: pytest.MonkeyPatch,
 
 
 @pytest.mark.usefixtures("terminal_size", "printed")
-def test_play_hold_between_recordings_and_repeats(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """--hold pauses after each recording except the last one played."""
+def test_play_hold_after_every_recording(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """--hold pauses after every recording played, including the last."""
     _write_recording(tmp_path / "a.tterec", ["A"])
     _write_recording(tmp_path / "b.tterec", ["B"])
     sleep = Mock()
     monkeypatch.setattr(__main__.time, "sleep", sleep)
     _run(monkeypatch, "--play", str(tmp_path), "--frame-rate", "0", "--hold", "1.5", "--repeat", "2")
-    assert [call.args[0] for call in sleep.call_args_list] == [1.5, 1.5, 1.5]
+    assert [call.args[0] for call in sleep.call_args_list] == [1.5, 1.5, 1.5, 1.5]
 
 
 @pytest.mark.usefixtures("terminal_size")
@@ -422,7 +432,7 @@ def test_play_hold_skips_recordings_without_frames(monkeypatch: pytest.MonkeyPat
     sleep = Mock()
     monkeypatch.setattr(__main__.time, "sleep", sleep)
     _run(monkeypatch, "--play", str(tmp_path), "--frame-rate", "0", "--hold", "2")
-    assert [call.args[0] for call in sleep.call_args_list] == [2.0]
+    assert [call.args[0] for call in sleep.call_args_list] == [2.0, 2.0]
 
 
 @pytest.mark.parametrize("value", ["nan", "inf", "-inf", "-1", "86400.5", "1e300", "abc"])
@@ -670,7 +680,7 @@ def test_play_alt_screen_enters_and_restores(
     _run(monkeypatch, "--play", str(path), "--frame-rate", "0", "--alt-screen")
     output = capsys.readouterr().out
     assert output.startswith(ansitools.enter_alternate_screen() + ansitools.hide_cursor())
-    assert output.endswith(ansitools.reset_all() + ansitools.show_cursor() + ansitools.exit_alternate_screen())
+    assert output.endswith(ansitools.show_cursor() + ansitools.reset_all() + ansitools.exit_alternate_screen())
     assert "A" in output
     assert "B" in output
 
@@ -721,8 +731,11 @@ def test_play_interrupt_restores_terminal(
         _run(monkeypatch, *arguments)
     assert error.value.code == 1
     output = capsys.readouterr().out
-    expected_end = ansitools.show_cursor() + (ansitools.exit_alternate_screen() if alt_screen else "\n")
-    assert output.endswith(ansitools.reset_all() + expected_end)
+    if alt_screen:
+        expected_end = ansitools.show_cursor() + ansitools.reset_all() + ansitools.exit_alternate_screen()
+    else:
+        expected_end = ansitools.reset_all() + ansitools.show_cursor() + "\n"
+    assert output.endswith(expected_end)
 
 
 @pytest.fixture
