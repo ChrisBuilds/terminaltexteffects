@@ -144,7 +144,7 @@ Characters fall from the top of the canvas as bouncy balls before settling into 
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -205,7 +205,7 @@ Forms bubbles with the characters. Bubbles float down and pop.
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -391,12 +391,12 @@ Swaps characters from an incorrect initial position to the correct position.
         Easing
         ------
         Note: A prefix must be added to the function name.
-        
+
         All easing functions support the following prefixes:
             IN_  - Ease in
             OUT_ - Ease out
             IN_OUT_ - Ease in and out
-            
+
         Easing Functions
         ----------------
         SINE   - Sine easing
@@ -409,10 +409,10 @@ Swaps characters from an incorrect initial position to the correct position.
         BACK   - Back easing
         ELASTIC - Elastic easing
         BOUNCE - Bounce easing
-        
+
         Visit: https://easings.net/ for visualizations of the easing functions.
 
-        
+
     Example: terminaltexteffects errorcorrect --error-pairs 0.1 --swap-delay 10 --error-color e74c3c --correct-color 45bf55 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --movement-speed 0.5
     ```
 ---
@@ -450,7 +450,7 @@ Characters expand from the center.
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -582,7 +582,7 @@ A laser etches characters onto the terminal.
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
                         Direction of the final gradient. (default: Direction.VERTICAL)
 
-    Example: terminaltexteffects laseretch --etch-speed 2 --etch-delay 5 --etch-direction row_top_to_bottom --cool-gradient-stops ffe680 ff7b00 --laser-gradient-stops ffffff 376cff --spark-gradient-stops ffffff ffe680 ff7b00 1a0900 --spark-cooling-frames 10 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 8  --final-gradient-frames 5 --final-gradient-direction vertical    
+    Example: terminaltexteffects laseretch --etch-speed 2 --etch-delay 5 --etch-direction row_top_to_bottom --cool-gradient-stops ffe680 ff7b00 --laser-gradient-stops ffffff 376cff --spark-gradient-stops ffffff ffe680 ff7b00 1a0900 --spark-cooling-frames 10 --final-gradient-stops 8A008A 00D1FF ffffff --final-gradient-steps 8  --final-gradient-frames 5 --final-gradient-direction vertical  
     ```
 ---
 
@@ -630,7 +630,7 @@ Matrix digital rain effect.
     Example: tte matrix --rain-color-gradient 92be92 185318 --rain-symbols 2 5 9 8 Z : . = + - ¦ _ --rain-fall-delay-range
     8-25 --rain-column-delay-range 5-15 --rain-time 15 --symbol-swap-chance 0.005 --color-swap-chance 0.001 --resolve-delay
     5 --final-gradient-stops 389c38 --final-gradient-steps 12 --final-gradient-frames 5 --final-gradient-direction vertical
-    --highlight-color dbffdb    
+    --highlight-color dbffdb  
     ```
 
 ---
@@ -676,7 +676,7 @@ Text expands in a single row or column in the middle of the canvas then out.
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -741,7 +741,7 @@ Four launchers travel along the canvas edges, firing characters from their neare
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -830,7 +830,7 @@ Pours the characters back and forth from the top, bottom, left, or right.
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -883,7 +883,7 @@ Prints the input data one line at at time with a carriage return and line feed.
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -939,7 +939,7 @@ Rain characters from the top of the canvas.
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -1053,7 +1053,7 @@ Text is scattered across the canvas and moves into position.
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -1106,7 +1106,7 @@ Slices the input in half and slides it into place from opposite directions.
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     LINEAR - Linear easing
@@ -1167,7 +1167,7 @@ Slide characters into view from outside the terminal.
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -1261,7 +1261,7 @@ Spotlights search the text area, illuminating characters, before converging in t
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -1316,7 +1316,7 @@ Sprays the characters from a single point.
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     SINE   - Sine easing
@@ -1519,12 +1519,12 @@ Spawns characters jumbled, explodes them to the edge of the canvas, then reassem
         Easing
         ------
         Note: A prefix must be added to the function name.
-        
+
         All easing functions support the following prefixes:
             IN_  - Ease in
             OUT_ - Ease out
             IN_OUT_ - Ease in and out
-            
+
         Easing Functions
         ----------------
         SINE   - Sine easing
@@ -1537,10 +1537,10 @@ Spawns characters jumbled, explodes them to the edge of the canvas, then reassem
         BACK   - Back easing
         ELASTIC - Elastic easing
         BOUNCE - Bounce easing
-        
+
         Visit: https://easings.net/ for visualizations of the easing functions.
 
-        
+
         Example: terminaltexteffects unstable --unstable-color ff9200 --final-gradient-stops 8A008A 00D1FF FFFFFF --final-gradient-steps 12 --explosion-ease OUT_EXPO --explosion-speed 0.75 --reassembly-ease OUT_EXPO --reassembly-speed 0.75</details>
     ```
 ---
@@ -1629,7 +1629,7 @@ Waves travel across the terminal leaving behind the characters.
         IN_  - Ease in
         OUT_ - Ease out
         IN_OUT_ - Ease in and out
-        
+
     Easing Functions
     ----------------
     LINEAR - Linear easing

@@ -26,7 +26,7 @@ Prefer the repository virtualenv: `./.venv/bin/pytest`, `./.venv/bin/ruff`, `./.
 - Python work is done when focused pytest, `ruff format --check`, `ruff check`, and
   `pyright --pythonpath ./.venv/bin/python` pass on the touched files. Documentation-only changes
   need only a formatting or link check.
-- Add a changelog fragment and regenerate the preview for every issue.
+- Add a changelog fragment for user-facing changes; otherwise apply the `no-changelog` label to the PR.
 - If CI is still running, report that and continue rather than blocking the conversation.
 
 ## Code style

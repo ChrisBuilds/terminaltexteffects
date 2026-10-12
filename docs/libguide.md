@@ -23,7 +23,7 @@ The following example plays the [Slide](./effects/slide.md) effect animation usi
         for frame in effect:
             terminal.print(frame)
     ```
-    
+
     1. Use the `effect_config` attribute to modify the effect configuration. Setting `merge` to `True` on the Slide effect causes the text to slide
     in from alternating sides of the terminal.
 
@@ -69,7 +69,7 @@ All effect configuration options are available within each effect via the `effec
         for frame in effect:
             terminal.print(frame)
     ```
-    
+
     1. Use the `effect_config` attribute to modify the effect configuration. Setting `merge` to `True` on the Slide effect causes the text to slide
     in from alternating sides of the terminal.
     2. Columns will slide in, rather than rows.

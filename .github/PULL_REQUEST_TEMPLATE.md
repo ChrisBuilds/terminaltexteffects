@@ -19,5 +19,5 @@ Closes #<!-- issue number -->
 - [ ] The linked issue's acceptance criteria are met.
 - [ ] Changes stay within the agreed scope.
 - [ ] Relevant documentation and generated completions are current.
-- [ ] Changelog note/skip reason added, or release fragments consumed into dated notes; preview refreshed.
+- [ ] Changelog fragment added for user-facing changes, or the `no-changelog` label applied.
 - [ ] Required CI checks pass for the latest revision.

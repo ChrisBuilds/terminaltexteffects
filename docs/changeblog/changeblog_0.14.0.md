@@ -33,7 +33,7 @@ I had found myself repeating the logic surrounding this in multiple effects such
             character.animation.query_scene("wipe").reset_scene()
             self.terminal.set_character_visibility(character, is_visible=False)
     ```
-    
+
     1. `easer.added` is all sequence elements that fall within the positive difference between the easing functions last two steps.
     2. Wipe groups characters into lists representing a row/column/diag based on the `--wipe-direction` option.
     3. `easer.removed` is all sequence elements that fall within the negative difference between the easing functions last two steps.
