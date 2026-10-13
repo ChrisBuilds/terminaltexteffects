@@ -10,7 +10,8 @@
     package.
 
 Both options default to `False`. Opt in only after measuring an effect; each cache has overhead that can outweigh
-its benefit. See [Performance Testing](../../performance.md) for the benchmark harness and recorded measurements.
+its benefit. See [Performance Testing](../../performance.md) for the benchmark harness and a summary of the
+measurements behind each cache.
 
 ### Eased-Scene Schedules
 

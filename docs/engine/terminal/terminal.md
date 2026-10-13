@@ -105,4 +105,39 @@ number of frames as it would live and recordings are reproducible with `--seed`.
 time directly, a recorded phase runs for that many seconds of rendering time instead, so its length in frames
 depends on rendering speed and is usually far longer than intended.
 
+## Row Caching
+
+!!! info "New in 0.16.0"
+
+    `enable_row_cache()` is available on development `main` and is not in the published 0.15.0 package.
+
+An effect can call `self.terminal.enable_row_cache()` to reuse formatted rows until their characters change.
+The engine tracks coordinates, animation visuals, visibility, layers, and direct `formatted_symbol` assignments.
+Wide characters use the existing width-aware renderer; caching resumes when all visible characters are single-cell.
+Existing motion and animation references, paths, and scenes remain valid when caching is enabled.
+
+Measure before enabling caching (see [Performance Testing](../../performance.md)): tracking and row membership consume
+extra memory, and frequent changes can reduce the benefit. Cache activation changes rendering work without changing
+effect options, scheduling, or random decisions.
+
+These built-in effects enable caching automatically within the input ranges where it measured faster:
+
+| Effect | Activation requirements |
+| --- | --- |
+| Matrix | Canvas at least 4 rows with at least 256 cells. |
+| Print | Text at least 16 columns by 4 rows, with at least 256 input characters. |
+| Pour | Up/down pouring; text at least 64 by 12, with at least 768 characters and three-quarter occupancy. |
+| BouncyBalls | Text at least 64 by 16, with at least 1,024 characters and three-quarter occupancy. |
+| ErrorCorrect | Text at least 8 by 5, with at least 80 input characters. |
+| SynthGrid | Visible canvas at least 8 by 4, including sparse text. |
+| Rain | Text at least 80 by 24, with at least 1,680 characters and seven-eighths occupancy. |
+
+All but Matrix also require single-cell input symbols, and the text-based gates require the text bounds to fit within
+the visible canvas. Occupancy is the input-character count divided by the area of the text bounds; fill and helper
+characters do not contribute. These checks run before effect build and helper allocation. Later wide visual changes
+still use the width-aware fallback. Smaller inputs and horizontal Pour keep the default renderer.
+
+To compare Matrix runs reproducibly, advance its wall-clock-based rain phase with the same simulated clock in both
+runs and verify frame counts and output hashes.
+
 ::: terminaltexteffects.engine.terminal.Terminal
