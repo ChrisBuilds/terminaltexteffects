@@ -81,7 +81,8 @@ Situational checks:
   `./.venv/bin/mkdocs build --strict` for `docs/` changes.
 - **Canonical examples** in `docs/libguide.md` or `docs/appguide.md` (marked blocks):
   `./.venv/bin/pytest -q tests/test_documented_examples.py`.
-- **CLI option changes:** `./.venv/bin/python tools/generate_shell_completions.py`, then `--check`.
+- **CLI option or help changes:** `./.venv/bin/python tools/generate_shell_completions.py` and
+  `./.venv/bin/python tools/generate_showroom.py`, then rerun each with `--check`.
 - **Nix packaging changes:** `bash tools/check_nix.sh` (needs Nix with flakes). Refresh nixpkgs
   deliberately with `nix flake update nixpkgs`.
 - **Visual and manual tests** are excluded by default; run them when a human needs to look:

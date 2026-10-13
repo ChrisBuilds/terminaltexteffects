@@ -5,7 +5,7 @@
 ## Quick Start
 
 ``` py title="thunderstorm.py"
-from terminaltexteffects.effects import Thunderstorm
+from terminaltexteffects.effects.effect_thunderstorm import Thunderstorm
 
 effect = Thunderstorm("YourTextHere")
 with effect.terminal_output() as terminal:

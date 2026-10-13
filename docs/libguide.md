@@ -3,7 +3,7 @@
 ## Playing Effect Animations
 
 All effects are iterators which return a string representing the current frame. Basic usage is as simple as importing
-the effect, instantiating it with the input text, and iterating over the effect. Effects includes a helpful context
+the effect, instantiating it with the input text, and iterating over the effect. Effects include a helpful context
 manager
 ([effect.terminal_output()](./engine/baseeffect.md#terminaltexteffects.engine.base_effect.BaseEffect.terminal_output))
 to handle terminal setup/teardown and cursor positioning.
@@ -28,7 +28,7 @@ The following example plays the [Slide](./effects/slide.md) effect animation usi
     in from alternating sides of the terminal.
 
 === "Output"
-    ![t](./img/lib_demos/libguide_onlyslide_output.gif)
+    ![Slide effect animation with merged groups](./img/lib_demos/libguide_onlyslide_output.gif)
 
 ## Effects are Iterable
 
@@ -42,7 +42,7 @@ text = ("EXAMPLE" * 10 + "\n") * 10
 effect = Slide(text)
 effect.effect_config.merge = True # (1)
 for frame in effect:
-    # frame is a string, do something with it
+    ...  # frame is a string; send it to your own output
 ```
 
 1. Use the `effect_config` attribute to modify the effect configuration. Setting `merge` to `True` on the Slide effect causes the text to slide
@@ -74,10 +74,10 @@ All effect configuration options are available within each effect via the `effec
     in from alternating sides of the terminal.
     2. Columns will slide in, rather than rows.
     3. Change the gradient colors from the defaults.
-    4. Set the canvas width manually rather than automatically detect. Canvas height will be automatically set to the input text height.
+    4. Set the canvas width explicitly. The canvas height keeps its default, which matches the input text height.
 
 === "Output"
-    ![t](./img/lib_demos/libguide_configuration_output.gif)
+    ![Slide effect animation with column grouping and custom gradient](./img/lib_demos/libguide_configuration_output.gif)
 
 ## Configuring the Terminal/Canvas
 
@@ -92,14 +92,14 @@ effect.terminal_config.canvas_width = 80
 effect.terminal_config.canvas_height = 24
 ```
 
-If either `canvas_width` or `canvas_height` are set to `0`, that dimension will be automatically detected based on the
-terminal device dimensions. If either dimensions is set to `-1`, that dimensions will be set to match the input text dimensions.
+Both dimensions default to `-1`, which matches the input text. Set a dimension to `0` to detect it from the terminal
+device, or to a positive integer to use that size.
 
 By default, if your Canvas dimensions exceed the visible area of the Terminal, the text outside of that area will not be
-output in the frame. If you want to output all characters regardless of they position relative to the visible terminal
-area, set `terminal_config.ignore_terminal_dimensions` to `True`. This should **only** be used if you are handing the
-frame yourself and outputting somewhere other than the terminal. The terminal emulator will wrap the text and produce
-unexpected results.
+output in the frame. If you want to output all characters regardless of their position relative to the visible terminal
+area, set `terminal_config.ignore_terminal_dimensions` to `True`. Use this **only** if you are handling the frame
+yourself and outputting somewhere other than the terminal. Otherwise, the terminal emulator will wrap the text and
+produce unexpected results.
 
 ```python
 effect.terminal_config.ignore_terminal_dimensions = True
@@ -107,27 +107,29 @@ effect.terminal_config.ignore_terminal_dimensions = True
 
 ### Frame Rate
 
-TTE sets a default target frame rate of 100FPS. To configure this within your scripts, access the
+TTE sets a default target frame rate of 60 FPS. To configure this within your scripts, access the
 `effect.terminal_config.frame_rate` attribute. Set this attribute to `0` to remove the frame limit.
 
 For more information on terminal configuration options, check out the [TerminalConfig](./engine/terminal/terminalconfig.md) reference.
 
 ## Infinitely Looping Effects
 
-Some effects support infinite looping. For example, [ColorShift](./effects/colorshift.md) via the
-[ColorShiftConfig.cycles](./effects/colorshift.md#terminaltexteffects.effects.effect_colorshift.ColorShiftConfig) config
-attribute. When set to 0 directly, the effect will cycle indefinitely. Explore the configuration options for a given
-effect to see if it supports infinite looping.
+Some effects support infinite looping. For example, setting
+[ColorShiftConfig.cycles](./effects/colorshift.md#terminaltexteffects.effects.effect_colorshift.ColorShiftConfig) to
+`0` makes [ColorShift](./effects/colorshift.md) cycle indefinitely. Explore the configuration options for a given
+effect to see if it supports infinite looping. An infinitely looping effect never finishes, so stop iterating when
+your application no longer needs frames.
 
 !!! note
 
-    Infinite looping is *NOT* supported when TTE is run as an application. The command line argument validators will not accept these values. This is by design, to prevent users inadvertently inputting a configuration that results in having to interrupt the process to end an effect.
+    From the command line, `tte colorshift --cycles 0` loops indefinitely, and `--repeat 0` replays any effect until
+    Ctrl+C. In the published 0.15.0 package, `--cycles` requires a positive value and `--repeat` is not available.
 
-## Small complete frame-iteration example
+## Collecting Frames
 
 This example collects a short [Wipe](./effects/wipe.md) animation and prints its last frame.
-A fixed canvas and no frame-rate delay make it suitable for checking integration without a
-live terminal. For normal animations, print each frame with the context manager shown above.
+A fixed canvas and no frame-rate delay let it run without a live terminal, for example in a
+test. For normal animations, print each frame with the context manager shown above.
 
 <!-- tte-example: library-wipe -->
 ```python
@@ -145,4 +147,4 @@ print(frames[-1])
 
 The final frame contains `Hi`. Collecting frames retains them in memory; for larger input,
 consume the iterator incrementally. Frame strings contain cursor-positioning sequences even
-when colors are disabled. CI executes this marked example directly from this page.
+when colors are disabled.

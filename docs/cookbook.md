@@ -36,4 +36,12 @@ resp = beams_animated_prompt("Here's one with beams:")
 
 ### Output
 
-![t](./img/lib_demos/animated_prompts_demo.gif)
+![Animated prompts using the Slide and Beams effects](./img/lib_demos/animated_prompts_demo.gif)
+
+## More Examples
+
+- [Effects are Iterable](./libguide.md#effects-are-iterable): send frames to your own TUI, GUI, or other output.
+- [Collecting Frames](./libguide.md#collecting-frames): render a fixed-size animation without a live terminal.
+- [Colors and Gradients](./engine/utils/gradient.md): build gradients and map them across a canvas.
+- [Character Orders](./engine/terminal/terminal.md#character-orders): select characters in rows, rings, or spirals.
+- [ParticlePool](./engine/particles.md): reuse helper characters for sparks, smoke, and other short-lived visuals.

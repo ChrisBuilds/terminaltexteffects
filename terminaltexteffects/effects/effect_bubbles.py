@@ -40,13 +40,12 @@ class BubblesConfig(BaseConfig):
 
     Attributes:
         rainbow (bool): If set, the bubbles will be colored with a rotating rainbow gradient.
-        bubble_colors (tuple[Color, ...]): Tuple of colors for the bubbles. Ignored if --no-rainbow is left as
-            default False.
+        bubble_colors (tuple[Color, ...]): Tuple of colors for the bubbles. Ignored when `rainbow` is set.
         pop_color (Color): Color for the spray emitted when a bubble pops.
         bubble_speed (float): Speed of the floating bubbles. Valid values are n > 0.
         bubble_delay (int): Number of frames between bubbles. Valid values are n >= 0.
         pop_condition (typing.Literal["row", "bottom", "anywhere"]): Condition for a bubble to pop. 'row' will pop
-            the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom'
+            the bubble when it reaches the lowest row for which a character in the bubble originates. 'bottom'
             will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at
             the bottom of the terminal.
         movement_easing (easing.EasingFunction): Easing function to use for character movement after a bubble pops.
@@ -83,10 +82,9 @@ class BubblesConfig(BaseConfig):
         action=argutils.TupleAction,
         default=(Color("#d33aff"), Color("#7395c4"), Color("#43c2a7"), Color("#02ff7f")),
         metavar=argutils.ColorArg.METAVAR,
-        help="Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as "
-        "default False.",
+        help="Space separated, unquoted, list of colors for the bubbles. Ignored if --rainbow is set.",
     )  # pyright: ignore[reportAssignmentType]
-    "tuple[Color, ...] : Tuple of colors for the bubbles. Ignored if --no-rainbow is left as default False."
+    "tuple[Color, ...] : Tuple of colors for the bubbles. Ignored if --rainbow is set."
 
     pop_color: Color = argutils.ArgSpec(
         name="--pop-color",
@@ -119,13 +117,13 @@ class BubblesConfig(BaseConfig):
         name="--pop-condition",
         default="row",
         choices=["row", "bottom", "anywhere"],
-        help="Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which "
+        help="Condition for a bubble to pop. 'row' will pop the bubble when it reaches the lowest row for which "
         "a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. "
         "'anywhere' will pop the bubble randomly, or at the bottom of the terminal.",
     )  # pyright: ignore[reportAssignmentType]
     (
         "typing.Literal['row', 'bottom', 'anywhere'] : Condition for a bubble to pop. 'row' will pop the bubble when "
-        "it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at "
+        "it reaches the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at "
         "the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal."
     )
 

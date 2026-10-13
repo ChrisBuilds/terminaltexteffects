@@ -49,7 +49,7 @@ red = Color("#ff0000")
 print(red)
 ```
 
-![t](../../img/lib_demos/printing_colors_demo.png)
+![Printed Color objects showing their codes and appearance](../../img/lib_demos/printing_colors_demo.png)
 
 ### Using Colors to Build a Gradient
 

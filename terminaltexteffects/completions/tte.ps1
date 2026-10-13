@@ -719,7 +719,7 @@
           "max": -1,
           "choices": [],
           "file": false,
-          "help": "Space separated, unquoted, list of colors for the bubbles. Ignored if --no-rainbow is left as default False."
+          "help": "Space separated, unquoted, list of colors for the bubbles. Ignored if --rainbow is set."
         },
         "--pop-color": {
           "min": 1,
@@ -751,7 +751,7 @@
             "anywhere"
           ],
           "file": false,
-          "help": "Condition for a bubble to pop. 'row' will pop the bubble when it reaches the the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal."
+          "help": "Condition for a bubble to pop. 'row' will pop the bubble when it reaches the lowest row for which a character in the bubble originates. 'bottom' will pop the bubble at the bottom row of the terminal. 'anywhere' will pop the bubble randomly, or at the bottom of the terminal."
         },
         "--movement-easing": {
           "min": 1,

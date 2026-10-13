@@ -35,6 +35,11 @@ eval "$(tte --print-completion zsh)"
 
 If you want completions to stick around, add the relevant command to your shell startup file. The generated completion script includes discovered effects and their options, so custom effects show up there too.
 
+!!! note
+
+    Starting with 0.16.0, completion scripts are bundled with TTE and cover built-in effects only. See
+    [Shell Completion](../appguide.md#shell-completion).
+
 One small but useful bit of polish: the `zsh` completion script initializes `compinit` and `bashcompinit` when needed. That means the basic `eval "$(tte --print-completion zsh)"` path works with less shell ceremony.
 
 
