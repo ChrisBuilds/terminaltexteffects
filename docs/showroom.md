@@ -169,7 +169,7 @@ Characters fall from the top of the canvas as bouncy balls before settling into 
 
     Visit: https://easings.net/ for visualizations of the easing functions.
 
-    Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols * o O 0 . --ball-delay 4 --movement-speed 0.45 --movement-easing OUT_BOUNCE --final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal
+    Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols '*' o O 0 . --ball-delay 4 --movement-speed 0.45 --movement-easing OUT_BOUNCE --final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal
     ```
 ---
 
@@ -679,7 +679,7 @@ Matrix digital rain effect.
     --final-gradient-direction (diagonal, horizontal, vertical, radial)
         Direction of the final gradient across the text. (default: radial)
 
-    Example: terminaltexteffects matrix --highlight-color dbffdb --rain-color-gradient 92be92 185318 --rain-symbols 2 5 9 8 Z * ) : . " = + - ¦ | _ ｦ ｱ ｳ ｴ ｵ ｶ ｷ ｹ ｺ ｻ ｼ ｽ ｾ ｿ ﾀ ﾁ ﾂ ﾃ ﾄ ﾅ ﾆ ﾇ ﾈ ﾉ ﾊ ﾋ ﾌ ﾍ ﾎ ﾏ ﾐ ﾑ ﾒ ﾓ ﾔ ﾕ ﾖ ﾗ ﾘ ﾙ ﾚ ﾛ ﾜ ﾝ ﾞ ﾟ --rain-fall-delay-range 2-15 --rain-column-delay-range 3-9 --rain-time 15 --symbol-swap-chance 0.005 --color-swap-chance 0.001 --resolve-delay 3 --final-gradient-stops 92be92 336b33 --final-gradient-steps 12 --final-gradient-frames 3 --final-gradient-direction radial
+    Example: terminaltexteffects matrix --highlight-color dbffdb --rain-color-gradient 92be92 185318 --rain-symbols 2 5 9 8 Z '*' ')' : . '"' = + - ¦ '|' _ ｦ ｱ ｳ ｴ ｵ ｶ ｷ ｹ ｺ ｻ ｼ ｽ ｾ ｿ ﾀ ﾁ ﾂ ﾃ ﾄ ﾅ ﾆ ﾇ ﾈ ﾉ ﾊ ﾋ ﾌ ﾍ ﾎ ﾏ ﾐ ﾑ ﾒ ﾓ ﾔ ﾕ ﾖ ﾗ ﾘ ﾙ ﾚ ﾛ ﾜ ﾝ ﾞ ﾟ --rain-fall-delay-range 2-15 --rain-column-delay-range 3-9 --rain-time 15 --symbol-swap-chance 0.005 --color-swap-chance 0.001 --resolve-delay 3 --final-gradient-stops 92be92 336b33 --final-gradient-steps 12 --final-gradient-frames 3 --final-gradient-direction radial
     ```
 
 ---

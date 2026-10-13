@@ -59,7 +59,7 @@ class BouncyBallsConfig(BaseConfig):
         help="Characters are bouncy balls falling from the top of the canvas.",
         description="bouncyballs | Characters are bouncy balls falling from the top of the canvas.",
         epilog=f"{argutils.EASING_EPILOG}"
-        "Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols * o O 0 . "
+        "Example: terminaltexteffects bouncyballs --ball-colors d1f4a5 96e2a4 5acda9 --ball-symbols '*' o O 0 . "
         "--ball-delay 4 --movement-speed 0.45 --movement-easing OUT_BOUNCE "
         "--final-gradient-stops f8ffae 43c6ac --final-gradient-steps 12 --final-gradient-direction diagonal",
     )

@@ -121,7 +121,7 @@ class MatrixConfig(BaseConfig):
         description="matrix | Matrix digital rain effect.",
         epilog=(
             "Example: terminaltexteffects matrix --highlight-color dbffdb --rain-color-gradient 92be92 185318 "
-            '--rain-symbols 2 5 9 8 Z * ) : . " = + - ¦ | _ ｦ ｱ ｳ ｴ ｵ ｶ ｷ ｹ ｺ ｻ ｼ ｽ ｾ ｿ ﾀ ﾁ ﾂ ﾃ ﾄ ﾅ ﾆ ﾇ ﾈ '
+            "--rain-symbols 2 5 9 8 Z '*' ')' : . '\"' = + - ¦ '|' _ ｦ ｱ ｳ ｴ ｵ ｶ ｷ ｹ ｺ ｻ ｼ ｽ ｾ ｿ ﾀ ﾁ ﾂ ﾃ ﾄ ﾅ ﾆ ﾇ ﾈ "
             "ﾉ ﾊ ﾋ ﾌ ﾍ ﾎ ﾏ ﾐ ﾑ ﾒ ﾓ ﾔ ﾕ ﾖ ﾗ ﾘ ﾙ ﾚ ﾛ ﾜ ﾝ ﾞ ﾟ --rain-fall-delay-range 2-15 "
             "--rain-column-delay-range 3-9 --rain-time 15 --symbol-swap-chance 0.005 --color-swap-chance 0.001 "
             "--resolve-delay 3 --final-gradient-stops 92be92 336b33 --final-gradient-steps 12 "
