@@ -103,7 +103,8 @@ no issue:
 
 Categories are `breaking`, `added`, `changed`, `deprecated`, `removed`, `fixed`, and `security`.
 Internal changes, and fixes to bugs introduced since the last release, need no fragment: apply the
-`no-changelog` label to the PR. CI fails a PR that has neither. Pending notes appear under Unreleased
+`no-changelog` label to the PR. CI fails a PR that has neither; if you add the label afterwards, re-run
+the failed jobs. Pending notes appear under Unreleased
 on the documentation site; `CHANGELOG.md` gains them only at release. See
 [changelog.d/README.md](changelog.d/README.md).
 
@@ -123,7 +124,7 @@ and you can post them in
 
 ## CI
 
-`.github/workflows/ci.yml` runs on PRs (including drafts and label changes), pushes to `main`, and
+`.github/workflows/ci.yml` runs on PR pushes (including drafts), pushes to `main`, and
 manual dispatch. Every run executes the full workflow:
 
 | Job | Checks |

@@ -7,8 +7,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    # Label events rerun CI so the `no-changelog` label is re-evaluated.
-    types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
 
 permissions:
@@ -27,6 +25,9 @@ jobs:
     name: Code quality
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read # Read the PR's current labels for the changelog check.
     outputs:
       nix: ${{ steps.nix.outputs.run }}
     steps:
@@ -37,7 +38,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.14"
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -61,12 +62,16 @@ jobs:
       - name: Run pre-commit checks on all files
         run: .venv/bin/pre-commit run --all-files --show-diff-on-failure
       - name: Check changelog fragments
+        # Labels are read when the job runs, so adding `no-changelog` later needs a rerun of this job.
         env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
-          SKIP_DECISION: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'no-changelog') }}
         run: |
           args=()
-          if [[ "$SKIP_DECISION" != 'true' ]]; then
+          if [[ -n "$PR_NUMBER" ]] &&
+            ! gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json labels --jq '.labels[].name' |
+              grep -qx 'no-changelog'; then
             args+=(--base "$PR_BASE")
           fi
           .venv/bin/python tools/changelog.py "${args[@]}"
@@ -100,7 +105,7 @@ jobs:
           fi
       - name: Upload test diagnostics
         if: "!cancelled() && hashFiles('test-results/context.json') != ''"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: test-results-quality
           path: |
@@ -143,7 +148,7 @@ jobs:
         run: bash tools/check_nix.sh 2>&1 | tee "$RUNNER_TEMP/nix-validation.log"
       - name: Upload Nix diagnostics
         if: "!cancelled()"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: nix-validation-${{ matrix.name }}
           path: ${{ runner.temp }}/nix-validation.log
@@ -167,7 +172,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -202,21 +207,25 @@ jobs:
         # Informational only: coverage never fails CI.
         if: "!cancelled() && hashFiles('coverage/coverage.xml') != ''"
         env:
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           {
             echo "## Coverage: $(.venv/bin/coverage report --format=total)% of lines and branches"
-            if [[ -n "$PR_BASE" ]]; then
-              .venv/bin/diff-cover coverage/coverage.xml --compare-branch="$PR_BASE" \
-                --format "markdown:$RUNNER_TEMP/diff-cover.md" > /dev/null
-              # Keep the per-file list and summary; drop the long source listings that follow.
-              awk '/^## Summary/ { summary = 1 } summary && /^## / && !/^## Summary/ { exit } { print }' \
-                "$RUNNER_TEMP/diff-cover.md"
+            # A PR checkout is GitHub's merge commit; its first parent is the base it was merged onto.
+            if [[ "$EVENT_NAME" == 'pull_request' ]]; then
+              if .venv/bin/diff-cover coverage/coverage.xml --compare-branch=HEAD^1 \
+                --format "markdown:$RUNNER_TEMP/diff-cover.md" > /dev/null; then
+                # Keep the per-file list and summary; drop the long source listings that follow.
+                awk '/^## Summary/ { summary = 1 } summary && /^## / && !/^## Summary/ { exit } { print }' \
+                  "$RUNNER_TEMP/diff-cover.md"
+              else
+                echo '_Changed-line coverage report unavailable; see the log._'
+              fi
             fi
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload coverage reports
         if: "!cancelled() && hashFiles('coverage/coverage.xml') != ''"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-python-3.14
           path: coverage/
@@ -224,7 +233,7 @@ jobs:
           if-no-files-found: error
       - name: Upload test diagnostics
         if: "!cancelled() && hashFiles('test-results/context.json') != ''"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: test-results-python-${{ matrix.python-version }}
           path: |
@@ -244,7 +253,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.14"
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -279,7 +288,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.14"
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -345,7 +354,7 @@ jobs:
 
       - name: Upload test diagnostics
         if: "!cancelled() && hashFiles('test-results/context.json') != ''"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: test-results-${{ matrix.name }}-python-3.14
           path: |

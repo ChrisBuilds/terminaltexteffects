@@ -52,7 +52,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.14'
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -100,7 +100,7 @@ jobs:
           echo 'Missing reports, cancellation, timeout or skipped tests are not passing exhaustive evidence.' >> "$GITHUB_STEP_SUMMARY"
       - name: Retain exhaustive evidence
         if: "!cancelled() && hashFiles('test-results/revision.txt') != ''"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: exhaustive-python-3.14-${{ inputs.commit }}
           path: test-results/

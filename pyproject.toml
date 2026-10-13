@@ -20,7 +20,7 @@ docs = [
     "mkdocs>=1.6.1; python_version >= '3.10'",
     "mkdocs-material>=9.6.22; python_version >= '3.10'",
     "mkdocstrings-python>=1.11.1; python_version >= '3.10'",
-    "pymdown-extensions>=11.0.1,<12; python_version >= '3.10'",
+    "pymdown-extensions>=11.0.1,<13; python_version >= '3.10'",
     "requests>=2.33.0; python_version >= '3.10'",
     "urllib3>=2.8.0; python_version >= '3.10'",
 ]
@@ -185,7 +185,7 @@ dev = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.22",
     "mkdocstrings-python>=1.11.1",
-    "pymdown-extensions>=11.0.1,<12",
+    "pymdown-extensions>=11.0.1,<13",
 ]
 artifacts = [
     "hatchling>=1.27",
