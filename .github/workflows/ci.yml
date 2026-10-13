@@ -7,8 +7,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    # Label events rerun CI so the `no-changelog` label is re-evaluated.
-    types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
 
 permissions:
@@ -27,6 +25,9 @@ jobs:
     name: Code quality
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read # Read the PR's current labels for the changelog check.
     outputs:
       nix: ${{ steps.nix.outputs.run }}
     steps:
@@ -61,12 +62,16 @@ jobs:
       - name: Run pre-commit checks on all files
         run: .venv/bin/pre-commit run --all-files --show-diff-on-failure
       - name: Check changelog fragments
+        # Labels are read when the job runs, so adding `no-changelog` later needs a rerun of this job.
         env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
-          SKIP_DECISION: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'no-changelog') }}
         run: |
           args=()
-          if [[ "$SKIP_DECISION" != 'true' ]]; then
+          if [[ -n "$PR_NUMBER" ]] &&
+            ! gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json labels --jq '.labels[].name' |
+              grep -qx 'no-changelog'; then
             args+=(--base "$PR_BASE")
           fi
           .venv/bin/python tools/changelog.py "${args[@]}"
