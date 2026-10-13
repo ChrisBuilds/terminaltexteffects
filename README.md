@@ -13,7 +13,7 @@
   </p>
 </p>
 
-[![PyPI - Version](https://img.shields.io/pypi/v/terminaltexteffects?style=flat&color=green)](https://pypi.org/project/terminaltexteffects/)  ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/terminaltexteffects) [![Python Bytes](https://img.shields.io/badge/Python_Bytes-377-D7F9FF?logo=applepodcasts&labelColor=blue)](https://youtu.be/eWnYlxOREu4?t=1549) ![License](https://img.shields.io/github/license/ChrisBuilds/terminaltexteffects)
+[![PyPI - Version](https://img.shields.io/pypi/v/terminaltexteffects?style=flat&color=green)](https://pypi.org/project/terminaltexteffects/)  ![Python Version](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2FChrisBuilds%2Fterminaltexteffects%2Fmain%2Fpyproject.toml) [![Python Bytes](https://img.shields.io/badge/Python_Bytes-377-D7F9FF?logo=applepodcasts&labelColor=blue)](https://youtu.be/eWnYlxOREu4?t=1549) ![License](https://img.shields.io/github/license/ChrisBuilds/terminaltexteffects)
 
 > [!NOTE]
 > This README and the [documentation](https://chrisbuilds.github.io/terminaltexteffects/) follow
