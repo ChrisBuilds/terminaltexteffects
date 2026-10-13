@@ -4,6 +4,11 @@
 
 ## Balanced Grids
 
+!!! info "New in 0.16.0"
+
+    `find_balanced_grid()` and `GridLayout` are available on development `main` and are not in the published
+    0.15.0 package.
+
 `find_balanced_grid(left, bottom, right, top)` returns a `GridLayout` covering inclusive bounds. It accounts for
 terminal character height when choosing row and column counts, then divides each axis so cell sizes differ by
 at most one position. `target_cells`, `min_cell_width`, and `min_cell_height` control the preferred size.

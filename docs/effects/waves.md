@@ -15,13 +15,18 @@ with effect.terminal_output() as terminal:
 
 ## Circular Waves
 
+!!! info "New in 0.16.0"
+
+    Circular directions, `CharacterOrder` directions, `--reverse-wave-direction`, and `--travel-speed` are
+    available on development `main` and are not in the published 0.15.0 package.
+
 The default direction, `circle_center_to_outside`, spreads waves outward in circular rings. Use
 `circle_outside_to_center` for waves that converge on the text center. These directions account for
 terminal character proportions. The existing `diamonds_center_to_outside` and `diamonds_outside_to_center` directions
 use diamond-shaped groups. The former `center_to_outside` and `outside_to_center` spellings remain
 accepted as compatibility aliases.
 
-```sh
+```bash
 tte waves --wave-direction circle_center_to_outside
 tte waves --wave-direction circle_outside_to_center
 ```
@@ -29,7 +34,7 @@ tte waves --wave-direction circle_outside_to_center
 ## Character Orders and Reversal
 
 `--wave-direction` accepts every `CharacterOrder`: rows, columns, diagonals, diamond and circular
-bands, individual row traversals, random order, and all six spiral patterns. By default, spatial orders
+bands, individual row traversals, random order, and all six [spiral orders](../engine/terminal/terminal.md#spiral-sorting). By default, spatial orders
 activate one complete group per frame and individual orders activate one character per frame.
 Double and quad spiral arms interleave in that individual character sequence.
 The default remains `circle_center_to_outside`.
@@ -37,7 +42,7 @@ The default remains `circle_center_to_outside`.
 Use `--reverse-wave-direction` to reverse activation order while retaining each group's membership.
 Reversed spirals travel outward along the selected path. Reversal defaults to off.
 
-```sh
+```bash
 tte waves --wave-direction spiral_clockwise_quad
 tte waves --wave-direction spiral_counter_clockwise_double --reverse-wave-direction --travel-speed 8
 ```
@@ -62,7 +67,7 @@ number of characters; for spatial orders it is the number of complete groups. Th
 positive integer and defaults to `1`. The last batch activates only the remaining entries, retaining
 the selected order and reversal. Animation timing still advances once per frame.
 
-```sh
+```bash
 tte waves --wave-direction spiral_clockwise --travel-speed 12
 tte waves --wave-direction circle_center_to_outside --travel-speed 2
 ```

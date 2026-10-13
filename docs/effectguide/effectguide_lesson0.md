@@ -2,7 +2,7 @@
 
 ## Introduction to the TTE Engine
 
-The TTE engine architecture features a single Terminal object and many, mostly isolated, EffectCharacter objects. The Terminal is responsible for creating EffectCharacters, providing them to the effects, and printing them to the screen. EffectCharacters are responsible for progressing themselves through their animation/motion logic. You can think of every character on the screen as it's own object, moving itself around, and modifying it's own appearance. The Terminal simply gets the latest location and string representation of each character on every call to Terminal.print().
+The TTE engine architecture features a single Terminal object and many, mostly isolated, EffectCharacter objects. The Terminal is responsible for creating EffectCharacters, providing them to the effects, and printing them to the screen. EffectCharacters are responsible for progressing themselves through their animation/motion logic. You can think of every character on the screen as its own object, moving itself around, and modifying its own appearance. The Terminal simply gets the latest location and string representation of each character on every call to Terminal.print().
 
 ### Terminal
 
@@ -12,6 +12,7 @@ Let's look at the lifecycle of the Terminal.
 ---
 title: Terminal
 ---
+stateDiagram-v2
 get_dimensions
 make_effectcharacters
 update_terminal_state

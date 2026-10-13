@@ -4,6 +4,9 @@ site_description: TerminalTextEffects Documentation
 site_author: ChrisBuilds
 repo_url: https://github.com/ChrisBuilds/terminaltexteffects
 docs_dir: docs
+# Unfinished effect-building guide; restore its nav entries below when publishing it.
+exclude_docs: |
+  effectguide/
 
 
 theme:
@@ -51,7 +54,6 @@ nav:
   - Changelog: changelog.md
   - Support and Compatibility: support.md
   - Security Policy: security.md
-  - Contributing: https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CONTRIBUTING.md
   - ChangeBlog:
     - changeblog/changeblog.md
     - changeblog/changeblog_0.15.0.md
@@ -65,18 +67,21 @@ nav:
     - Install: installation.md
     - Application Usage: appguide.md
     - Library Usage: libguide.md
-    - Performance Testing: performance.md
   # - Effect Building Guide:
   #   - effectguide/effectguide.md
   #   - effectguide/effectguide_lesson0.md
   - Effects Showroom: showroom.md
   - Library Cookbook: cookbook.md
+  - Development:
+    - Contributing: https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CONTRIBUTING.md
+    - Performance Testing: performance.md
   - Reference:
     - Engine:
       - engine/baseeffect.md
       - engine/basecharacter.md
       - engine/baseconfig.md
       - engine/eventhandler.md
+      - engine/particles.md
       - Animation:
         - engine/animation/animation.md
         - engine/animation/charactervisual.md

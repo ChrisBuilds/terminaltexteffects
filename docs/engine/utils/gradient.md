@@ -99,7 +99,7 @@ not exceed its maximum, and `direction` must be a `Gradient.Direction`. Invalid 
 
 Gradients can be printed to the terminal to show information about the stops, steps, and resulting spectrum.
 
-![t](../../img/lib_demos/printing_gradients_demo.png)
+![Printed Gradient showing its stops, steps, and spectrum](../../img/lib_demos/printing_gradients_demo.png)
 
 ---
 

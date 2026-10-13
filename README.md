@@ -200,7 +200,7 @@ Input can be piped or redirected through stdin, or passed with `--input-file`/`-
 * Randomly select an effect with `--random-effect`/`-R`. Use `--seed` to make the choice repeatable,
   and `--include-effects` or `--exclude-effects` to limit the pool.
 * Enable shell completion for built-in effects in the current shell. Add the line to `~/.bashrc` or
-  `~/.zshrc` to keep it. See [Configuration](https://chrisbuilds.github.io/terminaltexteffects/appguide/#configuration)
+  `~/.zshrc` to keep it. See [Shell Completion](https://chrisbuilds.github.io/terminaltexteffects/appguide/#shell-completion)
   for PowerShell and other details.
   * Bash: `eval "$(tte --print-completion bash)"`
   * Zsh: `eval "$(tte --print-completion zsh)"`

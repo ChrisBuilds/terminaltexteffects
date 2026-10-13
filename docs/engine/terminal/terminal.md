@@ -2,6 +2,11 @@
 
 *Module*: `terminaltexteffects.engine.terminal`
 
+!!! info "New in 0.16.0"
+
+    `CharacterOrder`, spiral sorting, grid grouping, and `clock()` are available on development `main` and are not
+    in the published 0.15.0 package.
+
 ## Character Orders
 
 `CharacterOrder` unifies spatial groups and individual character sorts. Both terminal methods accept

@@ -1,7 +1,7 @@
 # Application Guide
 
-When used as a system application, TerminalTextEffects will produce animations on text passed to stdin or through the
-`-i` argument. Passing data via STDIN to TTE occurs via pipes or redirection.
+When used as a system application, TerminalTextEffects produces animations on text passed to standard input or
+through the `-i` argument. Pipes and redirection both pass data through standard input.
 
 ## Invocation Examples
 
@@ -23,27 +23,48 @@ When used as a system application, TerminalTextEffects will produce animations o
     tte -i path/to/file slide
     ```
 
-## Configuration
+## Command Syntax
 
-TTE has many global terminal configuration options as well as effect-specific configuration options available via command-line arguments.
-
-Terminal configuration options should be specified prior to providing the effect name. The basic format is as follows:
+TTE has global terminal options as well as effect-specific options. Global options go before the effect name, and
+effect options go after it:
 
 ```bash title="TTE usage syntax"
 tte [global_options] <effect_name> [effect_options]
 ```
 
-Using the `-h` argument in place of the global_options or effect_options will produce either the global or effect help output, respectively.
+Use `-h` in place of the global options or the effect options to show the global or effect help, respectively.
 
-Shell completions for bundled effects are also available for Bash, Zsh, and PowerShell 7+:
+The example below passes the output of the `ls` command to TTE with the following options:
 
-Run `tte --print-completion` to print copy-and-paste setup commands, or use the commands directly:
+* *Global* options:
+    - Wrap text that is wider than the terminal.
+    - Replace tabs with 4 spaces.
 
-```bash title="Generate shell completions"
+* *Effect* options:
+    - Use the [slide](./effects/slide.md) effect.
+    - Merge the groups.
+    - Set the movement speed to 2.
+    - Group by column.
+
+```bash title="TTE argument specification example"
+ls | tte --wrap-text --tab-width 4 slide --merge --movement-speed 2 --grouping column
+```
+
+## Shell Completion
+
+!!! info "New in 0.16.0"
+
+    PowerShell 7+ completion is available on development `main`. The published 0.15.0 package provides Bash and Zsh
+    completion, generated at run time, which also includes custom effects.
+
+Completion is available for Bash, Zsh, and PowerShell 7+. Run `tte --print-completion` to print copy-and-paste setup
+commands, or use the commands directly:
+
+```bash title="Enable Bash completion in this session"
 eval "$(tte --print-completion bash)"
 ```
 
-```bash title="Generate zsh completions"
+```bash title="Enable Zsh completion in this session"
 eval "$(tte --print-completion zsh)"
 ```
 
@@ -51,22 +72,22 @@ eval "$(tte --print-completion zsh)"
 tte --print-completion powershell | Out-String | Invoke-Expression
 ```
 
-The script registers both `tte` and `terminaltexteffects`. It completes built-in effect names,
-global and effect-specific options, allowed values, and input-file paths. Bundled completions
-exclude user plugins and development effects and require no Python process on each Tab press.
+The script registers both `tte` and `terminaltexteffects`. It completes built-in effect names, global and
+effect-specific options, allowed values such as gradient directions, grouping modes, and easing functions, and
+input-file paths. Completion reads literal arguments; it does not evaluate variables or subexpressions to infer
+context. The scripts are bundled with TTE, so no Python process runs on each Tab press. As a result, they cover
+built-in effects only, not custom effects or development effects.
 
-To enable completions for future shells, add the relevant command to your `~/.bashrc` or `~/.zshrc`.
-For PowerShell 7+, add the activation command above to your `$PROFILE` file, creating its
-parent directory/file if needed, then restart PowerShell. Setup is opt-in; TTE never edits
-profiles automatically. Remove that profile line and restart the shell to disable completion.
+To enable completion for future shells, add the relevant command to your `~/.bashrc` or `~/.zshrc`. For PowerShell
+7+, add the activation command to your `$PROFILE` file, creating its parent directory and the file if needed, then
+restart PowerShell. Setup is opt-in; TTE never edits profiles automatically. To disable completion, remove that
+profile line and restart the shell.
 
-On Windows, Windows Terminal handles rendering and may host PowerShell, Command Prompt,
-or WSL shells. Choose PowerShell 7 for this script; Windows PowerShell 5.1 is not supported.
-Bash/Zsh sessions continue to use their respective scripts. Completion reads literal arguments;
-it does not evaluate variables or subexpressions to infer context.
-Completion includes valid values for enum-like options such as gradient directions, grouping modes, and easing
-functions.
-Completion scripts cover built-in effects only; options from custom effect plugins are not included.
+On Windows, Windows Terminal handles rendering and may host PowerShell, Command Prompt, or WSL shells. Choose
+PowerShell 7 for the PowerShell script; Windows PowerShell 5.1 is not supported. Bash and Zsh sessions use their
+respective scripts.
+
+## Random and Repeated Playback
 
 TTE can randomly select an effect with `--random-effect`/`-R`. Use `--seed` to make that selection repeatable, or
 limit the pool with `--include-effects` and `--exclude-effects`:
@@ -74,6 +95,11 @@ limit the pool with `--include-effects` and `--exclude-effects`:
 ```bash title="Random effect selection"
 ls | tte --random-effect --seed 123 --include-effects beams decrypt rain
 ```
+
+!!! info "New in 0.16.0"
+
+    `--repeat`, `--hold`, and `--alt-screen` are available on development `main` and are not in the published 0.15.0
+    package.
 
 Use `--repeat COUNT` to play effects in cycles against the same input. The default is one playback;
 `--repeat 3` plays three times, and `--repeat 0` keeps replaying until you press Ctrl+C.
@@ -93,8 +119,10 @@ tte -i banner.txt --repeat 0 beams
 
 Use `--hold SECONDS` (0 to 86400) to keep the final frame of each playback on screen before the next playback
 starts or `tte` exits, including after a single or final playback. No hold follows a playback that produced no
-frames. Use `--alt-screen` to run in the terminal's alternate screen, like full-screen programs such as `less`;
-the original screen and scrollback are restored when output ends, including after an error or Ctrl+C. The
+frames.
+
+Use `--alt-screen` to run in the terminal's alternate screen, like full-screen programs such as `less`.
+The original screen and scrollback are restored when output ends, including after an error or Ctrl+C. The
 final frame is not left in the terminal afterward, so combine it with `--hold` to keep the finished frame
 visible first. These options suit continuous displays:
 
@@ -102,7 +130,11 @@ visible first. These options suit continuous displays:
 tte -i banner.txt --repeat 0 --random-effect --hold 5 --alt-screen
 ```
 
-### Recording and playback
+## Recording and Playback
+
+!!! info "New in 0.16.0"
+
+    Recording and playback are available on development `main` and are not in the published 0.15.0 package.
 
 Use `--record FILE` to render an effect once and save its frames, then `--play` to replay them without
 running the effect again. Playback uses far less CPU than rendering, which suits screensavers, background
@@ -113,6 +145,8 @@ extension.
 tte -i banner.txt --record banner.tterec --canvas-width 0 --canvas-height 0 matrix
 tte --play banner.tterec --repeat 0
 ```
+
+### Recording
 
 Recording renders frames as fast as possible and shows nothing; it prints a one-line summary to standard
 error when it finishes. `--frame-rate` must be greater than `0` and becomes the playback rate. Effect
@@ -127,10 +161,11 @@ A recording stores only the canvas. Canvas size, text anchoring, and color optio
 and `--no-color` are fixed when recording. Set `--canvas-width` and `--canvas-height` explicitly, or use `0`
 to match the terminal at recording time, so the recording does not depend on the input size.
 
+### Playback
+
 `--play PATH` takes a recording file or a directory. For a directory, every top-level `.tterec` file plays
 in filename order; other files and subdirectories are ignored. No effect name or input is needed, and
-standard input is not read. Every recording is fully validated before anything is shown, and any invalid
-recording is an error. Playback options:
+standard input is not read. Playback options:
 
 - `--repeat COUNT` repeats the file or directory (`0` repeats until Ctrl+C).
 - `--frame-rate` overrides the recorded frame rate; `0` plays as fast as possible.
@@ -143,6 +178,10 @@ recording is an error. Playback options:
   share a canvas sized to the largest, each anchored within it.
 - `--seed`, `--reuse-canvas`, `--no-eol`, and `--no-restore-cursor` work as they do for live effects.
 
+```bash title="Background display from a directory of recordings"
+tte --play ~/recordings --repeat 0 --shuffle --hold 5 --alt-screen
+```
+
 Options fixed when a recording is made cannot be used with `--play`, and are rejected with an error naming
 them: `--canvas-width`, `--canvas-height`, `--anchor-text`, `--xterm-colors`, `--no-color`,
 `--terminal-background-color`, `--existing-color-handling`, `--tab-width`, `--wrap-text`, and
@@ -150,62 +189,51 @@ them: `--canvas-width`, `--canvas-height`, `--anchor-text`, `--xterm-colors`, `-
 rejected too. An effect name, `--random-effect`, and `--input-file` cannot be combined with `--play`. To
 change any of these, record again.
 
-Playback exits with an error if the terminal is smaller than the recorded canvas. Recordings are treated
-as untrusted input: playback writes only text and color (SGR) sequences, and rejects any recording that
-contains other control or escape sequences, has rows that do not exactly fill the recorded canvas width, or
-is corrupt, truncated, or oversized. Text attributes are reset when playback ends. A recording that changes
-on disk after validation stops playback with an error. Recordings larger than 256 MiB are not held in memory;
-on later passes each of their frames is checked again as it plays. A replacement with another valid
-recording with the same canvas size, frame rate, and TTE version therefore plays without an error, and one
-that is corrupt near its end can show earlier frames before playback stops. Playback ends early when a pass
-contains no frames.
+Playback exits with an error if the terminal is smaller than the recorded canvas. Text attributes are reset when
+playback ends.
 
-```bash title="Background display from a directory of recordings"
-tte --play ~/recordings --repeat 0 --shuffle --hold 5 --alt-screen
+??? note "Recording validation"
+
+    Recordings are treated as untrusted input. Every recording is fully validated before anything is shown, and any
+    invalid recording is an error. Playback writes only text and color (SGR) sequences, and rejects any recording
+    that contains other control or escape sequences, has rows that do not exactly fill the recorded canvas width, or
+    is corrupt, truncated, or oversized.
+
+    A recording that changes on disk after validation stops playback with an error. Recordings larger than 256 MiB
+    are not held in memory; on later passes each of their frames is checked again as it plays. A replacement with
+    another valid recording with the same canvas size, frame rate, and TTE version therefore plays without an
+    error, and one that is corrupt near its end can show earlier frames before playback stops. Playback ends early
+    when a pass contains no frames.
+
+## Animating Fetch Output
+
+Animate fetch output on shell launch using screenfetch:
+
+```bash title="Shell Fetch"
+screenfetch -N | tte slide --merge
 ```
 
-Recording and playback are part of development toward 0.16.0 and are not available in the published 0.15.0
-package.
+![Screenfetch output animated with the Slide effect](./img/application_demos/fetch_example.gif)
 
-Custom effect modules are discovered from `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or
-`~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is unset, empty, or a relative path. Any `.py` file in that directory that
-provides `get_effect_resources()` can register an effect command alongside the built-in effects.
-If a custom effect module fails to import or register, TTE prints a warning naming the file to standard
-error, skips that module, and keeps the built-in effects and other valid custom effects available.
-Each module is imported under its file name, so custom effect modules can import themselves and earlier-loaded
-sibling files by name. A file named like a standard-library or installed module, such as `random.py`, is skipped
-with a warning instead of replacing that module; rename the file to load it.
-These skip-with-warning protections are part of development toward 0.16.0. In the published 0.15.0 package,
-a custom effect module that fails to import or register stops `tte` from starting, and a module named like an
-installed module can replace it.
+!!! note
 
-For prototypes in an unreleased checkout, set `TTE_DEV_EFFECTS_DIR` to a directory of effect
-modules. These modules use the same `get_effect_resources()` interface. This development-only
-setting is not available in the released 0.15.0 CLI, is explicit, and does not affect bundled
-shell completion generation. Contributors can use `python -m tools.dev <effect>` from a checkout
-to load its `dev_effects/` directory.
+    TTE is not a full terminal emulator, but it does parse common fetch-style input. Supported input includes
+    SGR foreground/background colors, common cursor movement CSI sequences, carriage returns, and selected DEC
+    private mode toggles for cursor visibility and line wrapping. Unsupported control sequences still fail fast with
+    an error so they do not leak into the rendered animation.
 
-The example below will pass the output of the `ls` command to TTE with the following options:
+## Community Effects
 
-* *Global* options:
-    - Text will be wrapped if wider than the terminal.
-    - Tabs will be replaced with 4 spaces.
+TTE 0.15.0 and later can load community effect modules without installing them into the TTE package. TTE
+discovers custom effect modules in `${XDG_CONFIG_HOME}/terminaltexteffects/effects`, or in
+`~/.config/terminaltexteffects/effects` when `XDG_CONFIG_HOME` is unset, empty, or a relative path. Any `.py`
+file in that directory that provides `get_effect_resources()` registers an effect command alongside the built-in
+effects.
 
-* *Effect* options:
-    - Use the [slide](./effects/slide.md) effect.
-    - Merge the groups.
-    - Set movement-speed to 2.
-    - Group by column.
+### Installing a Community Effect
 
-```bash title="TTE argument specification example"
-ls | tte --wrap-text --tab-width 4 slide --merge --movement-speed 2 --grouping column
-```
-
-## Community effects
-
-TTE 0.15.0 and later can load community effect modules without installing them into the TTE package.
-Download or clone the effect author's source, then place the flat effect `.py` module in
-`${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects`. On macOS and Linux, for example:
+Download or clone the effect author's source, then place the flat effect `.py` module in the effects directory.
+On macOS and Linux, for example:
 
 ```bash title="Install a community effect module"
 mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects"
@@ -214,7 +242,6 @@ cp path/to/community_effect.py "${XDG_CONFIG_HOME:-$HOME/.config}/terminaltextef
 
 These commands use `XDG_CONFIG_HOME` as written. If it is set to a relative path, unset it or set it to an
 absolute directory before running them; TTE ignores relative values and searches `~/.config` instead.
-On TTE 0.15.0, an empty `XDG_CONFIG_HOME` also does not fall back to `~/.config`, so unset an empty value too.
 
 Install any dependencies listed by the author into the same Python environment as TTE. The module
 must expose `get_effect_resources()` and use APIs supported by the TTE version you have installed.
@@ -227,34 +254,42 @@ tte community-effect -h
 printf 'Hello!\n' | tte community-effect
 ```
 
-Replace `community-effect` with the effect command name documented by its author.
-On TTE 0.15.0, a module that fails to load stops `tte` from starting; remove it from the effects
-directory to restore the built-in effects.
-The effect remains hosted and maintained by its author.
+Replace `community-effect` with the effect command name documented by its author. The effect remains hosted and
+maintained by its author.
+
+### Loading Behavior
+
+If a custom effect module fails to import or register, TTE prints a warning naming the file to standard
+error, skips that module, and keeps the built-in effects and other valid custom effects available.
+Each module is imported under its file name, so custom effect modules can import themselves and earlier-loaded
+sibling files by name. A file named like a standard-library or installed module, such as `random.py`, is skipped
+with a warning instead of replacing that module; rename the file to load it.
+
+!!! warning "Differences in 0.15.0"
+
+    The skip-with-warning protections are available on development `main` and are not in the published 0.15.0
+    package. In 0.15.0:
+
+    - A custom effect module that fails to import or register stops `tte` from starting. Remove it from the effects
+      directory to restore the built-in effects.
+    - A module named like an installed module can replace it.
+    - An empty `XDG_CONFIG_HOME` does not fall back to `~/.config`, so unset an empty value.
+
+### Sharing Effects
 
 Browse or share projects in the [TTE Effect Show and Tell discussion category](https://github.com/ChrisBuilds/terminaltexteffects/discussions/categories/tte-effect-show-and-tell).
 Include a short demo, a source repository or public Gist, supported TTE version, installation and run
 steps, license, and maintenance status. A listing is a community sharing post; it does not mean the
 effect is bundled with TTE or endorsed by its maintainers.
 
-## Example Usage
+### Developing Effects
 
-Animate fetch output on shell launch using screenfetch:
+For prototypes in a repository checkout, set `TTE_DEV_EFFECTS_DIR` to a directory of effect modules. These modules
+use the same `get_effect_resources()` interface. This setting is development-only: it is not available in the
+released 0.15.0 CLI, must be set explicitly, and does not affect bundled shell completion. Contributors can use
+`python -m tools.dev <effect>` from a checkout to load its `dev_effects/` directory.
 
-```bash title="Shell Fetch"
-screenfetch -N | tte slide --merge
-```
-
-![fetch_demo](./img/application_demos/fetch_example.gif)
-
-!!! note
-
-    TTE is not a full terminal emulator, but it does parse common fetch-style input. Supported input includes
-    SGR foreground/background colors, common cursor movement CSI sequences, carriage returns, and selected DEC
-    private mode toggles for cursor visibility and line wrapping. Unsupported control sequences still fail fast with
-    an error so they do not leak into the rendered animation.
-
-## Short reproducible CLI example
+## Reproducible Example
 
 Run this command in Bash (including Git Bash) or a compatible POSIX shell. It pipes literal
 input into Wipe, fixes the canvas, and disables colors and playback delay. Global options
@@ -267,7 +302,5 @@ printf 'Hi' | tte --seed 16 --frame-rate 0 --no-color \
   wipe --final-gradient-stops ffffff --final-gradient-steps 1 --final-gradient-frames 1
 ```
 
-This is a short integration example rather than a pacing demonstration. For normal playback,
-choose a nonzero frame rate or omit `--frame-rate`. CI executes this marked command directly
-from this page and checks rendering and cursor restoration. It does not evaluate terminal
-appearance; visual QA remains separate.
+With `--frame-rate 0`, the animation plays as fast as possible. For normal playback, choose a nonzero frame rate or
+omit `--frame-rate`.

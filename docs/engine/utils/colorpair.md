@@ -46,7 +46,7 @@ color values raise the same `ValueError` as direct `Color` construction.
 
 ColorPair objects can be printed to see the resulting colors.
 
-![t](../../img/lib_demos/colorpair_print_example.png)
+![Printed ColorPair objects showing foreground and background colors](../../img/lib_demos/colorpair_print_example.png)
 
 ---
 

@@ -5,7 +5,7 @@
 ## Quick Start
 
 ``` py title="smoke.py"
-from terminaltexteffects.effects import Smoke
+from terminaltexteffects.effects.effect_smoke import Smoke
 
 effect = Smoke("YourTextHere")
 with effect.terminal_output() as terminal:

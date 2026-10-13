@@ -1,9 +1,14 @@
 # Performance Testing
 
+This page is for contributors. The benchmark commands run from a repository checkout set up as described in
+[CONTRIBUTING.md](https://github.com/ChrisBuilds/terminaltexteffects/blob/main/CONTRIBUTING.md).
+
 Use `tools/perf/benchmark_effects.py` for repeatable effect performance checks. The harness uses only the Python
 standard library, disables frame-rate sleeps, renders through the library iterator API, and avoids terminal output.
 
-## Baseline
+## Benchmark Harness
+
+### Baseline
 
 Run a baseline before changing performance-sensitive code:
 
@@ -33,7 +38,7 @@ The default `--lifecycle iterator` mode measures iterator construction and frame
 construction, frame generation, in-memory calls to `Terminal.print()`, and cursor restoration. This mode is useful for
 finding duplicated setup or output-lifecycle regressions without writing control sequences to the real terminal.
 
-## Candidate
+### Candidate
 
 After making a focused change and running the relevant functional checks, rerun the same benchmark arguments:
 
@@ -55,7 +60,7 @@ Compare the two reports:
 The comparison is advisory by default. Report build, render, and total mean deltas along with frame-count or output-size
 changes, but do not treat regressions as failures unless a task explicitly sets a threshold.
 
-## Profiling
+### Profiling
 
 Use `--profile` when the timing delta needs a call-level explanation:
 
@@ -70,7 +75,14 @@ Use `--profile` when the timing delta needs a call-level explanation:
 
 The profile reports cumulative time for one scenario and is best used after a benchmark shows a meaningful change.
 
-## Opt-in row caching
+## Measured Optimizations
+
+The sections below describe opt-in engine features and effect optimizations, with the measurements that justified
+them. They are local iterator timings and traced Python allocations, not RSS measurements or universal guarantees.
+
+### Opt-in row caching
+
+Row caching is available on development `main` and is not in the published 0.15.0 package.
 
 An effect can call `self.terminal.enable_row_cache()` to reuse formatted rows until their characters change.
 The engine tracks coordinates, animation visuals, visibility, layers, and direct `formatted_symbol` assignments.
@@ -99,7 +111,7 @@ characters do not contribute. These checks run before effect build and helper al
 still use the engine's width-aware fallback. Horizontal Pour and input shapes below these thresholds retain ordinary
 rendering. Cache activation changes rendering work without changing effect options, scheduling, or random decisions.
 
-## Spotlights illumination
+### Spotlights illumination
 
 Spotlights indexes authored input cells by column and row. Beam selection uses the original floating ellipse spans,
 including wide continuation cells and input spaces with parsed colors. Empty fill cells are excluded from the index;
@@ -134,7 +146,7 @@ and effect-option comparisons. A separate fresh-process `tracemalloc` sample for
 Python allocation from 25.46 MB to 8.27 MB (67.5%); build peak increased from 4.43 MB to 5.12 MB. These are local timing
 and traced-allocation results, not RSS measurements or universal performance guarantees.
 
-## Opt-in appearance reuse
+### Opt-in appearance reuse
 
 `Animation.set_appearance_if_changed(symbol=None, colors=None)` follows the ordinary setter's symbol defaults,
 color overrides, and width tracking. It reuses its last visual when the effective request, color policy, visual
@@ -169,7 +181,7 @@ from 8.07 MB to 8.01 MB (-0.8%).
 Overflow retains snapshots for moving rows, trading memory for reduced repeated visual construction. These are local
 timings and traced Python allocations, not RSS measurements or universal speed guarantees.
 
-## Motion activation distances
+### Motion activation distances
 
 `Motion.activate_path()` calculates straight-line origin distances with the same terminal-scaled `math.hypot`
 arithmetic as the geometry helper, avoiding its coordinate-key hashing. Bézier activation retains the shared
@@ -194,19 +206,11 @@ shapes, colors, offsets and configurations, and six control effects. Separate de
 samples measured 110.56 MB before and 111.67 MB after (+1.0%).
 These are local iterator timings and traced Python allocations, not RSS measurements or universal speed guarantees.
 
-## Opt-in eased-scene schedules
+### Opt-in eased-scene schedules
 
-`Animation.new_scene(cache_easing=True)` or `Scene(..., cache_easing=True)` reuses immutable frame-index
-schedules for scenes with matching built-in easing functions and duration boundaries. Frames, visuals,
-playback counters and lifecycle events remain independently owned. Only Waves opts in by default.
-Custom easing callables, scenes beyond the 4096-tick entry limit, and motion-synced scenes retain their
-ordinary playback calculations. The engine keeps at most 32 schedules; weak scene references allow
-entries to be released on eviction and lazily reacquired during playback. Easing changes or appended
-frames select a new schedule; resetting/looping reuses the existing layout.
-
-Use the helper after measuring repeated layouts. Many unique schedules or short/cancelled playback can
-pay for precomputation without enough reuse. Opting in does not cache arbitrary callback results or share
-mutable animation state. Manually changed out-of-range cursors retain ordinary easing/clamping behavior.
+`cache_easing=True` is described in the [Scene reference](engine/animation/scene.md#eased-scene-schedules). Only
+Waves opts in. Opting in does not cache arbitrary callback results or share mutable animation state. Manually
+changed out-of-range cursors retain ordinary easing/clamping behavior.
 
 Local production comparisons used the repository harness with actual pre-change source in isolated
 workers: seven samples, two warmups, seeds 1339–1345, serial rotating arms, GC before each run and cold
@@ -230,16 +234,12 @@ BinaryPath/Expand kept caching disabled; their small total-time variations (+0.9
 a meaningful change. Thunderstorm remains disabled and has no timing claim because its output is not
 reproducible under the existing benchmark. These are local measurements, not universal guarantees or RSS.
 
-## Opt-in encoded appearance construction
+### Opt-in encoded appearance construction
 
-`Animation.new_scene(cache_appearance=True)` or `Scene(..., cache_appearance=True)` shares immutable ANSI
-strings during frame construction. Every frame and visual remains a fresh mutable object. The engine
-retains at most 2048 encodings, keyed by symbol, style mask and colors resolved after terminal policy.
-Only native inputs use the cache; custom values and formatting overrides preserve ordinary behavior.
-Explicit formatting calls remain uncached, and visual edits keep their existing output invalidation.
-
-The option defaults to disabled. Waves enables it for the repeated wave scene. Use it after measuring
-both construction time and peak allocation: a high hit rate alone does not establish a speedup.
+`cache_appearance=True` is described in the [Scene reference](engine/animation/scene.md#encoded-appearance-reuse).
+Encodings are keyed by symbol, style mask, and colors resolved after terminal policy. Waves enables it for the
+repeated wave scene. Measure both construction time and peak allocation before enabling it elsewhere: a high hit rate
+alone does not establish a speedup.
 
 Production measurements against the already optimized Waves with easing schedules, using seven samples,
 two warmups, rotated isolated workers and cold caches per iteration:

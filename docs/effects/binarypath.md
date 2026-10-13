@@ -1,4 +1,4 @@
-# Binarypath
+# BinaryPath
 
 ![Demo](../img/effects_demos/binarypath_demo.gif)
 

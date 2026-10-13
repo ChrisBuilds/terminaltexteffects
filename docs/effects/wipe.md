@@ -15,25 +15,24 @@ with effect.terminal_output() as terminal:
 
 ## Wipe Directions and Sorts
 
+!!! info "New in 0.16.0"
+
+    `CharacterOrder` directions and `--reverse-wipe-direction` are available on development `main` and are not
+    in the published 0.15.0 package.
+
 `--wipe-direction` accepts every `CharacterOrder`. Group directions reveal whole
 rows, columns, diagonals, or radial bands. Sort directions reveal individual characters in the exact
 order returned by `Terminal.get_characters()`, using their input coordinates.
 
-The spiral sorts wind inward from the input's bounds:
+See [Spiral Sorting](../engine/terminal/terminal.md#spiral-sorting) for the six spiral orders, their starting
+corners, and how multiple arms interleave.
 
-| Clockwise | Counterclockwise | Starting corners |
-| --- | --- | --- |
-| `spiral_clockwise` | `spiral_counter_clockwise` | Top-left |
-| `spiral_clockwise_double` | `spiral_counter_clockwise_double` | Top-left and bottom-right |
-| `spiral_clockwise_quad` | `spiral_counter_clockwise_quad` | All four corners |
-
-Double and quad spirals interleave their arms in the character sequence. Both grouped and sorted
-modes use the same 100-step easing schedule, so multiple characters may appear in one frame.
+Both grouped and sorted modes use the same 100-step easing schedule, so multiple characters may appear in one frame.
 `wipe_delay` adds frames before the first easing step and between later steps. Easing functions that
 reverse temporarily hide characters and restart their wipe scenes when those characters reappear.
 The default remains `diagonal_top_left_to_bottom_right`.
 
-```sh
+```bash
 tte wipe --wipe-direction spiral_clockwise
 tte wipe --wipe-direction spiral_counter_clockwise_double --wipe-delay 2
 ```
@@ -42,7 +41,7 @@ Use `--reverse-wipe-direction` to reverse the complete traversal while preservin
 The flag defaults to off. Reversed spirals travel outward along the selected path; changing
 clockwise to counterclockwise instead selects a different inward path.
 
-```sh
+```bash
 tte wipe --wipe-direction spiral_clockwise --reverse-wipe-direction
 ```
 
