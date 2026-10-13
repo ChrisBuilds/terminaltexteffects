@@ -202,16 +202,20 @@ jobs:
         # Informational only: coverage never fails CI.
         if: "!cancelled() && hashFiles('coverage/coverage.xml') != ''"
         env:
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           {
             echo "## Coverage: $(.venv/bin/coverage report --format=total)% of lines and branches"
-            if [[ -n "$PR_BASE" ]]; then
-              .venv/bin/diff-cover coverage/coverage.xml --compare-branch="$PR_BASE" \
-                --format "markdown:$RUNNER_TEMP/diff-cover.md" > /dev/null
-              # Keep the per-file list and summary; drop the long source listings that follow.
-              awk '/^## Summary/ { summary = 1 } summary && /^## / && !/^## Summary/ { exit } { print }' \
-                "$RUNNER_TEMP/diff-cover.md"
+            # A PR checkout is GitHub's merge commit; its first parent is the base it was merged onto.
+            if [[ "$EVENT_NAME" == 'pull_request' ]]; then
+              if .venv/bin/diff-cover coverage/coverage.xml --compare-branch=HEAD^1 \
+                --format "markdown:$RUNNER_TEMP/diff-cover.md" > /dev/null; then
+                # Keep the per-file list and summary; drop the long source listings that follow.
+                awk '/^## Summary/ { summary = 1 } summary && /^## / && !/^## Summary/ { exit } { print }' \
+                  "$RUNNER_TEMP/diff-cover.md"
+              else
+                echo '_Changed-line coverage report unavailable; see the log._'
+              fi
             fi
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload coverage reports
