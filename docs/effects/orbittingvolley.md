@@ -1,13 +1,5 @@
 # OrbittingVolley
 
-Four launchers travel along the canvas edges, firing characters from the side nearest their final position.
-The text builds in expanding circular rings around its center, adjusted for terminal cell height.
-Every character in a ring launches before the next ring opens. Up to two rings can have characters
-still in flight; a third waits for one of them to finish arriving. Launchers with no characters assigned
-in the current ring keep moving while the other launchers fire. The effect finishes after all characters arrive.
-
-The default `launch_delay` is `1`, leaving one animation tick between volleys. Increase it for longer pauses.
-
 ![Demo](../img/effects_demos/orbittingvolley_demo.gif)
 
 ## Quick Start
@@ -20,5 +12,20 @@ with effect.terminal_output() as terminal:
     for frame in effect:
         terminal.print(frame)
 ```
+
+## Launch Pattern
+
+!!! info "New in 0.16.0"
+
+    The ring launch pattern and the `launch_delay` default of `1` are on development `main`. In the published 0.15.0
+    package, `launch_delay` defaults to `30`.
+
+Four launchers travel along the canvas edges, firing characters from the side nearest their final position.
+The text builds in expanding circular rings around its center, adjusted for terminal cell height.
+Every character in a ring launches before the next ring opens. Up to two rings can have characters
+still in flight; a third waits for one of them to finish arriving. Launchers with no characters assigned
+in the current ring keep moving while the other launchers fire. The effect finishes after all characters arrive.
+
+The default `launch_delay` is `1`, leaving one animation tick between volleys. Increase it for longer pauses.
 
 ::: terminaltexteffects.effects.effect_orbittingvolley
