@@ -44,8 +44,9 @@ The interface needs a terminal for output. When standard output is redirected, `
   Type in the filter above the list to show only effects whose name or description contains every word you type,
   and press ++down++ or ++enter++ to move into the list. Highlighting an effect shows its options. Pressing ++enter++
   on it plays it.
-- **The playback bar** above the text has buttons to play, pause, stop, replay, and step through the effect, play a
-  random effect, and fit or maximize the canvas, with the **Loop** and **Auto** (auto-replay) toggles.
+- **The playback bar** above the text has two groups. On the left, buttons play or pause, stop, and step through the
+  effect and play a random effect, with the **Loop** and **Auto** (auto-replay) toggles. On the right, **Open** and
+  **Save** load and save the text, and **Fit** and **Max** size the canvas.
 - **Text** fills the rest of the top of the screen. Type, paste, and arrange text here. The subtitle shows the canvas
   size, and while an effect is shown, the frame number and the frame rate.
 - **Options** at the bottom has two tabs. **Effect** holds the selected effect's options, and **Canvas** holds the
@@ -56,7 +57,7 @@ The interface uses a TerminalTextEffects theme in purple, cyan, and white. Other
 the command palette (++ctrl+p++).
 
 Option inputs follow each option's type: a checkbox for on/off options, a list for fixed choices such as gradient
-directions and easing functions, and a text box for everything else. Text boxes use the same spelling as the
+directions and easing functions, which opens inside the options panel and scrolls, and a text box for everything else. Text boxes use the same spelling as the
 command line. Lists are space separated, such as `ff0000 00ff00 0000ff`, and colors show a swatch. Hover over an
 option to see its help, how to write its value with an example, and its default. An invalid value
 turns its name and field red, with the reason in its tooltip, and the effect won't play until it is fixed. Changed
@@ -74,9 +75,9 @@ previews the gradient. Press ++ctrl+s++ or choose **Apply** to keep the colors, 
 
 ## Playback
 
-++f5++ plays the selected effect. While it plays, ++f5++ or ++space++ pauses and resumes it, and ++right++ pauses it
-and shows one frame at a time. ++ctrl+r++ replays it from the start, and ++f9++ plays a random effect from the listed
-effects. The effect plays on a black background. ++escape++, or a click on the effect, returns to the text, and a
+++f5++ or **Play** plays the selected effect. While it plays, ++f5++ or ++space++ pauses and resumes it, and
+++right++ pauses it and shows one frame at a time. Once the effect has finished or been stopped, **Play** plays it
+again from the start, as does ++ctrl+r++ at any time. ++f9++ plays a random effect from the listed effects. The effect plays on a black background. ++escape++, or a click on the effect, returns to the text, and a
 click puts the cursor where you clicked.
 
 Turn on **Loop** to replay the effect a second after it finishes. Loops replay the frames of the first run, so they
@@ -92,7 +93,7 @@ interface manages to show, next to the **frame-rate** option.
 | Key | Action |
 | --- | --- |
 | ++f1++ | Show the keys and a few tips. |
-| ++f5++ | Play the selected effect, pause or resume it, or replay it once finished. |
+| ++f5++ | Play or pause the selected effect. Once it has finished, play it again from the start. |
 | ++space++ / ++right++ | While an effect is shown: pause or resume it / show the next frame. |
 | ++ctrl+r++ | Replay the effect from the start. |
 | ++f9++ | Play a random effect. |

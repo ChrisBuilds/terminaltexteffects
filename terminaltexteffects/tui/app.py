@@ -44,6 +44,8 @@ from terminaltexteffects.tui.screens import CommandScreen, HelpScreen
 from terminaltexteffects.tui.theme import TTE_THEME, gradient_text
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from textual import events
     from textual.events import Resize
     from textual.timer import Timer
@@ -56,6 +58,8 @@ if typing.TYPE_CHECKING:
 
 _TERMINAL_SCOPE = "terminal"
 _MAX_UNLIMITED_FPS = 120
+_MIN_LIST_HEIGHT = 3
+"""Fewest rows, borders included, a dropdown list shrinks to when the options panel has little room."""
 _OPTION_COLUMN_WIDTH = 64
 _STATUS_INTERVAL = 0.25
 _LOOP_PAUSE = 1.0
@@ -366,6 +370,37 @@ class Swatch(Static):
         self.post_message(Swatch.Clicked())
 
 
+class PanelSelect(Select[str]):
+    """A `Select` whose list stays inside the scrolling panel that holds it, scrolling instead of overflowing.
+
+    The list opens below the field when it fits there or there is more room below, and above the field otherwise.
+    """
+
+    def _watch_expanded(self, expanded: bool) -> None:  # noqa: FBT001 (Textual calls watchers positionally)
+        if expanded:
+            self._fit_overlay()
+        super()._watch_expanded(expanded)
+
+    def _fit_overlay(self) -> None:
+        panel = next((ancestor for ancestor in self.ancestors if isinstance(ancestor, VerticalScroll)), None)
+        if panel is None:
+            return
+        overlay = self.query_one("SelectOverlay", OptionList)
+        bounds = panel.region
+        top = self.region.y
+        # The list has a border row above and below its options.
+        wanted = overlay.option_count + 2
+        below = bounds.bottom - (top + 1)
+        above = top - bounds.y
+        if wanted <= below or below >= above:
+            overlay.styles.max_height = max(below, _MIN_LIST_HEIGHT)
+            overlay.styles.offset = (0, 0)
+        else:
+            height = max(min(wanted, above), _MIN_LIST_HEIGHT)
+            overlay.styles.max_height = height
+            overlay.styles.offset = (0, -(height + 1))
+
+
 class OptionEditor(Horizontal):
     """A labelled input for one option, built from its `ArgSpec`."""
 
@@ -453,7 +488,7 @@ class OptionEditor(Horizontal):
         if option.kind == "bool":
             yield Checkbox("on" if self.value else "off", value=bool(self.value), compact=True)
         elif option.kind == "choice":
-            yield Select(
+            yield PanelSelect(
                 [(choice, choice) for choice in option.choices],
                 value=option.format(self.value),
                 allow_blank=False,
@@ -644,6 +679,14 @@ class TTEApp(App[None]):
         margin-right: 1;
         min-width: 0;
     }
+    #transport-gap {
+        width: 1fr;
+    }
+    #transport-divider {
+        width: 1;
+        margin-right: 1;
+        color: $primary;
+    }
     #transport #play {
         width: 11;
     }
@@ -786,21 +829,24 @@ class TTEApp(App[None]):
                 yield OptionList(*self.effect_resource_map, id="effects")
             with Vertical(id="right"):
                 with Horizontal(id="transport"):
-                    for label, button_id, tooltip in (
-                        ("▶ Play", "play", "Play, pause, or resume (F5)"),
+                    yield from self._transport_buttons(
+                        ("▶ Play", "play", "Play or pause, or play again from the start (F5)"),
                         ("■ Stop", "stop", "Stop and return to the text (Esc)"),
-                        ("↻ Replay", "replay", "Replay from the start (Ctrl+R)"),
                         ("→ Step", "step", "Show the next frame while paused (→)"),
                         ("Random", "random", "Play a random effect (F9)"),
-                        ("Fit", "fit", "Fit the canvas exactly around the text (Ctrl+T)"),
-                        ("Max", "max", "Grow the canvas to the whole text area (Ctrl+G)"),
-                    ):
-                        button = Button(label, id=button_id, compact=True, variant="primary")
-                        button.can_focus = False
-                        button.tooltip = tooltip
-                        yield button
+                    )
                     yield Checkbox("Loop", id="loop", compact=True)
                     yield Checkbox("Auto", id="auto-replay", compact=True)
+                    yield Static(id="transport-gap")
+                    yield from self._transport_buttons(
+                        ("Open", "open", "Open a text file (F2)"),
+                        ("Save", "save", "Save the text to a file (F3)"),
+                    )
+                    yield Static("│", id="transport-divider")
+                    yield from self._transport_buttons(
+                        ("Fit", "fit", "Fit the canvas exactly around the text (Ctrl+T)"),
+                        ("Max", "max", "Grow the canvas to the whole text area (Ctrl+G)"),
+                    )
                 with Vertical(id="stage"):
                     yield ColorTextArea(id="editor")
                     yield CanvasView(id="canvas")
@@ -810,6 +856,14 @@ class TTEApp(App[None]):
             with TabPane("Canvas", id="canvas-tab"), VerticalScroll():
                 yield Vertical(id="terminal-options", classes="option-grid")
         yield Footer()
+
+    @staticmethod
+    def _transport_buttons(*buttons: tuple[str, str, str]) -> Iterator[Button]:
+        for label, button_id, tooltip in buttons:
+            button = Button(label, id=button_id, compact=True, variant="primary")
+            button.can_focus = False
+            button.tooltip = tooltip
+            yield button
 
     async def on_mount(self) -> None:
         """Restore the last session, load the initial text, and show the selected effect's options."""
@@ -1582,13 +1636,12 @@ class TTEApp(App[None]):
             self.action_fit_canvas()
         elif action == "max":
             self.action_maximize_canvas()
-        elif action in ("play", "replay", "step"):
+        elif action in ("play", "step", "open", "save"):
             getattr(self, f"action_{action}")()
 
     def _update_transport(self) -> None:
         """Label the play button for the playback state, and enable the buttons that apply."""
-        labels = {"playing": "❚❚ Pause", "paused": "▶ Resume", "finished": "↻ Replay"}
-        self.query_one("#play", Button).label = labels.get(self.state, "▶ Play")
+        self.query_one("#play", Button).label = "❚❚ Pause" if self.state == "playing" else "▶ Play"
         self.query_one("#stop", Button).disabled = self.state == "editing"
         self.query_one("#step", Button).disabled = self.state not in ("playing", "paused")
         self.refresh_bindings()

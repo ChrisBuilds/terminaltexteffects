@@ -10,7 +10,8 @@ from textual.widgets import Button, Checkbox, Input, OptionList
 
 from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.tui import frames
-from terminaltexteffects.tui.app import CanvasView, OptionEditor, TTEApp
+from terminaltexteffects.tui.app import CanvasView, OptionEditor, PanelSelect, TTEApp
+from terminaltexteffects.tui.files import FileScreen
 from terminaltexteffects.tui.screens import HelpScreen
 
 if TYPE_CHECKING:
@@ -54,7 +55,7 @@ def test_play_pause_step_and_resume() -> None:
         await _wait(pilot, lambda: app._frame_index >= 3)
         await pilot.press("space")
         assert app.state == "paused"
-        assert str(app.query_one("#play", Button).label) == "▶ Resume"
+        assert str(app.query_one("#play", Button).label) == "▶ Play"
         await pilot.pause(0.1)
         paused_at = app._frame_index
         stream = app._stream
@@ -241,3 +242,49 @@ def test_clicking_the_effect_returns_to_the_text() -> None:
         assert app.editor.cursor_location == (1, 3)
 
     _run(TTEApp(_EFFECTS, "first\nsecond", effect="decrypt"), script)
+
+
+def test_play_button_only_says_play_or_pause() -> None:
+    """The play button should read Pause while playing and Play otherwise, and Open and Save should open dialogs."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        play = app.query_one("#play", Button)
+        _editor(app, "terminal", "frame_rate").query_one(Input).value = "0"
+        await pilot.pause()
+        await pilot.press("f5")
+        assert str(play.label) == "❚❚ Pause"
+        await _wait(pilot, lambda: app.state == "finished")
+        assert str(play.label) == "▶ Play"
+        await pilot.click("#play")
+        assert app.state in ("playing", "finished")
+        await pilot.press("escape")
+        assert str(play.label) == "▶ Play"
+        assert not app.query("#replay")
+        await pilot.click("#open")
+        await pilot.pause()
+        assert isinstance(app.screen, FileScreen)
+        await pilot.press("escape")
+        await pilot.pause(0.3)
+        await pilot.click("#save")
+        await pilot.pause()
+        assert isinstance(app.screen, FileScreen)
+
+    _run(TTEApp(_EFFECTS, "Hello\nworld", effect="decrypt"), script)
+
+
+def test_dropdowns_stay_inside_the_options_panel() -> None:
+    """An open dropdown should fit inside the options panel, opening above the field near the panel's bottom."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        panel = app.query_one("#effect-tab VerticalScroll")
+        selects = [select for select in app.query(PanelSelect) if panel.region.contains_region(select.region)]
+        assert selects
+        for select in (selects[0], selects[-1]):
+            select.expanded = True
+            await pilot.pause()
+            overlay = select.query_one("SelectOverlay")
+            assert panel.region.contains_region(overlay.region), (select.id, overlay.region, panel.region)
+            select.expanded = False
+            await pilot.pause()
+
+    _run(TTEApp(_EFFECTS, "Hi", effect="slide"), script)

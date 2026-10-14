@@ -106,7 +106,7 @@ class CommandScreen(ModalScreen["str | None"]):
 
 KEYS: tuple[tuple[str, str], ...] = (
     ("F1", "Show this help"),
-    ("F5", "Play, pause, resume, or replay a finished effect"),
+    ("F5", "Play or pause; play again once finished"),
     ("Ctrl+R", "Replay from the start"),
     ("Space / →", "Pause or resume / step one frame, while an effect is shown"),
     ("Esc / click", "Stop the effect and return to the text"),
