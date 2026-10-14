@@ -88,7 +88,13 @@ class CommandScreen(ModalScreen["str | None"]):
     @on(Button.Pressed, "#copy")
     def _copy(self) -> None:
         self.app.copy_to_clipboard(self.command)
-        self.app.notify("Command copied to the clipboard.")
+        if getattr(self.app, "copied_to_system_clipboard", False):
+            self.app.notify("Command copied to the clipboard.")
+        else:
+            self.app.notify(
+                "Sent the command to the terminal's clipboard. If it isn't there, select it in this dialog and copy.",
+                timeout=8,
+            )
         self.dismiss(None)
 
     @on(Input.Submitted, "#paste")
@@ -129,6 +135,7 @@ TIPS = (
     "Turn on Loop to keep replaying the effect.",
     "Clear an option's field and leave it to return the option to its default.",
     "Type in the filter above the effect list to find an effect by name or description.",
+    "Use the bar above the text to color the selection or new text, and to insert block, line, and arrow symbols.",
 )
 
 

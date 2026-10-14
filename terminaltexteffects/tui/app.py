@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import dataclasses
 import functools
 import gc
 import random
@@ -37,11 +38,13 @@ from textual.widgets import (
 )
 
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.tui import canvas, colors, frames, options, session
+from terminaltexteffects.tui import canvas, clipboard, colors, frames, options, session
 from terminaltexteffects.tui.files import FileScreen
 from terminaltexteffects.tui.picker import ColorScreen
 from terminaltexteffects.tui.screens import CommandScreen, HelpScreen
 from terminaltexteffects.tui.theme import TTE_THEME, gradient_text
+from terminaltexteffects.tui.toolbar import TextToolbar
+from terminaltexteffects.utils.graphics import Color
 
 if typing.TYPE_CHECKING:
     from collections.abc import Iterator
@@ -52,12 +55,13 @@ if typing.TYPE_CHECKING:
 
     from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
-    from terminaltexteffects.utils.graphics import Color
 
     EffectResourceMap = dict[str, tuple[type[BaseEffect], type[BaseConfig]]]
 
 _TERMINAL_SCOPE = "terminal"
 _MAX_UNLIMITED_FPS = 120
+_SWATCH_CELL = "  "
+"""One color in a clickable swatch: two cells, which look about square in most terminal fonts."""
 _MIN_LIST_HEIGHT = 3
 """Fewest rows, borders included, a dropdown list shrinks to when the options panel has little room."""
 _OPTION_COLUMN_WIDTH = 64
@@ -96,6 +100,8 @@ class ColorTextArea(TextArea):
         self.canvas_area = canvas.CanvasRect(0, 0, 1, 1)
         self.canvas_anchor = "nw"
         self._drag_edges: set[canvas.Edge] = set()
+        self.pen: colors.CellStyle | None = None
+        """Style given to typed and inserted text, or `None` to extend the style of the character before."""
         self.attach_colors(text, styles)
 
     def show_canvas(self, rect: canvas.CanvasRect, area: canvas.CanvasRect, anchor: str) -> None:
@@ -189,12 +195,33 @@ class ColorTextArea(TextArea):
 
     @on(TextArea.Changed)
     def _carry_styles(self) -> None:
-        """Keep input colors attached to the characters they belong to after an edit."""
-        if self._color_styles is None:
+        """Keep input colors attached to the characters they belong to after an edit, and color new text."""
+        if self._color_styles is None and self.pen is None:
             self._color_text = self.text
             return
         text = self.text
-        self.attach_colors(text, colors.carry_styles(self._color_text, self._color_styles, text))
+        old_styles: colors.StyleList = self._color_styles or [None] * len(self._color_text)
+        self.attach_colors(text, colors.carry_styles(self._color_text, old_styles, text, self.pen))
+
+    def _index(self, location: tuple[int, int]) -> int:
+        row, column = location
+        return self._line_starts[min(row, len(self._line_starts) - 1)] + column
+
+    def paint_selection(self, update: typing.Callable[[colors.CellStyle | None], colors.CellStyle | None]) -> bool:
+        """Apply `update` to the styles of the selected characters, and return whether any were selected."""
+        start, end = sorted(self.selection)
+        if start == end:
+            return False
+        text = self.text
+        styles: colors.StyleList = self._color_styles or [None] * len(text)
+        self.attach_colors(text, colors.paint(text, styles, self._index(start), self._index(end), update))
+        return True
+
+    def insert_symbol(self, symbol: str) -> None:
+        """Replace the selection with `symbol`, as typing it would, and place the cursor after it."""
+        start, end = sorted(self.selection)
+        result = self.replace(symbol, start, end, maintain_selection_offset=False)
+        self.move_cursor(result.end_location)
 
     def colored_text(self) -> str:
         """Return the current text with its input colors as SGR sequences."""
@@ -448,7 +475,7 @@ class OptionEditor(Horizontal):
     }
     OptionEditor > .swatch {
         width: auto;
-        max-width: 8;
+        max-width: 14;
         padding: 0 1;
     }
     OptionEditor > Checkbox {
@@ -543,7 +570,7 @@ class OptionEditor(Horizontal):
             text = Text()
             if self.error is None:
                 for color in values[:4]:
-                    text.append(" ", Style(bgcolor=f"#{color.rgb_color}"))
+                    text.append(_SWATCH_CELL, Style(bgcolor=f"#{color.rgb_color}"))
             text.append(" ▾")
             swatch.update(text)
             swatch.tooltip = "Pick colors (F7, or Enter in the field)"
@@ -673,7 +700,10 @@ class TTEApp(App[None]):
     }
     #transport {
         height: 1;
-        padding: 0 1;
+        padding: 0;
+    }
+    #transport #max, #transport #auto-replay {
+        margin-right: 0;
     }
     #transport Button {
         margin-right: 1;
@@ -681,18 +711,18 @@ class TTEApp(App[None]):
     }
     #transport-gap {
         width: 1fr;
+        min-width: 1;
     }
     #transport-divider {
         width: 1;
-        margin-right: 1;
         color: $primary;
     }
     #transport #play {
-        width: 11;
+        width: 10;
     }
     #transport Checkbox {
-        margin-left: 1;
-        padding: 0 1;
+        margin-right: 1;
+        padding: 0;
         background: $boost;
     }
     #transport Checkbox:focus {
@@ -813,6 +843,8 @@ class TTEApp(App[None]):
         self._recording: list[frames.Frame] | None = None
         self._playback_key: tuple[typing.Any, ...] | None = None
         self._recorded: tuple[tuple[typing.Any, ...], list[frames.Frame]] | None = None
+        self._color_hint_shown = False
+        self.copied_to_system_clipboard = False
         self.state: typing.Literal["editing", "playing", "paused", "finished"] = "editing"
         self.register_theme(TTE_THEME)
         self.theme = TTE_THEME.name
@@ -847,6 +879,7 @@ class TTEApp(App[None]):
                         ("Fit", "fit", "Fit the canvas exactly around the text (Ctrl+T)"),
                         ("Max", "max", "Grow the canvas to the whole text area (Ctrl+G)"),
                     )
+                yield TextToolbar(id="text-tools")
                 with Vertical(id="stage"):
                     yield ColorTextArea(id="editor")
                     yield CanvasView(id="canvas")
@@ -1375,6 +1408,67 @@ class TTEApp(App[None]):
         editor = self.editor
         editor.focus()
         editor.cursor_location = editor.get_target_document_location(message.event)
+
+    def copy_to_clipboard(self, text: str) -> None:
+        """Copy `text` with OSC 52 for the terminal, and with the system clipboard command where there is one.
+
+        Many terminals, including macOS Terminal and iTerm2 by default, ignore OSC 52.
+        """
+        super().copy_to_clipboard(text)
+        self.copied_to_system_clipboard = clipboard.copy_with_system_command(text)
+
+    # Text toolbar ----------------------------------------------------------------------------------------------
+
+    def _back_to_text(self) -> ColorTextArea:
+        """Stop any effect and focus the editor, keeping its cursor and selection."""
+        self.action_stop()
+        self.editor.focus()
+        return self.editor
+
+    @on(TextToolbar.InsertSymbol)
+    def _insert_symbol(self, message: TextToolbar.InsertSymbol) -> None:
+        self._back_to_text().insert_symbol(message.symbol)
+
+    @on(TextToolbar.PickColor)
+    def _pick_text_color(self, message: TextToolbar.PickColor) -> None:
+        editor = self._back_to_text()
+        layer = message.layer
+        pen = editor.pen or colors.CellStyle()
+        current = pen.fg if layer == "fg" else pen.bg
+        title = "text" if layer == "fg" else "text background"
+
+        def apply(result: tuple[Color, ...] | None) -> None:
+            editor.focus()
+            if not result:
+                return
+            color = result[0]
+            editor.pen = dataclasses.replace(editor.pen or colors.CellStyle(), **{layer: color})
+            editor.paint_selection(lambda style: dataclasses.replace(style or colors.CellStyle(), **{layer: color}))
+            self._show_pen()
+            self._suggest_color_handling()
+
+        self.push_screen(ColorScreen(title, [current or Color("ffffff")], multiple=False), apply)
+
+    @on(TextToolbar.ClearColor)
+    def _clear_text_color(self) -> None:
+        editor = self._back_to_text()
+        editor.pen = None
+        editor.paint_selection(lambda _style: None)
+        self._show_pen()
+
+    def _show_pen(self) -> None:
+        pen = self.editor.pen
+        self.query_one(TextToolbar).show_colors(pen.fg if pen else None, pen.bg if pen else None)
+
+    def _suggest_color_handling(self) -> None:
+        """Point out once that effects ignore text colors until existing color handling is changed."""
+        if self._color_hint_shown or self._value_of("existing_color_handling") != "ignore":
+            return
+        self._color_hint_shown = True
+        self.notify(
+            "Effects ignore text colors until existing color handling on the Canvas tab is 'always' or 'dynamic'.",
+            timeout=8,
+        )
 
     def on_resize(self, event: Resize) -> None:
         """Fit the option columns to the screen width and update the canvas size shown under the text area."""

@@ -92,11 +92,17 @@ def parse_colored_text(text: str, tab_width: int = 4) -> tuple[str, StyleList]:
     return "".join(chars), styles
 
 
-def carry_styles(old_text: str, old_styles: StyleList, new_text: str) -> StyleList:
+def carry_styles(
+    old_text: str,
+    old_styles: StyleList,
+    new_text: str,
+    insert_style: CellStyle | None = None,
+) -> StyleList:
     """Return styles for `new_text` that keep the styles of characters unchanged since `old_text`.
 
     Replaced characters keep the styles of the characters they replace, position by position. Inserted characters
-    take the style of the character before them on the same line, as typing extends a colored word.
+    take the style of the character before them on the same line, as typing extends a colored word. When
+    `insert_style` is given, inserted and replaced characters take it instead.
     """
     new_styles: StyleList = [None] * len(new_text)
     matcher = difflib.SequenceMatcher(None, old_text, new_text, autojunk=False)
@@ -108,11 +114,33 @@ def carry_styles(old_text: str, old_styles: StyleList, new_text: str) -> StyleLi
             for offset, index in enumerate(range(new_start, new_end)):
                 if new_text[index] == "\n":
                     continue
-                if offset < len(replaced):
+                if insert_style is not None:
+                    new_styles[index] = insert_style
+                elif offset < len(replaced):
                     new_styles[index] = replaced[offset]
                 elif index and new_text[index - 1] != "\n":
                     new_styles[index] = new_styles[index - 1]
     return new_styles
+
+
+def paint(
+    text: str,
+    styles: StyleList,
+    start: int,
+    end: int,
+    update: typing.Callable[[CellStyle | None], CellStyle | None],
+) -> StyleList:
+    """Return `styles` with `update` applied to the styles of the characters of `text` from `start` to `end`.
+
+    Newlines keep no style. Styles that `update` leaves empty become `None`.
+    """
+    painted = list(styles)
+    for index in range(max(0, start), min(end, len(text))):
+        if text[index] == "\n":
+            continue
+        style = update(painted[index])
+        painted[index] = style if style != CellStyle() else None
+    return painted
 
 
 def to_ansi(text: str, styles: StyleList) -> str:

@@ -47,6 +47,7 @@ The interface needs a terminal for output. When standard output is redirected, `
 - **The playback bar** above the text has two groups. On the left, buttons play or pause, stop, and step through the
   effect and play a random effect, with the **Loop** and **Auto** (auto-replay) toggles. On the right, **Open** and
   **Save** load and save the text, and **Fit** and **Max** size the canvas.
+- **The text toolbar** under the playback bar colors text and inserts symbols. See [Text toolbar](#text-toolbar).
 - **Text** fills the rest of the top of the screen. Type, paste, and arrange text here. The subtitle shows the canvas
   size, and while an effect is shown, the frame number and the frame rate.
 - **Options** at the bottom has two tabs. **Effect** holds the selected effect's options, and **Canvas** holds the
@@ -67,11 +68,25 @@ selected effect's description is shown along the bottom of the options panel.
 
 ### Picking colors
 
-Color options open a color picker when you press ++f7++ or ++enter++ in the field, or click the swatch. Choose from
-the 256 XTerm colors in the palette, type a hex value, or drag the hue, saturation, and lightness bars. Palette
+Color options open a color picker when you press ++f7++ or ++enter++ in the field, or click the swatch, which shows
+each color as a square. Choose from the 256 XTerm colors in the palette, type a hex value, or drag the hue,
+saturation, and lightness bars. Palette
 colors stay XTerm colors on the command line, and any other change gives an RGB hex color. For gradient options,
 the picker edits the list of stops: select a stop, change its color, and add, remove, or reorder stops while a bar
 previews the gradient. Press ++ctrl+s++ or choose **Apply** to keep the colors, or ++escape++ to discard them.
+
+### Text toolbar
+
+**Fg** and **Bg** open the color picker for the text color and the background color. A picked color applies to the
+selected text and to text you type or insert afterwards. **Clear** removes the colors from the selected text and
+stops coloring new text. The swatches show the current colors, or a hatched square when there is none.
+
+The buttons after **Clear** switch between symbol groups: blocks, single and rounded lines, double lines, shapes,
+and arrows. Click a symbol to insert it at the cursor, replacing any selected text. The toolbar never takes focus,
+so the cursor and selection stay in the text.
+
+Colors are kept with the text, as [input colors](#input-colors) are. Effects use them when
+**existing-color-handling** on the Canvas tab is `always` or `dynamic`.
 
 ## Playback
 
@@ -127,7 +142,9 @@ whole area.
 
 ## Commands
 
-++f4++ shows the `tte` command that plays the effect with the current options, with a button to copy it. The exported
+++f4++ shows the `tte` command that plays the effect with the current options, with a button to copy it. Copying
+uses the terminal's clipboard and also the system clipboard command (`pbcopy` on macOS, `clip` on Windows, and
+`wl-copy`, `xclip`, or `xsel` elsewhere), since many terminals ignore clipboard requests from applications. The exported
 command includes the canvas settings when they differ from the command-line defaults, so the effect plays the same
 way in your terminal.
 
