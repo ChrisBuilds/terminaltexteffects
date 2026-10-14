@@ -13,7 +13,7 @@ flowchart TB
     config["Config<br/>(BaseConfig subclass)"] --> effect["Effect<br/>(BaseEffect subclass)"]
     effect -- "iter(effect)" --> iterator["Iterator<br/>(BaseEffectIterator subclass)"]
     iterator -- builds --> terminal[Terminal]
-    terminal -- creates --> characters["EffectCharacter<br/>one per input symbol"]
+    terminal -- creates --> characters["EffectCharacter<br/>one per non-space symbol"]
     iterator -- "next() returns" --> frame["frame string"]
 ```
 
@@ -39,7 +39,7 @@ When you run `printf 'Hello' | tte spray`, or iterate over an effect in Python, 
    `EmptyInputError`.
 3. **The terminal makes characters.** The `Terminal` parses the input (including any ANSI colors), measures the
    available space, creates a [`Canvas`](../../engine/terminal/canvas.md), and creates one
-   [`EffectCharacter`](../../engine/basecharacter.md) for each input symbol. Each character remembers its symbol and
+   [`EffectCharacter`](../../engine/basecharacter.md) for each non-space input symbol. Each character remembers its symbol and
    its home position, `input_coord`. All characters start hidden.
 4. **Your iterator builds the animation.** In its `__init__`, your iterator gives characters their starting
    positions, paths to follow, and scenes to play, and decides when each one appears.

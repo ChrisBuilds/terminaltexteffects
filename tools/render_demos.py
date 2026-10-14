@@ -35,6 +35,7 @@ DEFAULT_INPUT = PROJECT_ROOT / "tests" / "testinput" / "demo.txt"
 DEFAULT_OUT = PROJECT_ROOT / "build" / "demos"
 GUIDE_EXAMPLES = PROJECT_ROOT / "docs" / "effectguide" / "examples"
 TUTORIAL_INPUT = GUIDE_EXAMPLES / "tutorial_input.txt"
+CONCEPT_INPUT = GUIDE_EXAMPLES / "concept_input.txt"
 FORMATS = ("gif", "webp", "mp4")
 
 
@@ -63,6 +64,23 @@ DEMO_OVERRIDES: dict[str, Demo] = {}
 GUIDE_DEMOS: dict[str, Demo] = {
     "spray_goal": Demo(effect="spray", input_file=TUTORIAL_INPUT),
     "myspray_step1": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step1"),
+    "myspray_step2": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step2"),
+    **{
+        f"reveal_{order}": Demo(
+            effect="reveal",
+            effect_args=("--order", order),
+            input_file=CONCEPT_INPUT,
+            frame_rate=frame_rate,
+            effects_dir=GUIDE_EXAMPLES / "reveal",
+        )
+        # The Characters chapter shows each command with this frame rate, so the demo plays at the reader's speed.
+        for order, frame_rate in (
+            ("row_top_to_bottom", 8),
+            ("diagonal_top_left_to_bottom_right", 30),
+            ("circle_center_to_outside", 15),
+            ("spiral_clockwise", 60),
+        )
+    },
 }
 
 

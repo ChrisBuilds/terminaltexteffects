@@ -61,7 +61,7 @@ describes the `myspray` subcommand: its one-line `help` in `tte -h`, and the `de
 The iterator does the work. Its `__init__` runs once, before the first frame:
 
 - `super().__init__(effect)` copies the configuration and builds `self.terminal`, which holds one character for
-  each symbol of the input.
+  each symbol of the input except spaces.
 - The loop makes every character visible. Characters start hidden, so without this the frame would be blank.
 
 `__next__` returns `self.frame`, the rendered canvas, the first time it is called, then raises `StopIteration` to end

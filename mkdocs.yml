@@ -72,9 +72,11 @@ nav:
     - The Engine:
       - effectguide/engine/architecture.md
       - effectguide/engine/frame-loop.md
+      - effectguide/engine/characters.md
     - Writing Effects:
       - Tutorial:
         - effectguide/tutorial/01-scaffold.md
+        - effectguide/tutorial/02-release.md
   - Effects Showroom: showroom.md
   - Library Cookbook: cookbook.md
   - Development:
