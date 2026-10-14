@@ -164,6 +164,15 @@ GUIDE_DEMOS: dict[str, Demo] = {
         input_file=CONCEPT_INPUT,
         effects_dir=GUIDE_EXAMPLES / "sparks",
     ),
+    **{
+        f"grow_{algorithm}": Demo(
+            effect="grow",
+            effect_args=("--algorithm", algorithm),
+            input_file=CONCEPT_INPUT,
+            effects_dir=GUIDE_EXAMPLES / "grow",
+        )
+        for algorithm in ("prims_simple", "recursive_backtracker", "aldous_broder")
+    },
     "travel_canvas": Demo(
         effect="travel",
         tte_args=("--canvas-width", "60", "--canvas-height", "14", "--anchor-text", "c"),
