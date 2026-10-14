@@ -234,10 +234,12 @@ def record(demo: Demo, path: Path) -> None:
         demo.effect,
         *demo.effect_args,
     ]
-    env = None
-    if demo.effects_dir is not None:
-        env = os.environ | {"TTE_DEV_EFFECTS_DIR": str(demo.effects_dir)}
-    run(command, env)
+    if demo.effects_dir is None:
+        run(command)
+        return
+    # An empty config dir keeps an installed copy of a guide effect from clashing with the development copy.
+    with tempfile.TemporaryDirectory() as config_home:
+        run(command, os.environ | {"TTE_DEV_EFFECTS_DIR": str(demo.effects_dir), "XDG_CONFIG_HOME": config_home})
 
 
 def recording_to_cast(recording: Path, cast: Path, start_hold: float) -> bool:
