@@ -1,0 +1,3 @@
+Welcome to the TTE Effect Guide.
+Every character in this text is an EffectCharacter.
+This tutorial rebuilds the Spray effect, one step at a time.

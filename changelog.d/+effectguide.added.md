@@ -1,0 +1,1 @@
+The Effect Guide is rewritten for community effect authors. It has chapters on each part of the engine, a seven-step tutorial that rebuilds the Spray effect, and a page on sharing effects, with rendered demos throughout.

@@ -4,9 +4,9 @@ site_description: TerminalTextEffects Documentation
 site_author: ChrisBuilds
 repo_url: https://github.com/ChrisBuilds/terminaltexteffects
 docs_dir: docs
-# Unfinished effect-building guide; restore its nav entries below when publishing it.
+# Effect Guide example modules are included in pages with snippets, not published as files.
 exclude_docs: |
-  effectguide/
+  effectguide/examples/
 
 
 theme:
@@ -67,9 +67,37 @@ nav:
     - Install: installation.md
     - Application Usage: appguide.md
     - Library Usage: libguide.md
-  # - Effect Building Guide:
-  #   - effectguide/effectguide.md
-  #   - effectguide/effectguide_lesson0.md
+  - Effect Guide:
+    - Start here: effectguide/index.md
+    - The Engine:
+      - effectguide/engine/architecture.md
+      - effectguide/engine/frame-loop.md
+      - effectguide/engine/canvas.md
+      - effectguide/engine/characters.md
+      - effectguide/engine/motion.md
+      - effectguide/engine/events.md
+      - effectguide/engine/animation.md
+      - effectguide/engine/color.md
+      - effectguide/engine/configuration.md
+      - effectguide/engine/loading.md
+      - effectguide/engine/performance.md
+      - effectguide/engine/toolbox.md
+    - Writing Effects:
+      - Tutorial:
+        - effectguide/tutorial/01-scaffold.md
+        - effectguide/tutorial/02-release.md
+        - effectguide/tutorial/03-move.md
+        - effectguide/tutorial/04-layer.md
+        - effectguide/tutorial/05-color.md
+        - effectguide/tutorial/06-configure.md
+        - effectguide/tutorial/07-harden.md
+      - Patterns:
+        - effectguide/writing/patterns/phases.md
+        - effectguide/writing/patterns/particles.md
+        - effectguide/writing/patterns/spanning-trees.md
+        - effectguide/writing/patterns/looping.md
+      - effectguide/writing/conventions.md
+      - effectguide/writing/sharing.md
   - Effects Showroom: showroom.md
   - Library Cookbook: cookbook.md
   - Development:

@@ -71,6 +71,9 @@ typing-extensions = false
     "S101", # assert
 
 ]
+# Effect Guide examples are flat community effect modules, loaded one directory at a time. They import names
+# used only in annotations at runtime to keep the tutorial code simple.
+"docs/effectguide/examples/**" = ["INP001", "TC001"]
 
 [tool.pytest.ini_options]
 console_output_style = "progress"
@@ -101,6 +104,11 @@ show_missing = true
 
 [tool.pyright]
 pythonVersion = "3.9"
+# The Effect Guide's MySpray tests import the effect the way readers run them, with its directory on the path.
+executionEnvironments = [
+  { root = "docs/effectguide/examples/myspray_tests", extraPaths = ["docs/effectguide/examples/myspray_step7"] },
+  { root = "." },
+]
 
 [tool.towncrier]
 directory = "changelog.d"

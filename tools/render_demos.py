@@ -12,6 +12,7 @@ Examples:
     ./.venv/bin/python tools/render_demos.py --list
     ./.venv/bin/python tools/render_demos.py beams matrix --formats gif,webp,mp4
     ./.venv/bin/python tools/render_demos.py --all --out docs/img/effects_demos
+    ./.venv/bin/python tools/render_demos.py --guide --all --out docs/img/effectguide
 
 """
 
@@ -19,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -31,6 +33,10 @@ from terminaltexteffects.engine._recording import RecordingReader
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = PROJECT_ROOT / "tests" / "testinput" / "demo.txt"
 DEFAULT_OUT = PROJECT_ROOT / "build" / "demos"
+GUIDE_EXAMPLES = PROJECT_ROOT / "docs" / "effectguide" / "examples"
+TUTORIAL_INPUT = GUIDE_EXAMPLES / "tutorial_input.txt"
+CONCEPT_INPUT = GUIDE_EXAMPLES / "concept_input.txt"
+COLOR_INPUT = GUIDE_EXAMPLES / "color_input.txt"
 FORMATS = ("gif", "webp", "mp4")
 
 
@@ -46,22 +52,147 @@ class Demo:
     start_hold: float = 0.0
     end_hold: float = 2.0
     agg_args: tuple[str, ...] = field(default=())
+    effects_dir: Path | None = None
 
 
 # Built-in effects render from `demo.txt` with default options. Add an entry here to change the options for a
 # demo, or to add a demo that is not named after its effect.
 DEMO_OVERRIDES: dict[str, Demo] = {}
 
+# Effect Guide visuals. Each one shows exactly what the reader sees when running the command next to it, so it uses
+# the same input file. Each example effect lives in its own directory under `docs/effectguide/examples/`, which is
+# loaded through `TTE_DEV_EFFECTS_DIR` so every tutorial step can keep the same command name.
+GUIDE_DEMOS: dict[str, Demo] = {
+    "spray_goal": Demo(effect="spray", input_file=TUTORIAL_INPUT),
+    "myspray_step1": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step1"),
+    "myspray_step2": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step2"),
+    "myspray_step3": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step3"),
+    "myspray_step4": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step4"),
+    "myspray_step5": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step5"),
+    "myspray_step7": Demo(
+        effect="myspray",
+        tte_args=("--existing-color-handling", "dynamic"),
+        input_file=COLOR_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "myspray_step7",
+    ),
+    "spray_colors": Demo(effect="spray", tte_args=("--existing-color-handling", "dynamic"), input_file=COLOR_INPUT),
+    "myspray_step6": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step6"),
+    "myspray_step6_options": Demo(
+        effect="myspray",
+        effect_args=("--spray-position", "center", "--final-gradient-direction", "radial"),
+        input_file=TUTORIAL_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "myspray_step6",
+    ),
+    **{
+        f"reveal_{order}": Demo(
+            effect="reveal",
+            effect_args=("--order", order),
+            input_file=CONCEPT_INPUT,
+            frame_rate=frame_rate,
+            effects_dir=GUIDE_EXAMPLES / "reveal",
+        )
+        # The Characters chapter shows each command with this frame rate, so the demo plays at the reader's speed.
+        for order, frame_rate in (
+            ("row_top_to_bottom", 8),
+            ("diagonal_top_left_to_bottom_right", 30),
+            ("circle_center_to_outside", 15),
+            ("spiral_clockwise", 60),
+        )
+    },
+    "travel_linear": Demo(effect="travel", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "travel"),
+    **{
+        f"travel_{ease}": Demo(
+            effect="travel",
+            effect_args=("--ease", ease),
+            input_file=CONCEPT_INPUT,
+            effects_dir=GUIDE_EXAMPLES / "travel",
+        )
+        for ease in ("out_expo", "in_out_quart", "out_bounce")
+    },
+    "travel_curve": Demo(
+        effect="travel",
+        effect_args=("--curve",),
+        input_file=CONCEPT_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "travel",
+    ),
+    "hop": Demo(effect="hop", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "hop"),
+    "glow": Demo(effect="glow", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "glow"),
+    "glow_slow": Demo(
+        effect="glow",
+        effect_args=("--frame-duration", "10"),
+        input_file=CONCEPT_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "glow",
+    ),
+    **{
+        f"glow_sync_{sync}": Demo(
+            effect="glow",
+            effect_args=("--sync", sync),
+            input_file=CONCEPT_INPUT,
+            effects_dir=GUIDE_EXAMPLES / "glow",
+        )
+        for sync in ("distance", "step")
+    },
+    **{
+        f"paint_{direction}": Demo(
+            effect="paint",
+            effect_args=("--direction", direction),
+            input_file=CONCEPT_INPUT,
+            effects_dir=GUIDE_EXAMPLES / "paint",
+        )
+        for direction in ("vertical", "horizontal", "radial", "diagonal")
+    },
+    **{
+        f"paint_colors_{handling}": Demo(
+            effect="paint",
+            tte_args=("--existing-color-handling", handling),
+            input_file=COLOR_INPUT,
+            effects_dir=GUIDE_EXAMPLES / "paint",
+        )
+        for handling in ("ignore", "always", "dynamic")
+    },
+    "gather": Demo(effect="gather", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "gather"),
+    "gather_columns": Demo(
+        effect="gather",
+        effect_args=("--gather-order", "column_left_to_right"),
+        input_file=CONCEPT_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "gather",
+    ),
+    "sparks": Demo(effect="sparks", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "sparks"),
+    "sparks_few": Demo(
+        effect="sparks",
+        effect_args=("--max-sparks", "8"),
+        input_file=CONCEPT_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "sparks",
+    ),
+    **{
+        f"grow_{algorithm}": Demo(
+            effect="grow",
+            effect_args=("--algorithm", algorithm),
+            input_file=CONCEPT_INPUT,
+            effects_dir=GUIDE_EXAMPLES / "grow",
+        )
+        for algorithm in ("prims_simple", "recursive_backtracker", "aldous_broder")
+    },
+    "wave": Demo(effect="wave", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "wave"),
+    "travel_canvas": Demo(
+        effect="travel",
+        tte_args=("--canvas-width", "60", "--canvas-height", "14", "--anchor-text", "c"),
+        input_file=CONCEPT_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "travel",
+    ),
+}
+
 
 class CommandError(Exception):
     """Raised when an external command fails."""
 
 
-def run(command: list[str]) -> None:
+def run(command: list[str], env: dict[str, str] | None = None) -> None:
     """Run a command, raising `CommandError` with its output when it fails."""
     result = subprocess.run(  # noqa: S603 - Separated arguments; no shell.
         command,
         check=False,
+        env=env,
         capture_output=True,
         text=True,
     )
@@ -103,7 +234,10 @@ def record(demo: Demo, path: Path) -> None:
         demo.effect,
         *demo.effect_args,
     ]
-    run(command)
+    env = None
+    if demo.effects_dir is not None:
+        env = os.environ | {"TTE_DEV_EFFECTS_DIR": str(demo.effects_dir)}
+    run(command, env)
 
 
 def recording_to_cast(recording: Path, cast: Path, start_hold: float) -> bool:
@@ -249,6 +383,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n\n")[0])
     parser.add_argument("demos", nargs="*", help="demo names to render (see --list)")
     parser.add_argument("--all", action="store_true", help="render every demo")
+    parser.add_argument("--guide", action="store_true", help="select Effect Guide demos instead of effect demos")
     parser.add_argument("--list", action="store_true", help="list demo names and exit")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="output directory (default: build/demos)")
     parser.add_argument(
@@ -261,7 +396,7 @@ def main() -> int:
     parser.add_argument("--gifsicle-lossy", type=int, metavar="LEVEL", help="apply gifsicle lossy compression")
     args = parser.parse_args()
 
-    available = demos()
+    available = GUIDE_DEMOS if args.guide else demos()
     if args.list:
         print("\n".join(available))
         return 0

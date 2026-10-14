@@ -1,0 +1,8 @@
+usage: tte myspray [-h]
+
+myspray | Sprays the characters from a single point.
+
+options:
+  -h, --help  show this help message and exit
+
+Example: tte myspray
