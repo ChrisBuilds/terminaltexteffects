@@ -280,6 +280,10 @@ Below you'll find a subset of the built-in effects. View all of the effects and 
 
 ![vhstape_demo](https://raw.githubusercontent.com/ChrisBuilds/terminaltexteffects/main/docs/img/effects_demos/vhstape_demo.webp)
 
+#### Waves
+
+![waves_demo](https://raw.githubusercontent.com/ChrisBuilds/terminaltexteffects/main/docs/img/effects_demos/waves_demo.webp)
+
 </details>
 
 ## Changelog
