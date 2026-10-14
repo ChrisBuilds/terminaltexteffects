@@ -224,7 +224,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
         for swarm in self.swarms:
             swarm_gradient = Gradient(random.choice(self.config.base_color), self.config.flash_color, steps=7)
             swarm_gradient_mirror = list(swarm_gradient) + flash_list + list(swarm_gradient)[::-1]
-            swarm_area_coordinate_map: dict[Coord, list[Coord]] = {}
+            swarm_area_coords_list: list[list[Coord]] = []
             swarm_spawn = self.terminal.canvas.random_coord(outside_scope=True)
             swarm_areas: list[Coord] = []
             swarm_area_count = random.randint(
@@ -251,11 +251,14 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 else:
                     next_focus_coord = self.terminal.canvas.random_coord()
                 swarm_areas.append(next_focus_coord)
-                swarm_area_coordinate_map[last_focus_coord] = geometry.find_coords_in_circle(
-                    last_focus_coord,
-                    radius=(
-                        max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 6, 1)
-                        * geometry.TERMINAL_ROW_SCALE
+                # Keep areas in walk order so a revisited focus coord adds an area instead of replacing one.
+                swarm_area_coords_list.append(
+                    geometry.find_coords_in_circle(
+                        last_focus_coord,
+                        radius=(
+                            max(min(self.terminal.canvas.right, self.terminal.canvas.top) // 6, 1)
+                            * geometry.TERMINAL_ROW_SCALE
+                        ),
                     ),
                 )
                 last_focus_coord = next_focus_coord
@@ -266,7 +269,7 @@ class SwarmIterator(BaseEffectIterator[SwarmConfig]):
                 flash_scn = character.animation.new_scene(sync=Scene.SyncMetric.DISTANCE)
                 for step in swarm_gradient_mirror:
                     flash_scn.add_frame(character.input_symbol, 1, colors=ColorPair(fg=step))
-                for swarm_area_count, swarm_area_coords in enumerate(swarm_area_coordinate_map.values()):
+                for swarm_area_count, swarm_area_coords in enumerate(swarm_area_coords_list):
                     swarm_area_name = f"{swarm_area_count}_swarm_area"
                     origin_path = character.motion.new_path(path_id=swarm_area_name, speed=0.4, ease=easing.out_sine)
                     origin_path.new_waypoint(random.choice(swarm_area_coords), waypoint_id=swarm_area_name)
