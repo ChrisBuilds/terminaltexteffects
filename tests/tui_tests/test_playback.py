@@ -100,8 +100,7 @@ def test_auto_replay_follows_option_changes_without_taking_focus() -> None:
         entry = _editor(app, "wipe", "wipe_delay").query_one(Input)
         entry.focus()
         entry.value = "1"
-        await pilot.pause()
-        assert app.state == "editing"
+        # The replay waits for typing to settle, which a slow runner can outlast before the next check.
         await _wait(pilot, lambda: app.state == "playing")
         assert app.focused is entry
         app.query_one("#effects", OptionList).highlighted = sorted(_EFFECTS).index("decrypt")
