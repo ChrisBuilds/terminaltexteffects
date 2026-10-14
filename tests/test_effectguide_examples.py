@@ -110,7 +110,7 @@ def test_guide_pages_show_rendered_guide_demos() -> None:
         assert (PROJECT_ROOT / "docs" / "img" / "effectguide" / f"{name}_demo.webp").is_file()
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="argparse names the options section differently before 3.10")
+@pytest.mark.skipif(sys.version_info < (3, 13), reason="argparse wraps usage lines differently before 3.13")
 @pytest.mark.parametrize("help_file", sorted(EXAMPLES.glob("*/help.txt")), ids=lambda path: path.parent.name)
 def test_documented_help_matches(help_file: Path, tmp_path: Path) -> None:
     """Help text shown in the guide is what `tte <effect> -h` prints for that example."""
