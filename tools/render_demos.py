@@ -173,6 +173,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
         )
         for algorithm in ("prims_simple", "recursive_backtracker", "aldous_broder")
     },
+    "wave": Demo(effect="wave", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "wave"),
     "travel_canvas": Demo(
         effect="travel",
         tte_args=("--canvas-width", "60", "--canvas-height", "14", "--anchor-text", "c"),
