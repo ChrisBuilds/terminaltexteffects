@@ -36,6 +36,7 @@ DEFAULT_OUT = PROJECT_ROOT / "build" / "demos"
 GUIDE_EXAMPLES = PROJECT_ROOT / "docs" / "effectguide" / "examples"
 TUTORIAL_INPUT = GUIDE_EXAMPLES / "tutorial_input.txt"
 CONCEPT_INPUT = GUIDE_EXAMPLES / "concept_input.txt"
+COLOR_INPUT = GUIDE_EXAMPLES / "color_input.txt"
 FORMATS = ("gif", "webp", "mp4")
 
 
@@ -67,6 +68,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
     "myspray_step2": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step2"),
     "myspray_step3": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step3"),
     "myspray_step4": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step4"),
+    "myspray_step5": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step5"),
     **{
         f"reveal_{order}": Demo(
             effect="reveal",
@@ -100,6 +102,40 @@ GUIDE_DEMOS: dict[str, Demo] = {
         effects_dir=GUIDE_EXAMPLES / "travel",
     ),
     "hop": Demo(effect="hop", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "hop"),
+    "glow": Demo(effect="glow", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "glow"),
+    "glow_slow": Demo(
+        effect="glow",
+        effect_args=("--frame-duration", "10"),
+        input_file=CONCEPT_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "glow",
+    ),
+    **{
+        f"glow_sync_{sync}": Demo(
+            effect="glow",
+            effect_args=("--sync", sync),
+            input_file=CONCEPT_INPUT,
+            effects_dir=GUIDE_EXAMPLES / "glow",
+        )
+        for sync in ("distance", "step")
+    },
+    **{
+        f"paint_{direction}": Demo(
+            effect="paint",
+            effect_args=("--direction", direction),
+            input_file=CONCEPT_INPUT,
+            effects_dir=GUIDE_EXAMPLES / "paint",
+        )
+        for direction in ("vertical", "horizontal", "radial", "diagonal")
+    },
+    **{
+        f"paint_colors_{handling}": Demo(
+            effect="paint",
+            tte_args=("--existing-color-handling", handling),
+            input_file=COLOR_INPUT,
+            effects_dir=GUIDE_EXAMPLES / "paint",
+        )
+        for handling in ("ignore", "always", "dynamic")
+    },
     "travel_canvas": Demo(
         effect="travel",
         tte_args=("--canvas-width", "60", "--canvas-height", "14", "--anchor-text", "c"),

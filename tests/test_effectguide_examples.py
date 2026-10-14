@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -14,6 +15,7 @@ from tools import render_demos
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = PROJECT_ROOT / "docs" / "effectguide" / "examples"
+ANSI_ESCAPE = re.compile(r"\x1b(\[[0-?]*[ -/]*[@-~]|[78])")
 EXAMPLE_DIRS = sorted(path for path in EXAMPLES.iterdir() if path.is_dir() and any(path.glob("*.py")))
 
 
@@ -57,9 +59,23 @@ def test_guide_demo_runs(name: str, tmp_path: Path) -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    final_text = re.sub(r"\x1b(\[[0-?]*[ -/]*[@-~]|[78])", "", result.stdout)
-    for line in demo.input_file.read_text(encoding="utf-8").splitlines():
+    final_text = ANSI_ESCAPE.sub("", result.stdout)
+    for line in ANSI_ESCAPE.sub("", demo.input_file.read_text(encoding="utf-8")).splitlines():
         assert line in final_text
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the documented script is a POSIX shell script")
+def test_color_input_matches_documented_script(tmp_path: Path) -> None:
+    """The colored input file is what the script shown in the Color chapter writes."""
+    bash = shutil.which("bash")
+    assert bash is not None
+    subprocess.run(  # noqa: S603 - Runs the documented script with a fixed path.
+        [bash, str(EXAMPLES / "color_input.sh")],
+        cwd=tmp_path,
+        check=True,
+        timeout=60,
+    )
+    assert (tmp_path / "color_input.txt").read_bytes() == (EXAMPLES / "color_input.txt").read_bytes()
 
 
 def test_guide_pages_show_rendered_guide_demos() -> None:

@@ -14,9 +14,9 @@ cells they leave are covered under [Fill characters](#fill-characters) below.
 | `input_symbol` | The symbol from the input, such as `"T"`. |
 | `input_coord` | The character's home position in the text, as a `Coord(column, row)`. |
 | `character_id` | A unique number, assigned in creation order. |
-| `motion` | Moves the character along paths. See the Motion chapter. |
-| `animation` | Changes the character's symbol and colors. See the Animation chapter. |
-| `event_handler` | Runs actions when paths and scenes start or finish. See the Events chapter. |
+| `motion` | Moves the character along paths. See [Motion](motion.md). |
+| `animation` | Changes the character's symbol and colors. See [Animation](animation.md). |
+| `event_handler` | Runs actions when paths and scenes start or finish. See [Events](events.md). |
 | `is_visible` | Whether the terminal draws the character. Read-only; change it through the terminal. |
 | `is_active` | Whether the character still has an unfinished path or scene. |
 | `layer` | Drawing order when characters overlap. |

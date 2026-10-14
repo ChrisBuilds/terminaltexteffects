@@ -1,0 +1,8 @@
+[38;2;255;80;80mTerminal[38;2;80;220;80mText[38;2;80;140;255mEffects[0m TerminalTextEffects
+[38;2;255;80;80mTerminal[38;2;80;220;80mText[38;2;80;140;255mEffects[0m TerminalTextEffects
+[38;2;255;80;80mTerminal[38;2;80;220;80mText[38;2;80;140;255mEffects[0m TerminalTextEffects
+[38;2;255;80;80mTerminal[38;2;80;220;80mText[38;2;80;140;255mEffects[0m TerminalTextEffects
+[38;2;255;80;80mTerminal[38;2;80;220;80mText[38;2;80;140;255mEffects[0m TerminalTextEffects
+[38;2;255;80;80mTerminal[38;2;80;220;80mText[38;2;80;140;255mEffects[0m TerminalTextEffects
+[38;2;255;80;80mTerminal[38;2;80;220;80mText[38;2;80;140;255mEffects[0m TerminalTextEffects
+[38;2;255;80;80mTerminal[38;2;80;220;80mText[38;2;80;140;255mEffects[0m TerminalTextEffects
