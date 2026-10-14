@@ -8,7 +8,7 @@ import typing
 import pytest
 from myspray import MySpray
 
-from terminaltexteffects.utils.exceptions import EmptyInputError
+from terminaltexteffects.utils.exceptions.terminal_exceptions import EmptyInputError
 
 Position = typing.Literal["n", "ne", "e", "se", "s", "sw", "w", "nw", "center"]
 ANSI_ESCAPE = re.compile(r"\x1b(\[[0-?]*[ -/]*[@-~]|[78])")
