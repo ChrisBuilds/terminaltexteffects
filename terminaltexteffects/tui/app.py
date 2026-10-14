@@ -1788,6 +1788,9 @@ class TTEApp(App[None]):
                 return
             effect = self.build_effect()
             if effect is not None:
+                # Record only the canvas, as the command line does, rather than the whole text area around it.
+                rect = self._canvas_geometry()
+                effect._terminal_dimensions_override = (rect.width, rect.height)
                 self._record(effect, self.effect_name, Path(result[0]).expanduser())
 
         file_formats = [FileFormat(fmt.name, fmt.suffix, export.format_problem(fmt)) for fmt in export.FORMATS]
