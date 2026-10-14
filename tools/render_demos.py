@@ -69,6 +69,13 @@ GUIDE_DEMOS: dict[str, Demo] = {
     "myspray_step3": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step3"),
     "myspray_step4": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step4"),
     "myspray_step5": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step5"),
+    "myspray_step7": Demo(
+        effect="myspray",
+        tte_args=("--existing-color-handling", "dynamic"),
+        input_file=COLOR_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "myspray_step7",
+    ),
+    "spray_colors": Demo(effect="spray", tte_args=("--existing-color-handling", "dynamic"), input_file=COLOR_INPUT),
     "myspray_step6": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step6"),
     "myspray_step6_options": Demo(
         effect="myspray",

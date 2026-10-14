@@ -79,6 +79,7 @@ nav:
       - effectguide/engine/animation.md
       - effectguide/engine/color.md
       - effectguide/engine/configuration.md
+      - effectguide/engine/loading.md
     - Writing Effects:
       - Tutorial:
         - effectguide/tutorial/01-scaffold.md
@@ -87,6 +88,8 @@ nav:
         - effectguide/tutorial/04-layer.md
         - effectguide/tutorial/05-color.md
         - effectguide/tutorial/06-configure.md
+        - effectguide/tutorial/07-harden.md
+      - effectguide/writing/sharing.md
   - Effects Showroom: showroom.md
   - Library Cookbook: cookbook.md
   - Development:

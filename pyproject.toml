@@ -104,6 +104,11 @@ show_missing = true
 
 [tool.pyright]
 pythonVersion = "3.9"
+# The Effect Guide's MySpray tests import the effect the way readers run them, with its directory on the path.
+executionEnvironments = [
+  { root = "docs/effectguide/examples/myspray_tests", extraPaths = ["docs/effectguide/examples/myspray_step7"] },
+  { root = "." },
+]
 
 [tool.towncrier]
 directory = "changelog.d"

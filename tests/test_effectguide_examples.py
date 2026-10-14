@@ -16,7 +16,11 @@ from tools import render_demos
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = PROJECT_ROOT / "docs" / "effectguide" / "examples"
 ANSI_ESCAPE = re.compile(r"\x1b(\[[0-?]*[ -/]*[@-~]|[78])")
-EXAMPLE_DIRS = sorted(path for path in EXAMPLES.iterdir() if path.is_dir() and any(path.glob("*.py")))
+EXAMPLE_DIRS = sorted(
+    path
+    for path in EXAMPLES.iterdir()
+    if path.is_dir() and any("def get_effect_resources" in module.read_text() for module in path.glob("*.py"))
+)
 
 
 def test_every_example_has_a_guide_demo() -> None:
@@ -76,6 +80,25 @@ def test_color_input_matches_documented_script(tmp_path: Path) -> None:
         timeout=60,
     )
     assert (tmp_path / "color_input.txt").read_bytes() == (EXAMPLES / "color_input.txt").read_bytes()
+
+
+def test_documented_myspray_tests_pass(tmp_path: Path) -> None:
+    """The tests in tutorial step 7 pass when run as the page says, with the effect's directory on the path."""
+    shutil.copy(EXAMPLES / "myspray_tests" / "test_myspray.py", tmp_path)
+    env = {key: value for key, value in os.environ.items() if key not in {"PYTHONHOME", "TTE_DEV_EFFECTS_DIR"}}
+    env["PYTHONPATH"] = str(EXAMPLES / "myspray_step7")
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "test_myspray.py"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "17 passed" in result.stdout
 
 
 def test_guide_pages_show_rendered_guide_demos() -> None:
