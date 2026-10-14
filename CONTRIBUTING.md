@@ -137,6 +137,10 @@ manual dispatch. Every run executes the full workflow:
 | Nix / Linux, Nix / macOS | Flake and classic package builds and CLI smoke tests; on PRs only when `flake.*`, `default.nix`, `pyproject.toml`, `tools/check_nix.sh`, or `ci.yml` change |
 | CI passed | Fails if any job above failed or was cancelled |
 
+`.github/workflows/profile.yml` records Python 3.15 sampling profiles of the benchmark harness on
+`main` and on manual dispatch; it is informational and not part of `CI passed`. See
+[docs/performance.md](docs/performance.md#sampling-profiles).
+
 Branch protection on `main` requires only `CI passed`, plus PRs and resolved conversations; it
 applies to admins and needs no approving reviews. Branches don't have to be up to date with `main`
 before merging; if a combination of merged PRs breaks `main`, its CI run catches it and the fix goes

@@ -74,6 +74,32 @@ Use `--profile` when the timing delta needs a call-level explanation:
 
 The profile reports cumulative time for one scenario and is best used after a benchmark shows a meaningful change.
 
+### Sampling Profiles
+
+Python 3.15 ships a statistical sampling profiler, `profiling.sampling`. It reads the target's stacks from a separate
+process instead of instrumenting every call, so overhead is low, and it writes flamegraphs, line-level heatmaps, Firefox
+Profiler data, and differential flamegraphs. Record the harness once in the binary format, then convert it as needed:
+
+```bash
+python3.15 -m profiling.sampling run --binary -o /tmp/tte.bin tools/perf/benchmark_effects.py \
+  --effect all --input-preset medium --samples 2 --warmups 0 > /dev/null
+python3.15 -m profiling.sampling replay --flamegraph -o /tmp/tte-flamegraph.html /tmp/tte.bin
+python3.15 -m profiling.sampling replay --heatmap -o /tmp/tte-heatmap /tmp/tte.bin
+python3.15 -m profiling.sampling replay --diff-flamegraph /tmp/tte-baseline.bin -o /tmp/tte-diff.html /tmp/tte.bin
+```
+
+Use an environment synced with `--python 3.15`. `tools/perf/summarize_profile.py` turns a `replay --jsonl` export into
+Markdown tables of the hottest functions, lines, and files by self samples.
+
+The [Profile workflow](https://github.com/ChrisBuilds/terminaltexteffects/actions/workflows/profile.yml) does this in
+CI. It runs on pushes to `main` that touch the package or harness, comparing against the previous `main` commit, and
+on manual dispatch with a choice of effect, `<input-preset>/<lifecycle>` scenarios, and an optional baseline ref. The
+job summary shows the hotspot tables; the `profile-results` artifact holds each scenario's flamegraph, heatmap,
+Firefox Profiler JSON (`profile.gecko.json`, for <https://profiler.firefox.com>), raw `profile.bin`, and, with a
+baseline, `diff-flamegraph.html` and a benchmark comparison. The workflow is informational and never fails on a
+slowdown. Its timings come from a shared runner under the profiler, so read proportions, not absolute times, and
+confirm any change with the benchmark harness.
+
 ## Reporting a Change
 
 Put the measurements for a performance change in its PR description, not on this page. A useful report includes:
