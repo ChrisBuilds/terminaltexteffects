@@ -102,5 +102,5 @@ Over seven steps, MySpray went from an effect that printed the text in place to 
 it used every major part of the engine: character visibility and release, paths with easing, events, scenes and
 gradients, command-line options, and input colors.
 
-From here, the Patterns pages show techniques Spray doesn't use, such as multi-phase effects and particles, and
+From here, the [Patterns](../writing/patterns/phases.md) pages show techniques Spray doesn't use, such as multi-phase effects and particles, and
 [Sharing your effect](../writing/sharing.md) explains how to publish yours.
