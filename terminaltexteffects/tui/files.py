@@ -13,14 +13,22 @@ from textual import on
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, DirectoryTree, Input, Label, Static
+from textual.widgets import Button, Checkbox, DirectoryTree, Input, Label, Select, Static
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
     from textual.app import ComposeResult
 
 FileMode = typing.Literal["open", "save"]
+
+
+class FileFormat(typing.NamedTuple):
+    """A file format offered when saving: its label, file suffix, and why it can't be used, if it can't."""
+
+    label: str
+    suffix: str
+    problem: str | None = None
 
 
 class FileTree(DirectoryTree):
@@ -85,6 +93,10 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
         margin: 1 0;
         background: $boost;
     }
+    FileScreen #format {
+        width: 12;
+        margin-left: 1;
+    }
     FileScreen .path-row > Label {
         width: auto;
         padding-right: 1;
@@ -128,6 +140,7 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
         mode: FileMode,
         checkbox: str | None = None,
         checked: bool = False,
+        formats: Sequence[FileFormat] = (),
     ) -> None:
         """Initialize the dialog.
 
@@ -137,6 +150,8 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
             mode (FileMode): "open" to choose an existing file, or "save" to choose where to write one.
             checkbox (str | None): Label of an optional checkbox shown under the path.
             checked (bool): Initial checkbox state.
+            formats (Sequence[FileFormat]): Formats to choose from when saving. Choosing one changes the path's
+                suffix, and a format with a `problem` can't be saved.
 
         """
         super().__init__()
@@ -145,6 +160,7 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
         self.mode: FileMode = mode
         self._checkbox = checkbox
         self._checked = checked
+        self._formats = tuple(formats)
         self._confirm_path: Path | None = None
         self._last_selected: Path | None = None
 
@@ -164,6 +180,15 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
             with Horizontal(classes="path-row"):
                 yield Label("File" if self.mode == "open" else "Save as")
                 yield Input(self._path, placeholder="path/to/file", id="path", compact=True)
+                if self._formats:
+                    current = self._format_of(self._path)
+                    yield Select(
+                        [(fmt.label, fmt.suffix) for fmt in self._formats],
+                        value=(current or self._formats[0]).suffix,
+                        allow_blank=False,
+                        compact=True,
+                        id="format",
+                    )
             yield Static(id="message")
             if self._checkbox is not None:
                 yield Checkbox(self._checkbox, value=self._checked, id="checkbox")
@@ -223,10 +248,33 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
             name = Path(path_input.value).name if path_input.value else ""
             path_input.value = str(event.path / name) if name else f"{event.path}/"
 
+    def _format_of(self, path: str) -> FileFormat | None:
+        suffix = Path(path).suffix.lower()
+        return next((fmt for fmt in self._formats if fmt.suffix == suffix), None)
+
     @on(Input.Changed, "#path")
-    def _path_changed(self) -> None:
+    def _path_changed(self, event: Input.Changed) -> None:
         self._confirm_path = None
         self._set_message("")
+        fmt = self._format_of(event.value)
+        if fmt is not None:
+            select = self.query_one("#format", Select)
+            if select.value != fmt.suffix:
+                select.value = fmt.suffix
+            if fmt.problem:
+                self._set_message(fmt.problem)
+
+    @on(Select.Changed, "#format")
+    def _format_changed(self, event: Select.Changed) -> None:
+        event.stop()
+        path_input = self.query_one("#path", Input)
+        suffix = str(event.value)
+        text = path_input.value
+        if Path(text).suffix.lower() == suffix:
+            return
+        known = self._format_of(text) is not None
+        if text and not text.endswith("/"):
+            path_input.value = str(Path(text).with_suffix(suffix)) if known else text + suffix
 
     @on(Input.Submitted, "#path")
     @on(Button.Pressed, "#ok")
@@ -249,6 +297,10 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
                 self._confirm_path = path
                 self._set_message(f"{path.name} already exists. Press Save again to replace it.")
                 return
+        fmt = self._format_of(text)
+        if fmt is not None and fmt.problem:
+            self._set_message(fmt.problem, error=True)
+            return
         checked = self.query_one("#checkbox", Checkbox).value if self._checkbox is not None else False
         self.dismiss((text, checked))
 

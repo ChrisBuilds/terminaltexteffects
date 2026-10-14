@@ -19,7 +19,6 @@ Examples:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import shutil
 import subprocess
@@ -28,7 +27,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from terminaltexteffects.engine._recording import RecordingReader
+from terminaltexteffects.tui.export import recording_to_cast
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = PROJECT_ROOT / "tests" / "testinput" / "demo.txt"
@@ -240,29 +239,6 @@ def record(demo: Demo, path: Path) -> None:
     # An empty config dir keeps an installed copy of a guide effect from clashing with the development copy.
     with tempfile.TemporaryDirectory() as config_home:
         run(command, os.environ | {"TTE_DEV_EFFECTS_DIR": str(demo.effects_dir), "XDG_CONFIG_HOME": config_home})
-
-
-def recording_to_cast(recording: Path, cast: Path, start_hold: float) -> bool:
-    """Write the recording as an asciicast v2 file holding only the canvas.
-
-    Every frame is drawn from the top-left corner with the cursor hidden, at the recording's frame period.
-    The first frame is shown for an extra `start_hold` seconds.
-
-    Returns:
-        bool: Whether any frame contains non-ASCII text, which needs the `resvg` renderer in `agg`.
-
-    """
-    non_ascii = False
-    with RecordingReader(recording) as reader, cast.open("w", encoding="utf-8") as out:
-        header = reader.header
-        period = 1 / header.frame_rate
-        out.write(json.dumps({"version": 2, "width": header.width, "height": header.height}) + "\n")
-        for index, frame in enumerate(reader.frames()):
-            non_ascii = non_ascii or not frame.isascii()
-            prefix = "\x1b[?25l\x1b[2J\x1b[H" if index == 0 else "\x1b[H"
-            time = 0.0 if index == 0 else start_hold + index * period
-            out.write(json.dumps([round(time, 6), "o", prefix + frame.replace("\n", "\r\n")]) + "\n")
-    return non_ascii
 
 
 def render_gif(cast: Path, gif: Path, demo: Demo, *, fps: int, non_ascii: bool) -> None:

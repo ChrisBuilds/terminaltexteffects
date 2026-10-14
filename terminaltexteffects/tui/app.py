@@ -7,6 +7,7 @@ import dataclasses
 import functools
 import gc
 import random
+import tempfile
 import time
 import typing
 from collections import deque
@@ -38,8 +39,8 @@ from textual.widgets import (
 )
 
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.tui import canvas, clipboard, colors, frames, options, session
-from terminaltexteffects.tui.files import FileScreen
+from terminaltexteffects.tui import canvas, clipboard, colors, export, frames, options, session
+from terminaltexteffects.tui.files import FileFormat, FileScreen
 from terminaltexteffects.tui.picker import ColorScreen
 from terminaltexteffects.tui.screens import CommandScreen, HelpScreen
 from terminaltexteffects.tui.theme import TTE_THEME, gradient_text
@@ -672,7 +673,7 @@ class TTEApp(App[None]):
         height: 1fr;
     }
     #effects-panel {
-        width: 26;
+        width: 19;
         height: 1fr;
         border: round $primary;
         border-title-color: $text;
@@ -712,10 +713,6 @@ class TTEApp(App[None]):
     #transport-gap {
         width: 1fr;
         min-width: 1;
-    }
-    #transport-divider {
-        width: 1;
-        color: $primary;
     }
     #transport #play {
         width: 10;
@@ -845,6 +842,7 @@ class TTEApp(App[None]):
         self._recorded: tuple[tuple[typing.Any, ...], list[frames.Frame]] | None = None
         self._color_hint_shown = False
         self.copied_to_system_clipboard = False
+        self._record_suffix = export.FORMATS[0].suffix
         self.state: typing.Literal["editing", "playing", "paused", "finished"] = "editing"
         self.register_theme(TTE_THEME)
         self.theme = TTE_THEME.name
@@ -873,8 +871,8 @@ class TTEApp(App[None]):
                     yield from self._transport_buttons(
                         ("Open", "open", "Open a text file (F2)"),
                         ("Save", "save", "Save the text to a file (F3)"),
+                        ("● Rec", "record", "Record the effect to a tterec, GIF, or WebP file (F8)"),
                     )
-                    yield Static("│", id="transport-divider")
                     yield from self._transport_buttons(
                         ("Fit", "fit", "Fit the canvas exactly around the text (Ctrl+T)"),
                         ("Max", "max", "Grow the canvas to the whole text area (Ctrl+G)"),
@@ -1730,7 +1728,7 @@ class TTEApp(App[None]):
             self.action_fit_canvas()
         elif action == "max":
             self.action_maximize_canvas()
-        elif action in ("play", "step", "open", "save"):
+        elif action in ("play", "step", "open", "save", "record"):
             getattr(self, f"action_{action}")()
 
     def _update_transport(self) -> None:
@@ -1780,9 +1778,7 @@ class TTEApp(App[None]):
     # Recording -------------------------------------------------------------------------------------------------
 
     def action_record(self) -> None:
-        """Ask for a file and record the selected effect to it."""
-        from terminaltexteffects.engine._recording import RECORDING_SUFFIX  # noqa: PLC0415
-
+        """Ask for a file and a format, and record the selected effect to it."""
         if self._value_of("frame_rate") == 0:
             self.notify("Recording needs a frame rate greater than 0 (Canvas tab).", severity="error")
             return
@@ -1794,25 +1790,40 @@ class TTEApp(App[None]):
             if effect is not None:
                 self._record(effect, self.effect_name, Path(result[0]).expanduser())
 
+        file_formats = [FileFormat(fmt.name, fmt.suffix, export.format_problem(fmt)) for fmt in export.FORMATS]
         self.push_screen(
-            FileScreen("Record effect to file", f"{self.effect_name}{RECORDING_SUFFIX}", mode="save"),
+            FileScreen(
+                "Record effect to file",
+                f"{self.effect_name}{self._record_suffix}",
+                mode="save",
+                formats=file_formats,
+            ),
             record,
         )
 
     @work(thread=True, exclusive=True, group="record")
     def _record(self, effect: BaseEffect, effect_name: str, path: Path) -> None:
-        """Render the effect to a recording without displaying it."""
+        """Render the effect to a recording without displaying it, then convert it for GIF or WebP."""
         from terminaltexteffects.__main__ import _record_playbacks  # noqa: PLC0415
         from terminaltexteffects.engine._recording import RecordingError  # noqa: PLC0415
 
+        fmt = export.format_for(path)
+        self._record_suffix = fmt.suffix
         self.call_from_thread(self.notify, f"Recording {effect_name} to {path}...")
         try:
-            header, frame_count, _ = _record_playbacks(path, effect_name, effect, 1)
-        except (OSError, RecordingError, ValueError) as error:
+            if fmt is export.FORMATS[0]:
+                header, frame_count, _ = _record_playbacks(path, effect_name, effect, 1)
+            else:
+                with tempfile.TemporaryDirectory(prefix="tte-record-") as folder:
+                    recording = Path(folder) / f"effect{export.FORMATS[0].suffix}"
+                    header, frame_count, _ = _record_playbacks(recording, effect_name, effect, 1)
+                    export.export_recording(recording, path, fmt, fps=header.frame_rate)
+        except (OSError, RecordingError, ValueError, export.ExportError) as error:
             self.call_from_thread(self.notify, f"Recording failed: {error}", severity="error")
             return
-        self.call_from_thread(
-            self.notify,
-            f"Recorded {frame_count} frames ({header.width}x{header.height} at {header.frame_rate} fps) to {path}. "
-            f"Play it with: tte --play {path}",
+        summary = (
+            f"Recorded {frame_count} frames ({header.width}x{header.height} at {header.frame_rate} fps) to {path}."
         )
+        if fmt is export.FORMATS[0]:
+            summary += f" Play it with: tte --play {path}"
+        self.call_from_thread(self.notify, summary)
