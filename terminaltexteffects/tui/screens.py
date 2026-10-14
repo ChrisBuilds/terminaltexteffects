@@ -135,7 +135,7 @@ TIPS = (
     "Turn on Loop to keep replaying the effect.",
     "Clear an option's field and leave it to return the option to its default.",
     "Type in the filter above the effect list to find an effect by name or description.",
-    "Use the bar above the text to color the selection or new text, and to insert block, line, and arrow symbols.",
+    "Use the bar above the text to color the selection or new text. Symbols opens a palette of blocks, lines, and arrows.",
 )
 
 

@@ -44,7 +44,7 @@ from terminaltexteffects.tui.files import FileFormat, FileScreen
 from terminaltexteffects.tui.picker import ColorScreen
 from terminaltexteffects.tui.screens import CommandScreen, HelpScreen
 from terminaltexteffects.tui.theme import TTE_THEME, gradient_text
-from terminaltexteffects.tui.toolbar import TextToolbar
+from terminaltexteffects.tui.toolbar import SymbolScreen, TextToolbar
 from terminaltexteffects.utils.graphics import Color
 
 if typing.TYPE_CHECKING:
@@ -104,6 +104,13 @@ class ColorTextArea(TextArea):
         self.pen: colors.CellStyle | None = None
         """Style given to typed and inserted text, or `None` to extend the style of the character before."""
         self.attach_colors(text, styles)
+
+    def get_component_rich_style(self, *names: str, partial: bool = False, default: Style | None = None) -> Style:
+        """Return a component style, keeping only the background of the cursor line so text colors show on it."""
+        style = super().get_component_rich_style(*names, partial=partial, default=default)
+        if names == ("text-area--cursor-line",):
+            return Style(bgcolor=style.bgcolor)
+        return style
 
     def show_canvas(self, rect: canvas.CanvasRect, area: canvas.CanvasRect, anchor: str) -> None:
         """Outline the canvas at `rect`, inside the effect `area`, for a canvas placed by `anchor`."""
@@ -1423,9 +1430,14 @@ class TTEApp(App[None]):
         self.editor.focus()
         return self.editor
 
-    @on(TextToolbar.InsertSymbol)
-    def _insert_symbol(self, message: TextToolbar.InsertSymbol) -> None:
-        self._back_to_text().insert_symbol(message.symbol)
+    @on(TextToolbar.OpenSymbols)
+    def _open_symbols(self, message: TextToolbar.OpenSymbols) -> None:
+        editor = self._back_to_text()
+
+        def closed(_result: None) -> None:
+            editor.focus()
+
+        self.push_screen(SymbolScreen(editor.insert_symbol, message.at), closed)
 
     @on(TextToolbar.PickColor)
     def _pick_text_color(self, message: TextToolbar.PickColor) -> None:
@@ -1441,7 +1453,9 @@ class TTEApp(App[None]):
                 return
             color = result[0]
             editor.pen = dataclasses.replace(editor.pen or colors.CellStyle(), **{layer: color})
-            editor.paint_selection(lambda style: dataclasses.replace(style or colors.CellStyle(), **{layer: color}))
+            if editor.paint_selection(lambda style: dataclasses.replace(style or colors.CellStyle(), **{layer: color})):
+                # Deselect so the new colors show instead of the selection highlight.
+                editor.move_cursor(editor.selection.end)
             self._show_pen()
             self._suggest_color_handling()
 

@@ -77,13 +77,14 @@ previews the gradient. Press ++ctrl+s++ or choose **Apply** to keep the colors, 
 
 ### Text toolbar
 
-**Fg** and **Bg** open the color picker for the text color and the background color. A picked color applies to the
-selected text and to text you type or insert afterwards. **Clear** removes the colors from the selected text and
-stops coloring new text. The swatches show the current colors, or a hatched square when there is none.
+**Text** and **Background** open the color picker for the text color and the background color. A picked color
+applies to the selected text and to text you type or insert afterwards. **Clear** removes the colors from the
+selected text and stops coloring new text. Each chip shows its current color, or a hatched square when there is
+none.
 
-The buttons after **Clear** switch between symbol groups: blocks, single and rounded lines, double lines, shapes,
-and arrows. Click a symbol to insert it at the cursor, replacing any selected text. The toolbar never takes focus,
-so the cursor and selection stay in the text.
+**Symbols** opens a palette of blocks, single and rounded lines, double lines, shapes, and arrows. Click a symbol,
+or move with the arrow keys and press ++enter++, to insert it at the cursor, replacing any selected text. The palette
+stays open so you can insert several symbols, and ++escape++ or a click outside closes it.
 
 Colors are kept with the text, as [input colors](#input-colors) are. Effects use them when
 **existing-color-handling** on the Canvas tab is `always` or `dynamic`.

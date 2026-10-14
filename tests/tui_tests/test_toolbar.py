@@ -11,7 +11,7 @@ from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.tui import colors
 from terminaltexteffects.tui.app import TTEApp
 from terminaltexteffects.tui.picker import ColorScreen
-from terminaltexteffects.tui.toolbar import SYMBOL_GROUPS, SymbolStrip, TextToolbar
+from terminaltexteffects.tui.toolbar import SYMBOL_GROUPS, SymbolGrid, SymbolScreen, TextToolbar
 from terminaltexteffects.utils.graphics import Color
 
 if TYPE_CHECKING:
@@ -32,25 +32,54 @@ def _run(app: TTEApp, script: Callable[[TTEApp, Pilot[None]], Awaitable[None]]) 
     asyncio.run(main())
 
 
-def test_symbols_insert_at_the_cursor_and_replace_the_selection() -> None:
-    """Clicking a symbol should insert it at the cursor, or replace the selected text, and keep editor focus."""
+def test_symbol_palette_inserts_at_the_cursor_and_replaces_the_selection() -> None:
+    """The palette should insert each chosen symbol at the cursor, replacing selected text, until it is closed."""
 
     async def script(app: TTEApp, pilot: Pilot[None]) -> None:
         editor = app.editor
         editor.focus()
-        editor.move_cursor((0, 2))
-        await pilot.click("#symbols", offset=(0, 0))
-        assert editor.text == "ab█cd"
-        assert editor.cursor_location == (0, 3)
-        assert app.focused is editor
-        await pilot.pause(0.25)
-        await pilot.click("#group-lines")
-        assert app.query_one(SymbolStrip).symbols == SYMBOL_GROUPS["Lines"]
         editor.selection = Selection((0, 0), (0, 2))
-        await pilot.click("#symbols", offset=(2, 0))
-        assert editor.text == f"{SYMBOL_GROUPS['Lines'][1]}█cd"
+        await pilot.click("#symbols")
+        await pilot.pause()
+        screen = app.screen
+        assert isinstance(screen, SymbolScreen)
+        grid = screen.query_one(SymbolGrid)
+        assert app.focused is grid
+        await pilot.press("enter")
+        assert editor.text == f"{SYMBOL_GROUPS['Blocks'][0]}cd"
+        await pilot.press("down", "right", "enter")
+        assert editor.text == f"{SYMBOL_GROUPS['Blocks'][0]}{SYMBOL_GROUPS['Lines'][1]}cd"
+        assert editor.cursor_location == (0, 2)
+        await pilot.click(SymbolGrid, offset=(8 + 3 * 2 + 1, 4))
+        assert editor.text.startswith(
+            f"{SYMBOL_GROUPS['Blocks'][0]}{SYMBOL_GROUPS['Lines'][1]}{SYMBOL_GROUPS['Double'][2]}"
+        )
+        await pilot.press("escape")
+        await pilot.pause()
+        assert not isinstance(app.screen, SymbolScreen)
+        assert app.focused is editor
 
     _run(TTEApp(_EFFECTS, "abcd", effect="wipe"), script)
+
+
+def test_colors_show_on_the_cursor_line() -> None:
+    """Typed colors should show on the line with the cursor, not only after the cursor leaves it."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        editor = app.editor
+        editor.focus()
+        editor.move_cursor((0, 4))
+        editor.pen = colors.CellStyle(fg=Color("ff0000"))
+        await pilot.press("x")
+        await pilot.pause()
+        styles = [segment.style for segment in editor.render_line(0) if segment.text.startswith("x")]
+        assert styles
+        assert styles[0] is not None
+        assert styles[0].color is not None
+        assert styles[0].color.triplet is not None
+        assert styles[0].color.triplet.hex == "#ff0000"
+
+    _run(TTEApp(_EFFECTS, "abcd\nefgh", effect="wipe"), script)
 
 
 def test_text_colors_paint_the_selection_and_new_text() -> None:
@@ -68,6 +97,7 @@ def test_text_colors_paint_the_selection_and_new_text() -> None:
         red = colors.CellStyle(fg=Color("ff0000"))
         assert editor.color_styles == [red, red, None, None]
         assert editor.pen == red
+        assert editor.selection.is_empty
         editor.move_cursor((0, 4))
         await pilot.press("x")
         await pilot.pause()

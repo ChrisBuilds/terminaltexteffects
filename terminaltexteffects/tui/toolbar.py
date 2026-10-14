@@ -1,4 +1,4 @@
-"""The text toolbar above the editor: text colors and symbol palettes."""
+"""The text toolbar above the editor: text colors and a symbol palette."""
 
 from __future__ import annotations
 
@@ -7,15 +7,20 @@ import typing
 from rich.segment import Segment
 from rich.style import Style
 from rich.text import Text
-from textual.containers import Horizontal
+from textual import events, on
+from textual.binding import Binding
+from textual.containers import Horizontal, Vertical
 from textual.message import Message
+from textual.screen import ModalScreen
 from textual.strip import Strip
 from textual.widget import Widget
 from textual.widgets import Button, Static
 
 if typing.TYPE_CHECKING:
-    from textual import events
+    from collections.abc import Callable
+
     from textual.app import ComposeResult
+    from textual.geometry import Offset
 
     from terminaltexteffects.utils.graphics import Color
 
@@ -28,97 +33,192 @@ SYMBOL_GROUPS: dict[str, str] = {
     "Shapes": "●○◆◇■□▲▼◀▶★☆",
     "Arrows": "←↑→↓↖↗↘↙⇐⇑⇒⇓",
 }
-"""Symbols the toolbar inserts, by group."""
+"""Symbols the palette inserts, by group."""
 
-_SYMBOL_WIDTH = 2
+_CELL = 3
+"""Cells per symbol in the palette, so each is an easy target."""
+_LABEL_WIDTH = 8
 _EMPTY_SWATCH = "░░"
 
 
 class PenSwatch(Static):
-    """Shows the text color for one layer, two cells wide, and asks for a new one when clicked."""
+    """A button-like chip that names a color layer, shows its color as a square, and asks for a new one."""
 
     def __init__(self, layer: Layer, **kwargs: typing.Any) -> None:
-        """Initialize the swatch for the foreground or background `layer`."""
+        """Initialize the chip for the foreground or background `layer`."""
         super().__init__(**kwargs)
         self.pen_layer: Layer = layer
         self.show(None)
 
     def show(self, color: Color | None) -> None:
         """Show `color`, or a hatched square when the layer has no color."""
-        name = "Fg" if self.pen_layer == "fg" else "Bg"
+        name = "Text" if self.pen_layer == "fg" else "Background"
         text = Text(f"{name} ")
         if color is None:
             text.append(_EMPTY_SWATCH, "dim")
         else:
             text.append("  ", Style(bgcolor=f"#{color.rgb_color}"))
         self.update(text)
-        what = "Text color" if self.pen_layer == "fg" else "Background color"
         current = f"#{color.rgb_color}" if color else "none"
-        self.tooltip = f"{what} for the selection and for new text ({current}). Click to pick."
+        self.tooltip = f"{name} color for the selection and for new text ({current}). Click to pick."
 
     def on_click(self) -> None:
         """Ask for a new color for this layer."""
         self.post_message(TextToolbar.PickColor(self.pen_layer))
 
 
-class SymbolStrip(Widget):
-    """A row of clickable symbols from one group."""
+class SymbolGrid(Widget, can_focus=True):
+    """Every symbol group as a labeled row of symbols, chosen with the mouse or the arrow keys and Enter."""
+
+    DEFAULT_CSS = f"""
+    SymbolGrid {{
+        width: {_LABEL_WIDTH + _CELL * max(len(symbols) for symbols in SYMBOL_GROUPS.values())};
+        height: {len(SYMBOL_GROUPS) * 2 - 1};
+    }}
+    """
+
+    BINDINGS: typing.ClassVar = [
+        Binding("up", "move(0, -1)", show=False),
+        Binding("down", "move(0, 1)", show=False),
+        Binding("left", "move(-1, 0)", show=False),
+        Binding("right", "move(1, 0)", show=False),
+        Binding("enter,space", "choose", "Insert"),
+    ]
+
+    class Chosen(Message):
+        """Posted when `symbol` is chosen."""
+
+        def __init__(self, symbol: str) -> None:
+            """Initialize the message with the chosen `symbol`."""
+            super().__init__()
+            self.symbol = symbol
+
+    def __init__(self, **kwargs: typing.Any) -> None:
+        """Initialize the grid with the first symbol selected."""
+        super().__init__(**kwargs)
+        self.rows = list(SYMBOL_GROUPS.items())
+        self.cursor = (0, 0)
+        """Column and row of the selected symbol."""
+
+    @property
+    def symbol(self) -> str:
+        """Return the selected symbol."""
+        column, row = self.cursor
+        return self.rows[row][1][column]
+
+    def render_line(self, y: int) -> Strip:
+        """Render a group's label and symbols on even lines, and a blank line between groups."""
+        base = self.rich_style
+        if y % 2 or y // 2 >= len(self.rows):
+            return Strip.blank(self.size.width, base)
+        row = y // 2
+        name, symbols = self.rows[row]
+        muted = base + Style(dim=True)
+        selected = base + Style(
+            color=self.app.theme_variables.get("background", "#000000"),
+            bgcolor=self.app.theme_variables.get("secondary", "#00d1ff"),
+            bold=True,
+        )
+        segments = [Segment(name.ljust(_LABEL_WIDTH), muted)]
+        for column, symbol in enumerate(symbols):
+            style = selected if (column, row) == self.cursor else base
+            segments.append(Segment(f" {symbol} ", style))
+        return Strip(segments).adjust_cell_length(self.size.width, base)
+
+    def _cell_at(self, offset: Offset) -> tuple[int, int] | None:
+        if offset.y % 2 or offset.x < _LABEL_WIDTH:
+            return None
+        row, column = offset.y // 2, (offset.x - _LABEL_WIDTH) // _CELL
+        if row < len(self.rows) and column < len(self.rows[row][1]):
+            return column, row
+        return None
+
+    def _select(self, cell: tuple[int, int]) -> None:
+        if cell != self.cursor:
+            self.cursor = cell
+            self.refresh()
+
+    def on_mouse_move(self, event: events.MouseMove) -> None:
+        """Select the symbol under the mouse."""
+        cell = self._cell_at(event.offset)
+        if cell is not None:
+            self._select(cell)
+
+    def on_click(self, event: events.Click) -> None:
+        """Choose the clicked symbol."""
+        cell = self._cell_at(event.offset)
+        if cell is not None:
+            self._select(cell)
+            self.action_choose()
+
+    def action_move(self, columns: int, rows: int) -> None:
+        """Move the selection, wrapping around the edges and keeping it within shorter rows."""
+        column, row = self.cursor
+        row = (row + rows) % len(self.rows)
+        width = len(self.rows[row][1])
+        column = (column + columns) % width if columns else min(column, width - 1)
+        self._select((column, row))
+
+    def action_choose(self) -> None:
+        """Choose the selected symbol."""
+        self.post_message(SymbolGrid.Chosen(self.symbol))
+
+
+class SymbolScreen(ModalScreen[None]):
+    """A palette of symbols that opens under the toolbar and inserts each symbol chosen until it is closed."""
 
     DEFAULT_CSS = """
-    SymbolStrip {
-        height: 1;
-        width: 1fr;
+    SymbolScreen {
+        background: $background 0%;
+    }
+    SymbolScreen > Vertical {
+        constrain: inside inside;
+        width: auto;
+        height: auto;
+        padding: 1 2;
+        border: round $secondary;
+        border-title-color: $text;
+        border-subtitle-color: $text-muted;
+        background: $surface;
     }
     """
 
-    def __init__(self, **kwargs: typing.Any) -> None:
-        """Initialize the strip with the first group's symbols."""
-        super().__init__(**kwargs)
-        self.symbols = next(iter(SYMBOL_GROUPS.values()))
-        self._hover: int | None = None
-        self.tooltip = "Click a symbol to insert it at the cursor"
+    BINDINGS: typing.ClassVar = [Binding("escape", "close", "Close")]
 
-    def show_group(self, group: str) -> None:
-        """Show the symbols of `group`."""
-        self.symbols = SYMBOL_GROUPS[group]
-        self.refresh()
+    def __init__(self, insert: Callable[[str], None], at: Offset) -> None:
+        """Initialize the palette to call `insert` with each chosen symbol, with its top-left corner `at`."""
+        super().__init__()
+        self._insert = insert
+        self._at = at
 
-    def render_line(self, y: int) -> Strip:
-        """Render the symbols, each centered in two cells, with the one under the mouse highlighted."""
-        if y:
-            return Strip.blank(self.size.width, self.rich_style)
-        base = self.rich_style
-        hover = base + Style(reverse=True)
-        segments = [
-            Segment(f"{symbol} ", hover if index == self._hover else base) for index, symbol in enumerate(self.symbols)
-        ]
-        return Strip(segments).adjust_cell_length(self.size.width, base)
+    def compose(self) -> ComposeResult:
+        """Create the palette."""
+        with Vertical() as panel:
+            panel.border_title = "Insert symbol"
+            panel.border_subtitle = "Click or Enter inserts · Esc closes"
+            panel.styles.offset = (self._at.x, self._at.y)
+            yield SymbolGrid()
 
-    def _index_at(self, x: int) -> int | None:
-        index = x // _SYMBOL_WIDTH
-        return index if 0 <= index < len(self.symbols) else None
+    def on_mount(self) -> None:
+        """Give the grid the keyboard."""
+        self.query_one(SymbolGrid).focus()
 
-    def on_mouse_move(self, event: events.MouseMove) -> None:
-        """Highlight the symbol under the mouse."""
-        index = self._index_at(event.x)
-        if index != self._hover:
-            self._hover = index
-            self.refresh()
-
-    def on_leave(self) -> None:
-        """Clear the highlight when the mouse leaves."""
-        self._hover = None
-        self.refresh()
+    @on(SymbolGrid.Chosen)
+    def _chosen(self, message: SymbolGrid.Chosen) -> None:
+        self._insert(message.symbol)
 
     def on_click(self, event: events.Click) -> None:
-        """Insert the clicked symbol."""
-        index = self._index_at(event.x)
-        if index is not None:
-            self.post_message(TextToolbar.InsertSymbol(self.symbols[index]))
+        """Close the palette when clicking outside it."""
+        if event.widget is self:
+            self.dismiss(None)
+
+    def action_close(self) -> None:
+        """Close the palette."""
+        self.dismiss(None)
 
 
 class TextToolbar(Horizontal):
-    """Text color swatches, a button to clear colors, and symbol palettes for the editor.
+    """Text and background color chips, a button to clear colors, and a button that opens the symbol palette.
 
     None of its parts take focus, so the editor keeps the cursor and selection while the toolbar is used.
     """
@@ -129,16 +229,19 @@ class TextToolbar(Horizontal):
     }
     TextToolbar PenSwatch {
         width: auto;
+        padding: 0 1;
         margin-right: 1;
+        background: $boost;
+    }
+    TextToolbar PenSwatch:hover {
+        background: $primary 40%;
     }
     TextToolbar Button {
         min-width: 0;
         margin-right: 1;
     }
-    TextToolbar .divider {
-        width: 1;
-        margin-right: 1;
-        color: $primary;
+    TextToolbar #symbols {
+        margin-left: 2;
     }
     """
 
@@ -153,31 +256,20 @@ class TextToolbar(Horizontal):
     class ClearColor(Message):
         """Posted to clear the text colors and the colors of the selection."""
 
-    class InsertSymbol(Message):
-        """Posted to insert `symbol` at the cursor."""
+    class OpenSymbols(Message):
+        """Posted to open the symbol palette with its top-left corner at the screen offset `at`."""
 
-        def __init__(self, symbol: str) -> None:
-            """Initialize the message with the `symbol` to insert."""
+        def __init__(self, at: Offset) -> None:
+            """Initialize the message with the screen offset `at`."""
             super().__init__()
-            self.symbol = symbol
-
-    def __init__(self, **kwargs: typing.Any) -> None:
-        """Initialize the toolbar with the first symbol group selected."""
-        super().__init__(**kwargs)
-        self.group = next(iter(SYMBOL_GROUPS))
+            self.at = at
 
     def compose(self) -> ComposeResult:
-        """Create the color swatches, the clear button, the group buttons, and the symbols."""
+        """Create the color chips, the clear button, and the symbols button."""
         yield PenSwatch("fg", id="pen-fg")
         yield PenSwatch("bg", id="pen-bg")
         yield self._button("Clear", "clear-color", "Clear the text colors and the selection's colors")
-        yield Static("│", classes="divider")
-        for group, symbols in SYMBOL_GROUPS.items():
-            button = self._button(symbols[0], f"group-{group.lower()}", f"{group}: show these symbols")
-            button.variant = "primary" if group == self.group else "default"
-            yield button
-        yield Static("│", classes="divider")
-        yield SymbolStrip(id="symbols")
+        yield self._button("Ω Symbols ▾", "symbols", "Insert block, line, shape, and arrow symbols")
 
     @staticmethod
     def _button(label: str, button_id: str, tooltip: str) -> Button:
@@ -191,18 +283,10 @@ class TextToolbar(Horizontal):
         self.query_one("#pen-fg", PenSwatch).show(fg)
         self.query_one("#pen-bg", PenSwatch).show(bg)
 
-    def select_group(self, group: str) -> None:
-        """Show the symbols of `group` and mark its button."""
-        self.group = group
-        for name in SYMBOL_GROUPS:
-            self.query_one(f"#group-{name.lower()}", Button).variant = "primary" if name == group else "default"
-        self.query_one(SymbolStrip).show_group(group)
-
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Clear the colors or switch the symbol group."""
+        """Clear the colors or open the symbol palette."""
         event.stop()
-        button_id = event.button.id or ""
-        if button_id == "clear-color":
+        if event.button.id == "clear-color":
             self.post_message(TextToolbar.ClearColor())
-        elif button_id.startswith("group-"):
-            self.select_group(button_id.removeprefix("group-").capitalize())
+        elif event.button.id == "symbols":
+            self.post_message(TextToolbar.OpenSymbols(event.button.region.bottom_left))
