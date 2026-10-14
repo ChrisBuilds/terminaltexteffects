@@ -165,7 +165,11 @@ class OptionEditor(Horizontal):
     OptionEditor {
         height: 1;
         width: 1fr;
-        margin-right: 2;
+        padding: 0 1;
+        background: $boost;
+    }
+    OptionEditor:focus-within {
+        background: $primary 25%;
     }
     OptionEditor > .option-label {
         width: 28;
@@ -177,6 +181,7 @@ class OptionEditor(Horizontal):
     }
     OptionEditor > Input, OptionEditor > Select {
         width: 1fr;
+        background: $surface-darken-1;
     }
     OptionEditor > Input.-invalid {
         color: $error;
@@ -449,7 +454,7 @@ class TTEApp(App[None]):
         display: block;
     }
     #options {
-        height: 14;
+        height: 16;
         border: round $primary-darken-2;
         border-title-color: $text;
     }
@@ -467,7 +472,7 @@ class TTEApp(App[None]):
     .option-grid {
         layout: grid;
         grid-size: 2;
-        grid-gutter: 0 1;
+        grid-gutter: 1 2;
         grid-rows: 1;
         height: auto;
     }
