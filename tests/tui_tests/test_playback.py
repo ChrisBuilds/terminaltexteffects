@@ -139,7 +139,11 @@ def test_random_effect_and_help() -> None:
         await pilot.press("f9")
         await pilot.pause()
         assert app.effect_name != "wipe"
-        assert app.state == "playing"
+        # Some effects play only a few frames on short text, so the effect may already have finished.
+        assert app.state in ("playing", "finished")
+        assert app._playback_key is not None
+        assert app._playback_key[0] == app.effect_name
+        assert not str(app.query_one("#stage").border_title).startswith("Failed")
         highlighted = app.query_one("#effects", OptionList).highlighted
         assert highlighted is not None
         assert app._listed[highlighted] == app.effect_name
