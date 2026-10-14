@@ -295,3 +295,34 @@ def test_tabs_are_kept_and_follow_the_tab_width() -> None:
         assert app.editor.indent_width == 8
 
     _run(TTEApp(_EFFECTS, "a\tb", effect="wipe"), script)
+
+
+def test_single_options_return_to_their_defaults() -> None:
+    """A field left blank, or Shift+F6 on an option, should return just that option to its default."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        delay = _editor(app, "wipe", "wipe_delay")
+        reverse = _editor(app, "wipe", "reverse_wipe_direction")
+        entry = delay.query_one(Input)
+        entry.focus()
+        entry.value = "5"
+        reverse.query_one(Checkbox).value = True
+        await pilot.pause()
+        assert app._values["wipe"] == {"wipe_delay": 5, "reverse_wipe_direction": True}
+        entry.value = ""
+        await pilot.pause()
+        assert delay.error is not None
+        await pilot.press("tab")
+        await pilot.pause()
+        assert delay.value == delay.option.default
+        assert delay.error is None
+        assert entry.value == delay.option.format(delay.option.default)
+        assert app._values["wipe"] == {"reverse_wipe_direction": True}
+        assert not app._current_errors()
+        reverse.query_one(Checkbox).focus()
+        await pilot.press("shift+f6")
+        await pilot.pause()
+        assert reverse.value is False
+        assert app._values["wipe"] == {}
+
+    _run(TTEApp(_EFFECTS, "text", effect="wipe"), script)

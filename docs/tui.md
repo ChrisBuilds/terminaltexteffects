@@ -59,7 +59,8 @@ Option inputs follow each option's type: a checkbox for on/off options, a list f
 directions and easing functions, and a text box for everything else. Text boxes use the same spelling as the
 command line. Lists are space separated, such as `ff0000 00ff00 0000ff`, and colors show a swatch. An invalid value
 turns its name and field red, with the reason in its tooltip, and the effect won't play until it is fixed. Changed
-options have their names highlighted, and each effect keeps its own values while the interface is open. The
+options have their names highlighted. Clearing a field and leaving it, or pressing ++shift+f6++ on an option,
+returns that option to its default. Each effect keeps its own values while the interface is open. The
 selected effect's description is shown along the bottom of the options panel.
 
 ### Picking colors
@@ -100,6 +101,7 @@ interface manages to show, next to the **frame-rate** option.
 | ++f3++ | Save the text to a file. |
 | ++f4++ | Show the `tte` command for the current settings, or load a pasted command. |
 | ++f7++ | Open the color picker for the selected color option. |
+| ++shift+f6++ | Reset the focused option to its default. |
 | ++f6++ | Reset the selected effect's options and the canvas options. |
 | ++f8++ | Record the effect to a `.tterec` file for [playback](appguide.md#recording-and-playback). |
 | ++tab++ | Move between the effect filter, the effect list, the text, and the options. |

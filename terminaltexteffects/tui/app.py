@@ -369,7 +369,10 @@ class Swatch(Static):
 class OptionEditor(Horizontal):
     """A labelled input for one option, built from its `ArgSpec`."""
 
-    BINDINGS: typing.ClassVar = [Binding("f7", "pick_color", "Pick color")]
+    BINDINGS: typing.ClassVar = [
+        Binding("f7", "pick_color", "Pick color"),
+        Binding("shift+f6", "reset_option", "Default"),
+    ]
 
     DEFAULT_CSS = """
     OptionEditor {
@@ -520,6 +523,18 @@ class OptionEditor(Horizontal):
         if action == "pick_color":
             return self.option.is_color
         return True
+
+    @on(Input.Blurred)
+    def _input_blurred(self, event: Input.Blurred) -> None:
+        """Return a field left blank to the option's default."""
+        event.stop()
+        if not event.value.strip():
+            self.action_reset_option()
+
+    def action_reset_option(self) -> None:
+        """Return this option to its default."""
+        self.set_value(self.option.default)
+        self.post_message(OptionEditor.Edited(self))
 
     @on(Input.Submitted)
     @on(Swatch.Clicked)

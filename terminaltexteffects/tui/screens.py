@@ -114,7 +114,7 @@ KEYS: tuple[tuple[str, str], ...] = (
     ("F2 / F3", "Open / save the text"),
     ("F4", "Show the command for the current settings, or load a pasted one"),
     ("Ctrl+T / Ctrl+G", "Fit the canvas exactly around the text / grow it to the whole text area"),
-    ("F6", "Reset the effect and canvas options"),
+    ("Shift+F6 / F6", "Reset the focused option / all effect and canvas options"),
     ("F7", "Pick colors for the selected color option"),
     ("F8", "Record the effect to a .tterec file"),
     ("Tab", "Move between the effect filter, effect list, text, and options"),
@@ -127,6 +127,7 @@ TIPS = (
     "Drag the canvas outline to resize the canvas. Fit wraps it around the text, and Max fills the text area.",
     "Turn on Auto-replay to replay the effect whenever an option changes, or when you highlight another effect.",
     "Turn on Loop to keep replaying the effect.",
+    "Clear an option's field and leave it to return the option to its default.",
     "Type in the filter above the effect list to find an effect by name or description.",
 )
 
