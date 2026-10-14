@@ -1370,6 +1370,38 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-randomly"
+version = "4.0.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.10'",
+]
+dependencies = [
+    { name = "importlib-metadata" },
+    { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" } },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c4/1d/258a4bf1109258c00c35043f40433be5c16647387b6e7cd5582d638c116b/pytest_randomly-4.0.1.tar.gz", hash = "sha256:174e57bb12ac2c26f3578188490bd333f0e80620c3f47340158a86eca0593cd8", size = 14130, upload-time = "2025-09-12T15:23:00.085Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/33/3e/a4a9227807b56869790aad3e24472a554b585974fe7e551ea350f50897ae/pytest_randomly-4.0.1-py3-none-any.whl", hash = "sha256:e0dfad2fd4f35e07beff1e47c17fbafcf98f9bf4531fd369d9260e2f858bfcb7", size = 8304, upload-time = "2025-09-12T15:22:58.946Z" },
+]
+
+[[package]]
+name = "pytest-randomly"
+version = "5.0.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.11'",
+    "python_full_version == '3.10.*'",
+]
+dependencies = [
+    { name = "pytest", version = "9.1.1", source = { registry = "https://pypi.org/simple" } },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/01/3b/6a40e1b9d925651e601e056a97f60d8a1daeddeac03d5609be60cb4362ce/pytest_randomly-5.0.0.tar.gz", hash = "sha256:e9c575a5873ef168ddbe340ed9e97ce9edb4492ccc821e4b2ac6bb1f0ed515d2", size = 8542, upload-time = "2026-09-01T22:34:20.441Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/10/b4/47e939285caad9a623d021512912ac08dc92a467ad075d179f43729d2934/pytest_randomly-5.0.0-py3-none-any.whl", hash = "sha256:8a0d4703115c0c25b38b6e129fc16b1947b9643ff26a41bc1d185d7e5a7689c1", size = 8920, upload-time = "2026-09-01T22:34:19.227Z" },
+]
+
+[[package]]
 name = "pytest-xdist"
 version = "3.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1675,6 +1707,7 @@ dev = [
     { name = "pyright", marker = "python_full_version >= '3.10'" },
     { name = "pytest", version = "9.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pytest-cov", marker = "python_full_version >= '3.10'" },
+    { name = "pytest-randomly", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pytest-xdist", marker = "python_full_version >= '3.10'" },
     { name = "ruff", marker = "python_full_version >= '3.10'" },
     { name = "shellcheck-py", marker = "python_full_version >= '3.10'" },
@@ -1700,6 +1733,8 @@ test = [
     { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pytest", version = "9.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pytest-cov" },
+    { name = "pytest-randomly", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "pytest-randomly", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pytest-xdist" },
     { name = "shtab" },
     { name = "towncrier" },
@@ -1736,6 +1771,8 @@ dev = [
     { name = "pytest", marker = "python_version < '0'", specifier = ">=8.3.5,<9" },
     { name = "pytest", marker = "python_full_version >= '3.10'", specifier = ">=9.0.3" },
     { name = "pytest-cov", marker = "python_full_version >= '3.10'", specifier = ">=5.0.0" },
+    { name = "pytest-randomly", marker = "python_version < '0'", specifier = ">=4.0.1,<4.1" },
+    { name = "pytest-randomly", marker = "python_full_version >= '3.10'", specifier = ">=5.0.0" },
     { name = "pytest-xdist", marker = "python_full_version >= '3.10'", specifier = ">=3.6.1" },
     { name = "ruff", marker = "python_full_version >= '3.10'", specifier = "==0.16.10" },
     { name = "shellcheck-py", marker = "python_full_version >= '3.10'", specifier = "==0.11.0.1" },
@@ -1761,6 +1798,8 @@ test = [
     { name = "pytest", marker = "python_full_version < '3.10'", specifier = ">=8.3.5,<9" },
     { name = "pytest", marker = "python_full_version >= '3.10'", specifier = ">=9.0.3" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
+    { name = "pytest-randomly", marker = "python_full_version < '3.10'", specifier = ">=4.0.1,<4.1" },
+    { name = "pytest-randomly", marker = "python_full_version >= '3.10'", specifier = ">=5.0.0" },
     { name = "pytest-xdist", specifier = ">=3.6.1" },
     { name = "shtab", specifier = "==1.12.1" },
     { name = "towncrier", specifier = "==26.9.0" },

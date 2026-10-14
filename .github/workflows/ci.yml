@@ -78,13 +78,13 @@ jobs:
       - name: Check shipped effect inventory
         run: |
           .venv/bin/python tools/check_effect_inventory.py
-          .venv/bin/python -m pytest -q tests/test_effect_inventory.py \
+          .venv/bin/python -m pytest tests/test_effect_inventory.py \
             --junitxml=test-results/effect-inventory.xml -o junit_logging=no -o faulthandler_timeout=120
       - name: Execute selected documentation examples
         env:
           TTE_REQUIRE_DOC_EXAMPLES: "1"
         run: |
-          .venv/bin/python -m pytest -q tests/test_documented_examples.py \
+          .venv/bin/python -m pytest tests/test_documented_examples.py \
             --junitxml=test-results/documented-examples.xml -o junit_logging=no -o faulthandler_timeout=120
       - name: Build documentation and check links
         run: .venv/bin/python -m mkdocs build --strict --site-dir "$RUNNER_TEMP/docs"
@@ -337,7 +337,7 @@ jobs:
           PY
       - name: Run focused terminal and CLI regressions
         run: |
-          uv run --no-sync python -m pytest -q --durations=10 \
+          uv run --no-sync python -m pytest --durations=10 \
             --junitxml=test-results/platform.xml -o junit_logging=no -o faulthandler_timeout=120 \
             tests/engine_tests/test_terminal.py \
             tests/engine_tests/test_terminal_input.py \

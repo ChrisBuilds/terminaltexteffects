@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from typing import Literal, cast
 
 import pytest
@@ -98,6 +99,8 @@ def test_swarm_args(
 @pytest.mark.parametrize(("coordination", "expected_follower_area"), [(0, "9_swarm_area"), (1, "10_swarm_area")])
 def test_swarm_coordination_advances_past_area_nine(coordination: float, expected_follower_area: str) -> None:
     """Verify coordination compares complete area indices and honors its ratio."""
+    # Repeated focus coordinates can merge swarm areas (#217); this seed creates all twelve.
+    random.seed(1337)
     effect = effect_swarm.Swarm("AB")
     effect.effect_config.swarm_size = 1
     effect.effect_config.swarm_coordination = coordination

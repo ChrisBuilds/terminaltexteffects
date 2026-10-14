@@ -88,8 +88,9 @@ def test_module_fixture_stays_module_scoped():
 """
     )
 
+    # Disable pytest-randomly so each subprocess keeps collection order and repeated runs compare equal.
     def collect(*args: str) -> list[str]:
-        result = pytester.runpytest_subprocess("--collect-only", "-q", *args)
+        result = pytester.runpytest_subprocess("-p", "no:randomly", "--collect-only", "-q", *args)
         assert result.ret == 0
         return [line for line in result.outlines if line.startswith("test_cases.py::test_cases[")]
 
@@ -100,5 +101,5 @@ def test_module_fixture_stays_module_scoped():
     assert len(exhaustive) == 12
     assert set(selected) < set(exhaustive)
     assert all(any(label in node for node in selected) for label in ("slow", "fast", "first", "second"))
-    pytester.runpytest_subprocess("-q").assert_outcomes(passed=7)
-    pytester.runpytest_subprocess("-q", "--exhaustive-effect-args").assert_outcomes(passed=13)
+    pytester.runpytest_subprocess("-p", "no:randomly", "-q").assert_outcomes(passed=7)
+    pytester.runpytest_subprocess("-p", "no:randomly", "-q", "--exhaustive-effect-args").assert_outcomes(passed=13)
