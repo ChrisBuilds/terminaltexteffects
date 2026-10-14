@@ -1,0 +1,187 @@
+name: Profile
+
+# Samples the benchmark harness with Python 3.15's `profiling.sampling` and uploads reviewable
+# reports. Profiling is informational: it is not part of `CI passed` and never fails on a slowdown.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - terminaltexteffects/**
+      - tools/perf/**
+      - .github/workflows/profile.yml
+  workflow_dispatch:
+    inputs:
+      effect:
+        description: Effect command to profile, or `all`
+        default: all
+        type: string
+      scenarios:
+        description: Space-separated `<input-preset>/<lifecycle>` pairs (see tools/perf/benchmark_effects.py)
+        default: medium/iterator large/iterator medium/terminal-output
+        type: string
+      baseline:
+        description: Optional commit, branch, or tag to compare against with differential flamegraphs
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  profile:
+    name: Profile / Python 3.15
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      EFFECT: ${{ inputs.effect || 'all' }}
+      SCENARIOS: ${{ inputs.scenarios || 'medium/iterator large/iterator medium/terminal-output' }}
+      # A push compares against the previous `main`; a manual run compares only when asked.
+      BASELINE: ${{ github.event_name == 'push' && github.event.before || inputs.baseline }}
+      SAMPLES: '2'
+      SEED: '1337'
+      RESULTS: profile-results
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.15'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          cache-suffix: profile
+      - name: Install package
+        run: uv sync --locked --no-default-groups --no-editable
+      - name: Validate inputs and resolve baseline
+        id: baseline
+        run: |
+          for scenario in $SCENARIOS; do
+            if [[ ! "$scenario" =~ ^[a-z]+/(iterator|terminal-output)$ ]]; then
+              echo "Invalid scenario '$scenario'; expected <input-preset>/<lifecycle>." >&2
+              exit 1
+            fi
+          done
+          if [[ ! "$EFFECT" =~ ^[a-z0-9_]+$ ]]; then
+            echo "Invalid effect '$EFFECT'." >&2
+            exit 1
+          fi
+          sha=''
+          if [[ -n "$BASELINE" && ! "$BASELINE" =~ ^0+$ ]]; then
+            if ! sha=$(git rev-parse --verify --quiet "${BASELINE}^{commit}"); then
+              if ! sha=$(git rev-parse --verify --quiet "origin/${BASELINE}^{commit}"); then
+                echo "Baseline '$BASELINE' is not a commit, branch, or tag in this repository." >&2
+                exit 1
+              fi
+            fi
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: Record and convert profiles
+        env:
+          BASELINE_SHA: ${{ steps.baseline.outputs.sha }}
+        run: |
+          # Differential flamegraphs match frames by absolute filename, so both builds are installed in
+          # turn into the same venv. The current harness drives both; only the package differs.
+          venv="$RUNNER_TEMP/profile-venv"
+          uv venv --python "$pythonLocation/bin/python" "$venv"
+          install() {
+            uv pip install --python "$venv/bin/python" --reinstall --no-deps "$1"
+          }
+          # The profiler puts the working directory first on `sys.path`, so record from an empty
+          # directory; from the checkout, its source tree would shadow the installed package.
+          root=$PWD
+          isolated="$RUNNER_TEMP/profile-cwd"
+          mkdir -p "$isolated"
+          record() {
+            # record <output.bin> <preset> <lifecycle> <benchmark.json>, paths relative to the checkout
+            (cd "$isolated" &&
+              "$venv/bin/python" -m profiling.sampling run --binary -o "$root/$1" \
+                "$root/tools/perf/benchmark_effects.py" \
+                --effect "$EFFECT" --input-preset "$2" --lifecycle "$3" \
+                --samples "$SAMPLES" --warmups 0 --seed "$SEED" --json-out "$root/$4" > /dev/null)
+          }
+          replay() {
+            .venv/bin/python -m profiling.sampling replay "$@" > /dev/null
+          }
+          if [[ -n "$BASELINE_SHA" ]]; then
+            git worktree add --detach "$RUNNER_TEMP/baseline" "$BASELINE_SHA"
+            install "$RUNNER_TEMP/baseline"
+            for scenario in $SCENARIOS; do
+              out="$RESULTS/$EFFECT-${scenario%/*}-${scenario#*/}"
+              mkdir -p "$out"
+              echo "::group::Baseline $EFFECT / ${scenario%/*} / ${scenario#*/}"
+              record "$out/baseline.bin" "${scenario%/*}" "${scenario#*/}" "$out/baseline-benchmark.json"
+              echo '::endgroup::'
+            done
+          fi
+          install .
+          for scenario in $SCENARIOS; do
+            preset=${scenario%/*}
+            lifecycle=${scenario#*/}
+            out="$RESULTS/$EFFECT-$preset-$lifecycle"
+            mkdir -p "$out"
+            echo "::group::Profile $EFFECT / $preset / $lifecycle"
+            record "$out/profile.bin" "$preset" "$lifecycle" "$out/benchmark.json"
+            replay --flamegraph -o "$out/flamegraph.html" "$out/profile.bin"
+            replay --heatmap -o "$out/heatmap" "$out/profile.bin"
+            replay --gecko -o "$out/profile.gecko.json" "$out/profile.bin"
+            replay --collapsed -o "$out/collapsed.txt" "$out/profile.bin"
+            replay --jsonl -o "$out/profile.jsonl" "$out/profile.bin"
+            .venv/bin/python tools/perf/summarize_profile.py "$out/profile.jsonl" \
+              --title "$EFFECT / $preset / $lifecycle" --limit 15 -o "$out/summary.md"
+            if [[ -n "$BASELINE_SHA" ]]; then
+              replay --diff-flamegraph "$out/baseline.bin" -o "$out/diff-flamegraph.html" "$out/profile.bin"
+              .venv/bin/python tools/perf/benchmark_effects.py \
+                --compare "$out/baseline-benchmark.json" "$out/benchmark.json" > "$out/compare.txt"
+            fi
+            echo '::endgroup::'
+          done
+      - name: Write job summary
+        if: "!cancelled()"
+        env:
+          BASELINE_SHA: ${{ steps.baseline.outputs.sha }}
+        run: |
+          {
+            echo '## Sampling profiles'
+            echo
+            printf 'Commit %s, effect %s, %s timed samples per scenario, seed %s.\n' \
+              "$GITHUB_SHA" "$EFFECT" "$SAMPLES" "$SEED"
+            if [[ -n "$BASELINE_SHA" ]]; then
+              printf 'Baseline %s: each scenario includes a differential flamegraph and benchmark comparison.\n' \
+                "$BASELINE_SHA"
+            fi
+            cat <<'EOF'
+
+          Download the `profile-results` artifact for interactive flamegraphs and line heatmaps.
+          Load `profile.gecko.json` in <https://profiler.firefox.com>, or convert `profile.bin` locally with
+          `python3.15 -m profiling.sampling replay`. Timings are taken under the profiler on a shared runner,
+          so compare proportions, not absolute times.
+
+          EOF
+            for summary in "$RESULTS"/*/summary.md; do
+              [[ -f "$summary" ]] || continue
+              cat "$summary"
+              compare="$(dirname "$summary")/compare.txt"
+              if [[ -f "$compare" ]]; then
+                printf '\n<details><summary>Benchmark comparison with baseline</summary>\n\n```text\n'
+                cat "$compare"
+                printf '```\n\n</details>\n'
+              fi
+              echo
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload profiles
+        if: "!cancelled() && hashFiles('profile-results/**/profile.bin') != ''"
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: profile-results
+          path: profile-results/
+          retention-days: 14
+          if-no-files-found: error
