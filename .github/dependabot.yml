@@ -16,11 +16,13 @@ updates:
     labels: [maintenance, ci, no-changelog]
     commit-message:
       prefix: "chore(deps)"
-    # Dependabot cannot update pytest's Python-version split (8.x for 3.9, 9.x for 3.10+), so
-    # version and security updates for it fail. Upgrade it with `uv lock --upgrade-package pytest`
-    # and watch its advisories manually; remove this when 3.9 is dropped (#184).
+    # Dependabot cannot update the Python-version splits for pytest (8.x for 3.9, 9.x for 3.10+)
+    # or pytest-randomly (4.0.x for 3.9, 5.x for 3.10+), so version and security updates for them
+    # fail. Upgrade them with `uv lock --upgrade-package <name>` and watch their advisories
+    # manually; remove this when 3.9 is dropped (#184).
     ignore:
       - dependency-name: pytest
+      - dependency-name: pytest-randomly
     groups:
       python-minor-patch:
         applies-to: version-updates

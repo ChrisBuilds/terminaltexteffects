@@ -147,6 +147,19 @@ in a follow-up PR.
 longer than 120 seconds dump a traceback. Reproduce narrowly at the tested revision, then fix on the
 branch. Rerun a job only if there's evidence of a transient infrastructure failure.
 
+**Random order and seeds.** pytest-randomly shuffles test order and reseeds `random` before every
+test, using a new seed for each run. The seed is printed near the top of the test output as
+`Using --randomly-seed=<seed>`. To reproduce a failure, run the failing test with that seed on the
+same Python version:
+
+```sh
+./.venv/bin/pytest -p no:xdist --randomly-seed=<seed> <failing test id>
+```
+
+If the failure is order-dependent, run its module or the whole suite with the same seed. If a
+seed-dependent failure appears on a PR that didn't cause it, open an issue that names the test and
+the seed, then rerun the failed job; the rerun uses a new seed. Fix the failure in its own PR.
+
 **After merge,** a successful `main` CI run triggers `docs.yml`, which publishes the documentation
 site from that commit; each page shows a banner linking the commit. GitHub notifies you of failures.
 To redeploy after fixing a failure, run `gh workflow run docs.yml --ref main`. Delete the merged
