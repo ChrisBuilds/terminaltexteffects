@@ -503,6 +503,7 @@ class TTEApp(App[None]):
         super().__init__()
         self.effect_resource_map = dict(sorted(effect_resource_map.items()))
         self.input_file = input_file
+        self._file_text: str | None = None
         self._initial_text = text
         self._initial_effect = effect if effect in self.effect_resource_map else None
         self.effect_name = self._initial_effect or next(iter(self.effect_resource_map))
@@ -535,6 +536,8 @@ class TTEApp(App[None]):
         """Load the initial text and show the selected effect's options."""
         self.query_one("#stage").border_title = "Text"
         self._load_text(self._initial_text)
+        if self.input_file:
+            self._file_text = self.editor.text
         terminal_grid = self.query_one("#terminal-options")
         await terminal_grid.mount_all(
             OptionEditor(_TERMINAL_SCOPE, option, self._value(_TERMINAL_SCOPE, option))
@@ -607,6 +610,8 @@ class TTEApp(App[None]):
                 values.pop(editor.option.name, None)
             else:
                 values[editor.option.name] = editor.value
+            if editor.scope == _TERMINAL_SCOPE and editor.option.name == "tab_width":
+                self.editor.indent_width = editor.value
         else:
             errors[editor.option.name] = editor.error
         self._refresh_subtitle()
@@ -644,7 +649,8 @@ class TTEApp(App[None]):
             except Exception as error:  # noqa: BLE001
                 self.notify(f"Could not read the input colors: {error}", severity="warning")
                 text, styles = "".join(ch for ch in text if ch == "\n" or ch.isprintable()), None
-        self.editor.load_colored(text.expandtabs(self._tab_width()) if styles is None else text, styles)
+        self.editor.indent_width = self._tab_width()
+        self.editor.load_colored(text, styles)
         if self.editor.color_styles is not None and self._value_of("existing_color_handling") == "ignore":
             self.notify(
                 "Input colors are kept in the text. To use them in effects, set existing color handling on the "
@@ -675,6 +681,7 @@ class TTEApp(App[None]):
             self.action_stop()
             self.input_file = str(path)
             self._load_text(text)
+            self._file_text = self.editor.text
             self.notify(f"Opened {path}.")
 
         self.push_screen(PathScreen("Open text file", self.input_file or ""), load)
@@ -696,6 +703,7 @@ class TTEApp(App[None]):
                 self.notify(f"Cannot save {path}: {error}", severity="error")
                 return
             self.input_file = str(path)
+            self._file_text = self.editor.text
             self.notify(f"Saved {path}.")
 
         self.push_screen(
@@ -718,7 +726,8 @@ class TTEApp(App[None]):
             self.effect_name,
             self._scope_values(self.effect_name),
             self._scope_values(_TERMINAL_SCOPE),
-            self.input_file,
+            # A file edited since it was opened or saved no longer holds the previewed text.
+            self.input_file if self.editor.text == self._file_text else None,
         )
         self.push_screen(CommandScreen(command))
 

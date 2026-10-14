@@ -84,6 +84,11 @@ def parse_colored_text(text: str, tab_width: int = 4) -> tuple[str, StyleList]:
             style = CellStyle(character.fg_color, character.bg_color, character.bold)
             styles.append(style if style != CellStyle() else None)
             column = character.column + character.cell_width
+    # Rows end at their last retained character, so restore trailing blank lines up to the final cursor row.
+    trailing_rows = parsed.final_cursor_row - (len(parsed.character_rows) - 1)
+    if trailing_rows > 0:
+        chars.append("\n" * trailing_rows)
+        styles.extend([None] * trailing_rows)
     return "".join(chars), styles
 
 

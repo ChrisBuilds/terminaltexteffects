@@ -38,3 +38,10 @@ def test_to_ansi_round_trips_through_the_parser() -> None:
     text, styles = "ab c\nd", [RED, RED, None, None, None, BLUE_BOLD]
     assert colors.parse_colored_text(colors.to_ansi(text, styles)) == (text, styles)
     assert colors.to_ansi("plain", [None] * 5) == "plain"
+
+
+def test_parse_colored_text_keeps_trailing_blank_lines() -> None:
+    """Trailing newlines after the last character should survive, so saving does not drop them."""
+    text, styles = colors.parse_colored_text("\x1b[31mred\x1b[0m\n\n")
+    assert text == "red\n\n"
+    assert len(styles) == len(text)

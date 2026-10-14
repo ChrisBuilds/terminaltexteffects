@@ -239,3 +239,30 @@ def test_app_shortcuts_wait_while_a_dialog_is_open() -> None:
         assert app.state == "editing"
 
     _run(TTEApp(_EFFECTS, "text", effect="wipe"), script)
+
+
+def test_command_omits_input_file_after_edits() -> None:
+    """An edited text no longer matches its file, so the command should not read that file."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        app.query_one("#editor", TextArea).insert("more ", (0, 0))
+        await pilot.pause()
+        await pilot.press("f4")
+        await pilot.pause()
+        assert isinstance(app.screen, CommandScreen)
+        assert "--input-file" not in app.screen.command
+
+    _run(TTEApp(_EFFECTS, "text", input_file="in.txt", effect="wipe"), script)
+
+
+def test_tabs_are_kept_and_follow_the_tab_width() -> None:
+    """Tabs should stay in the text and display at the configured tab width."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        assert app.editor.text == "a\tb"
+        assert app.editor.indent_width == 4
+        _editor(app, "terminal", "tab_width").query_one(Input).value = "8"
+        await pilot.pause()
+        assert app.editor.indent_width == 8
+
+    _run(TTEApp(_EFFECTS, "a\tb", effect="wipe"), script)
