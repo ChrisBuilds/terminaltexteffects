@@ -71,6 +71,8 @@ typing-extensions = false
     "S101", # assert
 
 ]
+# Effect Guide examples are flat community effect modules, loaded one directory at a time.
+"docs/effectguide/examples/**" = ["INP001"]
 
 [tool.pytest.ini_options]
 console_output_style = "progress"

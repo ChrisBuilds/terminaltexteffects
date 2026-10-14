@@ -12,6 +12,7 @@ Examples:
     ./.venv/bin/python tools/render_demos.py --list
     ./.venv/bin/python tools/render_demos.py beams matrix --formats gif,webp,mp4
     ./.venv/bin/python tools/render_demos.py --all --out docs/img/effects_demos
+    ./.venv/bin/python tools/render_demos.py --guide --all --out docs/img/effectguide
 
 """
 
@@ -19,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -31,6 +33,7 @@ from terminaltexteffects.engine._recording import RecordingReader
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = PROJECT_ROOT / "tests" / "testinput" / "demo.txt"
 DEFAULT_OUT = PROJECT_ROOT / "build" / "demos"
+GUIDE_EXAMPLES = PROJECT_ROOT / "docs" / "effectguide" / "examples"
 FORMATS = ("gif", "webp", "mp4")
 
 
@@ -46,22 +49,30 @@ class Demo:
     start_hold: float = 0.0
     end_hold: float = 2.0
     agg_args: tuple[str, ...] = field(default=())
+    effects_dir: Path | None = None
 
 
 # Built-in effects render from `demo.txt` with default options. Add an entry here to change the options for a
 # demo, or to add a demo that is not named after its effect.
 DEMO_OVERRIDES: dict[str, Demo] = {}
 
+# Effect Guide visuals. Each example effect lives in its own directory under `docs/effectguide/examples/`, which
+# is loaded through `TTE_DEV_EFFECTS_DIR` so every tutorial step can keep the same command name.
+GUIDE_DEMOS: dict[str, Demo] = {
+    "myspray_step1": Demo(effect="myspray", effects_dir=GUIDE_EXAMPLES / "myspray_step1"),
+}
+
 
 class CommandError(Exception):
     """Raised when an external command fails."""
 
 
-def run(command: list[str]) -> None:
+def run(command: list[str], env: dict[str, str] | None = None) -> None:
     """Run a command, raising `CommandError` with its output when it fails."""
     result = subprocess.run(  # noqa: S603 - Separated arguments; no shell.
         command,
         check=False,
+        env=env,
         capture_output=True,
         text=True,
     )
@@ -103,7 +114,10 @@ def record(demo: Demo, path: Path) -> None:
         demo.effect,
         *demo.effect_args,
     ]
-    run(command)
+    env = None
+    if demo.effects_dir is not None:
+        env = os.environ | {"TTE_DEV_EFFECTS_DIR": str(demo.effects_dir)}
+    run(command, env)
 
 
 def recording_to_cast(recording: Path, cast: Path, start_hold: float) -> bool:
@@ -249,6 +263,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n\n")[0])
     parser.add_argument("demos", nargs="*", help="demo names to render (see --list)")
     parser.add_argument("--all", action="store_true", help="render every demo")
+    parser.add_argument("--guide", action="store_true", help="select Effect Guide demos instead of effect demos")
     parser.add_argument("--list", action="store_true", help="list demo names and exit")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="output directory (default: build/demos)")
     parser.add_argument(
@@ -261,7 +276,7 @@ def main() -> int:
     parser.add_argument("--gifsicle-lossy", type=int, metavar="LEVEL", help="apply gifsicle lossy compression")
     args = parser.parse_args()
 
-    available = demos()
+    available = GUIDE_DEMOS if args.guide else demos()
     if args.list:
         print("\n".join(available))
         return 0

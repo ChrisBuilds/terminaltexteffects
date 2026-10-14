@@ -4,9 +4,9 @@ site_description: TerminalTextEffects Documentation
 site_author: ChrisBuilds
 repo_url: https://github.com/ChrisBuilds/terminaltexteffects
 docs_dir: docs
-# Unfinished effect-building guide; restore its nav entries below when publishing it.
+# Effect Guide example modules are included in pages with snippets, not published as files.
 exclude_docs: |
-  effectguide/
+  effectguide/examples/
 
 
 theme:
@@ -67,9 +67,14 @@ nav:
     - Install: installation.md
     - Application Usage: appguide.md
     - Library Usage: libguide.md
-  # - Effect Building Guide:
-  #   - effectguide/effectguide.md
-  #   - effectguide/effectguide_lesson0.md
+  - Effect Guide:
+    - Start here: effectguide/index.md
+    - The Engine:
+      - effectguide/engine/architecture.md
+      - effectguide/engine/frame-loop.md
+    - Writing Effects:
+      - Tutorial:
+        - effectguide/tutorial/01-scaffold.md
   - Effects Showroom: showroom.md
   - Library Cookbook: cookbook.md
   - Development:
