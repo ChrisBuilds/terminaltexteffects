@@ -62,7 +62,8 @@ class GrowIterator(BaseEffectIterator[GrowConfig]):
             tree.step()
         self.link_order = [character for character in tree.char_link_order if not character.is_fill_character]
         self.link_order.reverse()  # So pop() takes the first character linked.
-        self.pulse = BreadthFirst(self.terminal, tree.char_link_order[0])
+        self.root = tree.char_link_order[0]
+        self.pulse = BreadthFirst(self.terminal, self.root)
         for character in self.terminal.get_characters():
             character.animation.set_appearance(character.input_symbol, GROWN_COLOR)
             scene = character.animation.new_scene(scene_id="pulse")
@@ -82,7 +83,7 @@ class GrowIterator(BaseEffectIterator[GrowConfig]):
                     self.terminal.set_character_visibility(self.link_order.pop(), is_visible=True)
         elif not self.pulse.complete:
             if not self.pulse.char_explore_order:  # The first pulse tick: start at the root.
-                self.start_pulse(self.pulse.starting_char)
+                self.start_pulse(self.root)
             self.pulse.step()
             for character in self.pulse.explored_last_step:
                 self.start_pulse(character)
