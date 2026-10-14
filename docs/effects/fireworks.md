@@ -1,6 +1,6 @@
 # Fireworks
 
-![Demo](../img/effects_demos/fireworks_demo.gif)
+![Demo](../img/effects_demos/fireworks_demo.webp)
 
 ## Quick Start
 

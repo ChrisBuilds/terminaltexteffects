@@ -1,6 +1,6 @@
 # Waves
 
-![Demo](../img/effects_demos/waves_demo.gif)
+![Demo](../img/effects_demos/waves_demo.webp)
 
 ## Quick Start
 

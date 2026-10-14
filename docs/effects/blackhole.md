@@ -1,6 +1,6 @@
 # Blackhole
 
-![Demo](../img/effects_demos/blackhole_demo.gif)
+![Demo](../img/effects_demos/blackhole_demo.webp)
 
 ## Quick Start
 

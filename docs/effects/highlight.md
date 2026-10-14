@@ -1,6 +1,6 @@
 # Highlight
 
-![Demo](../img/effects_demos/highlight_demo.gif)
+![Demo](../img/effects_demos/highlight_demo.webp)
 
 ## Quick Start
 

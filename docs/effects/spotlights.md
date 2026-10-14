@@ -1,6 +1,6 @@
 # Spotlights
 
-![Demo](../img/effects_demos/spotlights_demo.gif)
+![Demo](../img/effects_demos/spotlights_demo.webp)
 
 ## Quick Start
 

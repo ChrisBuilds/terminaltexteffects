@@ -1,6 +1,6 @@
 # ColorShift
 
-![Demo](../img/effects_demos/colorshift_demo.gif)
+![Demo](../img/effects_demos/colorshift_demo.webp)
 
 ## Quick Start
 

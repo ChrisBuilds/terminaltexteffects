@@ -1,6 +1,6 @@
 # Decrypt
 
-![Demo](../img/effects_demos/decrypt_demo.gif)
+![Demo](../img/effects_demos/decrypt_demo.webp)
 
 ## Quick Start
 

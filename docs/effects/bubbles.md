@@ -1,6 +1,6 @@
 # Bubbles
 
-![Demo](../img/effects_demos/bubbles_demo.gif)
+![Demo](../img/effects_demos/bubbles_demo.webp)
 
 ## Quick Start
 

@@ -1,6 +1,6 @@
 # Expand
 
-![Demo](../img/effects_demos/expand_demo.gif)
+![Demo](../img/effects_demos/expand_demo.webp)
 
 ## Quick Start
 

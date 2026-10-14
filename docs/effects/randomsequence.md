@@ -1,6 +1,6 @@
 # RandomSequence
 
-![Demo](../img/effects_demos/randomsequence_demo.gif)
+![Demo](../img/effects_demos/randomsequence_demo.webp)
 
 ## Quick Start
 

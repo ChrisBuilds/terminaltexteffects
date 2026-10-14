@@ -1,6 +1,6 @@
 # Print
 
-![Demo](../img/effects_demos/print_demo.gif)
+![Demo](../img/effects_demos/print_demo.webp)
 
 ## Quick Start
 

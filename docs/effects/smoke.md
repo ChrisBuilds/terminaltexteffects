@@ -1,6 +1,6 @@
 # Smoke
 
-![Demo](../img/effects_demos/smoke_demo.gif)
+![Demo](../img/effects_demos/smoke_demo.webp)
 
 ## Quick Start
 

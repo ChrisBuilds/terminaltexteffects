@@ -1,6 +1,6 @@
 # Thunderstorm
 
-![Demo](../img/effects_demos/thunderstorm_demo.gif)
+![Demo](../img/effects_demos/thunderstorm_demo.webp)
 
 ## Quick Start
 

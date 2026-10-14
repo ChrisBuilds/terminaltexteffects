@@ -1,6 +1,6 @@
 # Slide
 
-![Demo](../img/effects_demos/slide_demo.gif)
+![Demo](../img/effects_demos/slide_demo.webp)
 
 ## Quick Start
 

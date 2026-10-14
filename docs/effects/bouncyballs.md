@@ -1,6 +1,6 @@
 # BouncyBalls
 
-![Demo](../img/effects_demos/bouncyballs_demo.gif)
+![Demo](../img/effects_demos/bouncyballs_demo.webp)
 
 ## Quick Start
 

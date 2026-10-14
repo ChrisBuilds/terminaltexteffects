@@ -1,6 +1,6 @@
 # LaserEtch
 
-![Demo](../img/effects_demos/laseretch_demo.gif)
+![Demo](../img/effects_demos/laseretch_demo.webp)
 
 ## Quick Start
 
