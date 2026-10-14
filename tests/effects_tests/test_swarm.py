@@ -96,10 +96,26 @@ def test_swarm_args(
             terminal.print(frame)
 
 
+@pytest.mark.parametrize("seed", range(20))
+def test_swarm_creates_configured_area_count_when_focus_coords_repeat(seed: int) -> None:
+    """Verify every configured swarm area becomes a path, even when the walk revisits a focus coord (#217)."""
+    random.seed(seed)
+    effect = effect_swarm.Swarm("AB")
+    effect.effect_config.swarm_size = 1
+    effect.effect_config.swarm_area_count_range = (12, 12)
+    effect.terminal_config = _make_terminal_config("ignore")
+    effect.terminal_config.canvas_width = 40
+    effect.terminal_config.canvas_height = 40
+    iterator = cast("effect_swarm.SwarmIterator", iter(effect))
+
+    for character in iterator.terminal.get_characters():
+        area_paths = [path_id for path_id in character.motion.paths if path_id.endswith("_swarm_area")]
+        assert area_paths == [f"{index}_swarm_area" for index in range(12)]
+
+
 @pytest.mark.parametrize(("coordination", "expected_follower_area"), [(0, "9_swarm_area"), (1, "10_swarm_area")])
 def test_swarm_coordination_advances_past_area_nine(coordination: float, expected_follower_area: str) -> None:
     """Verify coordination compares complete area indices and honors its ratio."""
-    # Repeated focus coordinates can merge swarm areas (#217); this seed creates all twelve.
     random.seed(1337)
     effect = effect_swarm.Swarm("AB")
     effect.effect_config.swarm_size = 1
