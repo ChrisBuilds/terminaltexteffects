@@ -84,12 +84,13 @@ By default the canvas is the whole text area and text is anchored to its top lef
 where you typed it. To preview an effect on a smaller canvas, set **canvas-width** and **canvas-height** on the
 Canvas tab. Setting either to `-1` sizes it to the text, as the command line does by default.
 
-When the canvas is smaller than the text area, it is outlined, and text outside it is dimmed because the effect
-won't show it. The outline sits just outside the canvas, so it covers the first clipped column and row. Drag an
-orange edge to resize the canvas, and the canvas options update to match. Which edges are orange depends on
-**anchor-canvas**: with the default `nw` anchor, the right and bottom edges move. When the canvas fills the text area,
-the text area's orange borders are its edges, so drag one inward to shrink the canvas. Dragging an edge back to the
-border sets that dimension to `0`, the whole text area.
+An orange outline of full blocks marks the canvas, one cell outside it, and stays visible while you edit and while
+an effect plays. Text outside the canvas is dimmed because the effect won't show it. Drag the outline to resize
+the canvas, and **canvas-width** and **canvas-height** update to match. The outline is drawn on the edges that move
+with **anchor-canvas**: with the default `nw` anchor, the right and bottom edges. The text area keeps one free column
+or row beyond each of those edges, so effects draw in a slightly smaller area than the text area, and the outline
+stays visible when the canvas fills that area. Dragging an edge all the way out sets that dimension to `0`, the
+whole area.
 
 The exported command includes these canvas settings when they differ from the command-line defaults, so the effect
 plays the same way in your terminal.

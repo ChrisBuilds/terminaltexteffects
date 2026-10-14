@@ -76,14 +76,16 @@ class ColorTextArea(TextArea):
         self._color_styles: colors.StyleList | None = None
         self._line_starts: list[int] = [0]
         self.canvas_rect: canvas.CanvasRect | None = None
+        self.canvas_area = canvas.CanvasRect(0, 0, 1, 1)
         self.canvas_anchor = "nw"
         self._drag_edges: set[canvas.Edge] = set()
         self.attach_colors(text, styles)
 
-    def show_canvas(self, rect: canvas.CanvasRect | None, anchor: str) -> None:
-        """Outline `rect`, or nothing when the canvas fills the editor, for a canvas placed by `anchor`."""
-        if (rect, anchor) != (self.canvas_rect, self.canvas_anchor):
+    def show_canvas(self, rect: canvas.CanvasRect, area: canvas.CanvasRect, anchor: str) -> None:
+        """Outline the canvas at `rect`, inside the effect `area`, for a canvas placed by `anchor`."""
+        if (rect, area, anchor) != (self.canvas_rect, self.canvas_area, self.canvas_anchor):
             self.canvas_rect = rect
+            self.canvas_area = area
             self.canvas_anchor = anchor
             self.refresh()
 
@@ -102,31 +104,7 @@ class ColorTextArea(TextArea):
             strip = Strip.join([_restyle(before, dim), inside, _restyle(after, dim)])
         else:
             strip = _restyle(strip, dim)
-        theme = self.app.theme_variables
-        movable = Style(color=theme.get("accent", "#fea62b"), bold=True)
-        fixed = Style(color=theme.get("primary-lighten-2", "#539eff"))
-        edges = canvas.draggable_edges(self.canvas_anchor)
-
-        def edge_style(*names: canvas.Edge) -> Style:
-            return movable if any(name in edges for name in names) else fixed
-
-        if y in (rect.top - 1, rect.bottom):
-            edge: canvas.Edge = "top" if y == rect.top - 1 else "bottom"
-            start = max(0, rect.left - 1)
-            end = min(width, rect.right + 1)
-            if start < end:
-                strip = _paint(strip, start, "─" * (end - start), edge_style(edge))
-            corners = ("┌", "┐") if edge == "top" else ("└", "┘")
-            if 0 <= rect.left - 1 < width:
-                strip = _paint(strip, rect.left - 1, corners[0], edge_style(edge, "left"))
-            if 0 <= rect.right < width:
-                strip = _paint(strip, rect.right, corners[1], edge_style(edge, "right"))
-        elif rect.top <= y < rect.bottom:
-            if 0 <= rect.left - 1 < width:
-                strip = _paint(strip, rect.left - 1, "│", edge_style("left"))
-            if 0 <= rect.right < width:
-                strip = _paint(strip, rect.right, "│", edge_style("right"))
-        return strip
+        return _draw_outline(strip, y, rect, self.canvas_anchor, _outline_style(self))
 
     def begin_canvas_drag(self, edges: set[canvas.Edge]) -> None:
         """Start resizing the canvas by dragging `edges`."""
@@ -153,12 +131,13 @@ class ColorTextArea(TextArea):
         event.prevent_default()
         width = height = None
         anchor = self.canvas_anchor
+        area = self.canvas_area
         if self._drag_edges & {"left", "right"}:
             edge: canvas.Edge = "right" if "right" in self._drag_edges else "left"
-            width = canvas.dragged_size(edge, event.x, self.size.width, anchor)
+            width = canvas.dragged_size(edge, event.x - area.left, area.width, anchor)
         if self._drag_edges & {"top", "bottom"}:
             edge = "bottom" if "bottom" in self._drag_edges else "top"
-            height = canvas.dragged_size(edge, event.y, self.size.height, anchor)
+            height = canvas.dragged_size(edge, event.y - area.top, area.height, anchor)
         self.post_message(ColorTextArea.CanvasResized(width, height))
 
     async def _on_mouse_up(self, event: events.MouseUp) -> None:
@@ -224,6 +203,31 @@ class ColorTextArea(TextArea):
         return line
 
 
+def _outline_style(widget: Widget) -> Style:
+    """Return the style of the canvas outline."""
+    return Style(color=widget.app.theme_variables.get("accent", "#fea62b"))
+
+
+def _draw_outline(strip: Strip, y: int, rect: canvas.CanvasRect, anchor: str, style: Style) -> Strip:
+    """Return row `y` of `strip` with the outline of the canvas at `rect` drawn in full blocks.
+
+    The outline is drawn one cell outside the canvas, on the edges that move with `anchor`. Those are the edges the
+    effect area leaves room for, so the outline stays visible at any canvas size.
+    """
+    edges = canvas.draggable_edges(anchor)
+    width = strip.cell_length
+    if ("top" in edges and y == rect.top - 1) or ("bottom" in edges and y == rect.bottom):
+        start = max(0, rect.left - 1 if "left" in edges else rect.left)
+        end = min(width, rect.right + 1 if "right" in edges else rect.right)
+        if start < end:
+            strip = _paint(strip, start, "█" * (end - start), style)
+    elif rect.top <= y < rect.bottom:
+        for x, edge in ((rect.left - 1, "left"), (rect.right, "right")):
+            if edge in edges and 0 <= x < width:
+                strip = _paint(strip, x, "█", style)
+    return strip
+
+
 def _restyle(strip: Strip, style: Style) -> Strip:
     """Return `strip` with `style` added on top of each segment's style."""
     return Strip(
@@ -249,24 +253,6 @@ def _rich_style(style: colors.CellStyle) -> Style:
     )
 
 
-class Stage(Vertical):
-    """Holds the editor and the effect view. Its borders resize a canvas that reaches them, by dragging."""
-
-    def on_mouse_down(self, event: events.MouseDown) -> None:
-        """Start a canvas drag when a movable canvas edge lies on the clicked border."""
-        editor = self.query_one(ColorTextArea)
-        if not editor.display:
-            return
-        gutter = self.styles.gutter
-        x = event.x - gutter.left
-        y = event.y - gutter.top
-        rect = editor.canvas_rect or canvas.CanvasRect(0, 0, editor.size.width, editor.size.height)
-        edges = canvas.edges_at(rect, x, y, canvas.draggable_edges(editor.canvas_anchor))
-        if edges:
-            event.stop()
-            editor.begin_canvas_drag(edges)
-
-
 class CanvasView(Widget, can_focus=True):
     """Shows effect frames over the editor's area."""
 
@@ -281,6 +267,16 @@ class CanvasView(Widget, can_focus=True):
         """Initialize an empty canvas."""
         super().__init__(**kwargs)
         self._strips: list[Strip] = []
+        self.canvas_rect: canvas.CanvasRect | None = None
+        self.canvas_area: canvas.CanvasRect | None = None
+        self.canvas_anchor = "nw"
+
+    def show_canvas(self, rect: canvas.CanvasRect, area: canvas.CanvasRect, anchor: str) -> None:
+        """Place frames in the effect `area` and outline the canvas at `rect`, for a canvas placed by `anchor`."""
+        self.canvas_rect = rect
+        self.canvas_area = area
+        self.canvas_anchor = anchor
+        self.refresh()
 
     def show_frame(self, frame: str) -> None:
         """Display one effect frame."""
@@ -293,12 +289,18 @@ class CanvasView(Widget, can_focus=True):
         self.refresh()
 
     def render_line(self, y: int) -> Strip:
-        """Return row `y`, aligning frame rows to the bottom of the view as the engine numbers them."""
+        """Return row `y`, with frame rows aligned to the bottom of the effect area as the engine numbers them."""
         width = self.size.width
-        index = y - (self.size.height - len(self._strips))
-        if 0 <= index < len(self._strips):
-            return self._strips[index].crop_extend(0, width, None)
-        return Strip.blank(width)
+        area = self.canvas_area or canvas.CanvasRect(0, 0, width, self.size.height)
+        index = y - area.top - (area.height - len(self._strips))
+        if area.top <= y < area.bottom and 0 <= index < len(self._strips):
+            row = self._strips[index].crop_extend(0, area.width, None)
+            strip = Strip.join([Strip.blank(area.left), row]).crop_extend(0, width, None)
+        else:
+            strip = Strip.blank(width)
+        if self.canvas_rect is None:
+            return strip
+        return _draw_outline(strip, y, self.canvas_rect, self.canvas_anchor, _outline_style(self))
 
 
 class Swatch(Static):
@@ -676,7 +678,7 @@ class TTEApp(App[None]):
             effect_list = OptionList(*self.effect_resource_map, id="effects")
             effect_list.border_title = "Effects"
             yield effect_list
-            with Stage(id="stage"):
+            with Vertical(id="stage"):
                 yield ColorTextArea(id="editor")
                 yield CanvasView(id="canvas")
         with Vertical(id="options"), TabbedContent():
@@ -890,66 +892,53 @@ class TTEApp(App[None]):
 
     # Playback --------------------------------------------------------------------------------------------------
 
+    def _effect_area(self) -> canvas.CanvasRect:
+        """Return the part of the text area effects draw in, which leaves room for the canvas outline."""
+        size = self.query_one("#stage").content_size
+        return canvas.canvas_area(max(1, size.width), max(1, size.height), self._value_of("anchor_canvas"))
+
     def _canvas_size(self) -> tuple[int, int]:
         """Return the width and height of the area effects are drawn in."""
-        size = self.query_one("#stage").content_size
-        return max(1, size.width), max(1, size.height)
+        area = self._effect_area()
+        return area.width, area.height
 
     def _canvas_geometry(self) -> canvas.CanvasRect:
         """Return where the canvas sits in the text area for the current canvas options."""
-        area_width, area_height = self._canvas_size()
+        area = self._effect_area()
         values = {option.name: value for option, value in self._scope_values(_TERMINAL_SCOPE)}
         width, height = values["canvas_width"], values["canvas_height"]
         if width < 0 or height < 0:
             # A dimension of -1 follows the text, so let the engine measure it.
             try:
                 config = typing.cast("TerminalConfig", options.build_config(TerminalConfig, values))
-                terminal = Terminal(self.editor.colored_text(), config, terminal_dimensions=(area_width, area_height))
+                terminal = Terminal(self.editor.colored_text(), config, terminal_dimensions=(area.width, area.height))
                 width, height = terminal.canvas.width, terminal.canvas.height
             except Exception:  # noqa: BLE001
                 width, height = max(width, 0), max(height, 0)
-        return canvas.canvas_rect(
-            area_width,
-            area_height,
-            width or area_width,
-            height or area_height,
+        rect = canvas.canvas_rect(
+            area.width,
+            area.height,
+            width or area.width,
+            height or area.height,
             values["anchor_canvas"],
         )
+        return canvas.CanvasRect(rect.left + area.left, rect.top + area.top, rect.width, rect.height)
 
     def _refresh_subtitle(self) -> None:
         """Show the canvas outline, and the canvas size and any validation problem under the text area."""
-        width, height = self._canvas_size()
+        area = self._effect_area()
         rect = self._canvas_geometry()
-        self.editor.show_canvas(
-            None if rect == canvas.CanvasRect(0, 0, width, height) else rect,
-            self._value_of("anchor_canvas"),
-        )
-        self._mark_stage_edges(rect, width, height)
+        anchor = self._value_of("anchor_canvas")
+        self.editor.show_canvas(rect, area, anchor)
+        self.query_one(CanvasView).show_canvas(rect, area, anchor)
         subtitle = f"canvas {rect.width}x{rect.height}"
-        if (rect.width, rect.height) != (width, height):
-            subtitle += f" of {width}x{height}"
+        if (rect.width, rect.height) != (area.width, area.height):
+            subtitle += f" of {area.width}x{area.height}"
         subtitle += " · drag the orange edge to resize"
         errors = self._current_errors()
         if errors:
             subtitle = f"[{len(errors)} invalid option{'s' if len(errors) != 1 else ''}] " + subtitle
         self.query_one("#stage").border_subtitle = subtitle
-
-    def _mark_stage_edges(self, rect: canvas.CanvasRect, width: int, height: int) -> None:
-        """Color the text area's borders that a movable canvas edge reaches, since dragging them resizes it."""
-        stage = self.query_one("#stage")
-        on_border = {
-            "left": rect.left <= 0,
-            "right": rect.right >= width,
-            "top": rect.top <= 0,
-            "bottom": rect.bottom >= height,
-        }
-        accent = self.theme_variables.get("accent", "#fea62b")
-        for edge in ("left", "right", "top", "bottom"):
-            rule = f"border_{edge}"
-            if on_border[edge] and edge in canvas.draggable_edges(self._value_of("anchor_canvas")):
-                setattr(stage.styles, rule, ("round", accent))
-            else:
-                stage.styles.clear_rule(rule)
 
     @on(TextArea.Changed, "#editor")
     def _text_changed(self) -> None:

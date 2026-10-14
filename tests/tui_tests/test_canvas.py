@@ -94,16 +94,30 @@ async def _set_canvas(app: TTEApp, pilot: Pilot[None], width: str, height: str) 
     await pilot.pause()
 
 
-def test_outline_is_shown_only_for_a_smaller_canvas() -> None:
-    """The editor should outline a canvas smaller than the text area, and none for a full canvas."""
+def test_canvas_area_leaves_room_for_the_outline() -> None:
+    """The effect area should give up one cell beyond each movable edge."""
+    assert canvas.canvas_area(100, 30, "nw") == canvas.CanvasRect(0, 0, 99, 29)
+    assert canvas.canvas_area(100, 30, "c") == canvas.CanvasRect(1, 1, 98, 28)
+    assert canvas.canvas_area(100, 30, "se") == canvas.CanvasRect(1, 1, 99, 29)
+
+
+def test_outline_is_always_visible() -> None:
+    """The outline should be drawn in full blocks just outside the canvas, also when the canvas fills the area."""
 
     async def script(app: TTEApp, pilot: Pilot[None]) -> None:
-        assert app.editor.canvas_rect is None
+        width, height = app._canvas_size()
+        stage = app.query_one("#stage").content_size
+        assert (width, height) == (stage.width - 1, stage.height - 1)
+        assert app.editor.canvas_rect == canvas.CanvasRect(0, 0, width, height)
+        assert app.editor.render_line(height).text == "█" * (width + 1)
+        assert app.editor.render_line(0).text.endswith("█")
         await _set_canvas(app, pilot, "30", "5")
         assert app.editor.canvas_rect == canvas.CanvasRect(0, 0, 30, 5)
         assert "canvas 30x5" in str(app.query_one("#stage").border_subtitle)
-        line = app.editor.render_line(5).text
-        assert line.startswith("─" * 30 + "┘")
+        assert app.editor.render_line(5).text.startswith("█" * 31)
+        effect = app.build_effect()
+        assert effect is not None
+        assert effect._terminal_dimensions_override == (width, height)
 
     _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)
 
@@ -133,12 +147,12 @@ def test_dragging_the_outline_resizes_the_canvas() -> None:
     _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)
 
 
-def test_dragging_the_text_area_border_shrinks_a_full_canvas() -> None:
-    """With a full canvas, the text area's right border should act as the canvas edge."""
+def test_dragging_a_full_canvas_edge_shrinks_and_restores_it() -> None:
+    """The outline of a full canvas should be draggable, and dragging back to the end of the area stores 0."""
 
     async def script(app: TTEApp, pilot: Pilot[None]) -> None:
         width, _ = app._canvas_size()
-        await pilot.mouse_down("#stage", offset=(width + 1, 4))
+        await pilot.mouse_down("#editor", offset=(width, 4))
         await pilot.hover("#editor", offset=(40, 4))
         await pilot.mouse_up("#editor", offset=(40, 4))
         await pilot.pause()

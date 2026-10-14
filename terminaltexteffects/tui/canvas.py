@@ -1,9 +1,9 @@
 """Canvas geometry for the TUI's canvas outline.
 
-Effects draw on a canvas placed inside the text area by `anchor_canvas`, the same way the engine places it inside
-the terminal. These helpers locate the canvas in the text area's top-down coordinates, say which outline edges can
-be dragged for an anchor, and turn a dragged edge position into a canvas dimension. This module does not import
-Textual.
+Effects draw in an area of the text area that leaves a one-cell margin for the canvas outline, on a canvas placed
+inside that area by `anchor_canvas` the same way the engine places it inside the terminal. These helpers find the
+area, locate the canvas in top-down coordinates, say which outline edges can be dragged for an anchor, and turn a
+dragged edge position into a canvas dimension. This module does not import Textual.
 """
 
 from __future__ import annotations
@@ -60,6 +60,20 @@ def canvas_rect(area_width: int, area_height: int, width: int, height: int, anch
     else:
         top = 0
     return CanvasRect(left, top, width, height)
+
+
+def canvas_area(width: int, height: int, anchor: str) -> CanvasRect:
+    """Return the part of a `width` by `height` text area that effects draw in for `anchor`.
+
+    One cell is left free beyond each edge that moves with the anchor, so the canvas outline, which sits just outside
+    the canvas, stays visible and draggable even when the canvas fills the area.
+    """
+    edges = draggable_edges(anchor)
+    left = 1 if "left" in edges else 0
+    top = 1 if "top" in edges else 0
+    right = 1 if "right" in edges else 0
+    bottom = 1 if "bottom" in edges else 0
+    return CanvasRect(left, top, max(1, width - left - right), max(1, height - top - bottom))
 
 
 def draggable_edges(anchor: str) -> frozenset[Edge]:
