@@ -65,6 +65,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
     "spray_goal": Demo(effect="spray", input_file=TUTORIAL_INPUT),
     "myspray_step1": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step1"),
     "myspray_step2": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step2"),
+    "myspray_step3": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step3"),
     **{
         f"reveal_{order}": Demo(
             effect="reveal",
@@ -81,6 +82,28 @@ GUIDE_DEMOS: dict[str, Demo] = {
             ("spiral_clockwise", 60),
         )
     },
+    "travel_linear": Demo(effect="travel", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "travel"),
+    **{
+        f"travel_{ease}": Demo(
+            effect="travel",
+            effect_args=("--ease", ease),
+            input_file=CONCEPT_INPUT,
+            effects_dir=GUIDE_EXAMPLES / "travel",
+        )
+        for ease in ("out_expo", "in_out_quart", "out_bounce")
+    },
+    "travel_curve": Demo(
+        effect="travel",
+        effect_args=("--curve",),
+        input_file=CONCEPT_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "travel",
+    ),
+    "travel_canvas": Demo(
+        effect="travel",
+        tte_args=("--canvas-width", "60", "--canvas-height", "14", "--anchor-text", "c"),
+        input_file=CONCEPT_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "travel",
+    ),
 }
 
 

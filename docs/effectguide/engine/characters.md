@@ -145,4 +145,4 @@ cells have neighbors too. Spanning-tree effects use neighbors to grow paths thro
 
 - [Tutorial step 2: Release](../tutorial/02-release.md) reveals characters a few at a time with visibility and
   `active_characters`.
-- Canvas and coordinates explains `Coord` and the canvas the characters live on.
+- [Canvas and coordinates](canvas.md) explains `Coord` and the canvas the characters live on.
