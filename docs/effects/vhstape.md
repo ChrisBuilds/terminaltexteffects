@@ -1,6 +1,6 @@
 # VHSTape
 
-![Demo](../img/effects_demos/vhstape_demo.gif)
+![Demo](../img/effects_demos/vhstape_demo.webp)
 
 ## Quick Start
 

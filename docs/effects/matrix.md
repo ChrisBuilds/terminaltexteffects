@@ -1,6 +1,6 @@
 # Matrix
 
-![Demo](../img/effects_demos/matrix_demo.gif)
+![Demo](../img/effects_demos/matrix_demo.webp)
 
 ## Quick Start
 

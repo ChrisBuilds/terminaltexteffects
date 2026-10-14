@@ -1,6 +1,6 @@
 # Wipe
 
-![Demo](../img/effects_demos/wipe_demo.gif)
+![Demo](../img/effects_demos/wipe_demo.webp)
 
 ## Quick Start
 

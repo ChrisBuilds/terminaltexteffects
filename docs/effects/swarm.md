@@ -1,6 +1,6 @@
 # Swarm
 
-![Demo](../img/effects_demos/swarm_demo.gif)
+![Demo](../img/effects_demos/swarm_demo.webp)
 
 ## Quick Start
 

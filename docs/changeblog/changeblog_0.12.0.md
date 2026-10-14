@@ -38,7 +38,7 @@ The highlight brightness, width, and direction are all customizable.
 The [LaserEtch](../effects/laseretch.md) effect burns the text into the terminal, sending sparks flying. As the sparks fall, they
 cool and disappear. If the sparks reach the bottom of the canvas before burning out, they will land on the bottom.
 
-![laseretch_demo](../img/effects_demos/laseretch_demo.gif)
+![laseretch_demo](../img/effects_demos/laseretch_demo.webp)
 
 The etch speed, laser colors, spark colors and all gradients are customizable.
 
@@ -47,7 +47,7 @@ The etch speed, laser colors, spark colors and all gradients are customizable.
 The [Sweep](../effects/sweep.md) effect makes two passes over the canvas. On the first pass, the text is revealed, dimmed, and
 without color. On the second pass, the text is colored.
 
-![sweep_demo](../img/effects_demos/sweep_demo.gif)
+![sweep_demo](../img/effects_demos/sweep_demo.webp)
 
 The sweep directions and sweep noise symbols are customizable. On the second sweep, the noise takes on colors from the final gradient.
 

@@ -1,6 +1,6 @@
 # Pour
 
-![Demo](../img/effects_demos/pour_demo.gif)
+![Demo](../img/effects_demos/pour_demo.webp)
 
 ## Quick Start
 

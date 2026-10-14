@@ -1,6 +1,6 @@
 # Overflow
 
-![Demo](../img/effects_demos/overflow_demo.gif)
+![Demo](../img/effects_demos/overflow_demo.webp)
 
 ## Quick Start
 

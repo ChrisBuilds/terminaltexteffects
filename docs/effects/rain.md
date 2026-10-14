@@ -1,6 +1,6 @@
 # Rain
 
-![Demo](../img/effects_demos/rain_demo.gif)
+![Demo](../img/effects_demos/rain_demo.webp)
 
 ## Quick Start
 

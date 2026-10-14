@@ -1,6 +1,6 @@
 # Beams
 
-![Demo](../img/effects_demos/beams_demo.gif)
+![Demo](../img/effects_demos/beams_demo.webp)
 
 ## Quick Start
 

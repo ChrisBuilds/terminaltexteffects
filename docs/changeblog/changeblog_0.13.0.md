@@ -61,7 +61,7 @@ There are two new effects in this update, which feels a bit underwhelming given 
 
 The text darkens as though storm clouds are rolling in. It begins to rain. Lightning strikes randomly around the canvas. When lightning reaches the bottom of the canvas, it flashes and all characters flash in sync with the strike. Sparks fly up from the lightning point of contact. Any characters in the path of the strike have a burning glow that lingers for a bit after the strike dissipates. Eventually, the rain stops and the characters lighten.
 
-![Thunderstorm](../img/effects_demos/thunderstorm_demo.gif)
+![Thunderstorm](../img/effects_demos/thunderstorm_demo.webp)
 
 The storm time is configurable, as is the lightning strike chance. As usual, colors and gradients are also configurable.
 
@@ -69,7 +69,7 @@ The storm time is configurable, as is the lightning strike chance. As usual, col
 
 Text appears uncolored. Smoke begins to flow out of a random point and spread around the canvas. When a character encounters the smoke, the smoke and character flow through the final gradient colors until landing on the correct color. Smoke will expand through the entire canvas and colorize all characters.
 
-![Smoke](../img/effects_demos/smoke_demo.gif)
+![Smoke](../img/effects_demos/smoke_demo.webp)
 
 The smoke will limit itself to the text boundary unless the `--use-whole-canvas` effect option is passed. Smoke symbols, gradient, and all other colors are configurable.
 
@@ -81,13 +81,13 @@ The smoke will limit itself to the text boundary unless the `--use-whole-canvas`
 
 Burn has been upgraded with a more realistic burn pattern and new smoke particles. A random spot on the canvas is chosen for the initial ignition, the flame spreads out in all direction from this point. Smoke is emitted from some of the burned characters.
 
-![Burn](../img/effects_demos/burn_demo.gif)
+![Burn](../img/effects_demos/burn_demo.webp)
 
 #### LaserEtch
 
 Laseretch has a new, and default, etch pattern, in addition to the existing patterns. The laser travels around the input text rather than only moving in rows/columns/diagonals.
 
-![LaserEtch](../img/effects_demos/laseretch_demo.gif)
+![LaserEtch](../img/effects_demos/laseretch_demo.webp)
 
 
 ### Minimum Spanning Trees and Search/Explore

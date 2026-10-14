@@ -1,6 +1,6 @@
 # Crumble
 
-![Demo](../img/effects_demos/crumble_demo.gif)
+![Demo](../img/effects_demos/crumble_demo.webp)
 
 ## Quick Start
 

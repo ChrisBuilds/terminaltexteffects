@@ -1,6 +1,6 @@
 # Burn
 
-![Demo](../img/effects_demos/burn_demo.gif)
+![Demo](../img/effects_demos/burn_demo.webp)
 
 ## Quick Start
 

@@ -1,6 +1,6 @@
 # Unstable
 
-![Demo](../img/effects_demos/unstable_demo.gif)
+![Demo](../img/effects_demos/unstable_demo.webp)
 
 ## Quick Start
 

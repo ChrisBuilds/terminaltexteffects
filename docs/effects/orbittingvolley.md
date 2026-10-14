@@ -1,6 +1,6 @@
 # OrbittingVolley
 
-![Demo](../img/effects_demos/orbittingvolley_demo.gif)
+![Demo](../img/effects_demos/orbittingvolley_demo.webp)
 
 ## Quick Start
 

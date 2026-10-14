@@ -1,6 +1,6 @@
 # MiddleOut
 
-![Demo](../img/effects_demos/middleout_demo.gif)
+![Demo](../img/effects_demos/middleout_demo.webp)
 
 ## Quick Start
 

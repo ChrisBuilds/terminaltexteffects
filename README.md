@@ -37,7 +37,7 @@
 
 ## TTE
 
-![thunderstorm_demo](https://github.com/user-attachments/assets/7678e1d2-df49-497e-bccd-87b933ece981)
+![thunderstorm_demo](https://raw.githubusercontent.com/ChrisBuilds/terminaltexteffects/main/docs/img/effects_demos/thunderstorm_demo.webp)
 
 TerminalTextEffects (TTE) is a terminal visual effects engine. TTE can be installed as a system application to produce effects in your terminal, or as a Python library to enable effects within your Python scripts/applications. TTE includes a growing library of built-in effects which showcase the engine's features. These features include:
 
@@ -254,31 +254,31 @@ Below you'll find a subset of the built-in effects. View all of the effects and 
 
 #### Beams
 
-![beams_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/6bb98dac-688e-43c9-96aa-1a45f451d4cb)
+![beams_demo](https://raw.githubusercontent.com/ChrisBuilds/terminaltexteffects/main/docs/img/effects_demos/beams_demo.webp)
 
 #### Burn
 
-![burn_demo](https://github.com/user-attachments/assets/b2e6ad48-15f7-4363-b281-d165b91403c4)
+![burn_demo](https://raw.githubusercontent.com/ChrisBuilds/terminaltexteffects/main/docs/img/effects_demos/burn_demo.webp)
 
 #### Decrypt
 
-![decrypt_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/36c23e70-065d-4316-a09e-c2761882cbb3)
+![decrypt_demo](https://raw.githubusercontent.com/ChrisBuilds/terminaltexteffects/main/docs/img/effects_demos/decrypt_demo.webp)
 
 #### LaserEtch
 
-![laseretch_demo](https://github.com/user-attachments/assets/b65b57b6-3a02-411e-b9f2-23ec4572c328)
+![laseretch_demo](https://raw.githubusercontent.com/ChrisBuilds/terminaltexteffects/main/docs/img/effects_demos/laseretch_demo.webp)
 
 #### Matrix
 
-![matrix_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/0f6ddfd9-5e78-4de2-a187-7950b1e5b9d0)
+![matrix_demo](https://raw.githubusercontent.com/ChrisBuilds/terminaltexteffects/main/docs/img/effects_demos/matrix_demo.webp)
 
 #### Spotlights
 
-![spotlights_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/4ab93725-0c8a-4bdf-af91-057338f4e007)
+![spotlights_demo](https://raw.githubusercontent.com/ChrisBuilds/terminaltexteffects/main/docs/img/effects_demos/spotlights_demo.webp)
 
 #### VHSTape
 
-![vhstape_demo](https://github.com/ChrisBuilds/terminaltexteffects/assets/57874186/720abbf4-f97d-4ce9-96ee-15ef973488d2)
+![vhstape_demo](https://raw.githubusercontent.com/ChrisBuilds/terminaltexteffects/main/docs/img/effects_demos/vhstape_demo.webp)
 
 </details>
 

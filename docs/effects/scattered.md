@@ -1,6 +1,6 @@
 # Scattered
 
-![Demo](../img/effects_demos/scattered_demo.gif)
+![Demo](../img/effects_demos/scattered_demo.webp)
 
 ## Quick Start
 

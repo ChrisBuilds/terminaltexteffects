@@ -1,6 +1,6 @@
 # ErrorCorrect
 
-![Demo](../img/effects_demos/errorcorrect_demo.gif)
+![Demo](../img/effects_demos/errorcorrect_demo.webp)
 
 ## Quick Start
 

@@ -1,6 +1,6 @@
 # Sweep
 
-![Demo](../img/effects_demos/sweep_demo.gif)
+![Demo](../img/effects_demos/sweep_demo.webp)
 
 ## Quick Start
 

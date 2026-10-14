@@ -1,6 +1,6 @@
 # Spray
 
-![Demo](../img/effects_demos/spray_demo.gif)
+![Demo](../img/effects_demos/spray_demo.webp)
 
 ## Quick Start
 

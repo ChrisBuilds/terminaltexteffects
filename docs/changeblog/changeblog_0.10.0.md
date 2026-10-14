@@ -95,7 +95,7 @@ dimensions. Of course, if your text extends beyond the terminal device dimension
 
 Speaking of [ColorShift](../showroom.md#colorshift), check it out.
 
-![ColorShift Demo](../img/effects_demos/colorshift_demo.gif)
+![ColorShift Demo](../img/effects_demos/colorshift_demo.webp)
 
 Here's one of the new directions for [Waves](../showroom.md#waves), `center_to_outside`.
 

@@ -1,6 +1,6 @@
 # Slice
 
-![Demo](../img/effects_demos/slice_demo.gif)
+![Demo](../img/effects_demos/slice_demo.webp)
 
 ## Quick Start
 

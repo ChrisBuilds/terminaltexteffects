@@ -8,7 +8,7 @@ The effects shown below represent the built-in library of effects and their defa
 
 Creates beams which travel over the canvas illuminating the characters.
 
-![Demo](./img/effects_demos/beams_demo.gif)
+![Demo](./img/effects_demos/beams_demo.webp)
 
 [Reference](./effects/beams.md){ .md-button } [Config](./effects/beams.md#terminaltexteffects.effects.effect_beams.BeamsConfig){ .md-button }
 
@@ -56,7 +56,7 @@ Creates beams which travel over the canvas illuminating the characters.
 
 Decodes characters into their binary form. Characters travel from outside the canvas towards their input coordinate, moving at right angles.
 
-![Demo](./img/effects_demos/binarypath_demo.gif)
+![Demo](./img/effects_demos/binarypath_demo.webp)
 
 [Reference](./effects/binarypath.md){ .md-button } [Config](./effects/binarypath.md#terminaltexteffects.effects.effect_binarypath.BinaryPathConfig){ .md-button }
 
@@ -88,7 +88,7 @@ Decodes characters into their binary form. Characters travel from outside the ca
 
 Creates a blackhole in a starfield, consumes the stars, explodes the input data back into position.
 
-![Demo](./img/effects_demos/blackhole_demo.gif)
+![Demo](./img/effects_demos/blackhole_demo.webp)
 
 [Reference](./effects/blackhole.md){ .md-button } [Config](./effects/blackhole.md#terminaltexteffects.effects.effect_blackhole.BlackholeConfig){ .md-button }
 
@@ -117,7 +117,7 @@ Creates a blackhole in a starfield, consumes the stars, explodes the input data 
 
 Characters fall from the top of the canvas as bouncy balls before settling into place.
 
-![Demo](./img/effects_demos/bouncyballs_demo.gif)
+![Demo](./img/effects_demos/bouncyballs_demo.webp)
 
 [Reference](./effects/bouncyballs.md){ .md-button } [Config](./effects/bouncyballs.md#terminaltexteffects.effects.effect_bouncyballs.BouncyBallsConfig){ .md-button }
 
@@ -177,7 +177,7 @@ Characters fall from the top of the canvas as bouncy balls before settling into 
 
 Forms bubbles with the characters. Bubbles float down and pop.
 
-![Demo](./img/effects_demos/bubbles_demo.gif)
+![Demo](./img/effects_demos/bubbles_demo.webp)
 
 [Reference](./effects/bubbles.md){ .md-button } [Config](./effects/bubbles.md#terminaltexteffects.effects.effect_bubbles.BubblesConfig){ .md-button }
 
@@ -243,7 +243,7 @@ Forms bubbles with the characters. Bubbles float down and pop.
 
 Characters are ignited and burn up the screen.
 
-![Demo](./img/effects_demos/burn_demo.gif)
+![Demo](./img/effects_demos/burn_demo.webp)
 
 [Reference](./effects/burn.md){ .md-button } [Config](./effects/burn.md#terminaltexteffects.effects.effect_burn.BurnConfig){ .md-button }
 
@@ -273,7 +273,7 @@ Characters are ignited and burn up the screen.
 
 Display a gradient that shifts colors across the terminal.
 
-![Demo](./img/effects_demos/colorshift_demo.gif)
+![Demo](./img/effects_demos/colorshift_demo.webp)
 
 !!! note
 
@@ -322,7 +322,7 @@ Display a gradient that shifts colors across the terminal.
 
 Characters crumble into dust before being vacuumed up and reformed.
 
-![Demo](./img/effects_demos/crumble_demo.gif)
+![Demo](./img/effects_demos/crumble_demo.webp)
 
 [Reference](./effects/crumble.md){ .md-button } [Config](./effects/crumble.md#terminaltexteffects.effects.effect_crumble.CrumbleConfig){ .md-button }
 
@@ -346,7 +346,7 @@ Characters crumble into dust before being vacuumed up and reformed.
 
 Movie style text decryption effect.
 
-![Demo](./img/effects_demos/decrypt_demo.gif)
+![Demo](./img/effects_demos/decrypt_demo.webp)
 
 [Reference](./effects/decrypt.md){ .md-button } [Config](./effects/decrypt.md#terminaltexteffects.effects.effect_decrypt.DecryptConfig){ .md-button }
 
@@ -375,7 +375,7 @@ Movie style text decryption effect.
 
 Swaps characters from an incorrect initial position to the correct position.
 
-![Demo](./img/effects_demos/errorcorrect_demo.gif)
+![Demo](./img/effects_demos/errorcorrect_demo.webp)
 
 [Reference](./effects/errorcorrect.md){ .md-button } [Config](./effects/errorcorrect.md#terminaltexteffects.effects.effect_errorcorrect.ErrorCorrectConfig){ .md-button }
 
@@ -437,7 +437,7 @@ Swaps characters from an incorrect initial position to the correct position.
 
 Characters expand from the center.
 
-![Demo](./img/effects_demos/expand_demo.gif)
+![Demo](./img/effects_demos/expand_demo.webp)
 
 [Reference](./effects/expand.md){ .md-button } [Config](./effects/expand.md#terminaltexteffects.effects.effect_expand.ExpandConfig){ .md-button }
 
@@ -490,7 +490,7 @@ Characters expand from the center.
 
 Launches characters up the screen where they explode like fireworks and fall into place.
 
-![Demo](./img/effects_demos/fireworks_demo.gif)
+![Demo](./img/effects_demos/fireworks_demo.webp)
 
 [Reference](./effects/fireworks.md){ .md-button } [Config](./effects/fireworks.md#terminaltexteffects.effects.effect_fireworks.FireworksConfig){ .md-button }
 
@@ -531,7 +531,7 @@ Launches characters up the screen where they explode like fireworks and fall int
 
 Run a specular highlight across the text.
 
-![Demo](./img/effects_demos/highlight_demo.gif)
+![Demo](./img/effects_demos/highlight_demo.webp)
 
 [Reference](./effects/highlight.md){ .md-button } [Config](./effects/highlight.md#terminaltexteffects.effects.effect_highlight.HighlightConfig){ .md-button }
 
@@ -590,7 +590,7 @@ Run a specular highlight across the text.
 
 A laser etches characters onto the terminal.
 
-![Demo](./img/effects_demos/laseretch_demo.gif)
+![Demo](./img/effects_demos/laseretch_demo.webp)
 
 [Reference](./effects/laseretch.md){ .md-button } [Config](./effects/laseretch.md#terminaltexteffects.effects.effect_laseretch.LaserEtchConfig){ .md-button }
 
@@ -639,7 +639,7 @@ A laser etches characters onto the terminal.
 
 Matrix digital rain effect.
 
-![Demo](./img/effects_demos/matrix_demo.gif)
+![Demo](./img/effects_demos/matrix_demo.webp)
 
 [Reference](./effects/matrix.md){ .md-button } [Config](./effects/matrix.md#terminaltexteffects.effects.effect_matrix.MatrixConfig){ .md-button }
 
@@ -688,7 +688,7 @@ Matrix digital rain effect.
 
 Text expands in a single row or column in the middle of the canvas then out.
 
-![Demo](./img/effects_demos/middleout_demo.gif)
+![Demo](./img/effects_demos/middleout_demo.webp)
 
 [Reference](./effects/middleout.md){ .md-button } [Config](./effects/middleout.md#terminaltexteffects.effects.effect_middleout.MiddleOutConfig){ .md-button }
 
@@ -748,7 +748,7 @@ Text expands in a single row or column in the middle of the canvas then out.
 
 Four launchers travel along the canvas edges, firing characters from their nearest canvas side to build the text in expanding circular rings. Rings launch in order with up to two still in flight.
 
-![Demo](./img/effects_demos/orbittingvolley_demo.gif)
+![Demo](./img/effects_demos/orbittingvolley_demo.webp)
 
 [Reference](./effects/orbittingvolley.md){ .md-button } [Config](./effects/orbittingvolley.md#terminaltexteffects.effects.effect_orbittingvolley.OrbittingVolleyConfig){ .md-button }
 
@@ -816,7 +816,7 @@ Four launchers travel along the canvas edges, firing characters from their neare
 
 Input text overflows and scrolls the terminal in a random order until eventually appearing ordered.
 
-![Demo](./img/effects_demos/overflow_demo.gif)
+![Demo](./img/effects_demos/overflow_demo.webp)
 
 [Reference](./effects/overflow.md){ .md-button } [Config](./effects/overflow.md#terminaltexteffects.effects.effect_overflow.OverflowConfig){ .md-button }
 
@@ -846,7 +846,7 @@ Input text overflows and scrolls the terminal in a random order until eventually
 
 Pours the characters back and forth from the top, bottom, left, or right.
 
-![Demo](./img/effects_demos/pour_demo.gif)
+![Demo](./img/effects_demos/pour_demo.webp)
 
 [Reference](./effects/pour.md){ .md-button } [Config](./effects/pour.md#terminaltexteffects.effects.effect_pour.PourConfig){ .md-button }
 
@@ -909,7 +909,7 @@ Pours the characters back and forth from the top, bottom, left, or right.
 
 Prints the input data one line at at time with a carriage return and line feed.
 
-![Demo](./img/effects_demos/print_demo.gif)
+![Demo](./img/effects_demos/print_demo.webp)
 
 [Reference](./effects/print.md){ .md-button } [Config](./effects/print.md#terminaltexteffects.effects.effect_print.PrintConfig){ .md-button }
 
@@ -963,7 +963,7 @@ Prints the input data one line at at time with a carriage return and line feed.
 
 Rain characters from the top of the canvas.
 
-![Demo](./img/effects_demos/rain_demo.gif)
+![Demo](./img/effects_demos/rain_demo.webp)
 
 [Reference](./effects/rain.md){ .md-button } [Config](./effects/rain.md#terminaltexteffects.effects.effect_rain.RainConfig){ .md-button }
 
@@ -1021,7 +1021,7 @@ Rain characters from the top of the canvas.
 
 Prints the input data in a random sequence, one character at a time.
 
-![Demo](./img/effects_demos/randomsequence_demo.gif)
+![Demo](./img/effects_demos/randomsequence_demo.webp)
 
 [Reference](./effects/randomsequence.md){ .md-button } [Config](./effects/randomsequence.md#terminaltexteffects.effects.effect_random_sequence.RandomSequenceConfig){ .md-button }
 
@@ -1049,7 +1049,7 @@ Prints the input data in a random sequence, one character at a time.
 
 Characters are dispersed and form into spinning rings.
 
-![Demo](./img/effects_demos/rings_demo.gif)
+![Demo](./img/effects_demos/rings_demo.webp)
 
 [Reference](./effects/rings.md){ .md-button } [Config](./effects/rings.md#terminaltexteffects.effects.effect_rings.RingsConfig){ .md-button }
 
@@ -1087,7 +1087,7 @@ Characters are dispersed and form into spinning rings.
 
 Text is scattered across the canvas and moves into position.
 
-![Demo](./img/effects_demos/scattered_demo.gif)
+![Demo](./img/effects_demos/scattered_demo.webp)
 
 [Reference](./effects/scattered.md){ .md-button } [Config](./effects/scattered.md#terminaltexteffects.effects.effect_scattered.ScatteredConfig){ .md-button }
 
@@ -1141,7 +1141,7 @@ Text is scattered across the canvas and moves into position.
 
 Slices the input in half and slides it into place from opposite directions.
 
-![Demo](./img/effects_demos/slice_demo.gif)
+![Demo](./img/effects_demos/slice_demo.webp)
 
 [Reference](./effects/slice.md){ .md-button } [Config](./effects/slice.md#terminaltexteffects.effects.effect_slice.SliceConfig){ .md-button }
 
@@ -1195,7 +1195,7 @@ Slices the input in half and slides it into place from opposite directions.
 
 Slide characters into view from outside the terminal.
 
-![Demo](./img/effects_demos/slide_demo.gif)
+![Demo](./img/effects_demos/slide_demo.webp)
 
 [Reference](./effects/slide.md){ .md-button } [Config](./effects/slide.md#terminaltexteffects.effects.effect_slide.SlideConfig){ .md-button }
 
@@ -1259,7 +1259,7 @@ Slide characters into view from outside the terminal.
 
 Smoke floods the canvas colorizing any characters it crosses.
 
-![Demo](./img/effects_demos/smoke_demo.gif)
+![Demo](./img/effects_demos/smoke_demo.webp)
 
 [Reference](./effects/smoke.md){ .md-button } [Config](./effects/smoke.md#terminaltexteffects.effects.effect_smoke.SmokeConfig){ .md-button }
 
@@ -1293,7 +1293,7 @@ Smoke floods the canvas colorizing any characters it crosses.
 
 Spotlights search the text area, illuminating characters, before converging in the center and expanding.
 
-![Demo](./img/effects_demos/spotlights_demo.gif)
+![Demo](./img/effects_demos/spotlights_demo.webp)
 
 [Reference](./effects/spotlights.md){ .md-button } [Config](./effects/spotlights.md#terminaltexteffects.effects.effect_spotlights.SpotlightsConfig){ .md-button }
 
@@ -1354,7 +1354,7 @@ Spotlights search the text area, illuminating characters, before converging in t
 
 Sprays the characters from a single point.
 
-![Demo](./img/effects_demos/spray_demo.gif)
+![Demo](./img/effects_demos/spray_demo.webp)
 
 [Reference](./effects/spray.md){ .md-button } [Config](./effects/spray.md#terminaltexteffects.effects.effect_spray.SprayConfig){ .md-button }
 
@@ -1410,7 +1410,7 @@ Sprays the characters from a single point.
 
 Characters are grouped into swarms and move around the terminal before settling into position.
 
-![Demo](./img/effects_demos/swarm_demo.gif)
+![Demo](./img/effects_demos/swarm_demo.webp)
 
 [Reference](./effects/swarm.md){ .md-button } [Config](./effects/swarm.md#terminaltexteffects.effects.effect_swarm.SwarmConfig){ .md-button }
 
@@ -1444,7 +1444,7 @@ Characters are grouped into swarms and move around the terminal before settling 
 
 Sweep across the canvas to reveal uncolored text, reverse sweep to color the text.
 
-![Demo](./img/effects_demos/sweep_demo.gif)
+![Demo](./img/effects_demos/sweep_demo.webp)
 
 [Reference](./effects/sweep.md){ .md-button } [Config](./effects/sweep.md#terminaltexteffects.effects.effect_sweep.SweepConfig){ .md-button }
 
@@ -1508,7 +1508,7 @@ Create a grid of balanced, approximately square cells which fill with characters
 Cell sizes differ by at most one position in each dimension. Tiny canvases use fewer cells and omit grid decoration
 where needed, supporting canvases down to a single character.
 
-![Demo](./img/effects_demos/synthgrid_demo.gif)
+![Demo](./img/effects_demos/synthgrid_demo.webp)
 
 [Reference](./effects/synthgrid.md){ .md-button } [Config](./effects/synthgrid.md#terminaltexteffects.effects.effect_synthgrid.SynthGridConfig){ .md-button }
 
@@ -1547,7 +1547,7 @@ where needed, supporting canvases down to a single character.
 
 Create a thunderstorm in the terminal.
 
-![Demo](./img/effects_demos/thunderstorm_demo.gif)
+![Demo](./img/effects_demos/thunderstorm_demo.webp)
 
 [Reference](./effects/thunderstorm.md){ .md-button } [Config](./effects/thunderstorm.md#terminaltexteffects.effects.effect_thunderstorm.ThunderstormConfig){ .md-button }
 
@@ -1591,7 +1591,7 @@ Create a thunderstorm in the terminal.
 
 Spawns characters jumbled, explodes them to the edge of the canvas, then reassembles them.
 
-![Demo](./img/effects_demos/unstable_demo.gif)
+![Demo](./img/effects_demos/unstable_demo.webp)
 
 [Reference](./effects/unstable.md){ .md-button } [Config](./effects/unstable.md#terminaltexteffects.effects.effect_unstable.UnstableConfig){ .md-button }
 
@@ -1649,7 +1649,7 @@ Spawns characters jumbled, explodes them to the edge of the canvas, then reassem
 
 Lines of characters glitch left and right and lose detail like an old VHS tape.
 
-![Demo](./img/effects_demos/vhstape_demo.gif)
+![Demo](./img/effects_demos/vhstape_demo.webp)
 
 [Reference](./effects/vhstape.md){ .md-button } [Config](./effects/vhstape.md#terminaltexteffects.effects.effect_vhstape.VHSTapeConfig){ .md-button }
 
@@ -1688,7 +1688,7 @@ Lines of characters glitch left and right and lose detail like an old VHS tape.
 
 Waves travel across the terminal leaving behind the characters.
 
-![Demo](./img/effects_demos/waves_demo.gif)
+![Demo](./img/effects_demos/waves_demo.webp)
 
 [Reference](./effects/waves.md){ .md-button } [Config](./effects/waves.md#terminaltexteffects.effects.effect_waves.WavesConfig){ .md-button }
 
@@ -1759,7 +1759,7 @@ Waves travel across the terminal leaving behind the characters.
 
 Performs a wipe across the terminal to reveal characters.
 
-![Demo](./img/effects_demos/wipe_demo.gif)
+![Demo](./img/effects_demos/wipe_demo.webp)
 
 [Reference](./effects/wipe.md){ .md-button } [Config](./effects/wipe.md#terminaltexteffects.effects.effect_wipe.WipeConfig){ .md-button }
 

@@ -47,7 +47,7 @@ When people initially encounter TTE their first thought is something like, "Neat
 and bewilderment. Who would make a terminal visual effects library and not include the most famous terminal visual
 effect in cinema history? Nobody. That would be crazy.
 
-![Matrix Demo](../img/effects_demos/matrix_demo.gif)
+![Matrix Demo](../img/effects_demos/matrix_demo.webp)
 
 *I don't even see the code...*
 *All I see is set_appearance(), set_coordinate(), set_visibility()...*

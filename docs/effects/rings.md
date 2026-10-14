@@ -1,6 +1,6 @@
 # Rings
 
-![Demo](../img/effects_demos/rings_demo.gif)
+![Demo](../img/effects_demos/rings_demo.webp)
 
 ## Quick Start
 

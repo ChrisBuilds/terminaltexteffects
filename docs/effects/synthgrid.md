@@ -1,6 +1,6 @@
 # SynthGrid
 
-![Demo](../img/effects_demos/synthgrid_demo.gif)
+![Demo](../img/effects_demos/synthgrid_demo.webp)
 
 ## Quick Start
 
