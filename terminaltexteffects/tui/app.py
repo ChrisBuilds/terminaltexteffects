@@ -31,6 +31,7 @@ from textual.widgets import (
 
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.tui import colors, frames, options
+from terminaltexteffects.tui.picker import ColorScreen
 
 if typing.TYPE_CHECKING:
     from collections.abc import Iterator
@@ -40,6 +41,7 @@ if typing.TYPE_CHECKING:
 
     from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
+    from terminaltexteffects.utils.graphics import Color
 
     EffectResourceMap = dict[str, tuple[type[BaseEffect], type[BaseConfig]]]
 
@@ -158,8 +160,21 @@ class CanvasView(Widget, can_focus=True):
         return Strip.blank(width)
 
 
+class Swatch(Static):
+    """Shows a color option's colors and opens the color picker when clicked."""
+
+    class Clicked(Message):
+        """Posted when the swatch is clicked."""
+
+    def on_click(self) -> None:
+        """Ask the editor to open the color picker."""
+        self.post_message(Swatch.Clicked())
+
+
 class OptionEditor(Horizontal):
     """A labelled input for one option, built from its `ArgSpec`."""
+
+    BINDINGS: typing.ClassVar = [Binding("f7", "pick_color", "Pick color")]
 
     DEFAULT_CSS = """
     OptionEditor {
@@ -249,7 +264,7 @@ class OptionEditor(Horizontal):
         else:
             yield Input(option.format(self.value), placeholder=option.format(option.default), compact=True)
             if option.is_color:
-                yield Static(classes="swatch")
+                yield Swatch(classes="swatch")
 
     def on_mount(self) -> None:
         """Show the modified marker and color swatch for the initial value."""
@@ -279,13 +294,15 @@ class OptionEditor(Horizontal):
             entry.set_class(self.error is not None, "-invalid")
             entry.tooltip = self.error or self.option.help or None
         if self.option.is_color:
-            swatch = self.query_one(".swatch", Static)
+            swatch = self.query_one(Swatch)
             values = self.value if isinstance(self.value, tuple) else (self.value,)
             text = Text()
             if self.error is None:
                 for color in values[:4]:
                     text.append(" ", Style(bgcolor=f"#{color.rgb_color}"))
+            text.append(" ▾")
             swatch.update(text)
+            swatch.tooltip = "Pick colors (F7, or Enter in the field)"
 
     @on(Checkbox.Changed)
     def _checkbox_changed(self, event: Checkbox.Changed) -> None:
@@ -302,6 +319,31 @@ class OptionEditor(Horizontal):
     def _input_changed(self, event: Input.Changed) -> None:
         event.stop()
         self._parse(event.value)
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:  # noqa: ARG002
+        """Offer the color picker only for color options."""
+        if action == "pick_color":
+            return self.option.is_color
+        return True
+
+    @on(Input.Submitted)
+    @on(Swatch.Clicked)
+    def action_pick_color(self, event: Message | None = None) -> None:
+        """Open the color picker with the option's current colors, and apply the colors it returns."""
+        if event is not None:
+            event.stop()
+        if not self.option.is_color:
+            return
+        current = self.value if isinstance(self.value, tuple) else (self.value,)
+
+        def apply(result: tuple[Color, ...] | None) -> None:
+            if result:
+                value = result if self.option.is_multi else result[0]
+                self.query_one(Input).value = self.option.format(value)
+
+        self.app.push_screen(
+            ColorScreen(self.option.flag.removeprefix("--"), current, multiple=self.option.is_multi), apply
+        )
 
     def _parse(self, text: str) -> None:
         try:
