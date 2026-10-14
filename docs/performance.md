@@ -38,6 +38,22 @@ The default `--lifecycle iterator` mode measures iterator construction and frame
 construction, frame generation, in-memory calls to `Terminal.print()`, and cursor restoration. This mode is useful for
 finding duplicated setup or output-lifecycle regressions without writing control sequences to the real terminal.
 
+Effects run with their default options unless you pass `tte` options as one quoted string, joined with `=` so the
+value is not mistaken for a harness option. `--effect-args` takes the options you would give `tte <effect>` and needs a
+single `--effect`; `--terminal-args` takes terminal options you would give `tte` before the effect name, except
+`--frame-rate`, since the harness disables frame-rate sleeps:
+
+```bash
+./.venv/bin/python tools/perf/benchmark_effects.py \
+  --effect waves \
+  --effect-args="--wave-count 3 --final-gradient-direction diagonal" \
+  --terminal-args="--xterm-colors"
+```
+
+Both are parsed by the `tte` parser, so names, values, and errors match the application, and reports record them. The
+harness shortens Matrix's rain, Thunderstorm's storm, and ColorShift's cycles to keep long hold phases from dominating
+the measurement; setting `--rain-time`, `--storm-time`, or `--cycles` explicitly overrides that.
+
 ### Candidate
 
 After making a focused change and running the relevant functional checks, rerun the same benchmark arguments:
@@ -94,13 +110,35 @@ match frames by absolute file path, so record both builds from the same install 
 Markdown tables of the hottest functions, lines, and files by self samples.
 
 The [Profile workflow](https://github.com/ChrisBuilds/terminaltexteffects/actions/workflows/profile.yml) does this in
-CI. It runs on pushes to `main` that touch the package or harness, comparing against the previous `main` commit, and
-on manual dispatch with a choice of effect, `<input-preset>/<lifecycle>` scenarios, and an optional baseline ref. The
-job summary shows the hotspot tables; the `profile-results` artifact holds each scenario's flamegraph, heatmap,
-Firefox Profiler JSON (`profile.gecko.json`, for <https://profiler.firefox.com>), raw `profile.bin`, and, with a
-baseline, `diff-flamegraph.html` and a benchmark comparison. The workflow is informational and never fails on a
-slowdown. Its timings come from a shared runner under the profiler, so read proportions, not absolute times, and
-confirm any change with the benchmark harness.
+CI. On pushes to `main` that touch the package or harness, it profiles all effects with default options in three fixed
+scenarios (`medium` and `large` iterator runs, and a `medium` terminal-output run) and compares against the previous
+`main` commit, so successive reports stay comparable.
+
+To profile on demand, open the workflow and choose **Run workflow**. The form offers:
+
+| Field | Purpose |
+| --- | --- |
+| Effect | One effect, or `all` |
+| Input preset | One preset, `medium + large`, or `all presets` |
+| Lifecycle | `iterator`, `terminal-output`, or `both`; each preset runs in each lifecycle |
+| Effect arguments | Options as for `tte <effect>`; needs a single effect |
+| Colour mode, existing colour handling | `--xterm-colors`, `--no-color`, and `--existing-color-handling` |
+| Timed samples, seed | Harness `--samples` and `--seed` |
+| Sampling rate, sampling mode | Profiler rate, and `wall` or `cpu` sampling; `cpu` ignores time spent waiting |
+| GC frames, native frames, bytecode detail | Profiler `<GC>` and `<native>` frames, and `--opcodes` for the heatmap |
+| Line heatmap | Untick to skip heatmaps, about 40 MB per scenario |
+| Baseline | Optional commit, branch, or tag for differential flamegraphs |
+
+Effect and terminal arguments are checked before anything is recorded, so a typo fails within seconds with `tte`'s
+error message. With a baseline, both builds run under the current harness, so effect arguments must also exist in the
+baseline build. `tools/check_effect_inventory.py` fails if the effect or input-preset drop-downs fall out of step with
+the shipped effects or harness presets.
+
+The job summary lists the settings and shows the hotspot tables; the `profile-results` artifact holds each scenario's
+flamegraph, heatmap, Firefox Profiler JSON (`profile.gecko.json`, for <https://profiler.firefox.com>), raw
+`profile.bin`, and, with a baseline, `diff-flamegraph.html` and a benchmark comparison. The workflow is informational
+and never fails on a slowdown. Its timings come from a shared runner under the profiler, so read proportions, not
+absolute times, and confirm any change with the benchmark harness.
 
 ## Reporting a Change
 

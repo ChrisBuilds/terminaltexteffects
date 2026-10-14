@@ -1,4 +1,4 @@
-"""Verify shipped effects have built-in registration, docs/navigation, and permanent test definitions."""
+"""Verify shipped effects have built-in registration, docs/navigation, permanent tests, and profiling options."""
 
 from __future__ import annotations
 
@@ -8,6 +8,9 @@ import sys
 from pathlib import Path
 
 from terminaltexteffects.__main__ import build_parser
+from tools.perf.benchmark_effects import INPUT_PRESET_NAMES
+
+PROFILE_WORKFLOW = ".github/workflows/profile.yml"
 
 
 def navigation_paths(value: object) -> set[str]:
@@ -32,6 +35,49 @@ def load_navigation(root: Path) -> set[str]:
         message = "mkdocs.yml must contain a configuration mapping"
         raise TypeError(message)
     return navigation_paths(config.get("nav"))
+
+
+def load_profile_options(root: Path) -> dict[str, list[str]]:
+    """Read the choice options of the Profile workflow's manual inputs."""
+    import yaml  # noqa: PLC0415 - Only CLI/docs-loading checks need the locked MkDocs dependency.
+
+    text = (root / PROFILE_WORKFLOW).read_text(encoding="utf-8")
+    # BaseLoader keeps the `on` key a string instead of YAML 1.1's boolean `True`.
+    workflow = yaml.load(text, Loader=yaml.BaseLoader)  # noqa: S506
+    try:
+        inputs = workflow["on"]["workflow_dispatch"]["inputs"]
+    except (KeyError, TypeError) as error:
+        message = f"{PROFILE_WORKFLOW} has no workflow_dispatch inputs"
+        raise TypeError(message) from error
+    return {name: spec["options"] for name, spec in inputs.items() if isinstance(spec, dict) and "options" in spec}
+
+
+def check_profile_options(options: dict[str, list[str]], commands: list[str]) -> list[str]:
+    """Report Profile workflow drop-downs that no longer list every effect and input preset."""
+    expected = {
+        "effect": ["all", *sorted(commands)],
+        "input_preset": ["medium + large", *INPUT_PRESET_NAMES, "all presets"],
+    }
+    problems: list[str] = []
+    for name, wanted in expected.items():
+        actual = options.get(name, [])
+        if actual == wanted:
+            continue
+        missing = [option for option in wanted if option not in actual]
+        extra = [option for option in actual if option not in wanted]
+        detail = "; ".join(
+            part
+            for part in (
+                f"add {', '.join(missing)}" if missing else "",
+                f"remove {', '.join(extra)}" if extra else "",
+                "keep the options in order" if not missing and not extra else "",
+            )
+            if part
+        )
+        problems.append(
+            f"{PROFILE_WORKFLOW} `{name}` options are out of date: {detail}. Expected: {', '.join(wanted)}."
+        )
+    return problems
 
 
 def has_test_definitions(path: Path) -> bool:
@@ -102,6 +148,7 @@ def main() -> int:
     root = Path(__file__).resolve().parents[1]
     effects = registered_effects()
     problems = check_inventory(root, effects, load_navigation(root))
+    problems += check_profile_options(load_profile_options(root), list(effects.values()))
     if problems:
         print("Effect inventory failed:\n" + "\n".join(f"- {problem}" for problem in problems), file=sys.stderr)
         return 1
