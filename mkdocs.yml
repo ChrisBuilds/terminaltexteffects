@@ -80,6 +80,8 @@ nav:
       - effectguide/engine/color.md
       - effectguide/engine/configuration.md
       - effectguide/engine/loading.md
+      - effectguide/engine/performance.md
+      - effectguide/engine/toolbox.md
     - Writing Effects:
       - Tutorial:
         - effectguide/tutorial/01-scaffold.md
@@ -94,6 +96,7 @@ nav:
         - effectguide/writing/patterns/particles.md
         - effectguide/writing/patterns/spanning-trees.md
         - effectguide/writing/patterns/looping.md
+      - effectguide/writing/conventions.md
       - effectguide/writing/sharing.md
   - Effects Showroom: showroom.md
   - Library Cookbook: cookbook.md
