@@ -50,7 +50,9 @@ The iterator does the work. Its `__init__` runs once, before the first frame:
 - The loop makes every character visible. Characters start hidden, so without this the frame would be blank.
 
 `__next__` returns `self.frame`, the rendered canvas, the first time it is called, then raises `StopIteration` to end
-the effect. It never calls `self.update()`, because no character has anything to animate yet.
+the effect. It never calls `self.update()`, because no character has anything to animate yet. The
+characters stay inactive, but the terminal draws every visible character whether or not it is active, so the
+text still appears. See [Active and visible are separate](../engine/frame-loop.md#active-and-visible-are-separate).
 
 ### `MySpray`
 
