@@ -326,3 +326,22 @@ def test_single_options_return_to_their_defaults() -> None:
         assert app._values["wipe"] == {}
 
     _run(TTEApp(_EFFECTS, "text", effect="wipe"), script)
+
+
+def test_option_tooltips_show_the_format_example_and_default() -> None:
+    """An option's tooltip should give its help, format, example, and default, led by any error."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        editor = _editor(app, "wipe", "wipe_delay")
+        tooltip = str(editor.tooltip)
+        assert editor.option.help in tooltip
+        assert "Format: a whole number, 0 or more." in tooltip
+        assert "Example: 0" in tooltip
+        assert f"Default: {editor.option.format(editor.option.default)}" in tooltip
+        editor.query_one(Input).value = "x"
+        await pilot.pause()
+        entry_tooltip = str(editor.query_one(Input).tooltip)
+        assert entry_tooltip.startswith(str(editor.error))
+        assert "Format: " in entry_tooltip
+
+    _run(TTEApp(_EFFECTS, "text", effect="wipe"), script)

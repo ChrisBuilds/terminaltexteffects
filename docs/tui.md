@@ -57,7 +57,8 @@ the command palette (++ctrl+p++).
 
 Option inputs follow each option's type: a checkbox for on/off options, a list for fixed choices such as gradient
 directions and easing functions, and a text box for everything else. Text boxes use the same spelling as the
-command line. Lists are space separated, such as `ff0000 00ff00 0000ff`, and colors show a swatch. An invalid value
+command line. Lists are space separated, such as `ff0000 00ff00 0000ff`, and colors show a swatch. Hover over an
+option to see its help, how to write its value with an example, and its default. An invalid value
 turns its name and field red, with the reason in its tooltip, and the effect won't play until it is fixed. Changed
 options have their names highlighted. Clearing a field and leaving it, or pressing ++shift+f6++ on an option,
 returns that option to its default. Each effect keeps its own values while the interface is open. The

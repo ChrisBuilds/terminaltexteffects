@@ -205,3 +205,27 @@ def test_parse_command_reports_flags_it_cannot_apply() -> None:
         options.parse_command("tte --frame-rate 30", effect_fields, terminal_fields)
     with pytest.raises(ValueError, match="cannot read"):
         options.parse_command("tte wipe --final-gradient-stops 'ff0000", effect_fields, terminal_fields)
+
+
+def test_format_hints_describe_the_value_and_give_an_example() -> None:
+    """Text options should explain how to write their value, with an example, and others should have no hint."""
+    by_name = {
+        f"{name}.{option.name}": option
+        for name, (_, config_class) in _EFFECTS.items()
+        for option in options.option_fields(config_class)
+    }
+    assert by_name["beams.beam_row_speed_range"].format_hint() == (
+        "Format: a range of whole numbers above 0, written low-high.\nExample: 2-8"
+    )
+    assert by_name["beams.beam_row_symbols"].format_hint().startswith("Format: space-separated single characters")
+    assert "Example: ff0000 00ff00 208" in by_name["beams.final_gradient_stops"].format_hint()
+    assert by_name["overflow.overflow_cycles_range"].format_hint() == (
+        "Format: a range of whole numbers, written low-high.\nExample: 2-4"
+    )
+    assert by_name["laseretch.etch_pattern"].format_hint().startswith("Format: one of algorithm, column_left_to_right,")
+    assert by_name["wipe.reverse_wipe_direction"].format_hint() == ""
+    assert by_name["wipe.wipe_ease"].format_hint() == ""
+    for key, option in by_name.items():
+        if option.kind == "text":
+            assert "Format: " in option.format_hint(), key
+            assert "\nExample: " in option.format_hint(), key

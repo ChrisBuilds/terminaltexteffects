@@ -441,7 +441,7 @@ class OptionEditor(Horizontal):
         self.option = option
         self.value = value
         self.error: str | None = None
-        self.tooltip = option.help or None
+        self.tooltip = self._option_tooltip()
 
     def compose(self) -> ComposeResult:
         """Create the label and the widget for the option's kind."""
@@ -481,6 +481,17 @@ class OptionEditor(Horizontal):
             self.query_one(Input).value = option.format(value)
         self._show_state()
 
+    def _option_tooltip(self) -> str | None:
+        """Return the option's help, value format, example, and default, led by any validation error."""
+        option = self.option
+        parts = [option.help, option.format_hint()]
+        if option.kind == "text":
+            parts.append(f"Default: {option.format(option.default) or '(empty)'}")
+        text = "\n\n".join(part for part in parts if part)
+        if self.error:
+            text = f"{self.error}\n\n{text}" if text else self.error
+        return text or None
+
     def _show_state(self) -> None:
         """Mark modified or invalid values and update the color swatch."""
         self.set_class(self.error is None and self.value != self.option.default, "-modified")
@@ -490,7 +501,7 @@ class OptionEditor(Horizontal):
         if self.option.kind == "text":
             entry = self.query_one(Input)
             entry.set_class(self.error is not None, "-invalid")
-            entry.tooltip = self.error or self.option.help or None
+            entry.tooltip = self._option_tooltip()
         if self.option.is_color:
             swatch = self.query_one(Swatch)
             values = self.value if isinstance(self.value, tuple) else (self.value,)

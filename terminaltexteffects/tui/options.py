@@ -55,6 +55,51 @@ TUI_TERMINAL_DEFAULTS: dict[str, typing.Any] = {
 """TUI defaults that differ from the CLI, so the canvas fills the text area and text lands where it was typed."""
 
 
+class _Format(typing.NamedTuple):
+    """How to write one value of an option type, for tooltips."""
+
+    one: str
+    many: str
+    example: str
+    examples: str
+
+
+_FORMATS: dict[typing.Any, _Format] = {
+    argutils.PositiveInt.type_parser: _Format("a whole number above 0", "whole numbers above 0", "4", "2 6 10"),
+    argutils.NonNegativeInt.type_parser: _Format("a whole number, 0 or more", "whole numbers, 0 or more", "0", "0 3 8"),
+    argutils.PositiveIntRange.type_parser: _Format(
+        "a range of whole numbers above 0, written low-high",
+        "ranges of whole numbers, written low-high",
+        "2-8",
+        "1-4 6-9",
+    ),
+    argutils.PositiveFloat.type_parser: _Format("a number above 0", "numbers above 0", "0.5", "0.25 1 2.5"),
+    argutils.NonNegativeFloat.type_parser: _Format("a number, 0 or more", "numbers, 0 or more", "0", "0 0.5 2"),
+    argutils.PositiveFloatRange.type_parser: _Format(
+        "a range of numbers above 0, written low-high", "ranges of numbers, written low-high", "0.25-1.5", "0.1-0.5 1-2"
+    ),
+    argutils.NonNegativeRatio.type_parser: _Format("a number from 0 to 1", "numbers from 0 to 1", "0.5", "0 0.5 1"),
+    argutils.PositiveRatio.type_parser: _Format(
+        "a number above 0, up to 1", "numbers above 0, up to 1", "0.25", "0.1 0.5 1"
+    ),
+    argutils.EasingStep.type_parser: _Format("a number above 0, up to 1", "numbers above 0, up to 1", "0.1", "0.1 0.5"),
+    argutils.ColorArg.type_parser: _Format(
+        "a color: an RGB hex value from 000000 to ffffff, or an XTerm color number from 0 to 255",
+        "colors: RGB hex values from 000000 to ffffff, or XTerm color numbers from 0 to 255",
+        "ff8800",
+        "ff0000 00ff00 208",
+    ),
+    argutils.Symbol.type_parser: _Format("one character", "single characters (quote a space as ' ')", "*", "* + ."),
+    argutils.CanvasDimension.type_parser: _Format(
+        "a whole number of cells: -1 follows the text size, and 0 fills the area", "", "40", ""
+    ),
+    argutils.TerminalDimension.type_parser: _Format("a whole number of cells: 0 uses the terminal size", "", "80", ""),
+    int: _Format("a whole number", "whole numbers", "3", "1 2 3"),
+    float: _Format("a number", "numbers", "0.5", "0.5 1 1.5"),
+}
+"""Value formats by `ArgSpec` type parser."""
+
+
 @dataclass(frozen=True)
 class OptionField:
     """One editable configuration option.
@@ -105,6 +150,39 @@ class OptionField:
     def is_color(self) -> bool:
         """Return whether the option's values are colors."""
         return self.spec.type is argutils.ColorArg.type_parser
+
+    def format_hint(self) -> str:
+        """Return how to write the option's value, with an example, or an empty string for checkboxes and lists.
+
+        Types the TUI does not know, such as those of community effects, are described by their `ArgSpec` metavar,
+        with the default value as the example.
+        """
+        if self.kind != "text":
+            return ""
+        known = _FORMATS.get(self.spec.type)
+        if known is not None and (known.many or not self.is_multi):
+            if self.is_multi:
+                return f"Format: space-separated {known.many}.\nExample: {known.examples}"
+            return f"Format: {known.one}.\nExample: {known.example}"
+        metavar = "" if self.spec.metavar is argutils._MISSING else self.spec.metavar
+        if isinstance(metavar, (tuple, list)):
+            metavar = " ".join(str(item) for item in metavar)
+        metavar = str(metavar).strip()
+        if isinstance(self.default, tuple) and len(self.default) == 2 and not self.is_multi:
+            numbers = "whole numbers" if all(isinstance(item, int) for item in self.default) else "numbers"
+            description = f"Format: a range of {numbers}, written low-high."
+        elif not metavar:
+            description = ""
+        elif self.is_multi:
+            description = f"Format: space-separated values, each {metavar.strip('()')}."
+        elif " " in metavar and "(" not in metavar:
+            description = f"Format: one of {', '.join(metavar.split())}."
+        else:
+            description = f"Format: {metavar.strip('()')}."
+        example = self.format(self.default)
+        if not example:
+            return description
+        return f"{description}\nExample: {example}".strip()
 
     def format(self, value: typing.Any) -> str:
         """Return `value` as editor text using the command-line spelling.
