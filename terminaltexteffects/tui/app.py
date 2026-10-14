@@ -165,30 +165,47 @@ class OptionEditor(Horizontal):
     OptionEditor {
         height: 1;
         width: 1fr;
-        padding: 0 1;
-        background: $boost;
-    }
-    OptionEditor:focus-within {
-        background: $primary 25%;
     }
     OptionEditor > .option-label {
-        width: 28;
+        padding: 0 1;
         color: $text-muted;
     }
     OptionEditor.-modified > .option-label {
-        color: $text;
+        color: $text-accent;
+    }
+    OptionEditor.-invalid > .option-label {
+        color: $text-error;
+    }
+    OptionEditor:focus-within > .option-label {
         text-style: bold;
+    }
+    OptionEditor:focus-within.-modified > .option-label, OptionEditor:focus-within > .option-label {
+        color: $text;
+    }
+    OptionEditor > Input, OptionEditor > Select, OptionEditor > .swatch, OptionEditor > Checkbox {
+        background: $boost;
     }
     OptionEditor > Input, OptionEditor > Select {
         width: 1fr;
-        background: $surface-darken-1;
+    }
+    OptionEditor > Input.-textual-compact, OptionEditor > Select.-textual-compact > SelectCurrent {
+        padding: 0 1;
+    }
+    OptionEditor > Input:focus, OptionEditor > Select:focus-within, OptionEditor > Checkbox:focus {
+        background: $primary 30%;
     }
     OptionEditor > Input.-invalid {
-        color: $error;
+        color: $text-error;
+        background: $error 15%;
     }
     OptionEditor > .swatch {
-        width: 4;
-        margin-left: 1;
+        width: auto;
+        max-width: 8;
+        padding: 0 1;
+    }
+    OptionEditor > Checkbox {
+        width: 1fr;
+        padding: 0 1;
     }
     """
 
@@ -200,10 +217,14 @@ class OptionEditor(Horizontal):
             super().__init__()
             self.editor = editor
 
-    def __init__(self, scope: str, option: options.OptionField, value: typing.Any) -> None:
-        """Initialize an editor for `option` in `scope`, the effect name or the terminal scope."""
+    def __init__(self, scope: str, option: options.OptionField, value: typing.Any, label_width: int = 0) -> None:
+        """Initialize an editor for `option` in `scope`, the effect name or the terminal scope.
+
+        A `label_width` above zero sets the label column width, so the inputs of a grid line up.
+        """
         super().__init__(id=f"option-{scope}-{option.name}")
         self.scope = scope
+        self.label_width = label_width
         self.option = option
         self.value = value
         self.error: str | None = None
@@ -212,9 +233,12 @@ class OptionEditor(Horizontal):
     def compose(self) -> ComposeResult:
         """Create the label and the widget for the option's kind."""
         option = self.option
-        yield Label(option.flag.removeprefix("--"), classes="option-label")
+        label = Label(option.flag.removeprefix("--"), classes="option-label")
+        if self.label_width:
+            label.styles.width = self.label_width
+        yield label
         if option.kind == "bool":
-            yield Checkbox(value=bool(self.value), compact=True)
+            yield Checkbox("on" if self.value else "off", value=bool(self.value), compact=True)
         elif option.kind == "choice":
             yield Select(
                 [(choice, choice) for choice in option.choices],
@@ -247,6 +271,9 @@ class OptionEditor(Horizontal):
     def _show_state(self) -> None:
         """Mark modified or invalid values and update the color swatch."""
         self.set_class(self.error is None and self.value != self.option.default, "-modified")
+        self.set_class(self.error is not None, "-invalid")
+        if self.option.kind == "bool":
+            self.query_one(Checkbox).label = "on" if self.value else "off"
         if self.option.kind == "text":
             entry = self.query_one(Input)
             entry.set_class(self.error is not None, "-invalid")
@@ -457,14 +484,17 @@ class TTEApp(App[None]):
         height: 16;
         border: round $primary-darken-2;
         border-title-color: $text;
+        border-subtitle-color: $text-muted;
+        border-subtitle-style: italic;
+        border-subtitle-align: left;
     }
     #options:focus-within {
         border: round $primary;
     }
-    #description {
-        height: 1;
-        color: $text-muted;
-        padding: 0 1;
+    #options VerticalScroll {
+        scrollbar-size-vertical: 1;
+        scrollbar-background: $boost;
+        scrollbar-color: $primary 40%;
     }
     #options TabPane {
         padding: 0 1;
@@ -472,7 +502,7 @@ class TTEApp(App[None]):
     .option-grid {
         layout: grid;
         grid-size: 2;
-        grid-gutter: 1 2;
+        grid-gutter: 1 3;
         grid-rows: 1;
         height: auto;
     }
@@ -528,13 +558,11 @@ class TTEApp(App[None]):
             with Vertical(id="stage"):
                 yield ColorTextArea(id="editor")
                 yield CanvasView(id="canvas")
-        with Vertical(id="options"):
-            yield Static(id="description")
-            with TabbedContent():
-                with TabPane("Effect", id="effect-tab"), VerticalScroll():
-                    yield Vertical(id="effect-options", classes="option-grid")
-                with TabPane("Canvas", id="canvas-tab"), VerticalScroll():
-                    yield Vertical(id="terminal-options", classes="option-grid")
+        with Vertical(id="options"), TabbedContent():
+            with TabPane("Effect", id="effect-tab"), VerticalScroll():
+                yield Vertical(id="effect-options", classes="option-grid")
+            with TabPane("Canvas", id="canvas-tab"), VerticalScroll():
+                yield Vertical(id="terminal-options", classes="option-grid")
         yield Footer()
 
     async def on_mount(self) -> None:
@@ -544,10 +572,7 @@ class TTEApp(App[None]):
         if self.input_file:
             self._file_text = self.editor.text
         terminal_grid = self.query_one("#terminal-options")
-        await terminal_grid.mount_all(
-            OptionEditor(_TERMINAL_SCOPE, option, self._value(_TERMINAL_SCOPE, option))
-            for option in self._scope_fields(_TERMINAL_SCOPE)
-        )
+        await terminal_grid.mount_all(self._editors(_TERMINAL_SCOPE))
         effect_list = self.query_one("#effects", OptionList)
         effect_list.highlighted = list(self.effect_resource_map).index(self.effect_name)
         await self._show_effect(self.effect_name)
@@ -576,22 +601,27 @@ class TTEApp(App[None]):
         """Return each option in `scope` with its current value."""
         return [(option, self._value(scope, option)) for option in self._scope_fields(scope)]
 
+    def _editors(self, scope: str) -> list[OptionEditor]:
+        """Return editors for the options in `scope`, with labels sized to the longest one."""
+        fields = self._scope_fields(scope)
+        # Each label shows its flag without the leading dashes, padded by one cell on each side.
+        label_width = max((len(option.flag) for option in fields), default=0)
+        return [OptionEditor(scope, option, self._value(scope, option), label_width) for option in fields]
+
     async def _show_effect(self, effect_name: str) -> None:
         """Show the options of `effect_name`."""
         self.effect_name = effect_name
         config_class = self.effect_resource_map[effect_name][1]
         parser_spec = getattr(config_class, "parser_spec", None)
         description = getattr(parser_spec, "help", "") or ""
-        self.query_one("#description", Static).update(Text(f"{effect_name}: {description}"))
-        self.query_one("#options").border_title = f"Options: {effect_name}"
+        options_panel = self.query_one("#options")
+        options_panel.border_title = f"Options · {effect_name}"
+        options_panel.border_subtitle = description
         grid = self.query_one("#effect-options")
         # Editors show each option's last valid value, so errors from an earlier visit no longer apply.
         self._errors.pop(effect_name, None)
         await grid.remove_children()
-        await grid.mount_all(
-            OptionEditor(effect_name, option, self._value(effect_name, option))
-            for option in self._scope_fields(effect_name)
-        )
+        await grid.mount_all(self._editors(effect_name))
         self._refresh_subtitle()
 
     @on(OptionList.OptionHighlighted, "#effects")

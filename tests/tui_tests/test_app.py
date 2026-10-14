@@ -98,6 +98,34 @@ def test_invalid_option_blocks_play_until_fixed() -> None:
     _run(TTEApp(_EFFECTS, "text", effect="decrypt"), script)
 
 
+def test_option_rows_show_their_state() -> None:
+    """Editors should mark modified and invalid values, label checkboxes, and align their inputs."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        speed = _editor(app, "decrypt", "typing_speed")
+        speed.query_one(Input).value = "5"
+        await pilot.pause()
+        assert speed.has_class("-modified")
+        speed.query_one(Input).value = "fast"
+        await pilot.pause()
+        assert speed.has_class("-invalid")
+        assert not speed.has_class("-modified")
+        wrap = _editor(app, "terminal", "wrap_text")
+        assert str(wrap.query_one(Checkbox).label) == "off"
+        wrap.query_one(Checkbox).value = True
+        await pilot.pause()
+        assert str(wrap.query_one(Checkbox).label) == "on"
+        widths = {
+            editor.query_one(".option-label").outer_size.width
+            for editor in app.query(OptionEditor)
+            if editor.scope == "decrypt"
+        }
+        assert len(widths) == 1
+        assert app.query_one("#options").border_subtitle
+
+    _run(TTEApp(_EFFECTS, "text", effect="decrypt"), script)
+
+
 def test_values_are_kept_per_effect_and_reset() -> None:
     """Edited values should survive switching effects and return to defaults on reset."""
 

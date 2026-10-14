@@ -51,8 +51,9 @@ The interface needs a terminal for output. When standard output is redirected, `
 Option inputs follow each option's type: a checkbox for on/off options, a list for fixed choices such as gradient
 directions and easing functions, and a text box for everything else. Text boxes use the same spelling as the
 command line. Lists are space separated, such as `ff0000 00ff00 0000ff`, and colors show a swatch. An invalid value
-is shown in red with the reason in its tooltip, and the effect won't play until it is fixed. Changed options are
-shown in bold, and each effect keeps its own values while the interface is open.
+turns its name and field red, with the reason in its tooltip, and the effect won't play until it is fixed. Changed
+options have their names highlighted, and each effect keeps its own values while the interface is open. The
+selected effect's description is shown along the bottom of the options panel.
 
 ## Keys
 
