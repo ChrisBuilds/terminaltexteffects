@@ -150,6 +150,13 @@ GUIDE_DEMOS: dict[str, Demo] = {
         )
         for handling in ("ignore", "always", "dynamic")
     },
+    "gather": Demo(effect="gather", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "gather"),
+    "gather_columns": Demo(
+        effect="gather",
+        effect_args=("--gather-order", "column_left_to_right"),
+        input_file=CONCEPT_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "gather",
+    ),
     "travel_canvas": Demo(
         effect="travel",
         tte_args=("--canvas-width", "60", "--canvas-height", "14", "--anchor-text", "c"),
