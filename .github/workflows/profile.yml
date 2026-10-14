@@ -83,35 +83,52 @@ jobs:
             fi
           fi
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
-      - name: Install baseline package
-        if: steps.baseline.outputs.sha != ''
-        env:
-          BASELINE_SHA: ${{ steps.baseline.outputs.sha }}
-        run: |
-          # The current harness drives both builds, so only the package itself comes from the baseline.
-          git worktree add --detach "$RUNNER_TEMP/baseline" "$BASELINE_SHA"
-          uv venv --python "$pythonLocation/bin/python" "$RUNNER_TEMP/baseline-venv"
-          uv pip install --python "$RUNNER_TEMP/baseline-venv/bin/python" --no-deps "$RUNNER_TEMP/baseline"
       - name: Record and convert profiles
         env:
           BASELINE_SHA: ${{ steps.baseline.outputs.sha }}
         run: |
+          # Differential flamegraphs match frames by absolute filename, so both builds are installed in
+          # turn into the same venv. The current harness drives both; only the package differs.
+          venv="$RUNNER_TEMP/profile-venv"
+          uv venv --python "$pythonLocation/bin/python" "$venv"
+          install() {
+            uv pip install --python "$venv/bin/python" --reinstall --no-deps "$1"
+          }
+          # The profiler puts the working directory first on `sys.path`, so record from an empty
+          # directory; from the checkout, its source tree would shadow the installed package.
+          root=$PWD
+          isolated="$RUNNER_TEMP/profile-cwd"
+          mkdir -p "$isolated"
           record() {
-            # record <python> <output.bin> <preset> <lifecycle> <benchmark.json>
-            "$1" -m profiling.sampling run --binary -o "$2" tools/perf/benchmark_effects.py \
-              --effect "$EFFECT" --input-preset "$3" --lifecycle "$4" \
-              --samples "$SAMPLES" --warmups 0 --seed "$SEED" --json-out "$5" > /dev/null
+            # record <output.bin> <preset> <lifecycle> <benchmark.json>, paths relative to the checkout
+            (cd "$isolated" &&
+              "$venv/bin/python" -m profiling.sampling run --binary -o "$root/$1" \
+                "$root/tools/perf/benchmark_effects.py" \
+                --effect "$EFFECT" --input-preset "$2" --lifecycle "$3" \
+                --samples "$SAMPLES" --warmups 0 --seed "$SEED" --json-out "$root/$4" > /dev/null)
           }
           replay() {
             .venv/bin/python -m profiling.sampling replay "$@" > /dev/null
           }
+          if [[ -n "$BASELINE_SHA" ]]; then
+            git worktree add --detach "$RUNNER_TEMP/baseline" "$BASELINE_SHA"
+            install "$RUNNER_TEMP/baseline"
+            for scenario in $SCENARIOS; do
+              out="$RESULTS/$EFFECT-${scenario%/*}-${scenario#*/}"
+              mkdir -p "$out"
+              echo "::group::Baseline $EFFECT / ${scenario%/*} / ${scenario#*/}"
+              record "$out/baseline.bin" "${scenario%/*}" "${scenario#*/}" "$out/baseline-benchmark.json"
+              echo '::endgroup::'
+            done
+          fi
+          install .
           for scenario in $SCENARIOS; do
             preset=${scenario%/*}
             lifecycle=${scenario#*/}
             out="$RESULTS/$EFFECT-$preset-$lifecycle"
             mkdir -p "$out"
             echo "::group::Profile $EFFECT / $preset / $lifecycle"
-            record .venv/bin/python "$out/profile.bin" "$preset" "$lifecycle" "$out/benchmark.json"
+            record "$out/profile.bin" "$preset" "$lifecycle" "$out/benchmark.json"
             replay --flamegraph -o "$out/flamegraph.html" "$out/profile.bin"
             replay --heatmap -o "$out/heatmap" "$out/profile.bin"
             replay --gecko -o "$out/profile.gecko.json" "$out/profile.bin"
@@ -120,8 +137,6 @@ jobs:
             .venv/bin/python tools/perf/summarize_profile.py "$out/profile.jsonl" \
               --title "$EFFECT / $preset / $lifecycle" --limit 15 -o "$out/summary.md"
             if [[ -n "$BASELINE_SHA" ]]; then
-              record "$RUNNER_TEMP/baseline-venv/bin/python" "$out/baseline.bin" "$preset" "$lifecycle" \
-                "$out/baseline-benchmark.json"
               replay --diff-flamegraph "$out/baseline.bin" -o "$out/diff-flamegraph.html" "$out/profile.bin"
               .venv/bin/python tools/perf/benchmark_effects.py \
                 --compare "$out/baseline-benchmark.json" "$out/benchmark.json" > "$out/compare.txt"

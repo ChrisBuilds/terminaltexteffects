@@ -88,7 +88,9 @@ python3.15 -m profiling.sampling replay --heatmap -o /tmp/tte-heatmap /tmp/tte.b
 python3.15 -m profiling.sampling replay --diff-flamegraph /tmp/tte-baseline.bin -o /tmp/tte-diff.html /tmp/tte.bin
 ```
 
-Use an environment synced with `--python 3.15`. `tools/perf/summarize_profile.py` turns a `replay --jsonl` export into
+Use an environment synced with `--python 3.15`. The profiler puts the working directory, not the script's directory,
+first on `sys.path`, so run it from outside the checkout when profiling an installed build; differential flamegraphs
+match frames by absolute file path, so record both builds from the same install location. `tools/perf/summarize_profile.py` turns a `replay --jsonl` export into
 Markdown tables of the hottest functions, lines, and files by self samples.
 
 The [Profile workflow](https://github.com/ChrisBuilds/terminaltexteffects/actions/workflows/profile.yml) does this in
