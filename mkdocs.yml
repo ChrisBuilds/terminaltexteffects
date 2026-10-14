@@ -75,11 +75,13 @@ nav:
       - effectguide/engine/canvas.md
       - effectguide/engine/characters.md
       - effectguide/engine/motion.md
+      - effectguide/engine/events.md
     - Writing Effects:
       - Tutorial:
         - effectguide/tutorial/01-scaffold.md
         - effectguide/tutorial/02-release.md
         - effectguide/tutorial/03-move.md
+        - effectguide/tutorial/04-layer.md
   - Effects Showroom: showroom.md
   - Library Cookbook: cookbook.md
   - Development:

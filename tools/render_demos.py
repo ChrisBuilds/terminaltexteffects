@@ -66,6 +66,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
     "myspray_step1": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step1"),
     "myspray_step2": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step2"),
     "myspray_step3": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step3"),
+    "myspray_step4": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step4"),
     **{
         f"reveal_{order}": Demo(
             effect="reveal",
@@ -98,6 +99,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
         input_file=CONCEPT_INPUT,
         effects_dir=GUIDE_EXAMPLES / "travel",
     ),
+    "hop": Demo(effect="hop", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "hop"),
     "travel_canvas": Demo(
         effect="travel",
         tte_args=("--canvas-width", "60", "--canvas-height", "14", "--anchor-text", "c"),
