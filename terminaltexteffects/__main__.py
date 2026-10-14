@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, NoReturn, cast
 
 import terminaltexteffects.effects
+from terminaltexteffects import tui
 from terminaltexteffects.engine._recording import (
     RECORDING_SUFFIX,
     RecordingError,
@@ -277,6 +278,15 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
         type=parse_completion_shell,
         metavar="{bash,zsh,powershell}",
         help="Print completion setup commands, or a completion script for the requested shell, and exit.",
+    )
+    parser.add_argument(
+        "--tui",
+        action="store_true",
+        help=(
+            "Open the interactive interface with the input text, if any, loaded for editing. Running tte with no "
+            "effect and no input, or with input and no effect, also opens it when the interface is installed "
+            "(pip install 'terminaltexteffects[tui]')."
+        ),
     )
     parser.add_argument(
         "--random-effect",
@@ -1039,6 +1049,68 @@ def _read_input(args: argparse.Namespace) -> str:
         sys.exit(1)
 
 
+def _is_terminal(stream: object) -> bool:
+    """Return whether `stream` is attached to a terminal."""
+    isatty = getattr(stream, "isatty", None)
+    try:
+        return bool(isatty()) if callable(isatty) else False
+    except (OSError, ValueError):
+        return False
+
+
+def _run_tui(
+    args: argparse.Namespace,
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+    input_data: str,
+) -> None:
+    """Open the interactive interface, exiting with status `1` if it is not installed or has no terminal."""
+    if not tui.is_available():
+        _exit_with_error(tui.INSTALL_HINT)
+    if not _is_terminal(sys.stdout):
+        _exit_with_error("--tui needs standard output to be a terminal.")
+    try:
+        tui.run(effect_resource_map, input_data, args.input_file, args.effect)
+    except OSError as e:
+        _exit_with_error(f"Cannot open the terminal for keyboard input: {e}")
+
+
+def _can_open_tui() -> bool:
+    """Return whether the interface can open without being requested explicitly."""
+    return tui.is_available() and _is_terminal(sys.stdout)
+
+
+def _input_or_tui(
+    args: argparse.Namespace,
+    effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
+) -> str | None:
+    """Return the input text to play, or `None` when the interface opened or there is nothing to play.
+
+    The interface opens for `--tui`, and for runs without an effect when it is installed and standard output is a
+    terminal. A run without an effect or input that cannot open the interface prints a usage hint.
+    """
+    if args.tui:
+        _run_tui(args, effect_resource_map, _read_input(args))
+        return None
+    _check_recording_options(args)
+    no_effect = not args.effect and not args.random_effect and args.record is None
+    if no_effect and not args.input_file and _is_terminal(sys.stdin):
+        if _can_open_tui():
+            _run_tui(args, effect_resource_map, "")
+            return None
+        print("usage: tte [options] <effect> [effect options], with input piped in or read by -i FILE", file=sys.stderr)
+        print("Run tte -h for help.", file=sys.stderr)
+        if not tui.is_available():
+            print(tui.INSTALL_HINT, file=sys.stderr)
+        return None
+    input_data = _read_input(args)
+    if not input_data.strip():
+        return None
+    if no_effect and _can_open_tui():
+        _run_tui(args, effect_resource_map, input_data)
+        return None
+    return input_data
+
+
 def main() -> None:
     """Run the terminaltexteffects command line interface.
 
@@ -1046,6 +1118,9 @@ def main() -> None:
     and stream rendered frames to the terminal. Empty or whitespace-only input is
     a successful no-op. The process exits with status `1` for invalid effect
     selection, input file read failures, or keyboard interruption.
+
+    With `--tui`, or with no effect selected when the interface is installed and standard
+    output is a terminal, the interactive interface opens instead, with any input loaded.
     """
     args, effect_resource_map = build_parsers_and_parse_args()
     if args.print_completion is not None:
@@ -1059,9 +1134,8 @@ def main() -> None:
     if args.play is not None:
         _run_playback(args)
         return
-    _check_recording_options(args)
-    input_data = _read_input(args)
-    if not input_data.strip():
+    input_data = _input_or_tui(args, effect_resource_map)
+    if input_data is None:
         return
 
     available_effects: list[str] | None = None
@@ -1075,6 +1149,8 @@ def main() -> None:
         selected_effect_name = random.choice(available_effects)
     elif not args.effect:
         print("Error: No effect specified. Must specify an effect or use --random-effect.\n")
+        if not tui.is_available():
+            print(tui.INSTALL_HINT + " to edit and preview effects interactively.\n")
         sys.exit(1)
 
     terminal_config = TerminalConfig._build_config(args)

@@ -23,6 +23,9 @@ through the `-i` argument. Pipes and redirection both pass data through standard
     tte -i path/to/file slide
     ```
 
+To edit text and preview effects interactively, run `tte` with no effect. See
+[Interactive Interface](./tui.md).
+
 ## Command Syntax
 
 TTE has global terminal options as well as effect-specific options. Global options go before the effect name, and

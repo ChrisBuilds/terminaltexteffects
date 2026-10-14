@@ -61,6 +61,7 @@ _shtab_tte_options=(
   {--input-file,-i}"[File to read input from]:input_file:_files"
   "(- : *)"{--version,-v}"[show program\'s version number and exit]"
   "--print-completion[Print completion setup commands, or a completion script for the requested shell, and exit.]:{bash,zsh,powershell}:(bash zsh powershell)"
+  "--tui[Open the interactive interface with the input text, if any, loaded for editing. Running tte with no effect and no input, or with input and no effect, also opens it when the interface is installed (pip install \'terminaltexteffects\[tui\]\').]"
   {--random-effect,-R}"[Randomly select an effect to apply\; with --repeat, select again for each playback.]"
   "--repeat[Play an effect COUNT times\; with --random-effect, select anew each time (0 repeats until interrupted\; default\: 1).]:COUNT:"
   "--seed[Seed to use for random effect selection]:seed:"
