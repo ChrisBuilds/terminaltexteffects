@@ -34,6 +34,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = PROJECT_ROOT / "tests" / "testinput" / "demo.txt"
 DEFAULT_OUT = PROJECT_ROOT / "build" / "demos"
 GUIDE_EXAMPLES = PROJECT_ROOT / "docs" / "effectguide" / "examples"
+TUTORIAL_INPUT = GUIDE_EXAMPLES / "tutorial_input.txt"
 FORMATS = ("gif", "webp", "mp4")
 
 
@@ -56,10 +57,12 @@ class Demo:
 # demo, or to add a demo that is not named after its effect.
 DEMO_OVERRIDES: dict[str, Demo] = {}
 
-# Effect Guide visuals. Each example effect lives in its own directory under `docs/effectguide/examples/`, which
-# is loaded through `TTE_DEV_EFFECTS_DIR` so every tutorial step can keep the same command name.
+# Effect Guide visuals. Each one shows exactly what the reader sees when running the command next to it, so it uses
+# the same input file. Each example effect lives in its own directory under `docs/effectguide/examples/`, which is
+# loaded through `TTE_DEV_EFFECTS_DIR` so every tutorial step can keep the same command name.
 GUIDE_DEMOS: dict[str, Demo] = {
-    "myspray_step1": Demo(effect="myspray", effects_dir=GUIDE_EXAMPLES / "myspray_step1"),
+    "spray_goal": Demo(effect="spray", input_file=TUTORIAL_INPUT),
+    "myspray_step1": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step1"),
 }
 
 
