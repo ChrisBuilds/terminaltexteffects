@@ -184,6 +184,8 @@ def test_main_writes_json_report(tmp_path: Path) -> None:
         ("matrix", ["--rain-time", "5"], "rain_time", 5),
         ("matrix", ["--rain-t", "5"], "rain_time", 5),
         ("colorshift", ["--cycles=4"], "cycles", 4),
+        ("matrix", ["--rain-t", "15"], "rain_time", 15),
+        ("colorshift", ["--cy", "3"], "cycles", 3),
     ],
 )
 def test_build_configs_shortens_hold_phases_unless_set(

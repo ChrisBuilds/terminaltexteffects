@@ -29,7 +29,7 @@ from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils import argutils
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Collection, Sequence
 
     from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
@@ -74,10 +74,10 @@ INPUT_PRESETS = {
 INPUT_PRESET_NAMES = tuple(sorted([*INPUT_PRESETS, "generated"]))
 
 # Long hold phases measure waiting, not rendering. Each entry is shortened unless the caller sets it explicitly.
-SHORTENED_OPTIONS: tuple[tuple[type[BaseConfig], str, str, int], ...] = (
-    (effect_matrix.MatrixConfig, "rain_time", "--rain-time", 1),
-    (effect_thunderstorm.ThunderstormConfig, "storm_time", "--storm-time", 1),
-    (effect_colorshift.ColorShiftConfig, "cycles", "--cycles", 2),
+SHORTENED_OPTIONS: tuple[tuple[type[BaseConfig], str, int], ...] = (
+    (effect_matrix.MatrixConfig, "rain_time", 1),
+    (effect_thunderstorm.ThunderstormConfig, "storm_time", 1),
+    (effect_colorshift.ColorShiftConfig, "cycles", 2),
 )
 
 # The harness disables frame-rate sleeps, so the frame rate is not a terminal argument it accepts.
@@ -127,23 +127,24 @@ def _make_terminal_config() -> TerminalConfig:
     return terminal_config
 
 
-def _option_given(config: BaseConfig, field_name: str, option: str, args: Sequence[str]) -> bool:
-    """Return whether `args` set an option, spelled out or abbreviated to a non-default value."""
-    if any(arg == option or arg.startswith(f"{option}=") for arg in args):
-        return True
-    spec = next(field.default for field in fields(config) if field.name == field_name)
-    return isinstance(spec, argutils.ArgSpec) and getattr(config, field_name) is not spec.default
+def _effect_options_given(parser: argparse.ArgumentParser, effect_name: str, effect_args: Sequence[str]) -> set[str]:
+    """Return the destinations of effect options present in `effect_args`.
+
+    Every default is suppressed, so only options actually given appear, including abbreviated and
+    `--option=value` forms and options given their default value.
+    """
+    subparsers = next(action for action in parser._actions if isinstance(action, argparse._SubParsersAction))
+    probe = subparsers.choices[effect_name]
+    for action in probe._actions:
+        action.default = argparse.SUPPRESS
+    known_args, _ = probe.parse_known_args(effect_args)
+    return set(vars(known_args))
 
 
-def _shorten_long_running_config(effect_config: BaseConfig, effect_args: Sequence[str] = ()) -> None:
+def _shorten_long_running_config(effect_config: BaseConfig, options_given: Collection[str] = ()) -> None:
     """Keep benchmark scenarios focused on renderer speed instead of long hold phases."""
-    for config_class, field_name, option, value in SHORTENED_OPTIONS:
-        if isinstance(effect_config, config_class) and not _option_given(
-            effect_config,
-            field_name,
-            option,
-            effect_args,
-        ):
+    for config_class, field_name, value in SHORTENED_OPTIONS:
+        if isinstance(effect_config, config_class) and field_name not in options_given:
             setattr(effect_config, field_name, value)
 
 
@@ -181,7 +182,7 @@ def build_configs(
     namespace = parser.parse_args([*terminal_args, effect_name, *effect_args])
     _, config_class = resources[effect_name]
     effect_config = config_class._build_config(namespace)
-    _shorten_long_running_config(effect_config, effect_args)
+    _shorten_long_running_config(effect_config, _effect_options_given(parser, effect_name, effect_args))
     terminal_config = TerminalConfig._build_config(namespace)
     terminal_config.frame_rate = 0
     return effect_config, terminal_config
