@@ -91,6 +91,7 @@ nav:
         - effectguide/tutorial/07-harden.md
       - Patterns:
         - effectguide/writing/patterns/phases.md
+        - effectguide/writing/patterns/particles.md
       - effectguide/writing/sharing.md
   - Effects Showroom: showroom.md
   - Library Cookbook: cookbook.md

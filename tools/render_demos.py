@@ -157,6 +157,13 @@ GUIDE_DEMOS: dict[str, Demo] = {
         input_file=CONCEPT_INPUT,
         effects_dir=GUIDE_EXAMPLES / "gather",
     ),
+    "sparks": Demo(effect="sparks", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "sparks"),
+    "sparks_few": Demo(
+        effect="sparks",
+        effect_args=("--max-sparks", "8"),
+        input_file=CONCEPT_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "sparks",
+    ),
     "travel_canvas": Demo(
         effect="travel",
         tte_args=("--canvas-width", "60", "--canvas-height", "14", "--anchor-text", "c"),
