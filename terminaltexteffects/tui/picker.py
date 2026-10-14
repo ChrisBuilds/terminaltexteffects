@@ -25,6 +25,7 @@ from terminaltexteffects.utils.graphics import Color, Gradient
 
 if typing.TYPE_CHECKING:
     from textual.app import ComposeResult
+    from textual.geometry import Size
 
 _CELL_WIDTH = 2
 
@@ -271,12 +272,12 @@ class ChannelBar(Widget, can_focus=True):
 
 
 class StopList(Widget, can_focus=True):
-    """The stops of a gradient, as a row of chips. Left and Right select a stop."""
+    """The stops of a gradient, as chips that wrap onto as many rows as they need. Left and Right select a stop."""
 
     DEFAULT_CSS = """
     StopList {
         width: 1fr;
-        height: 1;
+        height: auto;
     }
     """
 
@@ -298,33 +299,46 @@ class StopList(Widget, can_focus=True):
         """Show `stops` with the stop at `index` selected."""
         self.stops = stops
         self.index = index
-        self.refresh()
-
-    def _chips(self) -> list[tuple[int, int]]:
-        """Return the start and end column of each chip."""
-        spans = []
-        x = 0
-        for stop in self.stops:
-            width = len(self._label(stop)) + 4
-            spans.append((x, x + width))
-            x += width + 1
-        return spans
+        self.refresh(layout=True)
 
     @staticmethod
     def _label(color: Color) -> str:
         return str(color.xterm_color) if color.xterm_color is not None else color.rgb_color
 
-    def render_line(self, y: int) -> Strip:  # noqa: ARG002
-        """Render one chip per stop, with the selected stop highlighted."""
+    def _chips(self, width: int) -> list[tuple[int, int, int]]:
+        """Return the row, start column, and end column of each chip, wrapping chips that do not fit `width`."""
+        spans = []
+        row = x = 0
+        for stop in self.stops:
+            chip_width = len(self._label(stop)) + 4
+            if x and x + chip_width > width:
+                row += 1
+                x = 0
+            spans.append((row, x, x + chip_width))
+            x += chip_width + 1
+        return spans
+
+    def get_content_height(self, container: Size, viewport: Size, width: int) -> int:  # noqa: ARG002
+        """Return the number of rows the chips need at `width`."""
+        chips = self._chips(width)
+        return chips[-1][0] + 1 if chips else 1
+
+    def render_line(self, y: int) -> Strip:
+        """Render the chips on row `y`, with the selected stop highlighted."""
         base = self.rich_style
         selected_style = base + Style(bgcolor=self.app.current_theme.primary, bold=True)
         segments = []
-        for position, stop in enumerate(self.stops):
+        x = 0
+        for position, (row, start, _end) in enumerate(self._chips(self.size.width)):
+            if row != y:
+                continue
+            stop = self.stops[position]
             style = selected_style if position == self.index else base
+            segments.append(Segment(" " * (start - x), base))
             segments.append(Segment(" ", style))
             segments.append(Segment("██", style + Style(color=f"#{stop.rgb_color}")))
             segments.append(Segment(f" {self._label(stop)} ", style))
-            segments.append(Segment(" ", base))
+            x = start + len(self._label(stop)) + 4
         return Strip(segments).crop_extend(0, self.size.width, base)
 
     def action_select(self, step: int) -> None:
@@ -335,8 +349,8 @@ class StopList(Widget, can_focus=True):
 
     def on_click(self, event: events.Click) -> None:
         """Select the clicked stop."""
-        for position, (start, end) in enumerate(self._chips()):
-            if start <= event.x < end:
+        for position, (row, start, end) in enumerate(self._chips(self.size.width)):
+            if row == event.y and start <= event.x < end:
                 self.index = position
                 self.refresh()
                 self.post_message(StopList.Selected())
@@ -392,6 +406,7 @@ class ColorScreen(ModalScreen["tuple[Color, ...] | None"]):
         max-width: 100%;
         height: auto;
         max-height: 100%;
+        overflow-y: auto;
         border: round $primary;
         border-title-color: $text;
         border-subtitle-color: $text-muted;

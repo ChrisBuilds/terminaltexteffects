@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import shlex
 from typing import TYPE_CHECKING
 
@@ -147,3 +148,60 @@ def test_list_items_are_quoted_only_when_needed() -> None:
     text = option.format(option.default)
     assert text.startswith("▂ ")
     assert option.parse(text) == ("▂", "'", "\\")
+
+
+def _command_fields() -> tuple[dict[str, functools.partial[list[options.OptionField]]], list[options.OptionField]]:
+    effect_fields = {
+        name: functools.partial(options.option_fields, config_class) for name, (_, config_class) in _EFFECTS.items()
+    }
+    terminal_fields = options.option_fields(TerminalConfig, options.TUI_TERMINAL_OPTIONS, options.TUI_TERMINAL_DEFAULTS)
+    return effect_fields, terminal_fields
+
+
+def test_parse_command_reads_back_an_exported_command() -> None:
+    """A command from `command_line` should parse back to the values it was built from."""
+    effect_fields, terminal_fields = _command_fields()
+    decrypt_fields = effect_fields["decrypt"]()
+    colors = (Color("ff0000"), Color(208))
+    effect_values = [
+        (option, colors if option.name == "ciphertext_colors" else option.default) for option in decrypt_fields
+    ]
+    terminal_values = [(option, 30 if option.name == "frame_rate" else option.default) for option in terminal_fields]
+    command = options.command_line("decrypt", effect_values, terminal_values, "my text.txt")
+
+    parsed = options.parse_command(command, effect_fields, terminal_fields)
+
+    assert parsed.effect == "decrypt"
+    assert parsed.effect_values == {"ciphertext_colors": colors}
+    assert parsed.terminal_values == {
+        "canvas_width": 0,
+        "canvas_height": 0,
+        "anchor_canvas": "nw",
+        "anchor_text": "nw",
+        "frame_rate": 30,
+    }
+    assert parsed.input_file == "my text.txt"
+    assert parsed.problems == []
+
+
+def test_parse_command_reports_flags_it_cannot_apply() -> None:
+    """Unknown flags and invalid values should be reported without failing the rest of the command."""
+    effect_fields, terminal_fields = _command_fields()
+
+    parsed = options.parse_command(
+        "--reuse-canvas wipe stray --wipe-delay=x --reverse-wipe-direction --wipe-ease IN_OUT_CIRC",
+        effect_fields,
+        terminal_fields,
+    )
+
+    assert parsed.effect == "wipe"
+    assert parsed.effect_values["reverse_wipe_direction"] is True
+    assert "wipe_ease" in parsed.effect_values
+    assert parsed.terminal_values == {}
+    assert len(parsed.problems) == 3
+    assert parsed.problems[:2] == ["--reuse-canvas is not available here", "unexpected value 'stray'"]
+    assert parsed.problems[2].startswith("--wipe-delay:")
+    with pytest.raises(ValueError, match="no known effect"):
+        options.parse_command("tte --frame-rate 30", effect_fields, terminal_fields)
+    with pytest.raises(ValueError, match="cannot read"):
+        options.parse_command("tte wipe --final-gradient-stops 'ff0000", effect_fields, terminal_fields)

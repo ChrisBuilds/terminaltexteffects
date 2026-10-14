@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+import contextlib
+import functools
+import gc
+import random
+import time
 import typing
+from collections import deque
 from pathlib import Path
 
 from rich.segment import Segment
@@ -12,8 +18,8 @@ from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.geometry import Region
 from textual.message import Message
-from textual.screen import ModalScreen
 from textual.strip import Strip
 from textual.widget import Widget
 from textual.widgets import (
@@ -31,13 +37,13 @@ from textual.widgets import (
 )
 
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.tui import canvas, colors, frames, options
+from terminaltexteffects.tui import canvas, colors, frames, options, session
 from terminaltexteffects.tui.files import FileScreen
 from terminaltexteffects.tui.picker import ColorScreen
+from terminaltexteffects.tui.screens import CommandScreen, HelpScreen
+from terminaltexteffects.tui.theme import TTE_THEME, gradient_text
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterator
-
     from textual import events
     from textual.events import Resize
     from textual.timer import Timer
@@ -51,6 +57,13 @@ if typing.TYPE_CHECKING:
 _TERMINAL_SCOPE = "terminal"
 _MAX_UNLIMITED_FPS = 120
 _OPTION_COLUMN_WIDTH = 64
+_STATUS_INTERVAL = 0.25
+_LOOP_PAUSE = 1.0
+_AUTO_REPLAY_DELAY = 0.35
+_PREPARE_POLL = 0.05
+_MIN_TICK = 1 / 240
+_MAX_KEPT_FRAMES = 2000
+"""Longest run, in frames, kept for Loop to replay without building the effect again."""
 
 
 class ColorTextArea(TextArea):
@@ -256,12 +269,30 @@ def _rich_style(style: colors.CellStyle) -> Style:
 class CanvasView(Widget, can_focus=True):
     """Shows effect frames over the editor's area."""
 
+    BINDINGS: typing.ClassVar = [
+        Binding("space", "app.play", "Pause/Resume"),
+        Binding("right", "app.step", "Step"),
+    ]
+
     DEFAULT_CSS = """
     CanvasView {
         width: 1fr;
         height: 1fr;
     }
     """
+
+    class Clicked(Message):
+        """Posted when the canvas is clicked, to return to the text at the clicked cell."""
+
+        def __init__(self, event: events.Click) -> None:
+            """Initialize the message with the click `event`."""
+            super().__init__()
+            self.event = event
+
+    def on_click(self, event: events.Click) -> None:
+        """Ask the app to stop the effect and return to the text."""
+        event.stop()
+        self.post_message(CanvasView.Clicked(event))
 
     def __init__(self, **kwargs: typing.Any) -> None:
         """Initialize an empty canvas."""
@@ -280,8 +311,29 @@ class CanvasView(Widget, can_focus=True):
 
     def show_frame(self, frame: str) -> None:
         """Display one effect frame."""
-        self._strips = frames.frame_to_strips(frame)
-        self.refresh()
+        self.show_strips(frames.frame_to_strips(frame))
+
+    def show_strips(self, strips: frames.Frame) -> None:
+        """Display one frame converted to strips, redrawing only the rows that changed since the last frame.
+
+        Rows that did not change share their `Strip` with the previous frame, so a changed row is one whose strip is
+        a different object.
+        """
+        previous = self._strips
+        self._strips = strips
+        if len(previous) != len(strips) or self.canvas_area is None:
+            self.refresh()
+            return
+        width = self.size.width
+        top = self.canvas_area.top + self.canvas_area.height - len(strips)
+        start: int | None = None
+        for index in range(len(strips) + 1):
+            changed = index < len(strips) and strips[index] is not previous[index]
+            if changed and start is None:
+                start = index
+            elif not changed and start is not None:
+                self.refresh(Region(0, top + start, width, index - start))
+                start = None
 
     def clear(self) -> None:
         """Remove the displayed frame."""
@@ -505,61 +557,10 @@ class OptionEditor(Horizontal):
         self.post_message(OptionEditor.Edited(self))
 
 
-class CommandScreen(ModalScreen[None]):
-    """Shows the CLI command for the current effect and options."""
+class EffectFilter(Input):
+    """Filters the effect list. Down or Enter moves to the list."""
 
-    DEFAULT_CSS = """
-    CommandScreen {
-        align: center middle;
-    }
-    CommandScreen > Vertical {
-        width: 90%;
-        height: auto;
-        max-height: 80%;
-        border: thick $primary;
-        background: $surface;
-        padding: 1 2;
-    }
-    CommandScreen TextArea {
-        height: auto;
-        max-height: 12;
-        margin: 1 0;
-    }
-    CommandScreen Horizontal {
-        height: auto;
-        align-horizontal: right;
-    }
-    CommandScreen Button {
-        margin-left: 1;
-    }
-    """
-
-    BINDINGS: typing.ClassVar = [Binding("escape", "close", "Close")]
-
-    def __init__(self, command: str) -> None:
-        """Initialize the dialog with `command`."""
-        super().__init__()
-        self.command = command
-
-    def compose(self) -> ComposeResult:
-        """Create the dialog."""
-        with Vertical():
-            yield Label("Run this command with your text piped in, or save the text and use --input-file:")
-            yield TextArea(self.command, read_only=True, soft_wrap=True, id="command")
-            with Horizontal():
-                yield Button("Copy", variant="primary", id="copy")
-                yield Button("Close", id="close")
-
-    @on(Button.Pressed, "#copy")
-    def _copy(self) -> None:
-        self.app.copy_to_clipboard(self.command)
-        self.app.notify("Command copied to the clipboard.")
-        self.dismiss(None)
-
-    @on(Button.Pressed, "#close")
-    def action_close(self) -> None:
-        """Close the dialog."""
-        self.dismiss(None)
+    BINDINGS: typing.ClassVar = [Binding("down", "app.focus_effects", "Effects", show=False)]
 
 
 class TTEApp(App[None]):
@@ -568,26 +569,74 @@ class TTEApp(App[None]):
     TITLE = "TerminalTextEffects"
 
     CSS = """
+    #header {
+        height: 1;
+        padding: 0 1;
+    }
+    #title {
+        width: 1fr;
+    }
+    #hint {
+        width: auto;
+        color: $text-muted;
+    }
     #main {
         height: 1fr;
     }
-    #effects {
-        width: 24;
+    #effects-panel {
+        width: 26;
         height: 1fr;
-        border: round $primary-darken-2;
+        border: round $primary;
         border-title-color: $text;
     }
-    #effects:focus-within {
-        border: round $primary;
+    #effects-panel:focus-within {
+        border: round $secondary;
+    }
+    #effect-filter {
+        background: $boost;
+        padding: 0 1;
+        margin-bottom: 1;
+    }
+    #effect-filter:focus {
+        background: $primary 30%;
+    }
+    #effects {
+        height: 1fr;
+        border: none;
+        padding: 0;
+        background: transparent;
+    }
+    #right {
+        width: 1fr;
+        height: 1fr;
+    }
+    #transport {
+        height: 1;
+        padding: 0 1;
+    }
+    #transport Button {
+        margin-right: 1;
+        min-width: 0;
+    }
+    #transport #play {
+        width: 11;
+    }
+    #transport Checkbox {
+        margin-left: 1;
+        padding: 0 1;
+        background: $boost;
+    }
+    #transport Checkbox:focus {
+        background: $primary 30%;
     }
     #stage {
         width: 1fr;
         height: 1fr;
-        border: round $primary-darken-2;
+        border: round $primary;
         border-title-color: $text;
     }
     #stage:focus-within {
-        border: round $primary;
+        border: round $secondary;
     }
     #editor {
         border: none;
@@ -600,24 +649,28 @@ class TTEApp(App[None]):
     #stage.-playing #editor {
         display: none;
     }
+    #stage.-playing {
+        background: #000000;
+    }
     #stage.-playing #canvas {
         display: block;
+        background: #000000;
     }
     #options {
         height: 16;
-        border: round $primary-darken-2;
+        border: round $primary;
         border-title-color: $text;
         border-subtitle-color: $text-muted;
         border-subtitle-style: italic;
         border-subtitle-align: left;
     }
     #options:focus-within {
-        border: round $primary;
+        border: round $secondary;
     }
     #options VerticalScroll {
         scrollbar-size-vertical: 1;
         scrollbar-background: $boost;
-        scrollbar-color: $primary 40%;
+        scrollbar-color: $primary 60%;
     }
     #options TabPane {
         padding: 0 1;
@@ -632,12 +685,17 @@ class TTEApp(App[None]):
     """
 
     BINDINGS: typing.ClassVar = [
-        Binding("f5", "play", "Play", priority=True),
+        Binding("f1", "help", "Help", priority=True),
+        Binding("f5", "play", "Play/Pause", priority=True),
+        Binding("ctrl+r", "replay", "Replay", priority=True, show=False),
+        Binding("f9", "random", "Random effect", priority=True, show=False),
+        Binding("ctrl+t", "fit_canvas", "Fit canvas", priority=True, show=False),
+        Binding("ctrl+g", "maximize_canvas", "Maximize canvas", priority=True, show=False),
         Binding("escape", "stop", "Stop / edit"),
         Binding("f2", "open", "Open", priority=True),
         Binding("f3", "save", "Save", priority=True),
         Binding("f4", "command", "Command", priority=True),
-        Binding("f6", "reset", "Reset options", priority=True),
+        Binding("f6", "reset", "Reset options", priority=True, show=False),
         Binding("f8", "record", "Record", priority=True),
         Binding("ctrl+q", "quit", "Quit", priority=True),
     ]
@@ -648,6 +706,7 @@ class TTEApp(App[None]):
         text: str = "",
         input_file: str | None = None,
         effect: str | None = None,
+        session_path: Path | None = None,
     ) -> None:
         """Initialize the application.
 
@@ -656,31 +715,69 @@ class TTEApp(App[None]):
             text (str): Initial text, which may contain ANSI colors.
             input_file (str | None): File the text came from, used as the default save path.
             effect (str | None): Effect to select initially.
+            session_path (Path | None): File the session is restored from at startup and saved to on quit. No
+                session is kept when it is `None`.
 
         """
         super().__init__()
         self.effect_resource_map = dict(sorted(effect_resource_map.items()))
         self.input_file = input_file
+        self.session_path = session_path
         self._file_text: str | None = None
         self._initial_text = text
+        self._restored_text = False
         self._initial_effect = effect if effect in self.effect_resource_map else None
         self.effect_name = self._initial_effect or next(iter(self.effect_resource_map))
+        self._listed = list(self.effect_resource_map)
         self._fields: dict[str, list[options.OptionField]] = {}
         self._values: dict[str, dict[str, typing.Any]] = {}
         self._errors: dict[str, dict[str, str]] = {}
-        self._iterator: Iterator[str] | None = None
+        self._stream: frames.FrameStream | frames.RecordedFrames | None = None
         self._timer: Timer | None = None
-        self.state: typing.Literal["editing", "playing", "finished"] = "editing"
+        self._loop_timer: Timer | None = None
+        self._auto_timer: Timer | None = None
+        self._frame_rate = _MAX_UNLIMITED_FPS
+        self._due = 0.0
+        self._canvas_note = ""
+        self._frame_index = 0
+        self._shown_at: deque[float] = deque(maxlen=_MAX_UNLIMITED_FPS * 2)
+        self._recording: list[frames.Frame] | None = None
+        self._playback_key: tuple[typing.Any, ...] | None = None
+        self._recorded: tuple[tuple[typing.Any, ...], list[frames.Frame]] | None = None
+        self.state: typing.Literal["editing", "playing", "paused", "finished"] = "editing"
+        self.register_theme(TTE_THEME)
+        self.theme = TTE_THEME.name
 
     def compose(self) -> ComposeResult:
-        """Create the effect list, editor, canvas, and options panel."""
+        """Create the header, effect list, playback bar, editor, canvas, and options panel."""
+        with Horizontal(id="header"):
+            yield Static(gradient_text("TerminalTextEffects"), id="title")
+            yield Static("F1 help", id="hint")
         with Horizontal(id="main"):
-            effect_list = OptionList(*self.effect_resource_map, id="effects")
-            effect_list.border_title = "Effects"
-            yield effect_list
-            with Vertical(id="stage"):
-                yield ColorTextArea(id="editor")
-                yield CanvasView(id="canvas")
+            with Vertical(id="effects-panel") as effects_panel:
+                effects_panel.border_title = "Effects"
+                yield EffectFilter(placeholder="Filter effects", id="effect-filter", compact=True)
+                yield OptionList(*self.effect_resource_map, id="effects")
+            with Vertical(id="right"):
+                with Horizontal(id="transport"):
+                    for label, button_id, tooltip in (
+                        ("▶ Play", "play", "Play, pause, or resume (F5)"),
+                        ("■ Stop", "stop", "Stop and return to the text (Esc)"),
+                        ("↻ Replay", "replay", "Replay from the start (Ctrl+R)"),
+                        ("→ Step", "step", "Show the next frame while paused (→)"),
+                        ("Random", "random", "Play a random effect (F9)"),
+                        ("Fit", "fit", "Fit the canvas exactly around the text (Ctrl+T)"),
+                        ("Max", "max", "Grow the canvas to the whole text area (Ctrl+G)"),
+                    ):
+                        button = Button(label, id=button_id, compact=True, variant="primary")
+                        button.can_focus = False
+                        button.tooltip = tooltip
+                        yield button
+                    yield Checkbox("Loop", id="loop", compact=True)
+                    yield Checkbox("Auto", id="auto-replay", compact=True)
+                with Vertical(id="stage"):
+                    yield ColorTextArea(id="editor")
+                    yield CanvasView(id="canvas")
         with Vertical(id="options"), TabbedContent():
             with TabPane("Effect", id="effect-tab"), VerticalScroll():
                 yield Vertical(id="effect-options", classes="option-grid")
@@ -689,17 +786,165 @@ class TTEApp(App[None]):
         yield Footer()
 
     async def on_mount(self) -> None:
-        """Load the initial text and show the selected effect's options."""
+        """Restore the last session, load the initial text, and show the selected effect's options."""
         self.query_one("#stage").border_title = "Text"
+        self.query_one("#loop", Checkbox).tooltip = "Replay the effect when it finishes"
+        self.query_one(
+            "#auto-replay", Checkbox
+        ).tooltip = "Replay the effect when an option changes or another effect is highlighted"
+        self._restore_session()
         self._load_text(self._initial_text)
         if self.input_file:
-            self._file_text = self.editor.text
+            self._file_text = self._file_contents(self.input_file) if self._restored_text else self.editor.text
         terminal_grid = self.query_one("#terminal-options")
         await terminal_grid.mount_all(self._editors(_TERMINAL_SCOPE))
         effect_list = self.query_one("#effects", OptionList)
-        effect_list.highlighted = list(self.effect_resource_map).index(self.effect_name)
+        effect_list.highlighted = self._listed.index(self.effect_name)
         await self._show_effect(self.effect_name)
+        self._update_transport()
+        self.query_one("#stage").set_interval(_STATUS_INTERVAL, self._update_status)
         self.query_one("#editor").focus()
+
+    # Session ---------------------------------------------------------------------------------------------------
+
+    def _restore_session(self) -> None:
+        """Apply the saved session. Values that no longer parse and effects that are not installed are skipped."""
+        if self.session_path is None:
+            return
+        saved = session.load_session(self.session_path)
+        if saved is None:
+            return
+        for scope, values in saved.values.items():
+            if scope != _TERMINAL_SCOPE and scope not in self.effect_resource_map:
+                continue
+            fields = {option.name: option for option in self._scope_fields(scope)}
+            for name, text in values.items():
+                option = fields.get(name)
+                if option is None:
+                    continue
+                try:
+                    value = option.parse(text)
+                except ValueError:
+                    continue
+                if value != option.default:
+                    self._values.setdefault(scope, {})[name] = value
+        if self._initial_effect is None and saved.effect in self.effect_resource_map:
+            self.effect_name = saved.effect
+        if not self._initial_text and saved.text:
+            self._initial_text = saved.text
+            self._restored_text = True
+            if self.input_file is None:
+                self.input_file = saved.input_file
+        self.query_one("#loop", Checkbox).value = saved.loop
+        self.query_one("#auto-replay", Checkbox).value = saved.auto_replay
+
+    def save_session(self) -> None:
+        """Save the selected effect, changed options, text, and playback toggles to the session file."""
+        if self.session_path is None:
+            return
+        values = {
+            scope: {
+                option.name: option.format(scope_values[option.name])
+                for option in self._scope_fields(scope)
+                if option.name in scope_values
+            }
+            for scope, scope_values in self._values.items()
+            if scope_values
+        }
+        saved = session.Session(
+            effect=self.effect_name,
+            values=values,
+            text=self.editor.colored_text(),
+            input_file=self.input_file,
+            loop=self.query_one("#loop", Checkbox).value,
+            auto_replay=self.query_one("#auto-replay", Checkbox).value,
+        )
+        # The session is a convenience, so a read-only config directory should not stop the app from quitting.
+        with contextlib.suppress(OSError):
+            session.save_session(self.session_path, saved)
+
+    @staticmethod
+    def _file_contents(path: str) -> str | None:
+        """Return the text of the file at `path`, or `None` when it cannot be read."""
+        try:
+            return Path(path).expanduser().read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return None
+
+    async def action_quit(self) -> None:
+        """Save the session and quit."""
+        self._cancel_playback()
+        self.save_session()
+        self.exit()
+
+    # Effects list ----------------------------------------------------------------------------------------------
+
+    def _description(self, effect_name: str) -> str:
+        """Return the description of `effect_name` from its parser spec."""
+        parser_spec = getattr(self.effect_resource_map[effect_name][1], "parser_spec", None)
+        return getattr(parser_spec, "help", "") or ""
+
+    @on(Input.Changed, "#effect-filter")
+    def _filter_changed(self, event: Input.Changed) -> None:
+        """List the effects whose name or description contains every word of the filter."""
+        words = event.value.lower().split()
+        listed = [
+            name
+            for name in self.effect_resource_map
+            if all(word in f"{name} {self._description(name)}".lower() for word in words)
+        ]
+        if listed == self._listed:
+            return
+        self._listed = listed
+        effect_list = self.query_one("#effects", OptionList)
+        effect_list.clear_options()
+        effect_list.add_options(listed)
+        if listed:
+            effect_list.highlighted = listed.index(self.effect_name) if self.effect_name in listed else 0
+
+    @on(Input.Submitted, "#effect-filter")
+    def action_focus_effects(self) -> None:
+        """Move focus to the effect list."""
+        self.query_one("#effects", OptionList).focus()
+
+    def _clear_filter(self) -> None:
+        """Show every effect again."""
+        effect_filter = self.query_one("#effect-filter", Input)
+        if effect_filter.value:
+            effect_filter.value = ""
+        self._listed = list(self.effect_resource_map)
+        effect_list = self.query_one("#effects", OptionList)
+        effect_list.clear_options()
+        effect_list.add_options(self._listed)
+
+    def _highlight_effect(self, effect_name: str) -> None:
+        """Highlight `effect_name` in the effect list, clearing a filter that hides it."""
+        if effect_name not in self._listed:
+            self._clear_filter()
+        self.query_one("#effects", OptionList).highlighted = self._listed.index(effect_name)
+
+    @on(OptionList.OptionHighlighted, "#effects")
+    async def _effect_highlighted(self, event: OptionList.OptionHighlighted) -> None:
+        name = str(event.option.prompt)
+        if name != self.effect_name:
+            await self._show_effect(name)
+            self._schedule_auto_replay()
+
+    @on(OptionList.OptionSelected, "#effects")
+    def _effect_selected(self) -> None:
+        self.start_playback()
+
+    async def action_random(self) -> None:
+        """Select and play a random effect from the listed effects, or from all effects if fewer are listed."""
+        candidates = [name for name in self._listed if name != self.effect_name]
+        if not candidates:
+            candidates = [name for name in self.effect_resource_map if name != self.effect_name]
+        if not candidates:
+            return
+        name = random.choice(candidates)
+        await self._show_effect(name)
+        self._highlight_effect(name)
+        self.start_playback()
 
     # Options ---------------------------------------------------------------------------------------------------
 
@@ -734,28 +979,15 @@ class TTEApp(App[None]):
     async def _show_effect(self, effect_name: str) -> None:
         """Show the options of `effect_name`."""
         self.effect_name = effect_name
-        config_class = self.effect_resource_map[effect_name][1]
-        parser_spec = getattr(config_class, "parser_spec", None)
-        description = getattr(parser_spec, "help", "") or ""
         options_panel = self.query_one("#options")
         options_panel.border_title = f"Options · {effect_name}"
-        options_panel.border_subtitle = description
+        options_panel.border_subtitle = self._description(effect_name)
         grid = self.query_one("#effect-options")
         # Editors show each option's last valid value, so errors from an earlier visit no longer apply.
         self._errors.pop(effect_name, None)
         await grid.remove_children()
         await grid.mount_all(self._editors(effect_name))
         self._refresh_subtitle()
-
-    @on(OptionList.OptionHighlighted, "#effects")
-    async def _effect_highlighted(self, event: OptionList.OptionHighlighted) -> None:
-        name = str(event.option.prompt)
-        if name != self.effect_name:
-            await self._show_effect(name)
-
-    @on(OptionList.OptionSelected, "#effects")
-    def _effect_selected(self) -> None:
-        self.action_play()
 
     @on(OptionEditor.Edited)
     def _option_edited(self, event: OptionEditor.Edited) -> None:
@@ -764,12 +996,15 @@ class TTEApp(App[None]):
         if editor.error is None:
             errors.pop(editor.option.name, None)
             values = self._values.setdefault(editor.scope, {})
+            previous = values.get(editor.option.name, editor.option.default)
             if editor.value == editor.option.default:
                 values.pop(editor.option.name, None)
             else:
                 values[editor.option.name] = editor.value
             if editor.scope == _TERMINAL_SCOPE and editor.option.name == "tab_width":
                 self.editor.indent_width = editor.value
+            if editor.value != previous:
+                self._schedule_auto_replay()
         else:
             errors[editor.option.name] = editor.error
         self._refresh_subtitle()
@@ -824,23 +1059,27 @@ class TTEApp(App[None]):
         """Return the configured tab width."""
         return int(self._value_of("tab_width"))
 
+    def _open_file(self, path: Path) -> bool:
+        """Load the text of the file at `path` into the editor. Return whether it could be read."""
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as error:
+            self.notify(f"Cannot open {path}: {error}", severity="error")
+            return False
+        self.action_stop()
+        self.input_file = str(path)
+        self._load_text(text)
+        self._file_text = self.editor.text
+        return True
+
     def action_open(self) -> None:
         """Ask for a file and load its text into the editor."""
 
         def load(result: tuple[str, bool] | None) -> None:
-            if result is None:
-                return
-            path = Path(result[0]).expanduser()
-            try:
-                text = path.read_text(encoding="utf-8")
-            except (OSError, UnicodeDecodeError) as error:
-                self.notify(f"Cannot open {path}: {error}", severity="error")
-                return
-            self.action_stop()
-            self.input_file = str(path)
-            self._load_text(text)
-            self._file_text = self.editor.text
-            self.notify(f"Opened {path}.")
+            if result is not None:
+                path = Path(result[0]).expanduser()
+                if self._open_file(path):
+                    self.notify(f"Opened {path}.")
 
         self.push_screen(FileScreen("Open text file", self.input_file or "", mode="open"), load)
 
@@ -875,22 +1114,82 @@ class TTEApp(App[None]):
             save,
         )
 
-    def action_command(self) -> None:
-        """Show the CLI command for the selected effect and current options."""
-        errors = self._current_errors()
-        if errors:
-            self.notify("Fix the invalid options first:\n" + "\n".join(errors), severity="error")
-            return
-        command = options.command_line(
-            self.effect_name,
-            self._scope_values(self.effect_name),
-            self._scope_values(_TERMINAL_SCOPE),
-            # A file edited since it was opened or saved no longer holds the previewed text.
-            self.input_file if self.editor.text == self._file_text else None,
-        )
-        self.push_screen(CommandScreen(command))
+    # Commands --------------------------------------------------------------------------------------------------
 
-    # Playback --------------------------------------------------------------------------------------------------
+    def action_command(self) -> None:
+        """Show the CLI command for the selected effect and current options, and load a pasted command."""
+        command = ""
+        if not self._current_errors():
+            command = options.command_line(
+                self.effect_name,
+                self._scope_values(self.effect_name),
+                self._scope_values(_TERMINAL_SCOPE),
+                # A file edited since it was opened or saved no longer holds the previewed text.
+                self.input_file if self.editor.text == self._file_text else None,
+            )
+
+        async def load(pasted: str | None) -> None:
+            if pasted:
+                await self.apply_command(pasted)
+
+        self.push_screen(CommandScreen(command), load)
+
+    async def apply_command(self, command: str) -> None:
+        """Set the effect and options from a `tte` command line.
+
+        Options the command leaves out take their CLI defaults, so the TUI plays what the command would play.
+        """
+        effect_fields = {name: functools.partial(self._scope_fields, name) for name in self.effect_resource_map}
+        try:
+            parsed = options.parse_command(command, effect_fields, self._scope_fields(_TERMINAL_SCOPE))
+        except ValueError as error:
+            self.notify(f"Cannot load the command: {error}", severity="error")
+            return
+        self.action_stop()
+        effect_values = {}
+        for option in self._scope_fields(parsed.effect):
+            value = parsed.effect_values.get(option.name, option.default)
+            if value != option.default:
+                effect_values[option.name] = value
+        terminal_values = {}
+        for option in self._scope_fields(_TERMINAL_SCOPE):
+            value = parsed.terminal_values.get(option.name, option.spec.normalize(option.spec.default))
+            if value != option.default:
+                terminal_values[option.name] = value
+        self._values[parsed.effect] = effect_values
+        self._values[_TERMINAL_SCOPE] = terminal_values
+        self._errors.pop(_TERMINAL_SCOPE, None)
+        for editor in self.query(OptionEditor):
+            if editor.scope == _TERMINAL_SCOPE:
+                editor.set_value(self._value(_TERMINAL_SCOPE, editor.option))
+        self.editor.indent_width = self._tab_width()
+        await self._show_effect(parsed.effect)
+        self._highlight_effect(parsed.effect)
+        problems = list(parsed.problems)
+        if parsed.input_file:
+            problem = self._open_command_file(parsed.input_file)
+            if problem:
+                problems.append(problem)
+        message = f"Loaded {parsed.effect} from the command."
+        if problems:
+            self.notify(message + "\nSkipped: " + "; ".join(problems), severity="warning", timeout=10)
+        else:
+            self.notify(message)
+
+    def _open_command_file(self, input_file: str) -> str | None:
+        """Load the text of a command's input file. Return why it was not loaded, or `None`."""
+        path = Path(input_file).expanduser()
+        if not path.is_file():
+            return f"input file {path} was not found, so the text is unchanged"
+        if not self._open_file(path):
+            return f"input file {path} could not be read"
+        return None
+
+    def action_help(self) -> None:
+        """Show the keys and tips."""
+        self.push_screen(HelpScreen())
+
+    # Canvas ----------------------------------------------------------------------------------------------------
 
     def _effect_area(self) -> canvas.CanvasRect:
         """Return the part of the text area effects draw in, which leaves room for the canvas outline."""
@@ -934,11 +1233,11 @@ class TTEApp(App[None]):
         subtitle = f"canvas {rect.width}x{rect.height}"
         if (rect.width, rect.height) != (area.width, area.height):
             subtitle += f" of {area.width}x{area.height}"
-        subtitle += " · drag the orange edge to resize"
         errors = self._current_errors()
         if errors:
             subtitle = f"[{len(errors)} invalid option{'s' if len(errors) != 1 else ''}] " + subtitle
-        self.query_one("#stage").border_subtitle = subtitle
+        self._canvas_note = subtitle
+        self._update_status()
 
     @on(TextArea.Changed, "#editor")
     def _text_changed(self) -> None:
@@ -960,12 +1259,51 @@ class TTEApp(App[None]):
             if entry.value != text:
                 entry.value = text
 
+    def text_size(self) -> tuple[int, int]:
+        """Return the width and height of the text as the engine lays it out in the effect area."""
+        area_width, area_height = self._canvas_size()
+        values = {option.name: value for option, value in self._scope_values(_TERMINAL_SCOPE)}
+        values.update(canvas_width=-1, canvas_height=-1)
+        config = typing.cast("TerminalConfig", options.build_config(TerminalConfig, values))
+        terminal = Terminal(self.editor.colored_text(), config, terminal_dimensions=(area_width, area_height))
+        return terminal.canvas.width, terminal.canvas.height
+
+    def action_fit_canvas(self) -> None:
+        """Set the canvas size to the size of the text."""
+        if self._errors.get(_TERMINAL_SCOPE):
+            self.notify("Fix the invalid canvas options first.", severity="error")
+            return
+        if not self.editor.text.strip():
+            self.notify("Type or open some text to fit the canvas to.", severity="warning")
+            return
+        try:
+            width, height = self.text_size()
+        except Exception as error:  # noqa: BLE001
+            self.notify(f"Cannot measure the text: {error}", severity="error")
+            return
+        self.post_message(ColorTextArea.CanvasResized(width, height))
+
+    def action_maximize_canvas(self) -> None:
+        """Grow the canvas to the whole effect area."""
+        area_width, area_height = self._canvas_size()
+        self.post_message(ColorTextArea.CanvasResized(area_width, area_height))
+
+    @on(CanvasView.Clicked)
+    def _canvas_clicked(self, message: CanvasView.Clicked) -> None:
+        """Stop the effect and put the cursor where the text area was clicked."""
+        self.action_stop()
+        editor = self.editor
+        editor.focus()
+        editor.cursor_location = editor.get_target_document_location(message.event)
+
     def on_resize(self, event: Resize) -> None:
         """Fit the option columns to the screen width and update the canvas size shown under the text area."""
         columns = max(1, min(3, event.size.width // _OPTION_COLUMN_WIDTH))
         for grid in self.query(".option-grid"):
             grid.styles.grid_size_columns = columns
         self.call_after_refresh(self._refresh_subtitle)
+
+    # Playback --------------------------------------------------------------------------------------------------
 
     def build_effect(self) -> BaseEffect | None:
         """Return the selected effect configured with the current options and text, or `None` if it cannot run."""
@@ -989,74 +1327,281 @@ class TTEApp(App[None]):
         effect._terminal_dimensions_override = self._canvas_size()
         return effect
 
-    def action_play(self) -> None:
-        """Play the selected effect over the text."""
-        self._stop_timer()
+    def _settings_key(self) -> tuple[typing.Any, ...]:
+        """Return a value that changes whenever the effect would play differently, apart from its randomness."""
+        return (
+            self.effect_name,
+            repr(sorted(self._values.get(self.effect_name, {}).items())),
+            repr(sorted(self._values.get(_TERMINAL_SCOPE, {}).items())),
+            self.editor.colored_text(),
+            self._canvas_size(),
+        )
+
+    def start_playback(self, *, focus: bool = True, reuse: bool = False) -> bool:
+        """Play the selected effect from the start. Return whether it started.
+
+        Frames are produced on a background thread, so building the effect does not freeze the interface. With
+        `reuse`, the frames of the last complete run are replayed when the settings have not changed since, as a
+        loop does. With `focus`, the canvas takes focus so Space and the arrow keys control playback.
+        """
+        self._cancel_playback()
         effect = self.build_effect()
         if effect is None:
-            return
-        try:
-            self._iterator = iter(effect)
-        except Exception as error:  # noqa: BLE001
-            self.notify(f"Cannot play {self.effect_name}: {error}", severity="error")
-            return
-        canvas = self.query_one("#canvas", CanvasView)
-        canvas.clear()
-        self.query_one("#stage").add_class("-playing")
-        self.query_one("#stage").border_title = f"Playing: {self.effect_name}"
-        canvas.focus()
+            return False
+        key = self._settings_key()
+        stream: frames.FrameStream | frames.RecordedFrames
+        if reuse and self._recorded is not None and self._recorded[0] == key:
+            stream = frames.RecordedFrames(self._recorded[1])
+            self._recording = None
+        else:
+            stream = frames.FrameStream(effect)
+            self._recording = []
+        self._playback_key = key
+        stream.start()
+        self._stream = stream
+        canvas_view = self.query_one("#canvas", CanvasView)
+        canvas_view.clear()
+        stage = self.query_one("#stage")
+        stage.add_class("-playing")
+        stage.border_title = f"Preparing: {self.effect_name}"
+        if focus or self.focused is self.editor:
+            canvas_view.focus()
         self.state = "playing"
-        frame_rate = effect.terminal_config.frame_rate or _MAX_UNLIMITED_FPS
-        self._timer = self.set_interval(1 / frame_rate, self._next_frame)
-        self.refresh_bindings()
+        self._frame_index = 0
+        self._shown_at.clear()
+        self._frame_rate = effect.terminal_config.frame_rate or _MAX_UNLIMITED_FPS
+        self._run_frames()
+        self._update_transport()
+        return True
+
+    def _run_frames(self) -> None:
+        """Start the frame timer, polling slowly until the first frame is ready.
+
+        Once frames arrive, the timer ticks twice per frame and shows a frame whenever one is due, so a tick that
+        runs late delays one frame instead of skipping it and lowering the frame rate.
+        """
+        if self._timer is not None:
+            self._timer.stop()
+        interval = 1 / self._frame_rate
+        self._due = time.monotonic()
+        tick = _PREPARE_POLL if self._frame_index == 0 else max(interval / 2, _MIN_TICK)
+        self._timer = self.query_one("#canvas").set_interval(tick, self._tick)
+
+    def _tick(self) -> None:
+        """Show the next frame if it is due."""
+        now = time.monotonic()
+        if now < self._due:
+            return
+        interval = 1 / self._frame_rate
+        # Catch up on a late frame by at most one interval, rather than rushing through several.
+        self._due = max(self._due + interval, now - interval)
+        self._next_frame()
 
     def _next_frame(self) -> None:
-        """Show the next frame, or finish when the effect is complete."""
-        if self._iterator is None:
+        """Show the next frame when it is ready, or finish when the effect is complete."""
+        stream = self._stream
+        if stream is None:
             return
-        try:
-            frame = next(self._iterator)
-        except StopIteration:
-            self._finish("Finished")
-            return
-        except Exception as error:  # noqa: BLE001
-            self._finish("Failed")
-            self.notify(f"{self.effect_name} failed: {error}", severity="error")
-            return
-        self.query_one("#canvas", CanvasView).show_frame(frame)
+        frame = stream.poll()
+        if frame is not None:
+            self._show(frame)
+        elif stream.finished:
+            if stream.error is not None:
+                self._finish("Failed")
+                self.notify(f"{self.effect_name} failed: {stream.error}", severity="error")
+            else:
+                self._finish("Finished")
+
+    def _show(self, frame: frames.Frame) -> None:
+        """Display `frame` and count it for the frame rate."""
+        if self._recording is not None:
+            if len(self._recording) < _MAX_KEPT_FRAMES:
+                self._recording.append(frame)
+            else:
+                self._recording = None
+        self.query_one("#canvas", CanvasView).show_strips(frame)
+        self._frame_index += 1
+        self._shown_at.append(time.monotonic())
+        if self._frame_index == 1:
+            # The effect's objects live until playback ends. Freezing them keeps full garbage collections, which
+            # scan every object and can stall a frame for a tenth of a second, from rescanning them.
+            gc.freeze()
+            self.query_one("#stage").border_title = f"Playing: {self.effect_name}"
+            if self.state == "playing":
+                self._run_frames()
 
     def _finish(self, label: str) -> None:
-        """Stop advancing frames and keep the last frame on screen."""
-        self._stop_timer()
+        """Stop advancing frames and keep the last frame on screen. With Loop on, replay after a pause."""
+        stream = self._stream
+        if isinstance(stream, frames.FrameStream) and stream.error is None and self._recording is not None:
+            self._recorded = (typing.cast("tuple[typing.Any, ...]", self._playback_key), self._recording)
+        self._recording = None
+        self._stop_frames()
         self.state = "finished"
         self.query_one("#stage").border_title = f"{label}: {self.effect_name} (Esc to edit)"
-        self.refresh_bindings()
+        if label == "Finished" and self.query_one("#loop", Checkbox).value:
+            self._loop_timer = self.query_one("#stage").set_timer(_LOOP_PAUSE, self._loop_again)
+        self._update_transport()
 
-    def _stop_timer(self) -> None:
+    def _loop_again(self) -> None:
+        """Replay a finished effect while Loop is on."""
+        self._loop_timer = None
+        if self.state == "finished" and self.query_one("#loop", Checkbox).value and not self.screen.is_modal:
+            self.start_playback(focus=False, reuse=True)
+
+    def _stop_frames(self) -> None:
+        """Stop the frame timer and the frame stream, and let the garbage collector see the effect again."""
+        gc.unfreeze()
         if self._timer is not None:
             self._timer.stop()
             self._timer = None
-        self._iterator = None
+        if self._stream is not None:
+            self._stream.close()
+            self._stream = None
+
+    def _cancel_playback(self) -> None:
+        """Stop the frames, and cancel a pending loop or auto-replay."""
+        self._stop_frames()
+        for timer in (self._loop_timer, self._auto_timer):
+            if timer is not None:
+                timer.stop()
+        self._loop_timer = self._auto_timer = None
+
+    def action_play(self) -> None:
+        """Play the effect, pause or resume it, or replay it once finished."""
+        if self.state == "playing":
+            self._pause()
+        elif self.state == "paused":
+            self._resume()
+        else:
+            self.start_playback()
+
+    def action_replay(self) -> None:
+        """Play the effect from the start."""
+        self.start_playback()
+
+    def _pause(self) -> None:
+        if self._timer is not None:
+            self._timer.stop()
+            self._timer = None
+        self.state = "paused"
+        self.query_one("#stage").border_title = f"Paused: {self.effect_name} (Space to resume, → to step)"
+        self._update_transport()
+
+    def _resume(self) -> None:
+        self.state = "playing"
+        self.query_one("#stage").border_title = f"Playing: {self.effect_name}"
+        self._shown_at.clear()
+        self._run_frames()
+        self._update_transport()
+
+    def action_step(self) -> None:
+        """Pause, then show one more frame."""
+        if self.state == "playing":
+            self._pause()
+        if self.state != "paused":
+            return
+        self._next_frame()
+        self._update_status()
 
     def action_stop(self) -> None:
         """Stop the effect and return to the text."""
         if self.state == "editing":
             return
-        self._stop_timer()
+        self._cancel_playback()
+        self._recording = None
         self.state = "editing"
         stage = self.query_one("#stage")
         stage.remove_class("-playing")
         stage.border_title = "Text"
-        self.query_one("#canvas", CanvasView).clear()
-        self.editor.focus()
+        canvas_view = self.query_one("#canvas", CanvasView)
+        if self.focused is canvas_view:
+            self.editor.focus()
+        canvas_view.clear()
+        self._update_transport()
+
+    def _schedule_auto_replay(self) -> None:
+        """Replay the effect shortly after the last change, while Auto-replay is on."""
+        if not self.query_one("#auto-replay", Checkbox).value:
+            return
+        if self._auto_timer is not None:
+            self._auto_timer.stop()
+        self._auto_timer = self.query_one("#stage").set_timer(_AUTO_REPLAY_DELAY, self._auto_replay)
+
+    def _auto_replay(self) -> None:
+        self._auto_timer = None
+        if not self.query_one("#auto-replay", Checkbox).value or self.screen.is_modal or self._current_errors():
+            return
+        if self.editor._drag_edges:
+            # Replaying would hide the text area mid-drag, so wait for the drag to end.
+            self._schedule_auto_replay()
+            return
+        self.start_playback(focus=False)
+
+    @on(Checkbox.Changed, "#loop")
+    def _loop_changed(self, event: Checkbox.Changed) -> None:
+        if event.value and self.state == "finished":
+            self._loop_timer = self.query_one("#stage").set_timer(_LOOP_PAUSE, self._loop_again)
+
+    @on(Button.Pressed)
+    async def _transport_pressed(self, event: Button.Pressed) -> None:
+        if event.button.parent is None or event.button.parent.id != "transport":
+            return
+        action = event.button.id
+        if action == "random":
+            await self.action_random()
+        elif action == "stop":
+            self.action_stop()
+        elif action == "fit":
+            self.action_fit_canvas()
+        elif action == "max":
+            self.action_maximize_canvas()
+        elif action in ("play", "replay", "step"):
+            getattr(self, f"action_{action}")()
+
+    def _update_transport(self) -> None:
+        """Label the play button for the playback state, and enable the buttons that apply."""
+        labels = {"playing": "❚❚ Pause", "paused": "▶ Resume", "finished": "↻ Replay"}
+        self.query_one("#play", Button).label = labels.get(self.state, "▶ Play")
+        self.query_one("#stop", Button).disabled = self.state == "editing"
+        self.query_one("#step", Button).disabled = self.state not in ("playing", "paused")
         self.refresh_bindings()
+        self._update_status()
+
+    def measured_fps(self) -> float:
+        """Return the frames shown per second over the last second of playback."""
+        if self.state != "playing" or len(self._shown_at) < 2:
+            return 0.0
+        now = time.monotonic()
+        recent = [shown for shown in self._shown_at if now - shown <= 1.0]
+        if len(recent) < 2 or now - recent[-1] > 1.0:
+            return 0.0
+        return (len(recent) - 1) / max(recent[-1] - recent[0], 1e-6)
+
+    def _update_status(self) -> None:
+        """Show the canvas size under the text area, with the frame count and frame rate while an effect is shown."""
+        if self.state == "editing":
+            text = f"{self._canvas_note} · drag the outline to resize"
+        else:
+            text = f"frame {self._frame_index}"
+            if self.state == "playing":
+                target = self._value_of("frame_rate")
+                text += f" · {self.measured_fps():.0f} fps"
+                if target:
+                    text += f" of {target}"
+            text += f" · {self._canvas_note}"
+        stage = self.query_one("#stage")
+        if stage.border_subtitle != text:
+            stage.border_subtitle = text
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:  # noqa: ARG002
-        """Offer Stop only while an effect is shown, and only Quit while a dialog is open."""
+        """Offer Stop and Step only while an effect is shown, and only Quit while a dialog is open."""
         if self.screen.is_modal:
             return action == "quit"
         if action == "stop":
             return self.state != "editing"
+        if action == "step":
+            return self.state in ("playing", "paused")
         return True
 
     # Recording -------------------------------------------------------------------------------------------------

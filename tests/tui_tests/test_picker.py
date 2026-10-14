@@ -127,3 +127,23 @@ def test_picker_is_offered_only_for_color_options() -> None:
         assert not isinstance(app.screen, picker.ColorScreen)
 
     _run(TTEApp(_EFFECTS, "text", effect="beams"), script)
+
+
+def test_many_stops_wrap_onto_more_rows() -> None:
+    """Adding stops should wrap the stop chips onto new rows instead of hiding them."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        editor = _editor(app, "beams", "final_gradient_stops")
+        screen = await _open_picker(app, pilot, editor)
+        stop_list = screen.query_one(picker.StopList)
+        assert stop_list.size.height == 1
+        for _ in range(12):
+            screen._add_stop()
+        await pilot.pause()
+        assert len(screen.stops) == 15
+        chips = stop_list._chips(stop_list.size.width)
+        assert len(chips) == 15
+        assert stop_list.size.height == chips[-1][0] + 1 > 1
+        assert all(end <= stop_list.size.width for _, _, end in chips)
+
+    _run(TTEApp(_EFFECTS, "text", effect="beams"), script)

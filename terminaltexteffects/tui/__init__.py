@@ -59,6 +59,7 @@ def run(
 
     """
     from terminaltexteffects.tui.app import TTEApp  # noqa: PLC0415
+    from terminaltexteffects.tui.session import default_session_path  # noqa: PLC0415
 
     attach_keyboard()
-    TTEApp(effect_resource_map, text, input_file, effect).run()
+    TTEApp(effect_resource_map, text, input_file, effect, session_path=default_session_path()).run()

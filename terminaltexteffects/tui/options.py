@@ -228,3 +228,105 @@ def command_line(
         if value != option.spec.normalize(option.spec.default):
             tokens += option.command_tokens(value)
     return shlex.join(tokens)
+
+
+@dataclass
+class ParsedCommand:
+    """Settings read from a `tte` command line.
+
+    Attributes:
+        effect (str): Effect command name.
+        effect_values (dict[str, Any]): Effect option values given in the command, by field name.
+        terminal_values (dict[str, Any]): Terminal option values given in the command, by field name.
+        input_file (str | None): File given with `--input-file`.
+        problems (list[str]): Flags or values that could not be applied.
+
+    """
+
+    effect: str
+    effect_values: dict[str, typing.Any]
+    terminal_values: dict[str, typing.Any]
+    input_file: str | None
+    problems: list[str]
+
+
+def parse_command(
+    command: str,
+    effect_fields: typing.Mapping[str, typing.Callable[[], list[OptionField]]],
+    terminal_fields: list[OptionField],
+) -> ParsedCommand:
+    """Read the effect and options from a `tte` command line, such as one shown by the command dialog.
+
+    Flags before the effect name are terminal options, and flags after it are effect options. Each flag's values run
+    until the next flag. Unknown flags and invalid values are reported in `problems` instead of failing the whole
+    command.
+
+    Args:
+        command (str): The command line. A leading `tte` is optional.
+        effect_fields (Mapping[str, Callable[[], list[OptionField]]]): Effect names mapped to functions that return
+            their option fields.
+        terminal_fields (list[OptionField]): Terminal option fields that can be set.
+
+    Returns:
+        ParsedCommand: The settings found in the command.
+
+    Raises:
+        ValueError: If the command cannot be split or names no known effect.
+
+    """
+    try:
+        tokens = shlex.split(command)
+    except ValueError as error:
+        msg = f"cannot read the command: {error}."
+        raise ValueError(msg) from error
+    if tokens and tokens[0] in ("tte", "terminaltexteffects"):
+        tokens = tokens[1:]
+    effect_index = next((index for index, token in enumerate(tokens) if token in effect_fields), None)
+    if effect_index is None:
+        msg = "the command names no known effect."
+        raise ValueError(msg)
+    effect = tokens[effect_index]
+    problems: list[str] = []
+    input_file: str | None = None
+    terminal_tokens = tokens[:effect_index]
+    for index, token in enumerate(terminal_tokens):
+        if token in ("-i", "--input-file") and index + 1 < len(terminal_tokens):
+            input_file = terminal_tokens[index + 1]
+            terminal_tokens = terminal_tokens[:index] + terminal_tokens[index + 2 :]
+            break
+    terminal_values = _parse_flags(terminal_tokens, terminal_fields, problems)
+    effect_values = _parse_flags(tokens[effect_index + 1 :], effect_fields[effect](), problems)
+    return ParsedCommand(effect, effect_values, terminal_values, input_file, problems)
+
+
+def _parse_flags(tokens: list[str], fields_: list[OptionField], problems: list[str]) -> dict[str, typing.Any]:
+    """Return the values of the flags in `tokens`, adding unknown flags and invalid values to `problems`."""
+    by_flag = {option.flag: option for option in fields_}
+    values: dict[str, typing.Any] = {}
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        index += 1
+        if not token.startswith("--"):
+            problems.append(f"unexpected value '{token}'")
+            continue
+        flag, _, inline = token.partition("=")
+        arguments = [inline] if inline else []
+        while index < len(tokens) and not tokens[index].startswith("--"):
+            arguments.append(tokens[index])
+            index += 1
+        option = by_flag.get(flag)
+        if option is None:
+            problems.append(f"{flag} is not available here")
+            continue
+        try:
+            if option.kind == "bool":
+                values[option.name] = True
+                if arguments:
+                    problems.append(f"{flag} takes no value")
+            else:
+                text = " ".join(_quote_if_needed(argument) for argument in arguments) if option.is_multi else ""
+                values[option.name] = option.parse(text if option.is_multi else " ".join(arguments))
+        except ValueError as error:
+            problems.append(f"{flag}: {error}")
+    return values
