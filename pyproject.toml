@@ -16,6 +16,7 @@ tte = "terminaltexteffects.__main__:main"
 terminaltexteffects = "terminaltexteffects.__main__:main"
 
 [project.optional-dependencies]
+tui = ["textual>=8.0"]
 docs = [
     "mkdocs>=1.6.1; python_version >= '3.10'",
     "mkdocs-material>=9.6.22; python_version >= '3.10'",
@@ -180,6 +181,7 @@ test = [
     "shtab==1.12.1",
     "towncrier==26.9.0",
     "diff-cover>=10.6.0; python_version >= '3.10'",
+    "textual>=8.0",
 ]
 hooks = [
     { include-group = "quality" },

@@ -63,6 +63,9 @@ TTE, and SSH login animations.
 
 Optionally, enable [shell completion](./appguide.md#shell-completion) for effect names and options.
 
+To compose text and preview effects interactively, install the optional `tui` extra, for example
+`pipx install 'terminaltexteffects[tui]'`. See [Interactive Interface](./tui.md).
+
 [Application Usage](./appguide.md){ .md-button }
 
 ## Library

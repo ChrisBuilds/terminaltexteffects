@@ -66,6 +66,7 @@ nav:
   - How to install & use TTE:
     - Install: installation.md
     - Application Usage: appguide.md
+    - Interactive Interface: tui.md
     - Library Usage: libguide.md
   - Effect Guide:
     - Start here: effectguide/index.md

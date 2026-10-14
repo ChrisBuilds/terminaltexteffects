@@ -58,6 +58,13 @@
         "file": false,
         "help": "Print completion setup commands, or a completion script for the requested shell, and exit."
       },
+      "--tui": {
+        "min": 0,
+        "max": 0,
+        "choices": [],
+        "file": false,
+        "help": "Open the interactive interface with the input text, if any, loaded for editing. Running tte with no effect and no input, or with input and no effect, also opens it when the interface is installed (pip install 'terminaltexteffects[tui]')."
+      },
       "--random-effect": {
         "min": 0,
         "max": 0,

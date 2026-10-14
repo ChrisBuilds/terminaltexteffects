@@ -209,6 +209,9 @@ Input can be piped or redirected through stdin, or passed with `--input-file`/`-
   See [Community effects](https://chrisbuilds.github.io/terminaltexteffects/appguide/#community-effects)
   for installation steps, and browse or share projects in
   [TTE Effect Show and Tell](https://github.com/ChrisBuilds/terminaltexteffects/discussions/categories/tte-effect-show-and-tell).
+* Compose text and preview effects interactively by running `tte` with no effect, after installing the
+  optional extra with `pipx install 'terminaltexteffects[tui]'`. See
+  [Interactive Interface](https://chrisbuilds.github.io/terminaltexteffects/tui/).
 * Record effects and replay them later with `--record` and `--play`. See
   [Recording and playback](https://chrisbuilds.github.io/terminaltexteffects/appguide/#recording-and-playback).
 * TTE is not a full terminal emulator, but it parses common fetch-style input including SGR colors,
