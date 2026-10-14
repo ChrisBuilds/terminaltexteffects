@@ -49,6 +49,8 @@ behavioral decisions:
   useful or explain why it is deferred; keep any referenced demo assets valid.
 - [ ] Regenerate Bash, Zsh, and PowerShell completions using
   `./.venv/bin/python tools/generate_shell_completions.py`, then run its `--check` mode.
+- [ ] Add the command, in alphabetical order, to the `effect` drop-down in
+  `.github/workflows/profile.yml`; the inventory check fails until it is listed.
 - [ ] Add a user-facing changelog fragment (normally `.added.md`).
 - [ ] Run focused effect tests, formatting, lint, and Pyright, plus
   `./.venv/bin/python tools/check_effect_inventory.py` and a strict docs build.

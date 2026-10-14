@@ -12,22 +12,26 @@ import io
 import json
 import pstats
 import random
+import shlex
 import statistics
 import sys
 import time
 import tracemalloc
 from contextlib import redirect_stdout
-from dataclasses import dataclass
+from copy import deepcopy
+from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from terminaltexteffects import __main__ as tte_main
 from terminaltexteffects.effects import effect_colorshift, effect_matrix, effect_thunderstorm
 from terminaltexteffects.engine.terminal import TerminalConfig
+from terminaltexteffects.utils import argutils
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Collection, Sequence
 
+    from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
 
 DEFAULT_SAMPLES = 7
@@ -67,6 +71,21 @@ INPUT_PRESETS = {
         "Mix: A界B😀C"
     ),
 }
+INPUT_PRESET_NAMES = tuple(sorted([*INPUT_PRESETS, "generated"]))
+
+# Long hold phases measure waiting, not rendering. Each entry is shortened unless the caller sets it explicitly.
+SHORTENED_OPTIONS: tuple[tuple[type[BaseConfig], str, int], ...] = (
+    (effect_matrix.MatrixConfig, "rain_time", 1),
+    (effect_thunderstorm.ThunderstormConfig, "storm_time", 1),
+    (effect_colorshift.ColorShiftConfig, "cycles", 2),
+)
+
+# The harness disables frame-rate sleeps, so the frame rate is not a terminal argument it accepts.
+TERMINAL_ARG_NAMES = frozenset(
+    field.default.name
+    for field in fields(TerminalConfig)
+    if isinstance(field.default, argutils.ArgSpec) and field.default.name != "--frame-rate"
+)
 
 
 @dataclass(frozen=True)
@@ -108,14 +127,65 @@ def _make_terminal_config() -> TerminalConfig:
     return terminal_config
 
 
-def _shorten_long_running_effect(effect_instance: BaseEffect[Any]) -> None:
+def _effect_options_given(parser: argparse.ArgumentParser, effect_name: str, effect_args: Sequence[str]) -> set[str]:
+    """Return the destinations of effect options present in `effect_args`.
+
+    Every default is suppressed, so only options actually given appear, including abbreviated and
+    `--option=value` forms and options given their default value.
+    """
+    subparsers = next(action for action in parser._actions if isinstance(action, argparse._SubParsersAction))
+    probe = subparsers.choices[effect_name]
+    for action in probe._actions:
+        action.default = argparse.SUPPRESS
+    known_args, _ = probe.parse_known_args(effect_args)
+    return set(vars(known_args))
+
+
+def _shorten_long_running_config(effect_config: BaseConfig, options_given: Collection[str] = ()) -> None:
     """Keep benchmark scenarios focused on renderer speed instead of long hold phases."""
-    if isinstance(effect_instance, effect_matrix.Matrix):
-        effect_instance.effect_config.rain_time = 1
-    elif isinstance(effect_instance, effect_thunderstorm.Thunderstorm):
-        effect_instance.effect_config.storm_time = 1
-    elif isinstance(effect_instance, effect_colorshift.ColorShift):
-        effect_instance.effect_config.cycles = 2
+    for config_class, field_name, value in SHORTENED_OPTIONS:
+        if isinstance(effect_config, config_class) and field_name not in options_given:
+            setattr(effect_config, field_name, value)
+
+
+def _check_terminal_args(terminal_args: Sequence[str]) -> None:
+    """Reject options that are not terminal configuration, so other `tte` options cannot slip through."""
+    for arg in terminal_args:
+        if not arg.startswith("-") or arg.lstrip("-").replace(".", "", 1).isdigit():
+            continue
+        name = arg.split("=", 1)[0]
+        if name not in TERMINAL_ARG_NAMES:
+            allowed = ", ".join(sorted(TERMINAL_ARG_NAMES))
+            msg = f"unsupported terminal argument {name!r}; use one of: {allowed}"
+            raise ValueError(msg)
+
+
+def build_configs(
+    effect_name: str,
+    effect_args: Sequence[str] = (),
+    terminal_args: Sequence[str] = (),
+) -> tuple[BaseConfig, TerminalConfig]:
+    """Build effect and terminal configs from `tte` command line arguments.
+
+    Arguments are parsed by the `tte` parser, so option names, values, and error messages match the
+    application. Invalid arguments exit with status 2 after `argparse` prints usage.
+
+    Raises:
+        ValueError: If the effect is unknown or `terminal_args` contains a non-terminal option.
+
+    """
+    _check_terminal_args(terminal_args)
+    parser, resources = tte_main.build_parser()
+    if effect_name not in resources:
+        msg = f"unknown effect: {effect_name}"
+        raise ValueError(msg)
+    namespace = parser.parse_args([*terminal_args, effect_name, *effect_args])
+    _, config_class = resources[effect_name]
+    effect_config = config_class._build_config(namespace)
+    _shorten_long_running_config(effect_config, _effect_options_given(parser, effect_name, effect_args))
+    terminal_config = TerminalConfig._build_config(namespace)
+    terminal_config.frame_rate = 0
+    return effect_config, terminal_config
 
 
 def run_iteration(
@@ -125,17 +195,26 @@ def run_iteration(
     lifecycle: Literal["iterator", "terminal-output"] = "iterator",
     *,
     measure_memory: bool = False,
+    effect_config: BaseConfig | None = None,
+    terminal_config: TerminalConfig | None = None,
 ) -> IterationResult:
-    """Run one effect iteration and return timing details."""
+    """Run one effect iteration and return timing details.
+
+    Without `effect_config` and `terminal_config`, the effect runs with default options, shortened by
+    `SHORTENED_OPTIONS`, on a benchmark terminal config. Pass configs from `build_configs` to override them.
+    """
     if lifecycle not in ("iterator", "terminal-output"):
         message = f"Unknown benchmark lifecycle: {lifecycle}"
         raise ValueError(message)
     if measure_memory:
         tracemalloc.start()
     random.seed(seed)
-    effect_instance = effect_class(input_data)
-    effect_instance.terminal_config = _make_terminal_config()
-    _shorten_long_running_effect(effect_instance)
+    if effect_config is None:
+        effect_instance = effect_class(input_data)
+        _shorten_long_running_config(effect_instance.effect_config)
+    else:
+        effect_instance = effect_class(input_data, deepcopy(effect_config))
+    effect_instance.terminal_config = _make_terminal_config() if terminal_config is None else deepcopy(terminal_config)
 
     frames = 0
     output_characters = 0
@@ -229,9 +308,17 @@ def run_benchmark(
     seed: int,
     lifecycle: Literal["iterator", "terminal-output"] = "iterator",
     measure_memory: bool = False,
+    effect_args: Sequence[str] = (),
+    terminal_args: Sequence[str] = (),
 ) -> dict[str, Any]:
-    """Run warmups and timed samples for one effect scenario."""
+    """Run warmups and timed samples for one effect scenario.
+
+    `effect_args` and `terminal_args` are `tte` command line arguments; see `build_configs`.
+    """
     input_data = _make_input_data(input_preset)
+    configs: dict[str, Any] = {}
+    if effect_args or terminal_args:
+        configs["effect_config"], configs["terminal_config"] = build_configs(effect_name, effect_args, terminal_args)
     for warmup_index in range(warmups):
         run_iteration(
             effect_class,
@@ -239,6 +326,7 @@ def run_benchmark(
             seed + warmup_index,
             lifecycle,
             measure_memory=measure_memory,
+            **configs,
         )
     sample_results = [
         run_iteration(
@@ -247,6 +335,7 @@ def run_benchmark(
             seed + warmups + sample_index,
             lifecycle,
             measure_memory=measure_memory,
+            **configs,
         )
         for sample_index in range(samples)
     ]
@@ -258,6 +347,8 @@ def run_benchmark(
         "samples": samples,
         "warmups": warmups,
         "seed": seed,
+        "effect_args": list(effect_args),
+        "terminal_args": list(terminal_args),
         "summary": summarize_iterations(sample_results),
     }
 
@@ -267,12 +358,17 @@ def run_profile(
     input_preset: str,
     seed: int,
     lifecycle: Literal["iterator", "terminal-output"] = "iterator",
+    *,
+    effect_config: BaseConfig | None = None,
+    terminal_config: TerminalConfig | None = None,
 ) -> str:
     """Profile one benchmark iteration and return a compact pstats report."""
     input_data = _make_input_data(input_preset)
     profiler = cProfile.Profile()
     profiler.enable()
-    run_iteration(effect_class, input_data, seed, lifecycle)
+    run_iteration(
+        effect_class, input_data, seed, lifecycle, effect_config=effect_config, terminal_config=terminal_config
+    )
     profiler.disable()
     stream = io.StringIO()
     stats = pstats.Stats(profiler, stream=stream).strip_dirs().sort_stats("cumtime")
@@ -380,7 +476,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--effect", default="wipe", help="Effect command to benchmark, or 'all'.")
     parser.add_argument(
         "--input-preset",
-        choices=sorted([*INPUT_PRESETS, "generated"]),
+        choices=INPUT_PRESET_NAMES,
         default="medium",
         help="Input data preset to benchmark.",
     )
@@ -397,6 +493,20 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--memory",
         action="store_true",
         help="Measure peak traced Python memory; compare timings only with other memory-enabled runs.",
+    )
+    parser.add_argument(
+        "--effect-args",
+        type=shlex.split,
+        default=[],
+        metavar="ARGS",
+        help="Effect options for `tte <effect>`, as one string: --effect-args='...'. Requires a single --effect.",
+    )
+    parser.add_argument(
+        "--terminal-args",
+        type=shlex.split,
+        default=[],
+        metavar="ARGS",
+        help="Terminal options for `tte` (not --frame-rate), as one string: --terminal-args='...'.",
     )
     parser.add_argument("--profile", action="store_true", help="Print cProfile output for the first selected effect.")
     parser.add_argument("--json-out", type=Path, help="Write benchmark report JSON to this path.")
@@ -422,6 +532,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     effect_classes = _effect_classes()
+    if args.effect == "all" and args.effect_args:
+        parser.error("--effect-args requires a single --effect; options differ between effects")
+    try:
+        _check_terminal_args(args.terminal_args)
+    except ValueError as error:
+        parser.error(str(error))
     if args.effect == "all":
         selected_effects = sorted(effect_classes.items())
     else:
@@ -440,6 +556,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             seed=args.seed,
             lifecycle=args.lifecycle,
             measure_memory=args.memory,
+            effect_args=args.effect_args,
+            terminal_args=args.terminal_args,
         )
         for effect_name, effect_class in selected_effects
     ]
@@ -454,7 +572,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.profile:
         effect_name, effect_class = selected_effects[0]
         print(f"\nProfile for {effect_name}/{args.input_preset}/{args.lifecycle}:")
-        print(run_profile(effect_class, args.input_preset, args.seed, args.lifecycle))
+        configs: dict[str, Any] = {}
+        if args.effect_args or args.terminal_args:
+            configs["effect_config"], configs["terminal_config"] = build_configs(
+                effect_name,
+                args.effect_args,
+                args.terminal_args,
+            )
+        print(run_profile(effect_class, args.input_preset, args.seed, args.lifecycle, **configs))
 
     return 0
 

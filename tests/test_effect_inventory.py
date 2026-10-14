@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import argparse
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 
 from terminaltexteffects.effects import effect_wipe
 from tools import check_effect_inventory as inventory
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from tools.perf.benchmark_effects import INPUT_PRESET_NAMES
 
 
 @pytest.fixture
@@ -119,3 +117,54 @@ def test_parser_command_resource_mismatch(monkeypatch: pytest.MonkeyPatch) -> No
     )
     with pytest.raises(ValueError, match="subcommands disagree"):
         inventory.registered_effects()
+
+
+def _profile_options(effects: list[str]) -> dict[str, list[str]]:
+    """Build Profile workflow options that match `effects` and the harness presets."""
+    return {
+        "effect": ["all", *effects],
+        "input_preset": ["medium + large", *INPUT_PRESET_NAMES, "all presets"],
+    }
+
+
+def test_profile_options_match() -> None:
+    """Drop-downs listing every effect and preset in order pass."""
+    assert inventory.check_profile_options(_profile_options(["beams", "wipe"]), ["wipe", "beams"]) == []
+
+
+@pytest.mark.parametrize(
+    ("options", "message"),
+    [
+        (_profile_options(["beams"]), "add wipe"),
+        (_profile_options(["beams", "wipe", "gone"]), "remove gone"),
+        (_profile_options(["wipe", "beams"]), "keep the options in order"),
+        ({"effect": ["all", "beams", "wipe"]}, "`input_preset` options are out of date: add medium + large"),
+    ],
+)
+def test_profile_options_drift(options: dict[str, list[str]], message: str) -> None:
+    """Added, removed, or reordered effects and presets fail with an actionable diagnostic."""
+    assert any(message in item for item in inventory.check_profile_options(options, ["beams", "wipe"]))
+
+
+def test_load_profile_options(tmp_path: Path) -> None:
+    """Choice options are read from the manual inputs; other inputs are ignored."""
+    pytest.importorskip("yaml", reason="Workflow loader uses the development MkDocs dependency")
+    workflow = tmp_path / inventory.PROFILE_WORKFLOW
+    workflow.parent.mkdir(parents=True)
+    workflow.write_text(
+        "on:\n  workflow_dispatch:\n    inputs:\n"
+        "      effect:\n        type: choice\n        options: [all, wipe]\n"
+        "      seed:\n        type: number\n        default: 1\n"
+    )
+    assert inventory.load_profile_options(tmp_path) == {"effect": ["all", "wipe"]}
+    workflow.write_text("on:\n  push:\n")
+    with pytest.raises(TypeError, match="no workflow_dispatch inputs"):
+        inventory.load_profile_options(tmp_path)
+
+
+def test_repository_profile_options_are_current() -> None:
+    """The committed Profile workflow lists every shipped effect and harness preset."""
+    pytest.importorskip("yaml", reason="Workflow loader uses the development MkDocs dependency")
+    root = Path(__file__).resolve().parents[1]
+    commands = list(inventory.registered_effects().values())
+    assert inventory.check_profile_options(inventory.load_profile_options(root), commands) == []

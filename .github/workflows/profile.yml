@@ -2,6 +2,7 @@ name: Profile
 
 # Samples the benchmark harness with Python 3.15's `profiling.sampling` and uploads reviewable
 # reports. Profiling is informational: it is not part of `CI passed` and never fails on a slowdown.
+# Pushes use fixed defaults so their reports stay comparable; manual runs expose the form below.
 
 on:
   push:
@@ -12,18 +13,138 @@ on:
       - .github/workflows/profile.yml
   workflow_dispatch:
     inputs:
+      # `tools/check_effect_inventory.py` keeps the effect and input-preset options in sync.
       effect:
-        description: Effect command to profile, or `all`
+        description: Effect to profile
+        type: choice
         default: all
+        options:
+          - all
+          - beams
+          - binarypath
+          - blackhole
+          - bouncyballs
+          - bubbles
+          - burn
+          - colorshift
+          - crumble
+          - decrypt
+          - errorcorrect
+          - expand
+          - fireworks
+          - highlight
+          - laseretch
+          - matrix
+          - middleout
+          - orbittingvolley
+          - overflow
+          - pour
+          - print
+          - rain
+          - randomsequence
+          - rings
+          - scattered
+          - slice
+          - slide
+          - smoke
+          - spotlights
+          - spray
+          - swarm
+          - sweep
+          - synthgrid
+          - thunderstorm
+          - unstable
+          - vhstape
+          - waves
+          - wipe
+      input_preset:
+        description: Input text preset (see docs/performance.md)
+        type: choice
+        default: medium + large
+        options:
+          - medium + large
+          - color
+          - generated
+          - large
+          - medium
+          - small
+          - sparse
+          - tall
+          - unicode
+          - wide
+          - all presets
+      lifecycle:
+        description: Iterator only, or including terminal setup and output
+        type: choice
+        default: iterator
+        options:
+          - iterator
+          - terminal-output
+          - both
+      effect_args:
+        description: Effect options as for `tte <effect>`, e.g. `--wave-count 3` (single effect only)
         type: string
-      scenarios:
-        description: Space-separated `<input-preset>/<lifecycle>` pairs (see tools/perf/benchmark_effects.py)
-        default: medium/iterator large/iterator medium/terminal-output
-        type: string
+        default: ''
+      color_mode:
+        description: Terminal colour mode
+        type: choice
+        default: default
+        options:
+          - default
+          - xterm-256
+          - no-color
+      existing_color_handling:
+        description: Handling of colours already in the input (matters for the `color` preset)
+        type: choice
+        default: ignore
+        options:
+          - ignore
+          - always
+          - dynamic
+      samples:
+        description: Timed samples per scenario
+        type: number
+        default: 2
+      seed:
+        description: Base random seed
+        type: number
+        default: 1337
+      sampling_rate:
+        description: Profiler sampling rate
+        type: choice
+        default: 1khz
+        options:
+          - 1khz
+          - 5khz
+          - 10khz
+          - 20khz
+      sampling_mode:
+        description: Count all samples (wall) or only those on the CPU (cpu)
+        type: choice
+        default: wall
+        options:
+          - wall
+          - cpu
+      gc_frames:
+        description: Show garbage collection as `<GC>` frames
+        type: boolean
+        default: true
+      native_frames:
+        description: Show time in C code as `<native>` frames
+        type: boolean
+        default: false
+      opcodes:
+        description: Record bytecode instructions for the heatmap
+        type: boolean
+        default: false
+      heatmap:
+        description: Write line heatmaps (about 40 MB per scenario)
+        type: boolean
+        default: true
       baseline:
         description: Optional commit, branch, or tag to compare against with differential flamegraphs
-        default: ''
         type: string
+        default: ''
 
 permissions:
   contents: read
@@ -36,14 +157,25 @@ jobs:
   profile:
     name: Profile / Python 3.15
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       EFFECT: ${{ inputs.effect || 'all' }}
-      SCENARIOS: ${{ inputs.scenarios || 'medium/iterator large/iterator medium/terminal-output' }}
+      INPUT_PRESET: ${{ inputs.input_preset }}
+      LIFECYCLE: ${{ inputs.lifecycle }}
+      EFFECT_ARGS: ${{ inputs.effect_args }}
+      COLOR_MODE: ${{ inputs.color_mode || 'default' }}
+      EXISTING_COLOR_HANDLING: ${{ inputs.existing_color_handling || 'ignore' }}
+      SAMPLES: ${{ inputs.samples || 2 }}
+      SEED: ${{ inputs.seed || 1337 }}
+      SAMPLING_RATE: ${{ inputs.sampling_rate || '1khz' }}
+      SAMPLING_MODE: ${{ inputs.sampling_mode || 'wall' }}
+      # Booleans are empty on push, so test for the non-default value.
+      GC_FRAMES: ${{ inputs.gc_frames }}
+      NATIVE_FRAMES: ${{ inputs.native_frames }}
+      OPCODES: ${{ inputs.opcodes }}
+      HEATMAP: ${{ inputs.heatmap }}
       # A push compares against the previous `main`; a manual run compares only when asked.
       BASELINE: ${{ github.event_name == 'push' && github.event.before || inputs.baseline }}
-      SAMPLES: '2'
-      SEED: '1337'
       RESULTS: profile-results
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -60,26 +192,85 @@ jobs:
           cache-suffix: profile
       - name: Install package
         run: uv sync --locked --no-default-groups --no-editable
-      - name: Validate inputs and resolve baseline
+      - name: Resolve settings and baseline
         id: baseline
         run: |
-          for scenario in $SCENARIOS; do
-            if [[ ! "$scenario" =~ ^[a-z]+/(iterator|terminal-output)$ ]]; then
-              echo "Invalid scenario '$scenario'; expected <input-preset>/<lifecycle>." >&2
-              exit 1
-            fi
-          done
-          if [[ ! "$EFFECT" =~ ^[a-z0-9_]+$ ]]; then
-            echo "Invalid effect '$EFFECT'." >&2
+          fail() {
+            echo "$1" >&2
             exit 1
+          }
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            case "$INPUT_PRESET" in
+              'medium + large') presets='medium large' ;;
+              'all presets')
+                presets=$(.venv/bin/python -c \
+                  'from tools.perf.benchmark_effects import INPUT_PRESET_NAMES; print(*INPUT_PRESET_NAMES)')
+                ;;
+              *) presets=$INPUT_PRESET ;;
+            esac
+            case "$LIFECYCLE" in
+              both) lifecycles='iterator terminal-output' ;;
+              *) lifecycles=$LIFECYCLE ;;
+            esac
+            scenarios=''
+            for preset in $presets; do
+              for lifecycle in $lifecycles; do
+                scenarios+="$preset/$lifecycle "
+              done
+            done
+          else
+            scenarios='medium/iterator large/iterator medium/terminal-output'
           fi
+          for scenario in $scenarios; do
+            [[ "$scenario" =~ ^[a-z]+/(iterator|terminal-output)$ ]] ||
+              fail "Invalid scenario '$scenario'; expected <input-preset>/<lifecycle>."
+          done
+          [[ "$EFFECT" =~ ^[a-z0-9_]+$ ]] || fail "Invalid effect '$EFFECT'."
+          [[ "$SAMPLES" =~ ^[1-9][0-9]*$ ]] || fail "Samples must be a positive integer, not '$SAMPLES'."
+          [[ "$SEED" =~ ^-?[0-9]+$ ]] || fail "Seed must be an integer, not '$SEED'."
+          [[ "$SAMPLING_RATE" =~ ^[0-9]+khz$ ]] || fail "Invalid sampling rate '$SAMPLING_RATE'."
+          [[ "$SAMPLING_MODE" =~ ^(wall|cpu)$ ]] || fail "Invalid sampling mode '$SAMPLING_MODE'."
+          [[ "$EFFECT_ARGS" != *$'\n'* ]] || fail 'Effect arguments must be on one line.'
+          if [[ -n "$EFFECT_ARGS" && "$EFFECT" == all ]]; then
+            fail 'Effect arguments need a single effect; options differ between effects.'
+          fi
+
+          terminal_args=''
+          case "$COLOR_MODE" in
+            default) ;;
+            xterm-256) terminal_args+='--xterm-colors ' ;;
+            no-color) terminal_args+='--no-color ' ;;
+            *) fail "Invalid colour mode '$COLOR_MODE'." ;;
+          esac
+          case "$EXISTING_COLOR_HANDLING" in
+            ignore) ;;
+            always | dynamic) terminal_args+="--existing-color-handling $EXISTING_COLOR_HANDLING" ;;
+            *) fail "Invalid existing colour handling '$EXISTING_COLOR_HANDLING'." ;;
+          esac
+          # Fail now, with `tte`'s own message, rather than after the baseline has been recorded.
+          check_effect=$EFFECT
+          [[ "$check_effect" != all ]] || check_effect=wipe
+          .venv/bin/python -c '
+          import shlex, sys
+          from tools.perf.benchmark_effects import build_configs
+          build_configs(sys.argv[1], shlex.split(sys.argv[2]), shlex.split(sys.argv[3]))
+          ' "$check_effect" "$EFFECT_ARGS" "$terminal_args"
+
+          profiler_flags="-r $SAMPLING_RATE --mode $SAMPLING_MODE"
+          [[ "$GC_FRAMES" != false ]] || profiler_flags+=' --no-gc'
+          [[ "$NATIVE_FRAMES" != true ]] || profiler_flags+=' --native'
+          [[ "$OPCODES" != true ]] || profiler_flags+=' --opcodes'
+          {
+            echo "SCENARIOS=$scenarios"
+            echo "TERMINAL_ARGS=$terminal_args"
+            echo "PROFILER_FLAGS=$profiler_flags"
+          } >> "$GITHUB_ENV"
+
           sha=''
           if [[ -n "$BASELINE" && ! "$BASELINE" =~ ^0+$ ]]; then
             if ! sha=$(git rev-parse --verify --quiet "${BASELINE}^{commit}"); then
-              if ! sha=$(git rev-parse --verify --quiet "origin/${BASELINE}^{commit}"); then
-                echo "Baseline '$BASELINE' is not a commit, branch, or tag in this repository." >&2
-                exit 1
-              fi
+              sha=$(git rev-parse --verify --quiet "origin/${BASELINE}^{commit}") ||
+                fail "Baseline '$BASELINE' is not a commit, branch, or tag in this repository."
             fi
           fi
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
@@ -99,12 +290,14 @@ jobs:
           root=$PWD
           isolated="$RUNNER_TEMP/profile-cwd"
           mkdir -p "$isolated"
+          read -ra profiler_flags <<< "$PROFILER_FLAGS"
           record() {
             # record <output.bin> <preset> <lifecycle> <benchmark.json>, paths relative to the checkout
             (cd "$isolated" &&
-              "$venv/bin/python" -m profiling.sampling run --binary -o "$root/$1" \
+              "$venv/bin/python" -m profiling.sampling run "${profiler_flags[@]}" --binary -o "$root/$1" \
                 "$root/tools/perf/benchmark_effects.py" \
                 --effect "$EFFECT" --input-preset "$2" --lifecycle "$3" \
+                --effect-args="$EFFECT_ARGS" --terminal-args="$TERMINAL_ARGS" \
                 --samples "$SAMPLES" --warmups 0 --seed "$SEED" --json-out "$root/$4" > /dev/null)
           }
           replay() {
@@ -130,7 +323,9 @@ jobs:
             echo "::group::Profile $EFFECT / $preset / $lifecycle"
             record "$out/profile.bin" "$preset" "$lifecycle" "$out/benchmark.json"
             replay --flamegraph -o "$out/flamegraph.html" "$out/profile.bin"
-            replay --heatmap -o "$out/heatmap" "$out/profile.bin"
+            if [[ "$HEATMAP" != false ]]; then
+              replay --heatmap -o "$out/heatmap" "$out/profile.bin"
+            fi
             replay --gecko -o "$out/profile.gecko.json" "$out/profile.bin"
             replay --collapsed -o "$out/collapsed.txt" "$out/profile.bin"
             replay --jsonl -o "$out/profile.jsonl" "$out/profile.bin"
@@ -151,8 +346,12 @@ jobs:
           {
             echo '## Sampling profiles'
             echo
-            printf 'Commit %s, effect %s, %s timed samples per scenario, seed %s.\n' \
+            printf 'Commit %s, effect %s, %s timed samples per scenario, seed %s.\n\n' \
               "$GITHUB_SHA" "$EFFECT" "$SAMPLES" "$SEED"
+            printf -- '- Scenarios: %s\n' "$SCENARIOS"
+            printf -- '- Effect arguments: %s\n' "${EFFECT_ARGS:-(defaults)}"
+            printf -- '- Terminal arguments: %s\n' "${TERMINAL_ARGS:-(defaults)}"
+            printf -- '- Profiler options: %s\n' "$PROFILER_FLAGS"
             if [[ -n "$BASELINE_SHA" ]]; then
               printf 'Baseline %s: each scenario includes a differential flamegraph and benchmark comparison.\n' \
                 "$BASELINE_SHA"
