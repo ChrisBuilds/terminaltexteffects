@@ -69,6 +69,13 @@ GUIDE_DEMOS: dict[str, Demo] = {
     "myspray_step3": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step3"),
     "myspray_step4": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step4"),
     "myspray_step5": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step5"),
+    "myspray_step6": Demo(effect="myspray", input_file=TUTORIAL_INPUT, effects_dir=GUIDE_EXAMPLES / "myspray_step6"),
+    "myspray_step6_options": Demo(
+        effect="myspray",
+        effect_args=("--spray-position", "center", "--final-gradient-direction", "radial"),
+        input_file=TUTORIAL_INPUT,
+        effects_dir=GUIDE_EXAMPLES / "myspray_step6",
+    ),
     **{
         f"reveal_{order}": Demo(
             effect="reveal",
