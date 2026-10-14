@@ -9,7 +9,8 @@ from textual.widgets import Checkbox, Input, OptionList, TextArea
 
 from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.engine._recording import RecordingReader
-from terminaltexteffects.tui.app import CanvasView, CommandScreen, OptionEditor, PathScreen, TTEApp
+from terminaltexteffects.tui.app import CanvasView, CommandScreen, OptionEditor, TTEApp
+from terminaltexteffects.tui.files import FileScreen
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -174,7 +175,7 @@ def test_open_and_save_files(tmp_path: Path) -> None:
     async def script(app: TTEApp, pilot: Pilot[None]) -> None:
         await pilot.press("f2")
         await pilot.pause()
-        assert isinstance(app.screen, PathScreen)
+        assert isinstance(app.screen, FileScreen)
         app.screen.query_one("#path", Input).value = str(source)
         await pilot.press("enter")
         await pilot.pause()
@@ -233,7 +234,7 @@ def test_record_needs_a_frame_rate() -> None:
         await _set_frame_rate(app, pilot, "0")
         await pilot.press("f8")
         await pilot.pause()
-        assert not isinstance(app.screen, PathScreen)
+        assert not isinstance(app.screen, FileScreen)
 
     _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)
 
@@ -263,7 +264,7 @@ def test_app_shortcuts_wait_while_a_dialog_is_open() -> None:
         await pilot.pause()
         await pilot.press("f5")
         await pilot.pause()
-        assert isinstance(app.screen, PathScreen)
+        assert isinstance(app.screen, FileScreen)
         assert app.state == "editing"
 
     _run(TTEApp(_EFFECTS, "text", effect="wipe"), script)

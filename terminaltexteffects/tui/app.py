@@ -5,6 +5,7 @@ from __future__ import annotations
 import typing
 from pathlib import Path
 
+from rich.segment import Segment
 from rich.style import Style
 from rich.text import Text
 from textual import on, work
@@ -29,13 +30,15 @@ from textual.widgets import (
     TextArea,
 )
 
-from terminaltexteffects.engine.terminal import TerminalConfig
-from terminaltexteffects.tui import colors, frames, options
+from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
+from terminaltexteffects.tui import canvas, colors, frames, options
+from terminaltexteffects.tui.files import FileScreen
 from terminaltexteffects.tui.picker import ColorScreen
 
 if typing.TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from textual import events
     from textual.events import Resize
     from textual.timer import Timer
 
@@ -51,7 +54,20 @@ _OPTION_COLUMN_WIDTH = 64
 
 
 class ColorTextArea(TextArea):
-    """A plain-text editor that shows input colors carried across edits."""
+    """A plain-text editor that shows input colors carried across edits, and the canvas outline.
+
+    When the canvas is smaller than the editor, cells outside it are dimmed and an outline is drawn just outside it.
+    Dragging an outline edge that moves with the canvas anchor resizes the canvas.
+    """
+
+    class CanvasResized(Message):
+        """Posted while a canvas edge is dragged, with the new width or height, or `None` for an unchanged one."""
+
+        def __init__(self, width: int | None, height: int | None) -> None:
+            """Initialize the message with the new canvas `width` and `height`."""
+            super().__init__()
+            self.width = width
+            self.height = height
 
     def __init__(self, text: str = "", styles: colors.StyleList | None = None, **kwargs: typing.Any) -> None:
         """Initialize the editor with `text` and optional per-character `styles`."""
@@ -59,7 +75,98 @@ class ColorTextArea(TextArea):
         self._color_text = text
         self._color_styles: colors.StyleList | None = None
         self._line_starts: list[int] = [0]
+        self.canvas_rect: canvas.CanvasRect | None = None
+        self.canvas_anchor = "nw"
+        self._drag_edges: set[canvas.Edge] = set()
         self.attach_colors(text, styles)
+
+    def show_canvas(self, rect: canvas.CanvasRect | None, anchor: str) -> None:
+        """Outline `rect`, or nothing when the canvas fills the editor, for a canvas placed by `anchor`."""
+        if (rect, anchor) != (self.canvas_rect, self.canvas_anchor):
+            self.canvas_rect = rect
+            self.canvas_anchor = anchor
+            self.refresh()
+
+    def render_line(self, y: int) -> Strip:
+        """Render a line with the area outside the canvas dimmed and the canvas outline drawn over it."""
+        strip = super().render_line(y)
+        rect = self.canvas_rect
+        if rect is None:
+            return strip
+        width = strip.cell_length
+        dim = Style(dim=True)
+        if rect.top <= y < rect.bottom:
+            left = max(0, min(rect.left, width))
+            right = max(left, min(rect.right, width))
+            before, inside, after = strip.divide([left, right, width])
+            strip = Strip.join([_restyle(before, dim), inside, _restyle(after, dim)])
+        else:
+            strip = _restyle(strip, dim)
+        theme = self.app.theme_variables
+        movable = Style(color=theme.get("accent", "#fea62b"), bold=True)
+        fixed = Style(color=theme.get("primary-lighten-2", "#539eff"))
+        edges = canvas.draggable_edges(self.canvas_anchor)
+
+        def edge_style(*names: canvas.Edge) -> Style:
+            return movable if any(name in edges for name in names) else fixed
+
+        if y in (rect.top - 1, rect.bottom):
+            edge: canvas.Edge = "top" if y == rect.top - 1 else "bottom"
+            start = max(0, rect.left - 1)
+            end = min(width, rect.right + 1)
+            if start < end:
+                strip = _paint(strip, start, "─" * (end - start), edge_style(edge))
+            corners = ("┌", "┐") if edge == "top" else ("└", "┘")
+            if 0 <= rect.left - 1 < width:
+                strip = _paint(strip, rect.left - 1, corners[0], edge_style(edge, "left"))
+            if 0 <= rect.right < width:
+                strip = _paint(strip, rect.right, corners[1], edge_style(edge, "right"))
+        elif rect.top <= y < rect.bottom:
+            if 0 <= rect.left - 1 < width:
+                strip = _paint(strip, rect.left - 1, "│", edge_style("left"))
+            if 0 <= rect.right < width:
+                strip = _paint(strip, rect.right, "│", edge_style("right"))
+        return strip
+
+    def begin_canvas_drag(self, edges: set[canvas.Edge]) -> None:
+        """Start resizing the canvas by dragging `edges`."""
+        self._drag_edges = edges
+        self.capture_mouse()
+
+    # Textual also runs the `TextArea` mouse handlers after these unless `prevent_default` is called, which keeps
+    # a canvas drag from selecting text.
+
+    async def _on_mouse_down(self, event: events.MouseDown) -> None:
+        """Start a canvas drag on a movable outline edge. Elsewhere, `TextArea` starts a text selection."""
+        if self.canvas_rect is None:
+            return
+        edges = canvas.edges_at(self.canvas_rect, event.x, event.y, canvas.draggable_edges(self.canvas_anchor))
+        if edges:
+            event.prevent_default()
+            event.stop()
+            self.begin_canvas_drag(edges)
+
+    async def _on_mouse_move(self, event: events.MouseMove) -> None:
+        """Resize the canvas while dragging an edge. Otherwise, `TextArea` extends the text selection."""
+        if not self._drag_edges:
+            return
+        event.prevent_default()
+        width = height = None
+        anchor = self.canvas_anchor
+        if self._drag_edges & {"left", "right"}:
+            edge: canvas.Edge = "right" if "right" in self._drag_edges else "left"
+            width = canvas.dragged_size(edge, event.x, self.size.width, anchor)
+        if self._drag_edges & {"top", "bottom"}:
+            edge = "bottom" if "bottom" in self._drag_edges else "top"
+            height = canvas.dragged_size(edge, event.y, self.size.height, anchor)
+        self.post_message(ColorTextArea.CanvasResized(width, height))
+
+    async def _on_mouse_up(self, event: events.MouseUp) -> None:
+        """Finish a canvas drag. Otherwise, `TextArea` finishes the text selection."""
+        if self._drag_edges:
+            event.prevent_default()
+            self._drag_edges = set()
+            self.release_mouse()
 
     @property
     def color_styles(self) -> colors.StyleList | None:
@@ -117,6 +224,22 @@ class ColorTextArea(TextArea):
         return line
 
 
+def _restyle(strip: Strip, style: Style) -> Strip:
+    """Return `strip` with `style` added on top of each segment's style."""
+    return Strip(
+        [Segment(text, (segment_style or Style()) + style, control) for text, segment_style, control in strip],
+        strip.cell_length,
+    )
+
+
+def _paint(strip: Strip, x: int, text: str, style: Style) -> Strip:
+    """Return `strip` with the cells from `x` replaced by `text` in `style`, over the existing background."""
+    end = x + len(text)
+    before, covered, after = strip.divide([x, end, strip.cell_length])
+    background = next((segment.style.bgcolor for segment in covered if segment.style), None)
+    return Strip.join([before, Strip([Segment(text, Style(bgcolor=background) + style)], len(text)), after])
+
+
 def _rich_style(style: colors.CellStyle) -> Style:
     """Return the Rich style for an input color style."""
     return Style(
@@ -124,6 +247,24 @@ def _rich_style(style: colors.CellStyle) -> Style:
         bgcolor=f"#{style.bg.rgb_color}" if style.bg else None,
         bold=style.bold or None,
     )
+
+
+class Stage(Vertical):
+    """Holds the editor and the effect view. Its borders resize a canvas that reaches them, by dragging."""
+
+    def on_mouse_down(self, event: events.MouseDown) -> None:
+        """Start a canvas drag when a movable canvas edge lies on the clicked border."""
+        editor = self.query_one(ColorTextArea)
+        if not editor.display:
+            return
+        gutter = self.styles.gutter
+        x = event.x - gutter.left
+        y = event.y - gutter.top
+        rect = editor.canvas_rect or canvas.CanvasRect(0, 0, editor.size.width, editor.size.height)
+        edges = canvas.edges_at(rect, x, y, canvas.draggable_edges(editor.canvas_anchor))
+        if edges:
+            event.stop()
+            editor.begin_canvas_drag(edges)
 
 
 class CanvasView(Widget, can_focus=True):
@@ -362,68 +503,6 @@ class OptionEditor(Horizontal):
         self.post_message(OptionEditor.Edited(self))
 
 
-class PathScreen(ModalScreen["tuple[str, bool] | None"]):
-    """Asks for a file path, with an optional checkbox."""
-
-    DEFAULT_CSS = """
-    PathScreen {
-        align: center middle;
-    }
-    PathScreen > Vertical {
-        width: 72;
-        height: auto;
-        border: thick $primary;
-        background: $surface;
-        padding: 1 2;
-    }
-    PathScreen Input {
-        margin: 1 0;
-    }
-    PathScreen Horizontal {
-        height: auto;
-        align-horizontal: right;
-    }
-    PathScreen Button {
-        margin-left: 1;
-    }
-    """
-
-    BINDINGS: typing.ClassVar = [Binding("escape", "cancel", "Cancel")]
-
-    def __init__(self, title: str, path: str, checkbox: str | None = None, *, checked: bool = False) -> None:
-        """Initialize the dialog with a `title`, an initial `path`, and an optional checkbox label."""
-        super().__init__()
-        self._title = title
-        self._path = path
-        self._checkbox = checkbox
-        self._checked = checked
-
-    def compose(self) -> ComposeResult:
-        """Create the dialog."""
-        with Vertical():
-            yield Label(self._title)
-            yield Input(self._path, placeholder="path/to/file", id="path")
-            if self._checkbox is not None:
-                yield Checkbox(self._checkbox, value=self._checked, id="checkbox")
-            with Horizontal():
-                yield Button("OK", variant="primary", id="ok")
-                yield Button("Cancel", id="cancel")
-
-    @on(Input.Submitted)
-    @on(Button.Pressed, "#ok")
-    def _submit(self) -> None:
-        path = self.query_one("#path", Input).value.strip()
-        if not path:
-            return
-        checked = self.query_one("#checkbox", Checkbox).value if self._checkbox is not None else False
-        self.dismiss((path, checked))
-
-    @on(Button.Pressed, "#cancel")
-    def action_cancel(self) -> None:
-        """Close the dialog without a path."""
-        self.dismiss(None)
-
-
 class CommandScreen(ModalScreen[None]):
     """Shows the CLI command for the current effect and options."""
 
@@ -597,7 +676,7 @@ class TTEApp(App[None]):
             effect_list = OptionList(*self.effect_resource_map, id="effects")
             effect_list.border_title = "Effects"
             yield effect_list
-            with Vertical(id="stage"):
+            with Stage(id="stage"):
                 yield ColorTextArea(id="editor")
                 yield CanvasView(id="canvas")
         with Vertical(id="options"), TabbedContent():
@@ -761,7 +840,7 @@ class TTEApp(App[None]):
             self._file_text = self.editor.text
             self.notify(f"Opened {path}.")
 
-        self.push_screen(PathScreen("Open text file", self.input_file or ""), load)
+        self.push_screen(FileScreen("Open text file", self.input_file or "", mode="open"), load)
 
     def action_save(self) -> None:
         """Ask for a file and save the editor's text to it."""
@@ -784,10 +863,11 @@ class TTEApp(App[None]):
             self.notify(f"Saved {path}.")
 
         self.push_screen(
-            PathScreen(
+            FileScreen(
                 "Save text to file",
                 self.input_file or "",
-                "Keep input colors" if has_colors else None,
+                mode="save",
+                checkbox="Keep input colors" if has_colors else None,
                 checked=has_colors,
             ),
             save,
@@ -815,19 +895,81 @@ class TTEApp(App[None]):
         size = self.query_one("#stage").content_size
         return max(1, size.width), max(1, size.height)
 
-    def _refresh_subtitle(self) -> None:
-        """Show the canvas size and any validation problem under the text area."""
-        width, height = self._canvas_size()
+    def _canvas_geometry(self) -> canvas.CanvasRect:
+        """Return where the canvas sits in the text area for the current canvas options."""
+        area_width, area_height = self._canvas_size()
         values = {option.name: value for option, value in self._scope_values(_TERMINAL_SCOPE)}
-        canvas_width = values["canvas_width"] if values["canvas_width"] > 0 else width
-        canvas_height = values["canvas_height"] if values["canvas_height"] > 0 else height
-        subtitle = f"canvas {canvas_width}x{canvas_height}"
-        if (canvas_width, canvas_height) != (width, height):
+        width, height = values["canvas_width"], values["canvas_height"]
+        if width < 0 or height < 0:
+            # A dimension of -1 follows the text, so let the engine measure it.
+            try:
+                config = typing.cast("TerminalConfig", options.build_config(TerminalConfig, values))
+                terminal = Terminal(self.editor.colored_text(), config, terminal_dimensions=(area_width, area_height))
+                width, height = terminal.canvas.width, terminal.canvas.height
+            except Exception:  # noqa: BLE001
+                width, height = max(width, 0), max(height, 0)
+        return canvas.canvas_rect(
+            area_width,
+            area_height,
+            width or area_width,
+            height or area_height,
+            values["anchor_canvas"],
+        )
+
+    def _refresh_subtitle(self) -> None:
+        """Show the canvas outline, and the canvas size and any validation problem under the text area."""
+        width, height = self._canvas_size()
+        rect = self._canvas_geometry()
+        self.editor.show_canvas(
+            None if rect == canvas.CanvasRect(0, 0, width, height) else rect,
+            self._value_of("anchor_canvas"),
+        )
+        self._mark_stage_edges(rect, width, height)
+        subtitle = f"canvas {rect.width}x{rect.height}"
+        if (rect.width, rect.height) != (width, height):
             subtitle += f" of {width}x{height}"
+        subtitle += " · drag the orange edge to resize"
         errors = self._current_errors()
         if errors:
             subtitle = f"[{len(errors)} invalid option{'s' if len(errors) != 1 else ''}] " + subtitle
         self.query_one("#stage").border_subtitle = subtitle
+
+    def _mark_stage_edges(self, rect: canvas.CanvasRect, width: int, height: int) -> None:
+        """Color the text area's borders that a movable canvas edge reaches, since dragging them resizes it."""
+        stage = self.query_one("#stage")
+        on_border = {
+            "left": rect.left <= 0,
+            "right": rect.right >= width,
+            "top": rect.top <= 0,
+            "bottom": rect.bottom >= height,
+        }
+        accent = self.theme_variables.get("accent", "#fea62b")
+        for edge in ("left", "right", "top", "bottom"):
+            rule = f"border_{edge}"
+            if on_border[edge] and edge in canvas.draggable_edges(self._value_of("anchor_canvas")):
+                setattr(stage.styles, rule, ("round", accent))
+            else:
+                stage.styles.clear_rule(rule)
+
+    @on(TextArea.Changed, "#editor")
+    def _text_changed(self) -> None:
+        """Update the canvas outline, which can follow the text size."""
+        self._refresh_subtitle()
+
+    @on(ColorTextArea.CanvasResized)
+    def _canvas_resized(self, event: ColorTextArea.CanvasResized) -> None:
+        """Set the canvas options to the size dragged in the text area. A full dimension is stored as 0."""
+        area_width, area_height = self._canvas_size()
+        for name, value, area in (
+            ("canvas_width", event.width, area_width),
+            ("canvas_height", event.height, area_height),
+        ):
+            if value is None:
+                continue
+            entry = self.query_one(f"#option-{_TERMINAL_SCOPE}-{name}", OptionEditor).query_one(Input)
+            text = "0" if value >= area else str(value)
+            if entry.value != text:
+                entry.value = text
 
     def on_resize(self, event: Resize) -> None:
         """Fit the option columns to the screen width and update the canvas size shown under the text area."""
@@ -945,7 +1087,10 @@ class TTEApp(App[None]):
             if effect is not None:
                 self._record(effect, self.effect_name, Path(result[0]).expanduser())
 
-        self.push_screen(PathScreen("Record effect to file", f"{self.effect_name}{RECORDING_SUFFIX}"), record)
+        self.push_screen(
+            FileScreen("Record effect to file", f"{self.effect_name}{RECORDING_SUFFIX}", mode="save"),
+            record,
+        )
 
     @work(thread=True, exclusive=True, group="record")
     def _record(self, effect: BaseEffect, effect_name: str, path: Path) -> None:

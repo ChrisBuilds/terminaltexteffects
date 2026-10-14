@@ -84,8 +84,22 @@ By default the canvas is the whole text area and text is anchored to its top lef
 where you typed it. To preview an effect on a smaller canvas, set **canvas-width** and **canvas-height** on the
 Canvas tab. Setting either to `-1` sizes it to the text, as the command line does by default.
 
+When the canvas is smaller than the text area, it is outlined, and text outside it is dimmed because the effect
+won't show it. The outline sits just outside the canvas, so it covers the first clipped column and row. Drag an
+orange edge to resize the canvas, and the canvas options update to match. Which edges are orange depends on
+**anchor-canvas**: with the default `nw` anchor, the right and bottom edges move. When the canvas fills the text area,
+the text area's orange borders are its edges, so drag one inward to shrink the canvas. Dragging an edge back to the
+border sets that dimension to `0`, the whole text area.
+
 The exported command includes these canvas settings when they differ from the command-line defaults, so the effect
 plays the same way in your terminal.
+
+## Files
+
+++f2++, ++f3++, and ++f8++ open a file dialog with a folder tree and a path field. Browse the tree with the mouse or
+arrow keys, or type a path. Choosing a file twice, such as with a double click, opens it. When saving, choosing a
+folder keeps the file name you typed, and saving over an existing file asks for confirmation first. **Home** and
+**Up** (++ctrl+up++) change folders, and **Hidden** (++ctrl+t++) shows dot files.
 
 ## Input Colors
 
