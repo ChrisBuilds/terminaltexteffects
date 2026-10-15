@@ -1001,9 +1001,6 @@ def _check_recording_options(args: argparse.Namespace) -> None:
             _exit_with_error("--record cannot be combined with --repeat 0.")
         if args.frame_rate == 0:
             _exit_with_error("--record requires --frame-rate greater than 0.")
-        problem = export.format_problem(export.format_for(args.record))
-        if problem is not None:
-            _exit_with_error(problem)
 
 
 _PROGRESS_INTERVAL = 0.1
@@ -1219,6 +1216,10 @@ def main() -> None:
 
     terminal_config = TerminalConfig._build_config(args)
     if args.record is not None:
+        # Fail before rendering when GIF or WebP conversion is impossible, but after empty input has returned.
+        problem = export.format_problem(export.format_for(args.record))
+        if problem is not None:
+            _exit_with_error(problem)
         # Record the canvas alone; playback anchors it within the terminal.
         terminal_config.ignore_terminal_dimensions = True
 

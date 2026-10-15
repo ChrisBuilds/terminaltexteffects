@@ -893,6 +893,19 @@ def test_record_reports_missing_tools_before_rendering(
     assert list(tmp_path.iterdir()) == []
 
 
+def test_record_empty_input_skips_the_tool_check(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Empty input stays a successful no-op even when the converter is missing."""
+    monkeypatch.setattr(Terminal, "get_piped_input", lambda: " \n")
+    monkeypatch.setattr(export.shutil, "which", lambda _name: None)
+    _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
+    assert capsys.readouterr().err == ""
+    assert list(tmp_path.iterdir()) == []
+
+
 @pytest.mark.usefixtures("piped_input")
 def test_record_conversion_failure_leaves_no_file(
     monkeypatch: pytest.MonkeyPatch,
