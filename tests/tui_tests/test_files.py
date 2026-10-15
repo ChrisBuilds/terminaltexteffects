@@ -6,7 +6,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from textual.app import App
-from textual.widgets import DirectoryTree, Input, Static
+from textual.widgets import Checkbox, DirectoryTree, Input, Static
 
 from terminaltexteffects.tui.files import FileScreen
 
@@ -124,5 +124,11 @@ def test_hidden_files_toggle(tmp_path: Path) -> None:
         await pilot.press("ctrl+t")
         await pilot.pause()
         assert sorted(path.name for path in tree.filter_paths(entries)) == [".hidden", "shown"]
+        hidden = screen.query_one("#hidden", Checkbox)
+        assert hidden.value
+        await pilot.click("#hidden")
+        await pilot.pause()
+        assert not hidden.value
+        assert [path.name for path in tree.filter_paths(entries)] == ["shown"]
 
     _run(lambda: FileScreen("Open", str(tmp_path / "shown"), mode="open"), script)

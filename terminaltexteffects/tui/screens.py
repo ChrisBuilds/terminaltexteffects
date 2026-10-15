@@ -120,6 +120,7 @@ KEYS: tuple[tuple[str, str], ...] = (
     ("F2 / F3", "Open / save the text"),
     ("F4", "Show the command for the current settings, or load a pasted one"),
     ("Ctrl+T / Ctrl+G", "Fit the canvas exactly around the text / grow it to the whole text area"),
+    ("Ctrl+B / Ctrl+O", "Hide or show the effect list / the options panel"),
     ("Shift+F6 / F6", "Reset the focused option / all effect and canvas options"),
     ("F7", "Pick colors for the selected color option"),
     ("F8", "Export the effect to a tterec, GIF, or WebP file"),

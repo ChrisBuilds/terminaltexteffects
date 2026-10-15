@@ -81,6 +81,12 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
         margin-right: 1;
         background: $boost;
     }
+    FileScreen #hidden {
+        width: auto;
+        margin: 0;
+        padding: 0 1;
+        background: $boost;
+    }
     FileScreen #folder {
         width: 1fr;
         color: $text-muted;
@@ -180,8 +186,8 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
             with Horizontal(classes="toolbar"):
                 yield Button("Home", id="home", compact=True, tooltip="Browse your home folder")
                 yield Button("Up", id="up", compact=True, tooltip="Browse the parent folder (Ctrl+↑)")
-                yield Button("Hidden", id="hidden", compact=True, tooltip="Show or hide dot files (Ctrl+T)")
                 yield Static(str(folder), id="folder")
+                yield Checkbox("Hidden files", id="hidden", compact=True, tooltip="Show dot files (Ctrl+T)")
             yield FileTree(folder, id="tree")
             with Horizontal(classes="path-row"):
                 yield Label("File" if self.mode == "open" else "Save as")
@@ -229,10 +235,14 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
         """Browse the parent of the current folder."""
         self._browse(Path(self.file_tree.path).resolve().parent)
 
-    @on(Button.Pressed, "#hidden")
     def action_toggle_hidden(self) -> None:
         """Show or hide dot files."""
-        self.file_tree.show_hidden = not self.file_tree.show_hidden
+        self.query_one("#hidden", Checkbox).toggle()
+
+    @on(Checkbox.Changed, "#hidden")
+    def _hidden_changed(self, event: Checkbox.Changed) -> None:
+        event.stop()
+        self.file_tree.show_hidden = event.value
         self.file_tree.reload()
 
     @on(DirectoryTree.FileSelected)

@@ -7,6 +7,7 @@ import typing
 from typing import TYPE_CHECKING
 
 import pytest
+from rich.style import Style
 from textual.widgets import Input
 
 from terminaltexteffects.__main__ import build_parser
@@ -109,12 +110,14 @@ def test_outline_is_always_visible() -> None:
         stage = app.query_one("#stage").content_size
         assert (width, height) == (stage.width - 1, stage.height - 1)
         assert app.editor.canvas_rect == canvas.CanvasRect(0, 0, width, height)
-        assert app.editor.render_line(height).text == "█" * (width + 1)
+        bottom = app.editor.render_line(height).text
+        assert bottom.replace(" CANVAS ", "█" * len(" CANVAS ")) == "█" * (width + 1)
+        assert bottom.index(" CANVAS ") == (width - len(" CANVAS ")) // 2
         assert app.editor.render_line(0).text.endswith("█")
         await _set_canvas(app, pilot, "30", "5")
         assert app.editor.canvas_rect == canvas.CanvasRect(0, 0, 30, 5)
         assert "canvas 30x5" in str(app.query_one("#stage").border_subtitle)
-        assert app.editor.render_line(5).text.startswith("█" * 31)
+        assert app.editor.render_line(5).text.startswith("█" * 11 + " CANVAS " + "█" * 12)
         effect = app.build_effect()
         assert effect is not None
         assert effect._terminal_dimensions_override == (width, height)
@@ -162,5 +165,24 @@ def test_dragging_a_full_canvas_edge_shrinks_and_restores_it() -> None:
         await pilot.mouse_up("#editor", offset=(width, 4))
         await pilot.pause()
         assert app._value_of("canvas_width") == 0
+
+    _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)
+
+
+def test_outline_edges_light_up_under_the_mouse() -> None:
+    """Hovering an edge should light it, a corner should light both of its edges, and leaving should clear them."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        await _set_canvas(app, pilot, "30", "5")
+        editor = app.editor
+        await pilot.hover("#editor", offset=(30, 2))
+        assert editor._hover_edges == {"right"}
+        await pilot.hover("#editor", offset=(30, 5))
+        assert editor._hover_edges == {"right", "bottom"}
+        hot = Style(color=app.theme_variables["foreground"])
+        corner = editor.render_line(5).divide([30, 31])[1]
+        assert all(segment.style is not None and segment.style.color == hot.color for segment in corner)
+        await pilot.hover("#editor", offset=(5, 2))
+        assert editor._hover_edges == set()
 
     _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)

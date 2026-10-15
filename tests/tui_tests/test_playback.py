@@ -191,6 +191,7 @@ def test_session_is_restored(tmp_path: Path) -> None:
     async def first(app: TTEApp, pilot: Pilot[None]) -> None:
         await app.apply_command("tte --frame-rate 30 wipe --wipe-delay 2")
         app.query_one("#loop", Checkbox).value = True
+        await pilot.press("ctrl+b")
         app.editor.load_text("remember me")
         await pilot.pause()
         app.save_session()
@@ -202,6 +203,8 @@ def test_session_is_restored(tmp_path: Path) -> None:
         assert _editor(app, "wipe", "wipe_delay").value == 2
         assert _editor(app, "terminal", "frame_rate").value == 30
         assert app.query_one("#loop", Checkbox).value is True
+        assert not app.query_one("#effects-panel").display
+        assert app.query_one("#options").display
         assert app.editor.text == "remember me"
 
     _run(TTEApp(_EFFECTS, "", session_path=path), second)
@@ -322,3 +325,27 @@ def test_long_text_leaves_the_outline_visible() -> None:
         assert "scroll to see" not in str(app.query_one("#stage").border_subtitle)
 
     _run(TTEApp(_EFFECTS, "\n".join("x" * 200 for _ in range(60)), effect="wipe"), script)
+
+
+def test_panels_hide_to_give_the_text_room() -> None:
+    """The header checkboxes and their keys should hide the effect list and options panel, growing the text area."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        area = app._effect_area()
+        app.query_one("#effects", OptionList).focus()
+        await pilot.press("ctrl+b")
+        await pilot.pause()
+        assert not app.query_one("#effects-panel").display
+        assert app.focused is app.editor
+        await pilot.click("#show-options")
+        await pilot.pause()
+        assert not app.query_one("#options").display
+        grown = app._effect_area()
+        assert grown.width > area.width
+        assert grown.height > area.height
+        await pilot.press("ctrl+b", "ctrl+o")
+        await pilot.pause()
+        assert app.query_one("#effects-panel").display
+        assert app.query_one("#options").display
+
+    _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)

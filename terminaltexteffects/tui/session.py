@@ -1,9 +1,9 @@
 """Save and restore the TUI's last session.
 
 The session file keeps the selected effect, changed option values in their command-line spelling, the text with its
-input colors, and the playback toggles. Values are stored as text and parsed again on load, so a value that is no
-longer valid, or an effect that is no longer installed, is skipped instead of breaking startup. This module does not
-import Textual.
+input colors, the playback toggles, and which panels are shown. Values are stored as text and parsed again on load,
+so a value that is no longer valid, or an effect that is no longer installed, is skipped instead of breaking startup.
+This module does not import Textual.
 """
 
 from __future__ import annotations
@@ -37,6 +37,8 @@ class Session:
         input_file (str | None): File the text was last opened from or saved to.
         loop (bool): Whether playback loops.
         auto_replay (bool): Whether option changes replay the effect.
+        show_effects (bool): Whether the effect list is shown.
+        show_options (bool): Whether the options panel is shown.
 
     """
 
@@ -46,6 +48,8 @@ class Session:
     input_file: str | None = None
     loop: bool = False
     auto_replay: bool = False
+    show_effects: bool = True
+    show_options: bool = True
 
 
 def load_session(path: Path) -> Session | None:
@@ -68,6 +72,8 @@ def load_session(path: Path) -> Session | None:
         input_file=_optional_str(data.get("input_file")),
         loop=data.get("loop") is True,
         auto_replay=data.get("auto_replay") is True,
+        show_effects=data.get("show_effects") is not False,
+        show_options=data.get("show_options") is not False,
     )
 
 

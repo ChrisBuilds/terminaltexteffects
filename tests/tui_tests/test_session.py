@@ -16,7 +16,14 @@ if TYPE_CHECKING:
 def test_session_round_trips(tmp_path: Path) -> None:
     """A saved session should load back unchanged."""
     path = tmp_path / "config" / "session.json"
-    saved = session.Session("wipe", {"wipe": {"wipe_delay": "3"}}, "\x1b[31mhi\x1b[0m", "text.txt", loop=True)
+    saved = session.Session(
+        "wipe",
+        {"wipe": {"wipe_delay": "3"}},
+        "\x1b[31mhi\x1b[0m",
+        "text.txt",
+        loop=True,
+        show_options=False,
+    )
 
     session.save_session(path, saved)
 

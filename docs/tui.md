@@ -54,6 +54,9 @@ The interface needs a terminal for output. When standard output is redirected, `
   terminal options that affect previews: canvas size and anchors, text wrapping, frame rate, color handling, and tab
   width.
 
+The **Effects** and **Options** checkboxes in the header, or ++ctrl+b++ and ++ctrl+o++, hide those panels to give the
+text more room. The session remembers which panels are shown.
+
 The interface uses a TerminalTextEffects theme in purple, cyan, and white. Other Textual themes are available from
 the command palette (++ctrl+p++).
 
@@ -144,6 +147,7 @@ renders.
 | ++f9++ | Play a random effect. |
 | ++escape++ | Stop the effect, or clear the finished effect, and return to the text. |
 | ++ctrl+t++ / ++ctrl+g++ | Fit the canvas exactly around the text / grow it to the whole text area. |
+| ++ctrl+b++ / ++ctrl+o++ | Hide or show the effect list / the options panel. |
 | ++f2++ | Open a text file. |
 | ++f3++ | Save the text to a file. |
 | ++f4++ | Show the `tte` command for the current settings, or load a pasted command. |
@@ -163,8 +167,9 @@ Canvas tab. Setting either to `-1` sizes it to the text, as the command line doe
 sets the canvas to the size of the text, and **Max** (++ctrl+g++) sets it back to the whole text area.
 
 A cyan outline of full blocks marks the canvas, one cell outside it, and stays visible while you edit and while
-an effect plays. Text outside the canvas is dimmed because the effect won't show it. Drag the outline to resize
-the canvas, and **canvas-width** and **canvas-height** update to match. The outline is drawn on the edges that move
+an effect plays, with **CANVAS** in the middle of its bottom edge, or of its top edge when only that one moves. Text outside the canvas is dimmed because the
+effect won't show it. An edge lights up white under the mouse, and a corner lights both of its edges. Drag the
+outline to resize the canvas, and **canvas-width** and **canvas-height** update to match. The outline is drawn on the edges that move
 with **anchor-canvas**: with the default `nw` anchor, the right and bottom edges. The text area keeps one free column
 or row beyond each of those edges, so effects draw in a slightly smaller area than the text area, and the outline
 stays visible when the canvas fills that area. The text area shows no scrollbars, so they never cover the
@@ -197,7 +202,7 @@ Delete the file to start fresh.
 ++f2++, ++f3++, and ++f8++ open a file dialog with a folder tree and a path field. Browse the tree with the mouse or
 arrow keys, or type a path. Choosing a file twice, such as with a double click, opens it. When saving, choosing a
 folder keeps the file name you typed, and saving over an existing file asks for confirmation first. **Home** and
-**Up** (++ctrl+up++) change folders, and **Hidden** (++ctrl+t++) shows dot files.
+**Up** (++ctrl+up++) change folders, and the **Hidden files** checkbox (++ctrl+t++) shows dot files.
 
 ## Input Colors
 

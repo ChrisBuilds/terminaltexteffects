@@ -69,6 +69,8 @@ _SWATCH_CELL = "  "
 """One color in a clickable swatch: two cells, which look about square in most terminal fonts."""
 _MIN_LIST_HEIGHT = 3
 """Fewest rows, borders included, a dropdown list shrinks to when the options panel has little room."""
+_CANVAS_LABEL = " CANVAS "
+"""Label centered on the canvas outline's bottom edge, or its top edge when only that one moves."""
 _OPTION_COLUMN_WIDTH = 64
 _STATUS_INTERVAL = 0.25
 _LOOP_PAUSE = 1.0
@@ -108,6 +110,7 @@ class ColorTextArea(TextArea):
         self.canvas_area = canvas.CanvasRect(0, 0, 1, 1)
         self.canvas_anchor = "nw"
         self._drag_edges: set[canvas.Edge] = set()
+        self._hover_edges: set[canvas.Edge] = set()
         self._clip: tuple[str, colors.StyleList] | None = None
         """The text last cut or copied here, with its styles, so pasting it back keeps its colors."""
         self._paste_styles: tuple[int, colors.StyleList] | None = None
@@ -148,7 +151,8 @@ class ColorTextArea(TextArea):
             strip = Strip.join([_restyle(before, dim), inside, _restyle(after, dim)])
         else:
             strip = _restyle(strip, dim)
-        return _draw_outline(strip, y, rect, self.canvas_anchor, _outline_style(self))
+        hot = self._drag_edges or self._hover_edges
+        return _draw_outline(strip, y, rect, self.canvas_anchor, _outline_style(self), hot, _outline_hover_style(self))
 
     def begin_canvas_drag(self, edges: set[canvas.Edge]) -> None:
         """Start resizing the canvas by dragging `edges`."""
@@ -177,9 +181,28 @@ class ColorTextArea(TextArea):
             event.stop()
             self.begin_canvas_drag(edges)
 
+    def _set_hover_edges(self, edges: set[canvas.Edge]) -> None:
+        if edges != self._hover_edges:
+            self._hover_edges = edges
+            self.refresh()
+
+    def on_leave(self) -> None:
+        """Clear the outline highlight when the mouse leaves the text area."""
+        self._set_hover_edges(set())
+
     async def _on_mouse_move(self, event: events.MouseMove) -> None:
-        """Resize the canvas while dragging an edge. Otherwise, `TextArea` extends the text selection."""
+        """Resize the canvas while dragging an edge. Otherwise, light the edges under the mouse.
+
+        `TextArea` then extends any text selection.
+        """
         if not self._drag_edges:
+            rect = self.canvas_rect
+            hover = (
+                set()
+                if rect is None
+                else canvas.edges_at(rect, event.x, event.y, canvas.draggable_edges(self.canvas_anchor))
+            )
+            self._set_hover_edges(hover)
             return
         event.prevent_default()
         width = height = None
@@ -199,6 +222,7 @@ class ColorTextArea(TextArea):
             event.prevent_default()
             self._drag_edges = set()
             self.release_mouse()
+            self.refresh()
 
     @property
     def color_styles(self) -> colors.StyleList | None:
@@ -339,23 +363,56 @@ def _outline_style(widget: Widget) -> Style:
     return Style(color=widget.app.theme_variables.get("accent", "#fea62b"))
 
 
-def _draw_outline(strip: Strip, y: int, rect: canvas.CanvasRect, anchor: str, style: Style) -> Strip:
+def _outline_hover_style(widget: Widget) -> Style:
+    """Return the style of the outline edges under the mouse or being dragged."""
+    return Style(color=widget.app.theme_variables.get("foreground", "#ffffff"))
+
+
+def _draw_outline(
+    strip: Strip,
+    y: int,
+    rect: canvas.CanvasRect,
+    anchor: str,
+    style: Style,
+    hot: typing.AbstractSet[canvas.Edge] = frozenset(),
+    hot_style: Style | None = None,
+) -> Strip:
     """Return row `y` of `strip` with the outline of the canvas at `rect` drawn in full blocks.
 
     The outline is drawn one cell outside the canvas, on the edges that move with `anchor`. Those are the edges the
-    effect area leaves room for, so the outline stays visible at any canvas size.
+    effect area leaves room for, so the outline stays visible at any canvas size. The `hot` edges, under the mouse
+    or being dragged, are drawn in `hot_style`. The bottom edge, or the top edge when the bottom doesn't move, is
+    labeled `CANVAS` in its center.
     """
     edges = canvas.draggable_edges(anchor)
     width = strip.cell_length
+    hot_style = hot_style or style
+    side_styles = {edge: hot_style if edge in hot else style for edge in ("left", "right")}
     if ("top" in edges and y == rect.top - 1) or ("bottom" in edges and y == rect.bottom):
-        start = max(0, rect.left - 1 if "left" in edges else rect.left)
-        end = min(width, rect.right + 1 if "right" in edges else rect.right)
-        if start < end:
-            strip = _paint(strip, start, "█" * (end - start), style)
+        edge: canvas.Edge = "top" if "top" in edges and y == rect.top - 1 else "bottom"
+        row_style = hot_style if edge in hot else style
+        start = rect.left - 1 if "left" in edges else rect.left
+        end = rect.right + 1 if "right" in edges else rect.right
+        cells = [(x, row_style) for x in range(start, end)]
+        if edge not in hot:
+            # A hot side edge lights its corners too, so the edge reads as one piece.
+            cells = [
+                (x, side_styles["left"] if x == rect.left - 1 else side_styles["right"] if x == rect.right else s)
+                for x, s in cells
+            ]
+        for x, cell_style in cells:
+            if 0 <= x < width:
+                strip = _paint(strip, x, "█", cell_style)
+        labeled = "bottom" if "bottom" in edges else "top"
+        if edge == labeled and rect.width >= len(_CANVAS_LABEL) + 2:
+            x = rect.left + (rect.width - len(_CANVAS_LABEL)) // 2
+            if x >= 0 and x + len(_CANVAS_LABEL) <= width:
+                # Dark letters on the outline's color, so the label reads as cut out of the edge.
+                strip = _paint(strip, x, _CANVAS_LABEL, Style(color="black", bgcolor=row_style.color, bold=True))
     elif rect.top <= y < rect.bottom:
-        for x, edge in ((rect.left - 1, "left"), (rect.right, "right")):
-            if edge in edges and 0 <= x < width:
-                strip = _paint(strip, x, "█", style)
+        for x, side in ((rect.left - 1, "left"), (rect.right, "right")):
+            if side in edges and 0 <= x < width:
+                strip = _paint(strip, x, "█", side_styles[side])
     return strip
 
 
@@ -784,6 +841,11 @@ class TTEApp(App[None]):
         width: auto;
         color: $text-muted;
     }
+    #header Checkbox {
+        margin-right: 2;
+        padding: 0;
+        background: transparent;
+    }
     #main {
         height: 1fr;
     }
@@ -896,6 +958,22 @@ class TTEApp(App[None]):
         grid-rows: 1;
         height: auto;
     }
+    /* Every control lightens under the mouse, over whatever color its state gives it. */
+    Button:enabled:hover, Button.-primary:enabled:hover {
+        background: $primary;
+        background-tint: $foreground 25%;
+        color: $text;
+    }
+    Checkbox:hover, #transport Checkbox:hover, OptionEditor > Checkbox:hover,
+    Input:hover, OptionEditor > Input:hover, #effect-filter:hover,
+    SelectCurrent:hover, OptionEditor > Select:hover, OptionEditor > .swatch:hover,
+    Tab:hover {
+        background-tint: $foreground 25%;
+    }
+    Checkbox:hover > .toggle--label {
+        background: $primary;
+        color: $text;
+    }
     """
 
     BINDINGS: typing.ClassVar = [
@@ -911,6 +989,8 @@ class TTEApp(App[None]):
         Binding("f4", "command", "Command", priority=True),
         Binding("f6", "reset", "Reset options", priority=True, show=False),
         Binding("f8", "export", "Export", priority=True),
+        Binding("ctrl+b", "toggle_panel('show-effects')", "Effect list", priority=True, show=False),
+        Binding("ctrl+o", "toggle_panel('show-options')", "Options panel", priority=True, show=False),
         Binding("ctrl+q", "quit", "Quit", priority=True),
     ]
 
@@ -969,6 +1049,8 @@ class TTEApp(App[None]):
         """Create the header, effect list, playback bar, editor, canvas, and options panel."""
         with Horizontal(id="header"):
             yield Static(gradient_text("TerminalTextEffects"), id="title")
+            yield self._panel_toggle("Effects", "show-effects", "Show the effect list (Ctrl+B)")
+            yield self._panel_toggle("Options", "show-options", "Show the options panel (Ctrl+O)")
             yield Static("F1 help", id="hint")
         with Horizontal(id="main"):
             with Vertical(id="effects-panel") as effects_panel:
@@ -1006,6 +1088,12 @@ class TTEApp(App[None]):
                 yield Vertical(id="terminal-options", classes="option-grid")
         yield ExportProgress(id="export-progress")
         yield Footer()
+
+    @staticmethod
+    def _panel_toggle(label: str, toggle_id: str, tooltip: str) -> Checkbox:
+        toggle = Checkbox(label, value=True, id=toggle_id, compact=True, tooltip=tooltip)
+        toggle.can_focus = False
+        return toggle
 
     @staticmethod
     def _transport_buttons(*buttons: tuple[str, str, str]) -> Iterator[Button]:
@@ -1067,9 +1155,11 @@ class TTEApp(App[None]):
                 self.input_file = saved.input_file
         self.query_one("#loop", Checkbox).value = saved.loop
         self.query_one("#auto-replay", Checkbox).value = saved.auto_replay
+        self.query_one("#show-effects", Checkbox).value = saved.show_effects
+        self.query_one("#show-options", Checkbox).value = saved.show_options
 
     def save_session(self) -> None:
-        """Save the selected effect, changed options, text, and playback toggles to the session file."""
+        """Save the selected effect, changed options, text, playback toggles, and shown panels to the session file."""
         if self.session_path is None:
             return
         values = {
@@ -1088,6 +1178,8 @@ class TTEApp(App[None]):
             input_file=self.input_file,
             loop=self.query_one("#loop", Checkbox).value,
             auto_replay=self.query_one("#auto-replay", Checkbox).value,
+            show_effects=self.query_one("#show-effects", Checkbox).value,
+            show_options=self.query_one("#show-options", Checkbox).value,
         )
         # The session is a convenience, so a read-only config directory should not stop the app from quitting.
         with contextlib.suppress(OSError):
@@ -1649,6 +1741,20 @@ class TTEApp(App[None]):
             "Effects ignore text colors until existing color handling on the Canvas tab is 'always' or 'dynamic'.",
             timeout=8,
         )
+
+    def action_toggle_panel(self, toggle_id: str) -> None:
+        """Show or hide the panel that the header checkbox `toggle_id` controls."""
+        self.query_one(f"#{toggle_id}", Checkbox).toggle()
+
+    @on(Checkbox.Changed, "#show-effects, #show-options")
+    def _panel_toggled(self, event: Checkbox.Changed) -> None:
+        """Show or hide the effect list or the options panel, giving its room to the text area."""
+        event.stop()
+        panel = self.query_one("#effects-panel" if event.checkbox.id == "show-effects" else "#options")
+        if not event.value and panel.has_focus_within:
+            self.editor.focus()
+        panel.display = event.value
+        self.call_after_refresh(self._refresh_subtitle)
 
     def on_resize(self, event: Resize) -> None:
         """Fit the option columns to the screen width and update the canvas size shown under the text area."""

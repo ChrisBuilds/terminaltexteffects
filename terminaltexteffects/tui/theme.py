@@ -36,6 +36,7 @@ TTE_THEME = Theme(
         "footer-key-foreground": CYAN,
         "input-selection-background": f"{PURPLE} 50%",
         "border": CYAN,
+        "block-hover-background": f"{PURPLE} 55%",
     },
 )
 """Textual theme in TTE's purple, cyan, and white."""
