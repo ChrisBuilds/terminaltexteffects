@@ -1630,19 +1630,24 @@ class TTEApp(App[None]):
         current = pen.fg if layer == "fg" else pen.bg
         title = "text" if layer == "fg" else "text background"
 
+        def recolor(style: colors.CellStyle | None, color: Color | None) -> colors.CellStyle | None:
+            updated = dataclasses.replace(style or colors.CellStyle(), **{layer: color})
+            return None if updated == colors.CellStyle() else updated
+
         def apply(result: tuple[Color, ...] | None) -> None:
             editor.focus()
-            if not result:
+            if result is None:
                 return
-            color = result[0]
+            # An empty result is No color.
+            color = result[0] if result else None
             editor.pen = dataclasses.replace(editor.pen or colors.CellStyle(), **{layer: color})
-            if editor.paint_selection(lambda style: dataclasses.replace(style or colors.CellStyle(), **{layer: color})):
+            if editor.paint_selection(lambda style: recolor(style, color)):
                 # Deselect so the new colors show instead of the selection highlight.
                 editor.move_cursor(editor.selection.end)
             self._show_pen()
             self._suggest_color_handling()
 
-        self.push_screen(ColorScreen(title, [current or Color("ffffff")], multiple=False), apply)
+        self.push_screen(ColorScreen(title, [current or Color("ffffff")], multiple=False, allow_none=True), apply)
 
     @on(TextToolbar.ClearColor)
     def _clear_text_color(self) -> None:

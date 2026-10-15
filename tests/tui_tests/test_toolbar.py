@@ -122,6 +122,35 @@ def test_text_colors_paint_the_selection_and_new_text() -> None:
     _run(TTEApp(_EFFECTS, "abcd", effect="wipe"), script)
 
 
+def test_no_color_removes_one_layer() -> None:
+    """No color in the picker should remove that layer from the selection and new text, keeping the other layer."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        editor = app.editor
+        red = Color("ff0000")
+        blue = Color("0000ff")
+        editor.attach_colors("abc", [colors.CellStyle(fg=red, bg=blue), colors.CellStyle(fg=red), None])
+        editor.pen = colors.CellStyle(fg=red, bg=blue)
+        editor.focus()
+        editor.selection = Selection((0, 0), (0, 2))
+        app.query_one(TextToolbar).post_message(TextToolbar.PickColor("fg"))
+        await pilot.pause()
+        assert isinstance(app.screen, ColorScreen)
+        await pilot.click("#no-color")
+        await pilot.pause()
+        assert not isinstance(app.screen, ColorScreen)
+        assert editor.color_styles == [colors.CellStyle(bg=blue), None, None]
+        assert editor.pen == colors.CellStyle(bg=blue)
+
+    _run(TTEApp(_EFFECTS, "abc", effect="wipe"), script)
+
+
+def test_option_color_pickers_have_no_no_color_button() -> None:
+    """Color options always need a color, so their picker shouldn't offer No color."""
+    screen = ColorScreen("final-gradient-stops", [Color("ffffff")], multiple=True)
+    assert not screen.allow_none
+
+
 def test_paint_skips_newlines_and_drops_empty_styles() -> None:
     """`paint` should leave newlines unstyled and turn empty styles into `None`."""
     red = colors.CellStyle(fg=Color("ff0000"))

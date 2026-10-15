@@ -81,8 +81,8 @@ previews the gradient. Press ++ctrl+s++ or choose **Apply** to keep the colors, 
 ### Text toolbar
 
 **Text** and **Background** open the color picker for the text color and the background color. A picked color
-applies to the selected text and to text you type or insert afterwards. **Clear** removes the colors from the
-selected text and stops coloring new text. Each chip shows its current color, or a hatched square when there is
+applies to the selected text and to text you type or insert afterwards. **No color** in the picker removes just that
+color, keeping the other one. **Clear** removes both colors from the selected text and stops coloring new text. Each chip shows its current color, or a hatched square when there is
 none.
 
 **Symbols** opens a palette of blocks, single and rounded lines, double lines, shapes, and arrows. Click a symbol,

@@ -395,7 +395,10 @@ class GradientBar(Widget):
 
 
 class ColorScreen(ModalScreen["tuple[Color, ...] | None"]):
-    """Edits one color, or the stops of a gradient, and returns them, or `None` when cancelled."""
+    """Edits one color, or the stops of a gradient, and returns them, or `None` when cancelled.
+
+    With `allow_none`, a No color button returns an empty tuple.
+    """
 
     DEFAULT_CSS = """
     ColorScreen {
@@ -459,6 +462,9 @@ class ColorScreen(ModalScreen["tuple[Color, ...] | None"]):
         color: $text-error;
         background: $error 15%;
     }
+    ColorScreen #no-color {
+        margin-left: 4;
+    }
     ColorScreen .buttons {
         dock: bottom;
         align-horizontal: right;
@@ -473,18 +479,27 @@ class ColorScreen(ModalScreen["tuple[Color, ...] | None"]):
         Binding("ctrl+s", "apply", "Apply"),
     ]
 
-    def __init__(self, title: str, colors: typing.Sequence[Color], *, multiple: bool) -> None:
+    def __init__(
+        self,
+        title: str,
+        colors: typing.Sequence[Color],
+        *,
+        multiple: bool,
+        allow_none: bool = False,
+    ) -> None:
         """Initialize the dialog.
 
         Args:
             title (str): Option name shown in the border.
             colors (Sequence[Color]): Initial colors. Only the first is used unless `multiple` is set.
             multiple (bool): Whether to edit a list of gradient stops.
+            allow_none (bool): Whether to offer a No color button, which returns an empty tuple.
 
         """
         super().__init__()
         self._title = title
         self.multiple = multiple
+        self.allow_none = allow_none
         initial = list(colors) or [Color("ffffff")]
         self.stops: list[Color] = initial if multiple else initial[:1]
         self.index = 0
@@ -514,6 +529,8 @@ class ColorScreen(ModalScreen["tuple[Color, ...] | None"]):
                         with Horizontal(classes="channel"):
                             yield Label(label)
                             yield ChannelBar(typing.cast("ChannelName", channel), id=channel)
+                    if self.allow_none:
+                        yield Button("⊘ No color", id="no-color", compact=True, tooltip="Remove this color")
                     with Horizontal(classes="buttons"):
                         yield Button("Cancel", id="cancel")
                         yield Button("Apply", variant="primary", id="apply")
@@ -623,6 +640,10 @@ class ColorScreen(ModalScreen["tuple[Color, ...] | None"]):
     def action_apply(self) -> None:
         """Close the dialog and return the colors."""
         self.dismiss(tuple(self.stops))
+
+    @on(Button.Pressed, "#no-color")
+    def _no_color(self) -> None:
+        self.dismiss(())
 
     @on(Button.Pressed, "#cancel")
     def action_cancel(self) -> None:
