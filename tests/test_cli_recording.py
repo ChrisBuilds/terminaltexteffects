@@ -7,8 +7,8 @@ import os
 import random
 import struct
 import sys
+import typing
 import zlib
-from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
@@ -27,6 +27,7 @@ from terminaltexteffects.utils import ansitools, export
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
+    from pathlib import Path
 
 pytestmark = [pytest.mark.smoke]
 
@@ -822,48 +823,78 @@ def test_thunderstorm_storm_follows_frame_clock() -> None:
     assert not iterator.strike_in_progress  # type: ignore[attr-defined]
 
 
+class _ExportCall(typing.NamedTuple):
+    output: Path
+    fmt: export.ExportFormat
+    fps: int
+
+
 @pytest.fixture
-def export_tools(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
-    """Report agg and gif2webp on `PATH`, and record their commands instead of running them."""
-    commands: list[list[str]] = []
+def export_calls(monkeypatch: pytest.MonkeyPatch) -> list[_ExportCall]:
+    """Report Pillow as installed, and record GIF and WebP conversions instead of drawing them."""
+    calls: list[_ExportCall] = []
 
-    def run(command: list[str]) -> None:
-        commands.append(command)
-        Path(command[-1]).write_bytes(command[0].encode())
+    def export_recording(_recording: Path, output: Path, fmt: export.ExportFormat, *, fps: int) -> frozenset[str]:
+        calls.append(_ExportCall(output, fmt, fps))
+        output.write_bytes(fmt.name.encode())
+        return frozenset()
 
-    monkeypatch.setattr(export.shutil, "which", lambda name: f"/bin/{name}")
-    monkeypatch.setattr(export, "_run", run)
-    return commands
+    monkeypatch.setattr(export, "pillow_available", lambda: True)
+    monkeypatch.setattr(export, "export_recording", export_recording)
+    return calls
 
 
 @pytest.mark.usefixtures("piped_input")
-@pytest.mark.parametrize(
-    ("suffix", "commands", "tools"),
-    [(".gif", ["agg", "gifsicle"], ["agg"]), (".WEBP", ["agg", "gif2webp"], ["agg", "gif2webp"])],
-)
+@pytest.mark.parametrize("suffix", [".gif", ".WEBP"])
 def test_record_converts_gif_and_webp_by_suffix(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
-    export_tools: list[list[str]],
+    export_calls: list[_ExportCall],
     suffix: str,
-    commands: list[str],
-    tools: list[str],
 ) -> None:
     """A .gif or .webp path renders a recording and converts it at the recording frame rate."""
     path = tmp_path / f"out{suffix}"
     _run(monkeypatch, "--record", str(path), "--frame-rate", "24", "--repeat", "2", "wipe")
-    assert [command[0] for command in export_tools] == commands
-    agg = export_tools[0]
-    assert agg[agg.index("--fps-cap") + 1] == "25"
-    assert path.read_bytes() == commands[-1].encode()
+    fmt = export.format_for(path)
+    assert export_calls == [_ExportCall(path, fmt, 24)]
+    assert path.read_bytes() == fmt.name.encode()
     assert list(tmp_path.iterdir()) == [path]
     error = capsys.readouterr().err
-    name = export.format_for(path).name
-    assert f"frames to {name} with {' and '.join(tools)}\n" in error
+    assert f"frames to {fmt.name}\n" in error
     assert "frames in 2 segments" in error
     assert f"at 24 fps) to {path}" in error
     assert "\r" not in error
+
+
+@pytest.mark.usefixtures("piped_input")
+@pytest.mark.parametrize(("suffix", "magic"), [(".gif", b"GIF89a"), (".webp", b"RIFF")])
+def test_record_draws_gif_and_webp_with_pillow(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    suffix: str,
+    magic: bytes,
+) -> None:
+    """GIF and WebP files are drawn from the recording with Pillow when it is installed."""
+    pytest.importorskip("PIL")
+    path = tmp_path / f"out{suffix}"
+    _run(monkeypatch, "--record", str(path), "--frame-rate", "24", "wipe")
+    assert path.read_bytes().startswith(magic)
+    assert list(tmp_path.iterdir()) == [path]
+
+
+@pytest.mark.usefixtures("piped_input")
+def test_record_names_symbols_no_font_has(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    export_calls: list[_ExportCall],
+) -> None:
+    """Symbols drawn as missing-glyph boxes are listed after the export."""
+    monkeypatch.setattr(export, "export_recording", lambda *_args, **_kwargs: frozenset({"b", "a"}))
+    _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
+    assert "No installed font has these symbols, drawn as boxes: a b\n" in capsys.readouterr().err
+    assert not export_calls
 
 
 @pytest.mark.usefixtures("piped_input")
@@ -871,7 +902,7 @@ def test_record_shows_frame_count_on_a_terminal(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
-    export_tools: list[list[str]],
+    export_calls: list[_ExportCall],
 ) -> None:
     """On a terminal, the frame count updates in place and is erased before the next line."""
     monkeypatch.setattr(__main__, "_is_terminal", lambda _stream: True)
@@ -880,65 +911,63 @@ def test_record_shows_frame_count_on_a_terminal(
     error = capsys.readouterr().err
     assert error.startswith("\rRendering frame 1\rRendering frame 2")
     assert "\r\x1b[KDrawing " in error
-    assert export_tools
+    assert export_calls
 
 
 @pytest.mark.usefixtures("piped_input")
-def test_record_reports_missing_tools_before_rendering(
+def test_record_reports_missing_pillow_before_rendering(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """A missing converter fails with its name and source before any frame renders."""
-    monkeypatch.setattr(export.shutil, "which", lambda name: None if name == "gif2webp" else f"/bin/{name}")
+    """Without Pillow, GIF and WebP fail with the install command before any frame renders."""
+    monkeypatch.setattr(export, "pillow_available", lambda: False)
+    monkeypatch.setattr(export, "PILLOW_PYTHON", True)
     monkeypatch.setattr(__main__, "_create_effect", Mock(side_effect=AssertionError("rendered")))
     error = _run_error(monkeypatch, capsys, "--record", str(tmp_path / "out.webp"), "wipe")
-    assert error == "Error: WebP needs gif2webp from libwebp on PATH.\n"
+    assert error == f"Error: WebP export needs Pillow; install it with: {export.INSTALL_HINT}\n"
     assert list(tmp_path.iterdir()) == []
 
 
-def test_record_empty_input_skips_the_tool_check(
+def test_record_empty_input_skips_the_pillow_check(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """Empty input stays a successful no-op even when the converter is missing."""
+    """Empty input stays a successful no-op even when Pillow is missing."""
     monkeypatch.setattr(Terminal, "get_piped_input", lambda: " \n")
-    monkeypatch.setattr(export.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(export, "pillow_available", lambda: False)
     _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
     assert capsys.readouterr().err == ""
     assert list(tmp_path.iterdir()) == []
 
 
-@pytest.mark.usefixtures("piped_input")
+@pytest.mark.usefixtures("piped_input", "export_calls")
 def test_record_conversion_failure_leaves_no_file(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """A converter that fails reports its error and leaves no output."""
+    """A conversion that fails reports its error and leaves no output."""
 
-    def run(command: list[str]) -> None:
-        message = f"{command[0]} exited with 2: bad font"
+    def export_recording(*_args: object, **_kwargs: object) -> typing.NoReturn:
+        message = "No monospace font was found; install DejaVu Sans Mono."
         raise export.ExportError(message)
 
-    monkeypatch.setattr(export.shutil, "which", lambda name: f"/bin/{name}")
-    monkeypatch.setattr(export, "_run", run)
+    monkeypatch.setattr(export, "export_recording", export_recording)
     error = _run_error(monkeypatch, capsys, "--record", str(tmp_path / "out.gif"), "wipe")
-    assert error.endswith("Error: agg exited with 2: bad font\n")
+    assert error.endswith("Error: No monospace font was found; install DejaVu Sans Mono.\n")
     assert list(tmp_path.iterdir()) == []
 
 
-@pytest.mark.usefixtures("piped_input")
+@pytest.mark.usefixtures("piped_input", "export_calls")
 def test_record_interrupted_conversion_leaves_no_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """Ctrl+C while converting exits with status 1 and leaves no partial output."""
+    """Ctrl+C while converting exits with status 1 and leaves no output."""
 
-    def run(command: list[str]) -> None:
-        Path(command[-1]).write_bytes(b"partial")
+    def export_recording(*_args: object, **_kwargs: object) -> typing.NoReturn:
         raise KeyboardInterrupt
 
-    monkeypatch.setattr(export.shutil, "which", lambda name: f"/bin/{name}")
-    monkeypatch.setattr(export, "_run", run)
+    monkeypatch.setattr(export, "export_recording", export_recording)
     with pytest.raises(SystemExit) as error:
         _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
     assert error.value.code == 1

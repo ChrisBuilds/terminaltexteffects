@@ -173,17 +173,26 @@ animation of the canvas instead of writing a recording. Any other extension writ
 tte -i banner.txt --frame-rate 30 --record banner.webp wipe
 ```
 
-| Extension | What you get | Needs |
-| --- | --- | --- |
-| `.gif` | An animation of the canvas, with the last frame held for two seconds. | [agg](https://github.com/asciinema/agg) 1.7 or later on `PATH`. When [gifsicle](https://www.lcdf.org/gifsicle/) is also on `PATH`, it makes the GIF about 10% smaller with no visible change. |
-| `.webp` | The same animation as a lossless animated WebP, usually much smaller. | agg and `gif2webp` from [libwebp](https://developers.google.com/speed/webp/download) on `PATH`. |
+| Extension | What you get |
+| --- | --- |
+| `.gif` | An animation of the canvas, with the last frame held for two seconds, at up to 50 frames per second. Colors are reduced to one palette of 255. |
+| `.webp` | The same animation as a lossless animated WebP, keeping every color and frame. |
 
-A missing command is reported before anything renders. `--frame-rate` becomes the animation's frame rate, and
+Both formats are drawn with [Pillow](https://python-pillow.org), which needs Python 3.10 or later:
+
+```bash
+pip install 'terminaltexteffects[export]'
+```
+
+No other programs are needed. Text is drawn in DejaVu Sans Mono, Menlo, Consolas, or Liberation Mono,
+whichever is installed first, and symbols that font lacks come from another installed font that has them.
+Symbols no installed font has are listed after the export.
+
+A missing Pillow is reported before anything renders. `--frame-rate` becomes the animation's frame rate, and
 `--repeat` and `--random-effect` add their playbacks to the same animation. On a terminal, a frame count
-updates in place while frames render, then a line names the frames being drawn with agg. When standard error is
-redirected, only whole lines are written. An interrupted or failed conversion leaves no partial file. asciinema
-itself isn't needed: tte writes the asciicast that agg renders. The [TUI](tui.md#export) exports the same
-formats.
+updates in place while frames render, then a line names the frames being drawn. When standard error is
+redirected, only whole lines are written. An interrupted or failed conversion leaves no partial file. The
+[TUI](tui.md#export) exports the same formats.
 
 ### Playback
 

@@ -1,4 +1,4 @@
-"""Tests for the TUI export dialog, without running external tools."""
+"""Tests for the TUI export dialog."""
 
 from __future__ import annotations
 
@@ -19,8 +19,8 @@ _, _EFFECTS = build_parser(include_user_effects=False)
 
 
 def test_export_dialog_offers_formats(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The export dialog should switch the suffix with the format and refuse a format whose tools are missing."""
-    monkeypatch.setattr(export.shutil, "which", lambda _name: None)
+    """The export dialog should switch the suffix with the format and refuse a format whose Pillow is missing."""
+    monkeypatch.setattr(export, "pillow_available", lambda: False)
 
     async def main() -> None:
         app = TTEApp(_EFFECTS, "Hi", effect="wipe")
@@ -38,7 +38,7 @@ def test_export_dialog_offers_formats(monkeypatch: pytest.MonkeyPatch) -> None:
             await pilot.press("enter")
             await pilot.pause()
             assert app.screen is screen
-            assert "agg" in str(screen.query_one("#message").render())
+            assert "export needs" in str(screen.query_one("#message").render())
             path.value = "wipe.tterec"
             await pilot.pause()
             assert screen.query_one("#format", Select).value == ".tterec"

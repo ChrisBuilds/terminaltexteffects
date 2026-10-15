@@ -1,6 +1,7 @@
 """Interactive Textual interface for composing text and previewing effects.
 
-The interface needs the optional `tui` extra (`pip install terminaltexteffects[tui]`), which installs Textual.
+The interface needs the optional `tui` extra (`pip install terminaltexteffects[tui]`), which installs Textual, and
+Pillow for GIF and WebP export.
 Importing this package does not import Textual; `run` imports it when the interface starts.
 """
 

@@ -1,9 +1,8 @@
-"""Cover the demo renderer's recording conversion and demo selection, without running external tools."""
+"""Cover the demo renderer's output and demo selection."""
 
 from __future__ import annotations
 
 import argparse
-import json
 from typing import TYPE_CHECKING
 
 import pytest
@@ -23,33 +22,24 @@ def write_recording(path: Path, frames: list[str], frame_rate: int = 10) -> None
             writer.write_frame(frame)
 
 
-def read_cast(path: Path) -> tuple[dict[str, int], list[list[object]]]:
-    """Return the asciicast header and events."""
-    header, *events = (json.loads(line) for line in path.read_text(encoding="utf-8").splitlines())
-    return header, events
+def test_render_writes_each_format_and_reports_sizes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Each requested format is drawn from one recording and named after the demo."""
+    pytest.importorskip("PIL")
 
+    def record(_demo: render_demos.Demo, path: Path) -> None:
+        write_recording(path, ["ab\ncd", "ef\ngh"])
 
-def test_cast_holds_only_the_canvas_at_the_frame_period(tmp_path: Path) -> None:
-    """Frames are redrawn from the top-left corner every frame period, after the start hold."""
-    write_recording(tmp_path / "demo.tterec", ["ab\ncd", "ef\ngh", "ij\nkl"])
-
-    non_ascii = render_demos.recording_to_cast(tmp_path / "demo.tterec", tmp_path / "demo.cast", start_hold=0.5)
-
-    header, events = read_cast(tmp_path / "demo.cast")
-    assert header == {"version": 2, "width": 2, "height": 2}
-    assert events == [
-        [0.0, "o", "\x1b[?25l\x1b[2J\x1b[Hab\r\ncd"],
-        [0.6, "o", "\x1b[Hef\r\ngh"],
-        [0.7, "o", "\x1b[Hij\r\nkl"],
-    ]
-    assert not non_ascii
-
-
-def test_cast_reports_non_ascii_frames(tmp_path: Path) -> None:
-    """Non-ASCII symbols select the `resvg` renderer."""
-    write_recording(tmp_path / "demo.tterec", ["ab\ncd", "aé\ncd"])
-
-    assert render_demos.recording_to_cast(tmp_path / "demo.tterec", tmp_path / "demo.cast", start_hold=0)
+    monkeypatch.setattr(render_demos, "record", record)
+    message = render_demos.render(
+        "beams",
+        render_demos.Demo(effect="beams"),
+        tmp_path,
+        render_demos.RenderOptions(formats=("gif", "webp")),
+    )
+    assert (tmp_path / "beams_demo.gif").read_bytes().startswith(b"GIF89a")
+    assert (tmp_path / "beams_demo.webp").read_bytes()[8:12] == b"WEBP"
+    assert message.startswith("beams: gif ")
+    assert ", webp " in message
 
 
 def test_every_builtin_effect_has_a_demo() -> None:
@@ -61,14 +51,14 @@ def test_every_builtin_effect_has_a_demo() -> None:
 
 @pytest.mark.parametrize(
     ("value", "expected"),
-    [("webp", ["webp"]), ("gif, webp,mp4", ["gif", "webp", "mp4"])],
+    [("webp", ["webp"]), ("gif, webp", ["gif", "webp"])],
 )
 def test_formats_parse(value: str, expected: list[str]) -> None:
     """Formats are a comma-separated subset of the supported formats."""
     assert render_demos.parse_formats(value) == expected
 
 
-@pytest.mark.parametrize("value", ["", "png", "webp,apng"])
+@pytest.mark.parametrize("value", ["", "png", "webp,mp4"])
 def test_formats_reject_unknown(value: str) -> None:
     """Empty and unsupported formats are rejected."""
     with pytest.raises(argparse.ArgumentTypeError):

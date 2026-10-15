@@ -16,7 +16,9 @@ tte = "terminaltexteffects.__main__:main"
 terminaltexteffects = "terminaltexteffects.__main__:main"
 
 [project.optional-dependencies]
-tui = ["textual>=8.0"]
+tui = ["textual>=8.0", "pillow>=12.3; python_version >= '3.10'"]
+# GIF and WebP export. Pillow releases without known vulnerabilities need Python 3.10 or later.
+export = ["pillow>=12.3; python_version >= '3.10'"]
 docs = [
     "mkdocs>=1.6.1; python_version >= '3.10'",
     "mkdocs-material>=9.6.22; python_version >= '3.10'",
