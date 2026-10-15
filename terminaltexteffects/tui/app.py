@@ -2108,6 +2108,10 @@ class TTEApp(App[None]):
             self.call_from_thread(progress.finish)
             self.call_from_thread(self.notify, f"Export failed: {error}", severity="error")
             return
+        except Exception as error:  # noqa: BLE001 (an effect can raise anything, and the export must still end)
+            self.call_from_thread(progress.finish)
+            self.call_from_thread(self.notify, f"Export failed: {type(error).__name__}: {error}", severity="error")
+            return
         summary = (
             f"Exported {frame_count} frames ({header.width}x{header.height} at {header.frame_rate} fps) to {path}."
         )

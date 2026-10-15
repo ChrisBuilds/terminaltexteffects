@@ -50,7 +50,15 @@ def copy_with_system_command(text: str, platform: str = sys.platform) -> bool:
 
 _PASTE_COMMANDS: dict[str, tuple[tuple[str, ...], ...]] = {
     "darwin": (("pbpaste",),),
-    "win32": (("powershell", "-NoProfile", "-Command", "Get-Clipboard -Raw"),),
+    # Writing the text directly keeps PowerShell from ending its output with a line break the clipboard lacks.
+    "win32": (
+        (
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            "[Console]::OutputEncoding = [Text.Encoding]::UTF8; [Console]::Out.Write((Get-Clipboard -Raw))",
+        ),
+    ),
 }
 _UNIX_PASTE_COMMANDS: tuple[tuple[str, ...], ...] = (
     ("wl-paste", "--no-newline"),
