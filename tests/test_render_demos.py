@@ -73,8 +73,3 @@ def test_formats_reject_unknown(value: str) -> None:
     """Empty and unsupported formats are rejected."""
     with pytest.raises(argparse.ArgumentTypeError):
         render_demos.parse_formats(value)
-
-
-def test_near_lossless_demos_exist() -> None:
-    """Every near-lossless demo name matches an effect demo or an Effect Guide demo."""
-    assert set(render_demos.demos()) | set(render_demos.GUIDE_DEMOS) >= render_demos.NEAR_LOSSLESS_DEMOS

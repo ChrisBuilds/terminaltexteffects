@@ -1,11 +1,10 @@
 """Render effect demo animations without screen recording.
 
 Each demo is rendered ahead of time with `tte --record`, so frame timing is exact and independent of machine
-speed. WebP output, the default, is drawn straight from the recording with Pillow and encoded losslessly with
-`img2webp`, keeping every frame and every color (see `render_webp`). Demos in `NEAR_LOSSLESS_DEMOS` use
-near-lossless encoding, which shrinks them noticeably without visible change. GIF and MP4 output convert the
-recording to an asciicast holding only the effect canvas, which `agg` renders to a GIF that needs no cropping or
-trimming. Demos render in parallel, one per CPU core.
+speed. WebP output, the default, is drawn straight from the recording with Pillow and encoded by `img2webp` with
+near-lossless preprocessing, keeping every color with no visible change (see `render_webp`). GIF and MP4 output
+convert the recording to an asciicast holding only the effect canvas, which `agg` renders to a GIF that needs no
+cropping or trimming. Demos render in parallel, one per CPU core.
 
 Requires `img2webp` from libwebp for WebP output, and `agg` 1.7 or later for GIF and MP4 output, plus `ffmpeg` for
 MP4. When `gifsicle` is installed, `--gifsicle-lossy` applies lossy GIF compression.
@@ -42,8 +41,12 @@ TUTORIAL_INPUT = GUIDE_EXAMPLES / "tutorial_input.txt"
 CONCEPT_INPUT = GUIDE_EXAMPLES / "concept_input.txt"
 COLOR_INPUT = GUIDE_EXAMPLES / "color_input.txt"
 FORMATS = ("gif", "webp", "mp4")
+NEAR_LOSSLESS = 60
+"""The WebP near-lossless level, which changes pixel values by a few steps at most and shrinks most demos."""
 NEAR_LOSSLESS_OFF = 100
 """The near-lossless level that leaves WebP output lossless."""
+DEFAULT_FPS = 30
+"""The output frame rate. Demos record at 60 fps, and every other frame plays at the same speed in far fewer bytes."""
 
 
 @dataclass(frozen=True)
@@ -64,33 +67,6 @@ class Demo:
 # Built-in effects render from `demo.txt` with default options. Add an entry here to change the options for a
 # demo, or to add a demo that is not named after its effect.
 DEMO_OVERRIDES: dict[str, Demo] = {}
-
-NEAR_LOSSLESS_LEVEL = 60
-"""The near-lossless level for `NEAR_LOSSLESS_DEMOS`, which changes pixel values by a few steps at most."""
-
-# Demos whose WebP near-lossless encoding shrinks by 15% or more. The rest gain little or grow, so they stay lossless.
-NEAR_LOSSLESS_DEMOS = frozenset(
-    {
-        "beams",
-        "colorshift",
-        "crumble",
-        "expand",
-        "fireworks",
-        "highlight",
-        "middleout",
-        "overflow",
-        "randomsequence",
-        "rings",
-        "scattered",
-        "slice",
-        "slide",
-        "paint_colors_dynamic",
-        "paint_colors_ignore",
-        "paint_diagonal",
-        "paint_radial",
-        "paint_vertical",
-    },
-)
 
 # Effect Guide visuals. Each one shows exactly what the reader sees when running the command next to it, so it uses
 # the same input file. Each example effect lives in its own directory under `docs/effectguide/examples/`, which is
@@ -334,13 +310,13 @@ def render_mp4(gif: Path, mp4: Path) -> None:
 class RenderOptions:
     """Command-line choices that apply to every demo.
 
-    `fps` of `None` keeps every recorded frame. `near_lossless` of `None` uses each demo's own level for WebP output.
+    `near_lossless` applies to WebP output.
     """
 
     formats: tuple[str, ...]
-    fps: int | None = None
+    fps: int = DEFAULT_FPS
     gifsicle_lossy: int | None = None
-    near_lossless: int | None = None
+    near_lossless: int = NEAR_LOSSLESS
     font: str = FONT
     fallback_fonts: tuple[str, ...] = ()
 
@@ -367,10 +343,8 @@ def try_render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> 
 def render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> str:
     """Render one demo to each requested format, named `<name>_demo.<format>`, and return their sizes."""
     formats = options.formats
-    fps = options.fps or demo.frame_rate
+    fps = min(options.fps, demo.frame_rate)
     near_lossless = options.near_lossless
-    if near_lossless is None:
-        near_lossless = NEAR_LOSSLESS_LEVEL if name in NEAR_LOSSLESS_DEMOS else NEAR_LOSSLESS_OFF
     with tempfile.TemporaryDirectory(prefix="tte-demo-") as temp:
         work = Path(temp)
         record(demo, work / "demo.tterec")
@@ -435,16 +409,18 @@ def main() -> int:
     parser.add_argument(
         "--fps",
         type=int,
-        help="maximum output frame rate (default: each demo's frame rate; GIFs play at most about 50)",
+        default=DEFAULT_FPS,
+        help=f"maximum output frame rate (default: {DEFAULT_FPS})",
     )
     parser.add_argument("--gifsicle-lossy", type=int, metavar="LEVEL", help="apply gifsicle lossy compression")
     parser.add_argument(
         "--near-lossless",
         type=int,
+        default=NEAR_LOSSLESS,
         choices=range(101),
         metavar="LEVEL",
         help=f"WebP near-lossless level for every demo, from 0 (strongest) to {NEAR_LOSSLESS_OFF} (lossless) "
-        f"(default: {NEAR_LOSSLESS_LEVEL} for demos it shrinks noticeably, lossless for the rest)",
+        f"(default: {NEAR_LOSSLESS})",
     )
     parser.add_argument(
         "--jobs",
