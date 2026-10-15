@@ -46,7 +46,7 @@ The interface needs a terminal for output. When standard output is redirected, `
   on it plays it.
 - **The playback bar** above the text has two groups. On the left, buttons play or pause, stop, and step through the
   effect and play a random effect, with the **Loop** and **Auto** (auto-replay) toggles. On the right, **Open** and
-  **Save** load and save the text, **Rec** records the effect, and **Fit** and **Max** size the canvas.
+  **Save** load and save the text, **Export** saves the effect as a file, and **Fit** and **Max** size the canvas.
 - **The text toolbar** under the playback bar colors text and inserts symbols. See [Text toolbar](#text-toolbar).
 - **Text** fills the rest of the top of the screen. Type, paste, and arrange text here. The subtitle shows the canvas
   size, and while an effect is shown, the frame number and the frame rate.
@@ -116,10 +116,11 @@ Effects build their animations and draw their frames on a background thread, a f
 the interface stays responsive while a large effect is prepared. The frame rate in the subtitle is the rate the
 interface manages to show, next to the **frame-rate** option.
 
-## Recording
+## Export
 
-**Rec** (++f8++) renders the effect with the current options, without showing it, and saves it in the format chosen
-in the dialog:
+**Export** (++f8++) renders the effect with the current options, without showing it, and saves it in the format
+chosen in the dialog. A panel in the bottom-right corner shows the frames rendered and the elapsed time until the
+file is written:
 
 | Format | What you get | Needs |
 | --- | --- | --- |
@@ -128,7 +129,7 @@ in the dialog:
 | WebP | The same animation as a lossless animated WebP, usually much smaller. | agg and `gif2webp` from [libwebp](https://developers.google.com/speed/webp/download) on `PATH`. |
 
 Choosing a format changes the file's suffix, and typing a suffix chooses the format. When a format's tools are
-missing, the dialog says which and won't save in that format. Recording needs a **frame-rate** above `0`, and
+missing, the dialog says which and won't save in that format. Exporting needs a **frame-rate** above `0`, and
 GIF and WebP play at that rate. asciinema itself isn't needed: the interface writes the asciicast that agg
 renders.
 
@@ -149,7 +150,7 @@ renders.
 | ++f7++ | Open the color picker for the selected color option. |
 | ++shift+f6++ | Reset the focused option to its default. |
 | ++f6++ | Reset the selected effect's options and the canvas options. |
-| ++f8++ | Record the effect to a `.tterec`, GIF, or WebP file. See [Recording](#recording). |
+| ++f8++ | Export the effect to a `.tterec`, GIF, or WebP file. See [Export](#export). |
 | ++tab++ | Move between the effect filter, the effect list, the text, and the options. |
 | ++ctrl+p++ | Open the command palette, including themes. |
 | ++ctrl+q++ | Quit, keeping the session for next time. |

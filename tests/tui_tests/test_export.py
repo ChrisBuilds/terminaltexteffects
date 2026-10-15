@@ -29,7 +29,7 @@ def _write_recording(path: Path) -> None:
 
 
 def test_formats_follow_the_suffix() -> None:
-    """The suffix should pick the format, and unknown suffixes should record a tterec."""
+    """The suffix should pick the format, and unknown suffixes should export a tterec."""
     assert export.format_for(Path("a.GIF")) is _GIF
     assert export.format_for(Path("a.webp")) is _WEBP
     assert export.format_for(Path("a.cast")) is export.FORMATS[0]
@@ -62,15 +62,15 @@ def test_webp_export_renders_a_gif_with_agg_then_converts_it(tmp_path: Path, mon
     assert commands[1][-1] == str(tmp_path / "out.webp")
 
 
-def test_record_dialog_offers_formats(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The record dialog should switch the suffix with the format and refuse a format whose tools are missing."""
+def test_export_dialog_offers_formats(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The export dialog should switch the suffix with the format and refuse a format whose tools are missing."""
     monkeypatch.setattr(export.shutil, "which", lambda _name: None)
 
     async def main() -> None:
         app = TTEApp(_EFFECTS, "Hi", effect="wipe")
         async with app.run_test(size=(110, 34)) as pilot:
             await pilot.pause()
-            await pilot.click("#record")
+            await pilot.click("#export")
             await pilot.pause()
             screen = app.screen
             assert isinstance(screen, FileScreen)

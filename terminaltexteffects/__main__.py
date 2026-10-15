@@ -582,13 +582,15 @@ def _record_playbacks(
     effect: BaseEffect,
     count: int,
     next_playback_factory: Callable[[tuple[int, int]], tuple[str, BaseEffect]] | None = None,
+    on_frame: Callable[[int], None] | None = None,
 ) -> tuple[RecordingHeader, int, int]:
     """Render `count` playbacks with a frame clock and write them to a recording.
 
     Every playback uses the canvas geometry resolved for the first one. When
     `next_playback_factory` is provided, it creates a newly selected effect for each
     playback after the first. Empty output ends the recording early, as it does for
-    live repeats.
+    live repeats. `on_frame`, when provided, is called with the frame count after each
+    frame is written.
 
     Returns:
         tuple[RecordingHeader, int, int]: The recording header, frame count, and segment count.
@@ -614,6 +616,8 @@ def _record_playbacks(
             for frame in iterator:
                 writer.write_frame(frame)
                 rendered = True
+                if on_frame is not None:
+                    on_frame(writer.frame_count)
             if not rendered or segments >= count:
                 break
             if next_playback_factory is not None:

@@ -42,6 +42,7 @@ from textual.widgets import (
 
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.tui import canvas, clipboard, colors, export, frames, menu, options, session
+from terminaltexteffects.tui.export_progress import ExportProgress
 from terminaltexteffects.tui.files import FileFormat, FileScreen
 from terminaltexteffects.tui.picker import ColorScreen
 from terminaltexteffects.tui.screens import CommandScreen, HelpScreen
@@ -787,7 +788,7 @@ class TTEApp(App[None]):
         height: 1fr;
     }
     #effects-panel {
-        width: 19;
+        width: 18;
         height: 1fr;
         border: round $primary;
         border-title-color: $text;
@@ -805,6 +806,7 @@ class TTEApp(App[None]):
     }
     #effects {
         height: 1fr;
+        scrollbar-size-vertical: 1;
         border: none;
         padding: 0;
         background: transparent;
@@ -908,7 +910,7 @@ class TTEApp(App[None]):
         Binding("f3", "save", "Save", priority=True),
         Binding("f4", "command", "Command", priority=True),
         Binding("f6", "reset", "Reset options", priority=True, show=False),
-        Binding("f8", "record", "Record", priority=True),
+        Binding("f8", "export", "Export", priority=True),
         Binding("ctrl+q", "quit", "Quit", priority=True),
     ]
 
@@ -958,7 +960,7 @@ class TTEApp(App[None]):
         self._recorded: tuple[tuple[typing.Any, ...], list[frames.Frame]] | None = None
         self._color_hint_shown = False
         self.copied_to_system_clipboard = False
-        self._record_suffix = export.FORMATS[0].suffix
+        self._export_suffix = export.FORMATS[0].suffix
         self.state: typing.Literal["editing", "playing", "paused", "finished"] = "editing"
         self.register_theme(TTE_THEME)
         self.theme = TTE_THEME.name
@@ -987,7 +989,7 @@ class TTEApp(App[None]):
                     yield from self._transport_buttons(
                         ("Open", "open", "Open a text file (F2)"),
                         ("Save", "save", "Save the text to a file (F3)"),
-                        ("● Rec", "record", "Record the effect to a tterec, GIF, or WebP file (F8)"),
+                        ("Export", "export", "Export the effect as a tterec, GIF, or WebP file (F8)"),
                     )
                     yield from self._transport_buttons(
                         ("Fit", "fit", "Fit the canvas exactly around the text (Ctrl+T)"),
@@ -1002,6 +1004,7 @@ class TTEApp(App[None]):
                 yield Vertical(id="effect-options", classes="option-grid")
             with TabPane("Canvas", id="canvas-tab"), VerticalScroll():
                 yield Vertical(id="terminal-options", classes="option-grid")
+        yield ExportProgress(id="export-progress")
         yield Footer()
 
     @staticmethod
@@ -1907,7 +1910,7 @@ class TTEApp(App[None]):
             self.action_fit_canvas()
         elif action == "max":
             self.action_maximize_canvas()
-        elif action in ("play", "step", "open", "save", "record"):
+        elif action in ("play", "step", "open", "save", "export"):
             getattr(self, f"action_{action}")()
 
     def _update_transport(self) -> None:
@@ -1954,58 +1957,74 @@ class TTEApp(App[None]):
             return self.state in ("playing", "paused")
         return True
 
-    # Recording -------------------------------------------------------------------------------------------------
+    # Export ----------------------------------------------------------------------------------------------------
 
-    def action_record(self) -> None:
-        """Ask for a file and a format, and record the selected effect to it."""
+    def action_export(self) -> None:
+        """Ask for a file and a format, and export the selected effect to it."""
         if self._value_of("frame_rate") == 0:
-            self.notify("Recording needs a frame rate greater than 0 (Canvas tab).", severity="error")
+            self.notify("Exporting needs a frame rate greater than 0 (Canvas tab).", severity="error")
+            return
+        if self.query_one(ExportProgress).display:
+            self.notify("An export is already running.", severity="warning")
             return
 
-        def record(result: tuple[str, bool] | None) -> None:
+        def export_to(result: tuple[str, bool] | None) -> None:
             if result is None:
                 return
             effect = self.build_effect()
             if effect is not None:
-                # Record only the canvas, as the command line does, rather than the whole text area around it.
+                # Export only the canvas, as the command line records it, rather than the whole text area around it.
                 rect = self._canvas_geometry()
                 effect._terminal_dimensions_override = (rect.width, rect.height)
-                self._record(effect, self.effect_name, Path(result[0]).expanduser())
+                self.query_one(ExportProgress).start(self.effect_name)
+                self._export(effect, self.effect_name, Path(result[0]).expanduser())
 
         file_formats = [FileFormat(fmt.name, fmt.suffix, export.format_problem(fmt)) for fmt in export.FORMATS]
         self.push_screen(
             FileScreen(
-                "Record effect to file",
-                f"{self.effect_name}{self._record_suffix}",
+                "Export effect",
+                f"{self.effect_name}{self._export_suffix}",
                 mode="save",
                 formats=file_formats,
             ),
-            record,
+            export_to,
         )
 
-    @work(thread=True, exclusive=True, group="record")
-    def _record(self, effect: BaseEffect, effect_name: str, path: Path) -> None:
+    @work(thread=True, exclusive=True, group="export")
+    def _export(self, effect: BaseEffect, effect_name: str, path: Path) -> None:
         """Render the effect to a recording without displaying it, then convert it for GIF or WebP."""
         from terminaltexteffects.__main__ import _record_playbacks  # noqa: PLC0415
         from terminaltexteffects.engine._recording import RecordingError  # noqa: PLC0415
 
+        progress = self.query_one(ExportProgress)
         fmt = export.format_for(path)
-        self._record_suffix = fmt.suffix
-        self.call_from_thread(self.notify, f"Recording {effect_name} to {path}...")
+        self._export_suffix = fmt.suffix
+        last_update = 0.0
+
+        def on_frame(count: int) -> None:
+            nonlocal last_update
+            now = time.monotonic()
+            if now - last_update >= _STATUS_INTERVAL:
+                last_update = now
+                self.call_from_thread(progress.show_frames, count)
+
         try:
             if fmt is export.FORMATS[0]:
-                header, frame_count, _ = _record_playbacks(path, effect_name, effect, 1)
+                header, frame_count, _ = _record_playbacks(path, effect_name, effect, 1, on_frame=on_frame)
             else:
-                with tempfile.TemporaryDirectory(prefix="tte-record-") as folder:
+                with tempfile.TemporaryDirectory(prefix="tte-export-") as folder:
                     recording = Path(folder) / f"effect{export.FORMATS[0].suffix}"
-                    header, frame_count, _ = _record_playbacks(recording, effect_name, effect, 1)
+                    header, frame_count, _ = _record_playbacks(recording, effect_name, effect, 1, on_frame=on_frame)
+                    self.call_from_thread(progress.show_rendering, fmt.name, frame_count)
                     export.export_recording(recording, path, fmt, fps=header.frame_rate)
         except (OSError, RecordingError, ValueError, export.ExportError) as error:
-            self.call_from_thread(self.notify, f"Recording failed: {error}", severity="error")
+            self.call_from_thread(progress.finish)
+            self.call_from_thread(self.notify, f"Export failed: {error}", severity="error")
             return
         summary = (
-            f"Recorded {frame_count} frames ({header.width}x{header.height} at {header.frame_rate} fps) to {path}."
+            f"Exported {frame_count} frames ({header.width}x{header.height} at {header.frame_rate} fps) to {path}."
         )
         if fmt is export.FORMATS[0]:
             summary += f" Play it with: tte --play {path}"
+        self.call_from_thread(progress.finish)
         self.call_from_thread(self.notify, summary)

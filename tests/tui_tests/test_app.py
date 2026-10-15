@@ -10,6 +10,7 @@ from textual.widgets import Checkbox, Input, OptionList, TextArea
 from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.engine._recording import RecordingReader
 from terminaltexteffects.tui.app import CanvasView, CommandScreen, OptionEditor, TTEApp
+from terminaltexteffects.tui.export_progress import ExportProgress
 from terminaltexteffects.tui.files import FileScreen
 
 if TYPE_CHECKING:
@@ -207,17 +208,29 @@ def test_colored_input_keeps_colors_through_edits() -> None:
     _run(TTEApp(_EFFECTS, "\x1b[31mred\x1b[0m text", effect="wipe"), script)
 
 
-def test_record_writes_a_recording(tmp_path: Path) -> None:
-    """Recording should render the configured effect to a playable recording file."""
+def test_export_writes_a_recording(tmp_path: Path) -> None:
+    """Exporting should render the configured effect to a playable recording file, showing progress meanwhile."""
     target = tmp_path / "wipe.tterec"
 
     async def script(app: TTEApp, pilot: Pilot[None]) -> None:
         await pilot.press("f8")
         await pilot.pause()
         app.screen.query_one("#path", Input).value = str(target)
+        progress = app.query_one(ExportProgress)
+        shown_until_done: list[bool] = []
+        finish = progress.finish
+
+        def spy_finish() -> None:
+            shown_until_done.append(progress.display)
+            finish()
+
+        progress.finish = spy_finish  # type: ignore[method-assign]
         await pilot.press("enter")
         await app.workers.wait_for_complete()
         await pilot.pause()
+        assert shown_until_done == [True]
+        assert "Exporting wipe" in str(progress.border_title)
+        assert not progress.display
         width, height = app._canvas_size()
         with RecordingReader(target) as reader:
             header = reader.header
@@ -227,8 +240,8 @@ def test_record_writes_a_recording(tmp_path: Path) -> None:
     _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)
 
 
-def test_record_needs_a_frame_rate() -> None:
-    """Recording should refuse an unlimited frame rate instead of asking for a path."""
+def test_export_needs_a_frame_rate() -> None:
+    """Exporting should refuse an unlimited frame rate instead of asking for a path."""
 
     async def script(app: TTEApp, pilot: Pilot[None]) -> None:
         await _set_frame_rate(app, pilot, "0")

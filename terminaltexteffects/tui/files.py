@@ -1,4 +1,4 @@
-"""File dialog for opening, saving, and recording in the TUI.
+"""File dialog for opening, saving, and exporting in the TUI.
 
 The dialog pairs a browsable folder tree with a path field, so files can be picked with the mouse or keyboard, or
 typed directly. Opening asks for an existing file, and saving asks before replacing one.
@@ -94,18 +94,24 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
         background: $boost;
     }
     FileScreen #format {
-        width: 12;
+        width: 14;
         margin-left: 1;
     }
     FileScreen .path-row > Label {
         width: auto;
         padding-right: 1;
+        margin-top: 1;
         color: $text-muted;
     }
     FileScreen #path {
         width: 1fr;
-        background: $boost;
+        border: tall $primary;
+        background: $primary 12%;
         padding: 0 1;
+    }
+    FileScreen #path:focus {
+        border: tall $secondary;
+        background: $primary 22%;
     }
     FileScreen #message {
         height: auto;
@@ -179,14 +185,13 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
             yield FileTree(folder, id="tree")
             with Horizontal(classes="path-row"):
                 yield Label("File" if self.mode == "open" else "Save as")
-                yield Input(self._path, placeholder="path/to/file", id="path", compact=True)
+                yield Input(self._path, placeholder="path/to/file", id="path")
                 if self._formats:
                     current = self._format_of(self._path)
                     yield Select(
                         [(fmt.label, fmt.suffix) for fmt in self._formats],
                         value=(current or self._formats[0]).suffix,
                         allow_blank=False,
-                        compact=True,
                         id="format",
                     )
             yield Static(id="message")
