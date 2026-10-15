@@ -9,7 +9,9 @@ from textual.widgets import Checkbox, Input, OptionList, TextArea
 
 from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.engine._recording import RecordingReader
-from terminaltexteffects.tui.app import CanvasView, CommandScreen, OptionEditor, PathScreen, TTEApp
+from terminaltexteffects.tui.app import CanvasView, CommandScreen, OptionEditor, TTEApp
+from terminaltexteffects.tui.export_progress import ExportProgress
+from terminaltexteffects.tui.files import FileScreen
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -98,6 +100,34 @@ def test_invalid_option_blocks_play_until_fixed() -> None:
     _run(TTEApp(_EFFECTS, "text", effect="decrypt"), script)
 
 
+def test_option_rows_show_their_state() -> None:
+    """Editors should mark modified and invalid values, label checkboxes, and align their inputs."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        speed = _editor(app, "decrypt", "typing_speed")
+        speed.query_one(Input).value = "5"
+        await pilot.pause()
+        assert speed.has_class("-modified")
+        speed.query_one(Input).value = "fast"
+        await pilot.pause()
+        assert speed.has_class("-invalid")
+        assert not speed.has_class("-modified")
+        wrap = _editor(app, "terminal", "wrap_text")
+        assert str(wrap.query_one(Checkbox).label) == "off"
+        wrap.query_one(Checkbox).value = True
+        await pilot.pause()
+        assert str(wrap.query_one(Checkbox).label) == "on"
+        widths = {
+            editor.query_one(".option-label").outer_size.width
+            for editor in app.query(OptionEditor)
+            if editor.scope == "decrypt"
+        }
+        assert len(widths) == 1
+        assert app.query_one("#options").border_subtitle
+
+    _run(TTEApp(_EFFECTS, "text", effect="decrypt"), script)
+
+
 def test_values_are_kept_per_effect_and_reset() -> None:
     """Edited values should survive switching effects and return to defaults on reset."""
 
@@ -146,7 +176,7 @@ def test_open_and_save_files(tmp_path: Path) -> None:
     async def script(app: TTEApp, pilot: Pilot[None]) -> None:
         await pilot.press("f2")
         await pilot.pause()
-        assert isinstance(app.screen, PathScreen)
+        assert isinstance(app.screen, FileScreen)
         app.screen.query_one("#path", Input).value = str(source)
         await pilot.press("enter")
         await pilot.pause()
@@ -178,17 +208,29 @@ def test_colored_input_keeps_colors_through_edits() -> None:
     _run(TTEApp(_EFFECTS, "\x1b[31mred\x1b[0m text", effect="wipe"), script)
 
 
-def test_record_writes_a_recording(tmp_path: Path) -> None:
-    """Recording should render the configured effect to a playable recording file."""
+def test_export_writes_a_recording(tmp_path: Path) -> None:
+    """Exporting should render the configured effect to a playable recording file, showing progress meanwhile."""
     target = tmp_path / "wipe.tterec"
 
     async def script(app: TTEApp, pilot: Pilot[None]) -> None:
         await pilot.press("f8")
         await pilot.pause()
         app.screen.query_one("#path", Input).value = str(target)
+        progress = app.query_one(ExportProgress)
+        shown_until_done: list[bool] = []
+        finish = progress.finish
+
+        def spy_finish() -> None:
+            shown_until_done.append(progress.display)
+            finish()
+
+        progress.finish = spy_finish  # type: ignore[method-assign]
         await pilot.press("enter")
         await app.workers.wait_for_complete()
         await pilot.pause()
+        assert shown_until_done == [True]
+        assert "Exporting wipe" in str(progress.border_title)
+        assert not progress.display
         width, height = app._canvas_size()
         with RecordingReader(target) as reader:
             header = reader.header
@@ -198,14 +240,14 @@ def test_record_writes_a_recording(tmp_path: Path) -> None:
     _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)
 
 
-def test_record_needs_a_frame_rate() -> None:
-    """Recording should refuse an unlimited frame rate instead of asking for a path."""
+def test_export_needs_a_frame_rate() -> None:
+    """Exporting should refuse an unlimited frame rate instead of asking for a path."""
 
     async def script(app: TTEApp, pilot: Pilot[None]) -> None:
         await _set_frame_rate(app, pilot, "0")
         await pilot.press("f8")
         await pilot.pause()
-        assert not isinstance(app.screen, PathScreen)
+        assert not isinstance(app.screen, FileScreen)
 
     _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)
 
@@ -235,7 +277,7 @@ def test_app_shortcuts_wait_while_a_dialog_is_open() -> None:
         await pilot.pause()
         await pilot.press("f5")
         await pilot.pause()
-        assert isinstance(app.screen, PathScreen)
+        assert isinstance(app.screen, FileScreen)
         assert app.state == "editing"
 
     _run(TTEApp(_EFFECTS, "text", effect="wipe"), script)
@@ -266,3 +308,53 @@ def test_tabs_are_kept_and_follow_the_tab_width() -> None:
         assert app.editor.indent_width == 8
 
     _run(TTEApp(_EFFECTS, "a\tb", effect="wipe"), script)
+
+
+def test_single_options_return_to_their_defaults() -> None:
+    """A field left blank, or Shift+F6 on an option, should return just that option to its default."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        delay = _editor(app, "wipe", "wipe_delay")
+        reverse = _editor(app, "wipe", "reverse_wipe_direction")
+        entry = delay.query_one(Input)
+        entry.focus()
+        entry.value = "5"
+        reverse.query_one(Checkbox).value = True
+        await pilot.pause()
+        assert app._values["wipe"] == {"wipe_delay": 5, "reverse_wipe_direction": True}
+        entry.value = ""
+        await pilot.pause()
+        assert delay.error is not None
+        await pilot.press("tab")
+        await pilot.pause()
+        assert delay.value == delay.option.default
+        assert delay.error is None
+        assert entry.value == delay.option.format(delay.option.default)
+        assert app._values["wipe"] == {"reverse_wipe_direction": True}
+        assert not app._current_errors()
+        reverse.query_one(Checkbox).focus()
+        await pilot.press("shift+f6")
+        await pilot.pause()
+        assert reverse.value is False
+        assert app._values["wipe"] == {}
+
+    _run(TTEApp(_EFFECTS, "text", effect="wipe"), script)
+
+
+def test_option_tooltips_show_the_format_example_and_default() -> None:
+    """An option's tooltip should give its help, format, example, and default, led by any error."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        editor = _editor(app, "wipe", "wipe_delay")
+        tooltip = str(editor.tooltip)
+        assert editor.option.help in tooltip
+        assert "Format: a whole number, 0 or more." in tooltip
+        assert "Example: 0" in tooltip
+        assert f"Default: {editor.option.format(editor.option.default)}" in tooltip
+        editor.query_one(Input).value = "x"
+        await pilot.pause()
+        entry_tooltip = str(editor.query_one(Input).tooltip)
+        assert entry_tooltip.startswith(str(editor.error))
+        assert "Format: " in entry_tooltip
+
+    _run(TTEApp(_EFFECTS, "text", effect="wipe"), script)

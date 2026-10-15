@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import shlex
 from typing import TYPE_CHECKING
 
@@ -147,3 +148,84 @@ def test_list_items_are_quoted_only_when_needed() -> None:
     text = option.format(option.default)
     assert text.startswith("▂ ")
     assert option.parse(text) == ("▂", "'", "\\")
+
+
+def _command_fields() -> tuple[dict[str, functools.partial[list[options.OptionField]]], list[options.OptionField]]:
+    effect_fields = {
+        name: functools.partial(options.option_fields, config_class) for name, (_, config_class) in _EFFECTS.items()
+    }
+    terminal_fields = options.option_fields(TerminalConfig, options.TUI_TERMINAL_OPTIONS, options.TUI_TERMINAL_DEFAULTS)
+    return effect_fields, terminal_fields
+
+
+def test_parse_command_reads_back_an_exported_command() -> None:
+    """A command from `command_line` should parse back to the values it was built from."""
+    effect_fields, terminal_fields = _command_fields()
+    decrypt_fields = effect_fields["decrypt"]()
+    colors = (Color("ff0000"), Color(208))
+    effect_values = [
+        (option, colors if option.name == "ciphertext_colors" else option.default) for option in decrypt_fields
+    ]
+    terminal_values = [(option, 30 if option.name == "frame_rate" else option.default) for option in terminal_fields]
+    command = options.command_line("decrypt", effect_values, terminal_values, "my text.txt")
+
+    parsed = options.parse_command(command, effect_fields, terminal_fields)
+
+    assert parsed.effect == "decrypt"
+    assert parsed.effect_values == {"ciphertext_colors": colors}
+    assert parsed.terminal_values == {
+        "canvas_width": 0,
+        "canvas_height": 0,
+        "anchor_canvas": "nw",
+        "anchor_text": "nw",
+        "frame_rate": 30,
+    }
+    assert parsed.input_file == "my text.txt"
+    assert parsed.problems == []
+
+
+def test_parse_command_reports_flags_it_cannot_apply() -> None:
+    """Unknown flags and invalid values should be reported without failing the rest of the command."""
+    effect_fields, terminal_fields = _command_fields()
+
+    parsed = options.parse_command(
+        "--reuse-canvas wipe stray --wipe-delay=x --reverse-wipe-direction --wipe-ease IN_OUT_CIRC",
+        effect_fields,
+        terminal_fields,
+    )
+
+    assert parsed.effect == "wipe"
+    assert parsed.effect_values["reverse_wipe_direction"] is True
+    assert "wipe_ease" in parsed.effect_values
+    assert parsed.terminal_values == {}
+    assert len(parsed.problems) == 3
+    assert parsed.problems[:2] == ["--reuse-canvas is not available here", "unexpected value 'stray'"]
+    assert parsed.problems[2].startswith("--wipe-delay:")
+    with pytest.raises(ValueError, match="no known effect"):
+        options.parse_command("tte --frame-rate 30", effect_fields, terminal_fields)
+    with pytest.raises(ValueError, match="cannot read"):
+        options.parse_command("tte wipe --final-gradient-stops 'ff0000", effect_fields, terminal_fields)
+
+
+def test_format_hints_describe_the_value_and_give_an_example() -> None:
+    """Text options should explain how to write their value, with an example, and others should have no hint."""
+    by_name = {
+        f"{name}.{option.name}": option
+        for name, (_, config_class) in _EFFECTS.items()
+        for option in options.option_fields(config_class)
+    }
+    assert by_name["beams.beam_row_speed_range"].format_hint() == (
+        "Format: a range of whole numbers above 0, written low-high.\nExample: 2-8"
+    )
+    assert by_name["beams.beam_row_symbols"].format_hint().startswith("Format: space-separated single characters")
+    assert "Example: ff0000 00ff00 208" in by_name["beams.final_gradient_stops"].format_hint()
+    assert by_name["overflow.overflow_cycles_range"].format_hint() == (
+        "Format: a range of whole numbers, written low-high.\nExample: 2-4"
+    )
+    assert by_name["laseretch.etch_pattern"].format_hint().startswith("Format: one of algorithm, column_left_to_right,")
+    assert by_name["wipe.reverse_wipe_direction"].format_hint() == ""
+    assert by_name["wipe.wipe_ease"].format_hint() == ""
+    for key, option in by_name.items():
+        if option.kind == "text":
+            assert "Format: " in option.format_hint(), key
+            assert "\nExample: " in option.format_hint(), key

@@ -41,41 +41,168 @@ The interface needs a terminal for output. When standard output is redirected, `
 ## Layout
 
 - **Effects** on the left lists every available effect, including [community effects](appguide.md#community-effects).
-  Highlighting one shows its options. Pressing Enter on it plays it.
+  Type in the filter above the list to show only effects whose name or description contains every word you type,
+  and press ++down++ or ++enter++ to move into the list. Highlighting an effect shows its options. Pressing ++enter++
+  on it plays it.
+- **The playback bar** above the text has two groups. On the left, buttons play or pause, stop, and step through the
+  effect and play a random effect, with the **Loop** and **Auto** (auto-replay) toggles. On the right, **Open** and
+  **Save** load and save the text, **Export** saves the effect as a file, and **Fit** and **Max** size the canvas.
+- **The text toolbar** under the playback bar colors text and inserts symbols. See [Text toolbar](#text-toolbar).
 - **Text** fills the rest of the top of the screen. Type, paste, and arrange text here. The subtitle shows the canvas
-  size.
+  size, and while an effect is shown, the frame number and the frame rate.
 - **Options** at the bottom has two tabs. **Effect** holds the selected effect's options, and **Canvas** holds the
   terminal options that affect previews: canvas size and anchors, text wrapping, frame rate, color handling, and tab
   width.
 
+Click the thin handle to the right of **Effects**, or above **Options**, to hide that panel and give the text more
+room, and click it again to bring the panel back. ++ctrl+b++ and ++ctrl+o++ do the same.
+
+The interface uses a TerminalTextEffects theme in purple, cyan, and white. Other Textual themes are available from
+the command palette (++ctrl+p++).
+
 Option inputs follow each option's type: a checkbox for on/off options, a list for fixed choices such as gradient
-directions and easing functions, and a text box for everything else. Text boxes use the same spelling as the
-command line. Lists are space separated, such as `ff0000 00ff00 0000ff`, and colors show a swatch. An invalid value
-is shown in red with the reason in its tooltip, and the effect won't play until it is fixed. Changed options are
-shown in bold, and each effect keeps its own values while the interface is open.
+directions and easing functions, which opens inside the options panel and scrolls, and a text box for everything
+else. Text boxes use the same spelling as the command line. Lists are space separated, such as `ff0000 00ff00
+0000ff`, and colors show a swatch. Hover over an option to see its help, how to write its value with an example, and
+its default. An invalid value turns its name and field red, with the reason in its tooltip, and the effect won't
+play until it is fixed. Changed options have their names highlighted. Clearing a field and leaving it, or pressing
+++shift+f6++ on an option, returns that option to its default. Each effect keeps its own values while the interface
+is open. The selected effect's description is shown along the bottom of the options panel.
+
+### Picking colors
+
+Color options open a color picker when you press ++f7++ or ++enter++ in the field, or click the swatch, which shows
+each color as a square. Choose from the 256 XTerm colors in the palette, type a hex value, or drag the hue,
+saturation, and lightness bars. Palette colors stay XTerm colors on the command line, and any other change gives an
+RGB hex color. For gradient options, the picker edits the list of stops: select a stop, change its color, and add,
+remove, or reorder stops while a bar previews the gradient. Press ++ctrl+s++ or choose **Apply** to keep the colors,
+or ++escape++ to discard them.
+
+### Text toolbar
+
+**Text** and **Background** open the color picker for the text color and the background color. A picked color
+applies to the selected text and to text you type or insert afterwards. **No color** in the picker removes just that
+color, keeping the other one. **Clear** removes both colors from the selected text and stops coloring new text. Each
+chip shows its current color, or a hatched square when there is none.
+
+**Gradient** shows the current gradient. Click it with text selected to spread the gradient across the selection:
+the box around the selected characters runs from the first stop to the last in the gradient's direction. Click its
+**▾**, or click it with nothing selected, to build the gradient: edit its stops in the color picker, set the steps
+between stops and the direction (horizontal, vertical, diagonal, or radial), and choose whether it colors the text or
+its background. With text selected, the dialog applies the new gradient right away.
+
+**Symbols** opens a palette of blocks, single and rounded lines, double lines, shapes, and arrows. Click a symbol,
+or move with the arrow keys and press ++enter++, to insert it at the cursor, replacing any selected text. The palette
+stays open so you can insert several symbols, and ++escape++ or a click outside closes it.
+
+Colors are kept with the text, as [input colors](#input-colors) are. Effects use them when
+**existing-color-handling** on the Canvas tab is `always` or `dynamic`.
+
+### Clipboard and right-click menu
+
+++ctrl+x++, ++ctrl+c++, and ++ctrl+v++ cut, copy, and paste in the text area, using the system clipboard
+(`pbcopy` and `pbpaste` on macOS, `clip` and PowerShell on Windows, and `wl-copy`, `xclip`, or `xsel` elsewhere).
+Most macOS terminals keep ++cmd+c++ and ++cmd+x++ for their own selection, which mouse support in the interface
+turns off, so use the Ctrl keys or the menu. ++cmd+v++ pastes as usual. Terminals that pass ++cmd++ through to
+applications, such as kitty, WezTerm, and Ghostty, can use the ++cmd++ keys too.
+
+Right-click the text, or the effect while it plays, for a menu with cut, copy, paste, and select all, the text
+color, background color, clear colors, and insert symbol actions, play or pause, stop, and fit or maximize the
+canvas. Right-clicking keeps the selection, so the menu can cut or copy it.
+
+## Playback
+
+++f5++ or **Play** plays the selected effect. While it plays, ++f5++ or ++space++ pauses and resumes it, and
+++right++ pauses it and shows one frame at a time. Once the effect has finished or been stopped, **Play** plays it
+again from the start, as does ++ctrl+r++ at any time. ++f9++ plays a random effect from the listed effects. The
+effect plays on a black background. ++escape++, or a click on the effect, returns to the text, and a click puts the
+cursor where you clicked.
+
+Turn on **Loop** to replay the effect a second after it finishes. Loops replay the frames of the first run, so they
+start at once, and stop reusing them when you change an option or the text. Turn on **Auto** to replay the effect
+shortly after you change an option or highlight another effect, without leaving the field you are editing.
+
+Effects build their animations and draw their frames on a background thread, a few frames ahead of the screen, so
+the interface stays responsive while a large effect is prepared. The frame rate in the subtitle is the rate the
+interface manages to show, next to the **frame-rate** option.
+
+## Export
+
+**Export** (++f8++) renders the effect with the current options, without showing it, and saves it in the format
+chosen in the dialog. A panel in the bottom-right corner shows the frames rendered and the elapsed time until the
+file is written:
+
+| Format | What you get | Needs |
+| --- | --- | --- |
+| tterec | A recording that `tte --play` replays in a terminal. See [recording and playback](appguide.md#recording-and-playback). | Nothing else. |
+| GIF | An animation of the canvas, with the last frame held for two seconds. | [agg](https://github.com/asciinema/agg) on `PATH`. |
+| WebP | The same animation as a lossless animated WebP, usually much smaller. | agg and `gif2webp` from [libwebp](https://developers.google.com/speed/webp/download) on `PATH`. |
+
+Choosing a format changes the file's suffix, and typing a suffix chooses the format. When a format's tools are
+missing, the dialog says which and won't save in that format. Exporting needs a **frame-rate** above `0`, and
+GIF and WebP play at that rate. asciinema itself isn't needed: the interface writes the asciicast that agg
+renders.
 
 ## Keys
 
 | Key | Action |
 | --- | --- |
-| ++f5++ | Play the selected effect over the text. |
+| ++f1++ | Show the keys and a few tips. |
+| ++f5++ | Play or pause the selected effect. Once it has finished, play it again from the start. |
+| ++space++ / ++right++ | While an effect is shown: pause or resume it / show the next frame. |
+| ++ctrl+r++ | Replay the effect from the start. |
+| ++f9++ | Play a random effect. |
 | ++escape++ | Stop the effect, or clear the finished effect, and return to the text. |
+| ++ctrl+t++ / ++ctrl+g++ | Fit the canvas exactly around the text / grow it to the whole text area. |
+| ++ctrl+b++ / ++ctrl+o++ | Hide or show the effect list / the options panel. |
 | ++f2++ | Open a text file. |
 | ++f3++ | Save the text to a file. |
-| ++f4++ | Show the `tte` command that plays the effect with the current options, with a button to copy it. |
+| ++f4++ | Show the `tte` command for the current settings, or load a pasted command. |
+| ++f7++ | Open the color picker for the selected color option. |
+| ++shift+f6++ | Reset the focused option to its default. |
 | ++f6++ | Reset the selected effect's options and the canvas options. |
-| ++f8++ | Record the effect to a `.tterec` file for [playback](appguide.md#recording-and-playback). |
-| ++tab++ | Move between the effect list, the text, and the options. |
+| ++f8++ | Export the effect to a `.tterec`, GIF, or WebP file. See [Export](#export). |
+| ++tab++ | Move between the effect filter, the effect list, the text, and the options. |
+| ++ctrl+p++ | Open the command palette, including themes. |
 | ++ctrl+q++ | Quit. |
 
 ## Canvas
 
 By default the canvas is the whole text area and text is anchored to its top left, so the effect draws your text
 where you typed it. To preview an effect on a smaller canvas, set **canvas-width** and **canvas-height** on the
-Canvas tab. Setting either to `-1` sizes it to the text, as the command line does by default.
+Canvas tab. Setting either to `-1` sizes it to the text, as the command line does by default. **Fit** (++ctrl+t++)
+sets the canvas to the size of the text, and **Max** (++ctrl+g++) sets it back to the whole text area.
 
-The exported command includes these canvas settings when they differ from the command-line defaults, so the effect
-plays the same way in your terminal.
+A cyan outline of full blocks marks the canvas, one cell outside it, and stays visible while you edit and while an
+effect plays, with **CANVAS** in the middle of its bottom edge, or of its top edge when only that one moves. Text
+outside the canvas is dimmed because the effect won't show it. An edge lights up white under the mouse, and a corner
+lights both of its edges. Drag the outline to resize the canvas, and **canvas-width** and **canvas-height** update
+to match. The outline is drawn on the edges that move with **anchor-canvas**: with the default `nw` anchor, the
+right and bottom edges. The text area keeps one free column or row beyond each of those edges, so effects draw in a
+slightly smaller area than the text area, and the outline stays visible when the canvas fills that area. The text
+area shows no scrollbars, so they never cover the outline: scroll with the mouse wheel or the cursor keys, and the
+subtitle says when there is more text than fits. Dragging an edge all the way out sets that dimension to `0`, the
+whole area.
+
+## Commands
+
+++f4++ shows the `tte` command that plays the effect with the current options, with a button to copy it. Copying
+uses the terminal's clipboard and also the system clipboard command (`pbcopy` on macOS, `clip` on Windows, and
+`wl-copy`, `xclip`, or `xsel` elsewhere), since many terminals ignore clipboard requests from applications. The
+command includes the canvas settings when they differ from the command-line defaults, so the effect plays the same
+way in your terminal.
+
+The same dialog loads a command: paste a `tte` command, such as one copied from the docs, and choose **Load**. The
+interface selects its effect and applies its options. Options the command leaves out take their command-line
+defaults, so the preview matches what the command plays. Its `--input-file`, if any, is opened, and flags the
+interface doesn't offer, such as `--reuse-canvas`, are listed in a notice and skipped.
+
+## Files
+
+++f2++, ++f3++, and ++f8++ open a file dialog with a folder tree and a path field. Browse the tree with the mouse or
+arrow keys, or type a path. Choosing a file twice, such as with a double click, opens it. When saving, choosing a
+folder keeps the file name you typed, and saving over an existing file asks for confirmation first. **Home** and
+**Up** (++ctrl+up++) change folders, and the **Hidden files** checkbox (++ctrl+t++) shows dot files.
 
 ## Input Colors
 

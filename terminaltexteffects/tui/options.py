@@ -55,6 +55,51 @@ TUI_TERMINAL_DEFAULTS: dict[str, typing.Any] = {
 """TUI defaults that differ from the CLI, so the canvas fills the text area and text lands where it was typed."""
 
 
+class _Format(typing.NamedTuple):
+    """How to write one value of an option type, for tooltips."""
+
+    one: str
+    many: str
+    example: str
+    examples: str
+
+
+_FORMATS: dict[typing.Any, _Format] = {
+    argutils.PositiveInt.type_parser: _Format("a whole number above 0", "whole numbers above 0", "4", "2 6 10"),
+    argutils.NonNegativeInt.type_parser: _Format("a whole number, 0 or more", "whole numbers, 0 or more", "0", "0 3 8"),
+    argutils.PositiveIntRange.type_parser: _Format(
+        "a range of whole numbers above 0, written low-high",
+        "ranges of whole numbers, written low-high",
+        "2-8",
+        "1-4 6-9",
+    ),
+    argutils.PositiveFloat.type_parser: _Format("a number above 0", "numbers above 0", "0.5", "0.25 1 2.5"),
+    argutils.NonNegativeFloat.type_parser: _Format("a number, 0 or more", "numbers, 0 or more", "0", "0 0.5 2"),
+    argutils.PositiveFloatRange.type_parser: _Format(
+        "a range of numbers above 0, written low-high", "ranges of numbers, written low-high", "0.25-1.5", "0.1-0.5 1-2"
+    ),
+    argutils.NonNegativeRatio.type_parser: _Format("a number from 0 to 1", "numbers from 0 to 1", "0.5", "0 0.5 1"),
+    argutils.PositiveRatio.type_parser: _Format(
+        "a number above 0, up to 1", "numbers above 0, up to 1", "0.25", "0.1 0.5 1"
+    ),
+    argutils.EasingStep.type_parser: _Format("a number above 0, up to 1", "numbers above 0, up to 1", "0.1", "0.1 0.5"),
+    argutils.ColorArg.type_parser: _Format(
+        "a color: an RGB hex value from 000000 to ffffff, or an XTerm color number from 0 to 255",
+        "colors: RGB hex values from 000000 to ffffff, or XTerm color numbers from 0 to 255",
+        "ff8800",
+        "ff0000 00ff00 208",
+    ),
+    argutils.Symbol.type_parser: _Format("one character", "single characters (quote a space as ' ')", "*", "* + ."),
+    argutils.CanvasDimension.type_parser: _Format(
+        "a whole number of cells: -1 follows the text size, and 0 fills the area", "", "40", ""
+    ),
+    argutils.TerminalDimension.type_parser: _Format("a whole number of cells: 0 uses the terminal size", "", "80", ""),
+    int: _Format("a whole number", "whole numbers", "3", "1 2 3"),
+    float: _Format("a number", "numbers", "0.5", "0.5 1 1.5"),
+}
+"""Value formats by `ArgSpec` type parser."""
+
+
 @dataclass(frozen=True)
 class OptionField:
     """One editable configuration option.
@@ -105,6 +150,39 @@ class OptionField:
     def is_color(self) -> bool:
         """Return whether the option's values are colors."""
         return self.spec.type is argutils.ColorArg.type_parser
+
+    def format_hint(self) -> str:
+        """Return how to write the option's value, with an example, or an empty string for checkboxes and lists.
+
+        Types the TUI does not know, such as those of community effects, are described by their `ArgSpec` metavar,
+        with the default value as the example.
+        """
+        if self.kind != "text":
+            return ""
+        known = _FORMATS.get(self.spec.type)
+        if known is not None and (known.many or not self.is_multi):
+            if self.is_multi:
+                return f"Format: space-separated {known.many}.\nExample: {known.examples}"
+            return f"Format: {known.one}.\nExample: {known.example}"
+        metavar = "" if self.spec.metavar is argutils._MISSING else self.spec.metavar
+        if isinstance(metavar, (tuple, list)):
+            metavar = " ".join(str(item) for item in metavar)
+        metavar = str(metavar).strip()
+        if isinstance(self.default, tuple) and len(self.default) == 2 and not self.is_multi:
+            numbers = "whole numbers" if all(isinstance(item, int) for item in self.default) else "numbers"
+            description = f"Format: a range of {numbers}, written low-high."
+        elif not metavar:
+            description = ""
+        elif self.is_multi:
+            description = f"Format: space-separated values, each {metavar.strip('()')}."
+        elif " " in metavar and "(" not in metavar:
+            description = f"Format: one of {', '.join(metavar.split())}."
+        else:
+            description = f"Format: {metavar.strip('()')}."
+        example = self.format(self.default)
+        if not example:
+            return description
+        return f"{description}\nExample: {example}".strip()
 
     def format(self, value: typing.Any) -> str:
         """Return `value` as editor text using the command-line spelling.
@@ -228,3 +306,105 @@ def command_line(
         if value != option.spec.normalize(option.spec.default):
             tokens += option.command_tokens(value)
     return shlex.join(tokens)
+
+
+@dataclass
+class ParsedCommand:
+    """Settings read from a `tte` command line.
+
+    Attributes:
+        effect (str): Effect command name.
+        effect_values (dict[str, Any]): Effect option values given in the command, by field name.
+        terminal_values (dict[str, Any]): Terminal option values given in the command, by field name.
+        input_file (str | None): File given with `--input-file`.
+        problems (list[str]): Flags or values that could not be applied.
+
+    """
+
+    effect: str
+    effect_values: dict[str, typing.Any]
+    terminal_values: dict[str, typing.Any]
+    input_file: str | None
+    problems: list[str]
+
+
+def parse_command(
+    command: str,
+    effect_fields: typing.Mapping[str, typing.Callable[[], list[OptionField]]],
+    terminal_fields: list[OptionField],
+) -> ParsedCommand:
+    """Read the effect and options from a `tte` command line, such as one shown by the command dialog.
+
+    Flags before the effect name are terminal options, and flags after it are effect options. Each flag's values run
+    until the next flag. Unknown flags and invalid values are reported in `problems` instead of failing the whole
+    command.
+
+    Args:
+        command (str): The command line. A leading `tte` is optional.
+        effect_fields (Mapping[str, Callable[[], list[OptionField]]]): Effect names mapped to functions that return
+            their option fields.
+        terminal_fields (list[OptionField]): Terminal option fields that can be set.
+
+    Returns:
+        ParsedCommand: The settings found in the command.
+
+    Raises:
+        ValueError: If the command cannot be split or names no known effect.
+
+    """
+    try:
+        tokens = shlex.split(command)
+    except ValueError as error:
+        msg = f"cannot read the command: {error}."
+        raise ValueError(msg) from error
+    if tokens and tokens[0] in ("tte", "terminaltexteffects"):
+        tokens = tokens[1:]
+    effect_index = next((index for index, token in enumerate(tokens) if token in effect_fields), None)
+    if effect_index is None:
+        msg = "the command names no known effect."
+        raise ValueError(msg)
+    effect = tokens[effect_index]
+    problems: list[str] = []
+    input_file: str | None = None
+    terminal_tokens = tokens[:effect_index]
+    for index, token in enumerate(terminal_tokens):
+        if token in ("-i", "--input-file") and index + 1 < len(terminal_tokens):
+            input_file = terminal_tokens[index + 1]
+            terminal_tokens = terminal_tokens[:index] + terminal_tokens[index + 2 :]
+            break
+    terminal_values = _parse_flags(terminal_tokens, terminal_fields, problems)
+    effect_values = _parse_flags(tokens[effect_index + 1 :], effect_fields[effect](), problems)
+    return ParsedCommand(effect, effect_values, terminal_values, input_file, problems)
+
+
+def _parse_flags(tokens: list[str], fields_: list[OptionField], problems: list[str]) -> dict[str, typing.Any]:
+    """Return the values of the flags in `tokens`, adding unknown flags and invalid values to `problems`."""
+    by_flag = {option.flag: option for option in fields_}
+    values: dict[str, typing.Any] = {}
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        index += 1
+        if not token.startswith("--"):
+            problems.append(f"unexpected value '{token}'")
+            continue
+        flag, _, inline = token.partition("=")
+        arguments = [inline] if inline else []
+        while index < len(tokens) and not tokens[index].startswith("--"):
+            arguments.append(tokens[index])
+            index += 1
+        option = by_flag.get(flag)
+        if option is None:
+            problems.append(f"{flag} is not available here")
+            continue
+        try:
+            if option.kind == "bool":
+                values[option.name] = True
+                if arguments:
+                    problems.append(f"{flag} takes no value")
+            else:
+                text = " ".join(_quote_if_needed(argument) for argument in arguments) if option.is_multi else ""
+                values[option.name] = option.parse(text if option.is_multi else " ".join(arguments))
+        except ValueError as error:
+            problems.append(f"{flag}: {error}")
+    return values
