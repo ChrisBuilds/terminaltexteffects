@@ -119,6 +119,9 @@ class FileScreen(ModalScreen["tuple[str, bool] | None"]):
         border: tall $secondary;
         background: $primary 22%;
     }
+    FileScreen #path:hover {
+        background: $primary 40%;
+    }
     FileScreen #message {
         height: auto;
         color: $text-warning;

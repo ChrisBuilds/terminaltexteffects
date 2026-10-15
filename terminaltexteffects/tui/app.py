@@ -964,11 +964,19 @@ class TTEApp(App[None]):
         background-tint: $foreground 25%;
         color: $text;
     }
-    Checkbox:hover, #transport Checkbox:hover, OptionEditor > Checkbox:hover,
-    Input:hover, OptionEditor > Input:hover, #effect-filter:hover,
-    SelectCurrent:hover, OptionEditor > Select:hover, OptionEditor > .swatch:hover,
-    Tab:hover {
+    Checkbox:hover, #transport Checkbox:hover, OptionEditor > Checkbox:hover, SelectCurrent:hover, Tab:hover {
         background-tint: $foreground 25%;
+    }
+    /* Text fields are transparent, which a tint can't lighten, so they get a background. */
+    Input:hover, OptionEditor > Input:hover, #effect-filter:hover {
+        background: $primary 45%;
+    }
+    /* A tint would barely show around the color cells, so the swatch's padding turns solid purple. */
+    OptionEditor > .swatch:hover {
+        background: $primary;
+    }
+    OptionEditor > Input.-invalid:hover {
+        background: $error 35%;
     }
     Checkbox:hover > .toggle--label {
         background: $primary;
