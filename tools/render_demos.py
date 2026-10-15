@@ -29,9 +29,13 @@ import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from terminaltexteffects.utils.export import agg_fps_cap, recording_to_cast
-from tools.render_webp import FONT, Encoding, Fonts, RenderError, render_webp
+
+# The WebP renderer needs Pillow, which is only installed on Python 3.10 and later, so it is imported when used.
+if TYPE_CHECKING:
+    from tools.render_webp import Fonts
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = PROJECT_ROOT / "tests" / "testinput" / "demo.txt"
@@ -314,16 +318,18 @@ class RenderOptions:
     """
 
     formats: tuple[str, ...]
+    font: str
     fps: int = DEFAULT_FPS
     gifsicle_lossy: int | None = None
     near_lossless: int = NEAR_LOSSLESS
-    font: str = FONT
     fallback_fonts: tuple[str, ...] = ()
 
 
 @functools.cache
 def load_fonts(font: str, fallback_fonts: tuple[str, ...]) -> Fonts:
     """Load the WebP fonts once in each worker process."""
+    from tools.render_webp import Fonts  # noqa: PLC0415
+
     return Fonts(font, fallback_fonts)
 
 
@@ -336,7 +342,7 @@ def try_render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> 
     """
     try:
         return True, render(name, demo, out_dir, options)
-    except (CommandError, RenderError) as error:
+    except CommandError as error:
         return False, f"{name}: {error}"
 
 
@@ -349,15 +355,20 @@ def render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> str:
         work = Path(temp)
         record(demo, work / "demo.tterec")
         if "webp" in formats:
-            render_webp(
-                work / "demo.tterec",
-                out_dir / f"{name}_demo.webp",
-                fps=fps,
-                encoding=Encoding(None if near_lossless == NEAR_LOSSLESS_OFF else near_lossless),
-                fonts=load_fonts(options.font, options.fallback_fonts),
-                start_hold=demo.start_hold,
-                end_hold=demo.end_hold,
-            )
+            from tools.render_webp import Encoding, RenderError, render_webp  # noqa: PLC0415
+
+            try:
+                render_webp(
+                    work / "demo.tterec",
+                    out_dir / f"{name}_demo.webp",
+                    fps=fps,
+                    encoding=Encoding(None if near_lossless == NEAR_LOSSLESS_OFF else near_lossless),
+                    fonts=load_fonts(options.font, options.fallback_fonts),
+                    start_hold=demo.start_hold,
+                    end_hold=demo.end_hold,
+                )
+            except RenderError as error:
+                raise CommandError(str(error)) from error
         if "gif" in formats or "mp4" in formats:
             non_ascii = recording_to_cast(work / "demo.tterec", work / "demo.cast", demo.start_hold)
             gif = work / "demo.gif"
@@ -428,7 +439,7 @@ def main() -> int:
         default=os.cpu_count() or 1,
         help="demos to render at once (default: one per CPU core)",
     )
-    parser.add_argument("--font", default=FONT, help=f"font path or file name for WebP output (default: {FONT})")
+    parser.add_argument("--font", help="font path or file name for WebP output (default: DejaVu Sans Mono)")
     parser.add_argument(
         "--fallback-font",
         action="append",
@@ -456,19 +467,25 @@ def main() -> int:
     ]:
         parser.error(f"missing required tools: {', '.join(missing)}")
 
+    font = args.font or ""
+    if "webp" in args.formats:
+        try:
+            from tools.render_webp import FONT, RenderError  # noqa: PLC0415
+        except ImportError as error:
+            parser.error(f"WebP output needs Pillow, installed on Python 3.10 or later ({error})")
+        font = font or FONT
+        try:
+            load_fonts(font, tuple(args.fallback_font))
+        except RenderError as error:
+            parser.error(str(error))
     options = RenderOptions(
         formats=tuple(args.formats),
+        font=font,
         fps=args.fps,
         gifsicle_lossy=args.gifsicle_lossy,
         near_lossless=args.near_lossless,
-        font=args.font,
         fallback_fonts=tuple(args.fallback_font),
     )
-    if "webp" in args.formats:
-        try:
-            load_fonts(options.font, options.fallback_fonts)
-        except RenderError as error:
-            parser.error(str(error))
 
     args.out.mkdir(parents=True, exist_ok=True)
     # Each demo records and encodes on one core, so demos render in parallel.

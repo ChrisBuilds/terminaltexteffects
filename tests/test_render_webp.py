@@ -8,6 +8,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 from terminaltexteffects.engine._recording import RecordingHeader, RecordingWriter
+
+# Pillow is only installed on Python 3.10 and later.
+pytest.importorskip("PIL")
+
 from tools import render_webp
 from tools.render_webp import BACKGROUND, FOREGROUND, Cell, Encoding
 
