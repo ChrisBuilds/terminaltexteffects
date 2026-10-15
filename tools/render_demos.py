@@ -45,8 +45,8 @@ NEAR_LOSSLESS = 60
 """The WebP near-lossless level, which changes pixel values by a few steps at most and shrinks most demos."""
 NEAR_LOSSLESS_OFF = 100
 """The near-lossless level that leaves WebP output lossless."""
-DEFAULT_FPS = 30
-"""The output frame rate. Demos record at 60 fps, and every other frame plays at the same speed in far fewer bytes."""
+DEFAULT_FPS = 60
+"""The highest output frame rate. Demos record at 60 fps, so WebP output keeps every frame."""
 
 
 @dataclass(frozen=True)
