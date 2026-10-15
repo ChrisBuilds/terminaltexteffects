@@ -89,6 +89,18 @@ stays open so you can insert several symbols, and ++escape++ or a click outside 
 Colors are kept with the text, as [input colors](#input-colors) are. Effects use them when
 **existing-color-handling** on the Canvas tab is `always` or `dynamic`.
 
+### Clipboard and right-click menu
+
+++ctrl+x++, ++ctrl+c++, and ++ctrl+v++ cut, copy, and paste in the text area, using the system clipboard
+(`pbcopy` and `pbpaste` on macOS, `clip` and PowerShell on Windows, and `wl-copy`, `xclip`, or `xsel` elsewhere).
+Most macOS terminals keep ++cmd+c++ and ++cmd+x++ for their own selection, which mouse support in the interface
+turns off, so use the Ctrl keys or the menu. ++cmd+v++ pastes as usual. Terminals that pass ++cmd++ through to
+applications, such as kitty, WezTerm, and Ghostty, can use the ++cmd++ keys too.
+
+Right-click the text, or the effect while it plays, for a menu with cut, copy, paste, and select all, the text
+color, background color, clear colors, and insert symbol actions, play or pause, stop, and fit or maximize the
+canvas. Right-clicking keeps the selection, so the menu can cut or copy it.
+
 ## Playback
 
 ++f5++ or **Play** plays the selected effect. While it plays, ++f5++ or ++space++ pauses and resumes it, and

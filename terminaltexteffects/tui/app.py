@@ -17,6 +17,7 @@ from rich.segment import Segment
 from rich.style import Style
 from rich.text import Text
 from textual import on, work
+from textual.actions import SkipAction
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
@@ -39,12 +40,12 @@ from textual.widgets import (
 )
 
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.tui import canvas, clipboard, colors, export, frames, options, session
+from terminaltexteffects.tui import canvas, clipboard, colors, export, frames, menu, options, session
 from terminaltexteffects.tui.files import FileFormat, FileScreen
 from terminaltexteffects.tui.picker import ColorScreen
 from terminaltexteffects.tui.screens import CommandScreen, HelpScreen
 from terminaltexteffects.tui.theme import TTE_THEME, gradient_text
-from terminaltexteffects.tui.toolbar import SymbolScreen, TextToolbar
+from terminaltexteffects.tui.toolbar import Layer, SymbolScreen, TextToolbar
 from terminaltexteffects.utils.graphics import Color
 
 if typing.TYPE_CHECKING:
@@ -52,6 +53,7 @@ if typing.TYPE_CHECKING:
 
     from textual import events
     from textual.events import Resize
+    from textual.geometry import Offset
     from textual.timer import Timer
 
     from terminaltexteffects.engine.base_config import BaseConfig
@@ -81,6 +83,9 @@ class ColorTextArea(TextArea):
     When the canvas is smaller than the editor, cells outside it are dimmed and an outline is drawn just outside it.
     Dragging an outline edge that moves with the canvas anchor resizes the canvas.
     """
+
+    # Terminals that pass Cmd through (with the kitty keyboard protocol) send it as super.
+    BINDINGS: typing.ClassVar = [Binding("super+v", "paste", "Paste", show=False)]
 
     class CanvasResized(Message):
         """Posted while a canvas edge is dragged, with the new width or height, or `None` for an unchanged one."""
@@ -149,7 +154,16 @@ class ColorTextArea(TextArea):
     # a canvas drag from selecting text.
 
     async def _on_mouse_down(self, event: events.MouseDown) -> None:
-        """Start a canvas drag on a movable outline edge. Elsewhere, `TextArea` starts a text selection."""
+        """Open the context menu on a right click, or start a canvas drag on a movable outline edge.
+
+        Elsewhere, `TextArea` starts a text selection.
+        """
+        if event.button == menu.RIGHT_BUTTON:
+            # Keep the selection, so the menu can cut or copy it.
+            event.prevent_default()
+            event.stop()
+            self.post_message(menu.ContextRequested(event.screen_offset))
+            return
         if self.canvas_rect is None:
             return
         edges = canvas.edges_at(self.canvas_rect, event.x, event.y, canvas.draggable_edges(self.canvas_anchor))
@@ -227,6 +241,16 @@ class ColorTextArea(TextArea):
         styles: colors.StyleList = self._color_styles or [None] * len(text)
         self.attach_colors(text, colors.paint(text, styles, self._index(start), self._index(end), update))
         return True
+
+    def action_paste(self) -> None:
+        """Paste the system clipboard, or the app's own clipboard when the system clipboard can't be read."""
+        if self.read_only:
+            return
+        text = clipboard.paste_with_system_command()
+        if text is None:
+            text = self.app.clipboard
+        if result := self._replace_via_keyboard(text, *self.selection):
+            self.move_cursor(result.end_location)
 
     def insert_symbol(self, symbol: str) -> None:
         """Replace the selection with `symbol`, as typing it would, and place the cursor after it."""
@@ -331,9 +355,17 @@ class CanvasView(Widget, can_focus=True):
             super().__init__()
             self.event = event
 
+    def on_mouse_down(self, event: events.MouseDown) -> None:
+        """Open the context menu on a right click."""
+        if event.button == menu.RIGHT_BUTTON:
+            event.stop()
+            self.post_message(menu.ContextRequested(event.screen_offset))
+
     def on_click(self, event: events.Click) -> None:
         """Ask the app to stop the effect and return to the text."""
         event.stop()
+        if event.button == menu.RIGHT_BUTTON:
+            return
         self.post_message(CanvasView.Clicked(event))
 
     def __init__(self, **kwargs: typing.Any) -> None:
@@ -1432,6 +1464,58 @@ class TTEApp(App[None]):
         self.action_stop()
         self.editor.focus()
         return self.editor
+
+    @on(menu.ContextRequested)
+    def _context_menu(self, message: menu.ContextRequested) -> None:
+        """Offer editing, color, symbol, canvas, and playback actions where the mouse was right-clicked."""
+        if self.screen.is_modal:
+            return
+        has_selection = bool(self.editor.selected_text)
+        shown = self.state != "editing"
+        items: list[menu.MenuItem | None] = [
+            menu.MenuItem("Cut", "cut", "Ctrl+X", has_selection),
+            menu.MenuItem("Copy", "copy", "Ctrl+C", has_selection),
+            menu.MenuItem("Paste", "paste", "Ctrl+V"),
+            menu.MenuItem("Select all", "select_all"),
+            None,
+            menu.MenuItem("Text color…", "fg"),
+            menu.MenuItem("Background color…", "bg"),
+            menu.MenuItem("Clear colors", "clear"),
+            menu.MenuItem("Insert symbol…", "symbols"),
+            None,
+            menu.MenuItem("Pause" if self.state == "playing" else "Play", "play", "F5"),
+            menu.MenuItem("Stop", "stop", "Esc", shown),
+            menu.MenuItem("Fit canvas to text", "fit", "Ctrl+T"),
+            menu.MenuItem("Maximize canvas", "max", "Ctrl+G"),
+        ]
+
+        def chosen(action: str | None) -> None:
+            if action is not None:
+                self._run_menu_action(action, message.at)
+
+        self.push_screen(menu.ContextMenu(items, message.at), chosen)
+
+    def _run_menu_action(self, action: str, at: Offset) -> None:
+        playback = {"play": self.action_play, "stop": self.action_stop}
+        canvas_actions = {"fit": self.action_fit_canvas, "max": self.action_maximize_canvas}
+        if action in playback:
+            playback[action]()
+            return
+        if action in canvas_actions:
+            canvas_actions[action]()
+            return
+        editor = self._back_to_text()
+        if action in ("cut", "copy", "paste"):
+            with contextlib.suppress(SkipAction):
+                getattr(editor, f"action_{action}")()
+        elif action == "select_all":
+            editor.select_all()
+        elif action in ("fg", "bg"):
+            self._pick_text_color(TextToolbar.PickColor(typing.cast("Layer", action)))
+        elif action == "clear":
+            self._clear_text_color()
+        elif action == "symbols":
+            self._open_symbols(TextToolbar.OpenSymbols(at))
 
     @on(TextToolbar.OpenSymbols)
     def _open_symbols(self, message: TextToolbar.OpenSymbols) -> None:

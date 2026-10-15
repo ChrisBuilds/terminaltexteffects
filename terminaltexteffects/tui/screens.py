@@ -134,6 +134,7 @@ TIPS = (
     "Turn on Auto-replay to replay the effect whenever an option changes, or when you highlight another effect.",
     "Turn on Loop to keep replaying the effect.",
     "Clear an option's field and leave it to return the option to its default.",
+    "Right-click the text for a menu with clipboard, color, symbol, and canvas actions.",
     "Type in the filter above the effect list to find an effect by name or description.",
     "Use the bar above the text to color the selection or new text, and Symbols to insert blocks, lines, and arrows.",
 )
