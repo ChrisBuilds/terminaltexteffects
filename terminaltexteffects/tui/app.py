@@ -106,6 +106,10 @@ class ColorTextArea(TextArea):
         self.canvas_area = canvas.CanvasRect(0, 0, 1, 1)
         self.canvas_anchor = "nw"
         self._drag_edges: set[canvas.Edge] = set()
+        self._clip: tuple[str, colors.StyleList] | None = None
+        """The text last cut or copied here, with its styles, so pasting it back keeps its colors."""
+        self._paste_styles: tuple[int, colors.StyleList] | None = None
+        """Styles to give a paste in progress, from its start index."""
         self.pen: colors.CellStyle | None = None
         """Style given to typed and inserted text, or `None` to extend the style of the character before.
 
@@ -221,12 +225,17 @@ class ColorTextArea(TextArea):
     @on(TextArea.Changed)
     def _carry_styles(self) -> None:
         """Keep input colors attached to the characters they belong to after an edit, and color new text."""
-        if self._color_styles is None and self.pen is None:
+        if self._color_styles is None and self.pen is None and self._paste_styles is None:
             self._color_text = self.text
             return
         text = self.text
         old_styles: colors.StyleList = self._color_styles or [None] * len(self._color_text)
-        self.attach_colors(text, colors.carry_styles(self._color_text, old_styles, text, self.pen))
+        styles = colors.carry_styles(self._color_text, old_styles, text, self.pen)
+        if self._paste_styles is not None:
+            start, pasted = self._paste_styles
+            self._paste_styles = None
+            styles[start : start + len(pasted)] = pasted[: max(0, len(styles) - start)]
+        self.attach_colors(text, styles)
 
     def _index(self, location: tuple[int, int]) -> int:
         row, column = location
@@ -242,6 +251,37 @@ class ColorTextArea(TextArea):
         self.attach_colors(text, colors.paint(text, styles, self._index(start), self._index(end), update))
         return True
 
+    def _remember_clip(self, start: tuple[int, int], end: tuple[int, int]) -> None:
+        """Keep the text from `start` to `end` with its styles, for a later paste."""
+        text = self.get_text_range(start, end)
+        styles = self._color_styles
+        if styles is None or text != self._color_text[self._index(start) : self._index(end)]:
+            self._clip = None
+            return
+        self._clip = (text, styles[self._index(start) : self._index(end)])
+
+    def _expect_paste(self, text: str) -> None:
+        """Give `text` the styles it was cut or copied with, if it is the text last cut or copied here."""
+        if self._clip is not None and self._clip[0] == text and any(self._clip[1]):
+            self._paste_styles = (self._index(min(self.selection)), self._clip[1])
+
+    def action_copy(self) -> None:
+        """Copy the selection, keeping its colors for pasting here."""
+        start, end = sorted(self.selection)
+        if start != end:
+            self._remember_clip(start, end)
+        super().action_copy()
+
+    def action_cut(self) -> None:
+        """Cut the selection, or the cursor line, keeping its colors for pasting here."""
+        start, end = sorted(self.selection)
+        if start == end:
+            row = start[0]
+            # Without a selection, `TextArea` cuts the whole cursor line with its line break.
+            start, end = (row, 0), (row + 1, 0) if row + 1 < self.document.line_count else self.document.end
+        self._remember_clip(start, end)
+        super().action_cut()
+
     def action_paste(self) -> None:
         """Paste the system clipboard, or the app's own clipboard when the system clipboard can't be read."""
         if self.read_only:
@@ -249,8 +289,19 @@ class ColorTextArea(TextArea):
         text = clipboard.paste_with_system_command()
         if text is None:
             text = self.app.clipboard
+        self._expect_paste(text)
         if result := self._replace_via_keyboard(text, *self.selection):
             self.move_cursor(result.end_location)
+        else:
+            self._paste_styles = None
+
+    async def _on_paste(self, event: events.Paste) -> None:
+        """Keep the colors of pasted text that was cut or copied here.
+
+        Textual then runs the `TextArea` handler, which inserts the text.
+        """
+        if not self.read_only:
+            self._expect_paste(event.text)
 
     def insert_symbol(self, symbol: str) -> None:
         """Replace the selection with `symbol`, as typing it would, and place the cursor after it."""
@@ -446,10 +497,31 @@ class PanelSelect(Select[str]):
     The list opens below the field when it fits there or there is more room below, and above the field otherwise.
     """
 
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        """Initialize the select, with no tooltips hidden yet."""
+        super().__init__(*args, **kwargs)
+        self._hidden_tooltips: list[tuple[Widget, typing.Any]] = []
+
     def _watch_expanded(self, expanded: bool) -> None:  # noqa: FBT001 (Textual calls watchers positionally)
         if expanded:
             self._fit_overlay()
+            self._hide_tooltips()
+        else:
+            self._restore_tooltips()
         super()._watch_expanded(expanded)
+
+    def _hide_tooltips(self) -> None:
+        """Hide the tooltips of the select's ancestors, which would otherwise cover the open list."""
+        for node in self.ancestors_with_self:
+            if isinstance(node, Widget) and node.tooltip is not None:
+                self._hidden_tooltips.append((node, node.tooltip))
+                node.tooltip = None
+
+    def _restore_tooltips(self) -> None:
+        for node, tooltip in self._hidden_tooltips:
+            if node.tooltip is None:
+                node.tooltip = tooltip
+        self._hidden_tooltips.clear()
 
     def _fit_overlay(self) -> None:
         panel = next((ancestor for ancestor in self.ancestors if isinstance(ancestor, VerticalScroll)), None)

@@ -288,3 +288,21 @@ def test_dropdowns_stay_inside_the_options_panel() -> None:
             await pilot.pause()
 
     _run(TTEApp(_EFFECTS, "Hi", effect="slide"), script)
+
+
+def test_open_dropdowns_hide_option_tooltips() -> None:
+    """An option's tooltip should not cover its dropdown while the list is open, and should return after."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        select = app.query(PanelSelect).first()
+        editor = next(node for node in select.ancestors if isinstance(node, OptionEditor))
+        tooltip = editor.tooltip
+        assert tooltip is not None
+        select.expanded = True
+        await pilot.pause()
+        assert editor.tooltip is None
+        select.expanded = False
+        await pilot.pause()
+        assert editor.tooltip == tooltip
+
+    _run(TTEApp(_EFFECTS, "Hi", effect="slide"), script)

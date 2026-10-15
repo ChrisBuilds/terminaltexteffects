@@ -39,6 +39,16 @@ class ContextRequested(Message):
 RIGHT_BUTTON = 3
 
 
+class MenuList(OptionList):
+    """An `OptionList` whose highlight follows the mouse, so the entry under the pointer is easy to see."""
+
+    def _on_mouse_move(self, event: events.MouseMove) -> None:
+        super()._on_mouse_move(event)
+        index = self._mouse_hovering_over
+        if index is not None and not self.options[index].disabled:
+            self.highlighted = index
+
+
 class ContextMenu(ModalScreen["str | None"]):
     """Lists actions at a screen position and returns the chosen action id, or `None` when dismissed."""
 
@@ -46,7 +56,7 @@ class ContextMenu(ModalScreen["str | None"]):
     ContextMenu {
         background: $background 0%;
     }
-    ContextMenu > OptionList {
+    ContextMenu > MenuList {
         constrain: inside inside;
         width: auto;
         height: auto;
@@ -55,8 +65,14 @@ class ContextMenu(ModalScreen["str | None"]):
         background: $surface;
         padding: 0;
     }
-    ContextMenu > OptionList > .option-list--option {
+    ContextMenu > MenuList > .option-list--option {
         padding: 0 1;
+    }
+    ContextMenu > MenuList > .option-list--option-highlighted,
+    ContextMenu > MenuList:focus > .option-list--option-highlighted {
+        color: $background;
+        background: $secondary;
+        text-style: bold;
     }
     """
 
@@ -78,13 +94,13 @@ class ContextMenu(ModalScreen["str | None"]):
                 options.append(None)
                 continue
             options.append(Option(f"{item.label.ljust(width)}{item.key}", id=item.action, disabled=not item.enabled))
-        menu = OptionList(*options)
+        menu = MenuList(*options)
         menu.styles.offset = (self._at.x, self._at.y)
         yield menu
 
     def on_mount(self) -> None:
         """Give the menu the keyboard, with the first available entry highlighted."""
-        menu = self.query_one(OptionList)
+        menu = self.query_one(MenuList)
         menu.focus()
         menu.highlighted = next((index for index, option in enumerate(menu.options) if not option.disabled), None)
 

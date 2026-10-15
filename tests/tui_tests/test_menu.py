@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import typing
 
+from textual import events
 from textual.widgets import OptionList
 from textual.widgets.text_area import Selection
 
@@ -99,3 +100,48 @@ def test_paste_commands_per_platform() -> None:
     """Each platform should have its clipboard-reading command first."""
     assert clipboard.paste_commands("darwin") == (("pbpaste",),)
     assert clipboard.paste_commands("linux")[0] == ("wl-paste", "--no-newline")
+
+
+def test_cut_and_paste_keep_colors(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Text cut or copied in the editor should keep its colors when pasted back, by key or bracketed paste."""
+    system: list[str] = []
+    monkeypatch.setattr(clipboard, "copy_with_system_command", lambda text: system.append(text) or True)
+    monkeypatch.setattr(clipboard, "paste_with_system_command", lambda: system[-1] if system else None)
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        editor = app.editor
+        red = editor.color_styles[0] if editor.color_styles else None
+        assert red is not None
+        editor.focus()
+        editor.selection = Selection((0, 0), (0, 3))
+        await pilot.press("ctrl+x")
+        await pilot.pause()
+        assert editor.text == " text"
+        editor.move_cursor((0, 5))
+        await pilot.press("ctrl+v")
+        await pilot.pause()
+        assert editor.text == " textred"
+        assert editor.color_styles == [None] * 5 + [red] * 3
+        editor.selection = Selection((0, 5), (0, 8))
+        await pilot.press("ctrl+c")
+        editor.move_cursor((0, 0))
+        app.post_message(events.Paste("red"))
+        await pilot.pause()
+        assert editor.text == "red textred"
+        assert editor.color_styles == [red] * 3 + [None] * 5 + [red] * 3
+
+    _run(TTEApp(_EFFECTS, "\x1b[31mred\x1b[0m text", effect="wipe"), script)
+
+
+def test_menu_highlight_follows_the_mouse() -> None:
+    """Moving the mouse over an entry should highlight it."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        await pilot.click("#editor", offset=(2, 0), button=3)
+        await pilot.pause()
+        menu = app.screen.query_one(OptionList)
+        await pilot.hover(OptionList, offset=(3, menu.get_option_index("select_all") + 1))
+        await pilot.pause()
+        assert menu.highlighted == menu.get_option_index("select_all")
+
+    _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)
