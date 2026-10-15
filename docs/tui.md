@@ -141,7 +141,7 @@ file is written:
 Choosing a format changes the file's suffix, and typing a suffix chooses the format. When a format's tools are
 missing, the dialog says which and won't save in that format. Exporting needs a **frame-rate** above `0`, and
 GIF and WebP play at that rate. asciinema itself isn't needed: the interface writes the asciicast that agg
-renders.
+renders. The command line makes the same files with [`--record`](appguide.md#gif-and-webp).
 
 ## Keys
 

@@ -13,6 +13,7 @@ import pkgutil
 import random
 import shutil
 import sys
+import tempfile
 import time
 import weakref
 from contextlib import contextmanager
@@ -32,7 +33,7 @@ from terminaltexteffects.engine._recording import (
     RecordingWriter,
 )
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.utils import ansitools
+from terminaltexteffects.utils import ansitools, export
 from terminaltexteffects.utils.argutils import NonNegativeFloat, NonNegativeInt
 from terminaltexteffects.utils.exceptions import EmptyInputError, UnsupportedAnsiSequenceError
 from terminaltexteffects.utils.shell_completion import (
@@ -331,8 +332,10 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
         type=Path,
         metavar="FILE",
         help=(
-            f"Render the effect without displaying it and save the frames to FILE (use the {RECORDING_SUFFIX} "
-            "extension). Requires --frame-rate greater than 0, which becomes the playback rate."
+            f"Render the effect without displaying it and save the frames to FILE. A {RECORDING_SUFFIX} file (or any "
+            "other extension) plays back with --play; a .gif or .webp file is an animation of the canvas, made "
+            "with agg (and gif2webp for WebP) from PATH. Requires --frame-rate greater than 0, which becomes the "
+            "playback rate."
         ),
     )
     record_play_group.add_argument(
@@ -998,6 +1001,49 @@ def _check_recording_options(args: argparse.Namespace) -> None:
             _exit_with_error("--record cannot be combined with --repeat 0.")
         if args.frame_rate == 0:
             _exit_with_error("--record requires --frame-rate greater than 0.")
+        problem = export.format_problem(export.format_for(args.record))
+        if problem is not None:
+            _exit_with_error(problem)
+
+
+_PROGRESS_INTERVAL = 0.1
+"""Seconds between updates of the frame count shown while `--record` renders to a terminal."""
+
+
+class _RecordingProgress:
+    """Report `--record` progress on standard error.
+
+    On a terminal, the frame count updates in place while frames render. Otherwise only whole lines are printed.
+    """
+
+    def __init__(self) -> None:
+        self._live = _is_terminal(sys.stderr)
+        self._last_update = 0.0
+        self._shown = False
+
+    def frame(self, count: int) -> None:
+        """Show `count` frames rendered, at most every `_PROGRESS_INTERVAL` seconds, on a terminal."""
+        if not self._live:
+            return
+        now = time.monotonic()
+        if now - self._last_update < _PROGRESS_INTERVAL:
+            return
+        self._last_update = now
+        sys.stderr.write(f"\rRendering frame {count}")
+        sys.stderr.flush()
+        self._shown = True
+
+    def line(self, message: str) -> None:
+        """Replace any frame count with `message` on its own line."""
+        self.clear()
+        print(message, file=sys.stderr, flush=True)
+
+    def clear(self) -> None:
+        """Erase the frame count, if one is shown."""
+        if self._shown:
+            sys.stderr.write("\r\x1b[K")
+            sys.stderr.flush()
+            self._shown = False
 
 
 def _run_recording(
@@ -1018,15 +1064,29 @@ def _run_recording(
             input_data,
             effect.terminal_config,
         )
+    fmt = export.format_for(args.record)
+    progress = _RecordingProgress()
+    record = partial(
+        _record_playbacks,
+        effect_name=effect_name,
+        effect=effect,
+        count=args.repeat,
+        next_playback_factory=next_recording_factory,
+        on_frame=progress.frame,
+    )
     try:
-        header, frame_count, segments = _record_playbacks(
-            args.record,
-            effect_name,
-            effect,
-            args.repeat,
-            next_recording_factory,
-        )
-    except (EmptyInputError, UnsupportedAnsiSequenceError, RecordingError) as e:
+        try:
+            if fmt is export.FORMATS[0]:
+                header, frame_count, segments = record(args.record)
+            else:
+                with tempfile.TemporaryDirectory(prefix="tte-record-") as folder:
+                    recording = Path(folder) / f"effect{RECORDING_SUFFIX}"
+                    header, frame_count, segments = record(recording)
+                    progress.line(f"Drawing {frame_count} frames to {fmt.name} with {' and '.join(fmt.tools)}")
+                    export.export_recording(recording, args.record, fmt, fps=header.frame_rate)
+        finally:
+            progress.clear()
+    except (EmptyInputError, UnsupportedAnsiSequenceError, RecordingError, export.ExportError) as e:
         _exit_with_error(str(e))
     except OSError as e:
         _exit_with_error(f"Cannot write recording {str(args.record)!r}: {e.strerror or e}.")

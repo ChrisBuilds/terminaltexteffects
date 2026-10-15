@@ -164,6 +164,27 @@ A recording stores only the canvas. Canvas size, text anchoring, and color optio
 and `--no-color` are fixed when recording. Set `--canvas-width` and `--canvas-height` explicitly, or use `0`
 to match the terminal at recording time, so the recording does not depend on the input size.
 
+### GIF and WebP
+
+When `FILE` ends in `.gif` or `.webp`, `--record` renders the effect the same way and converts it to an
+animation of the canvas instead of writing a recording. Any other extension writes a `.tterec` recording.
+
+```bash title="Record an effect as an animated WebP"
+tte -i banner.txt --frame-rate 30 --record banner.webp wipe
+```
+
+| Extension | What you get | Needs |
+| --- | --- | --- |
+| `.gif` | An animation of the canvas, with the last frame held for two seconds. | [agg](https://github.com/asciinema/agg) on `PATH`. |
+| `.webp` | The same animation as a lossless animated WebP, usually much smaller. | agg and `gif2webp` from [libwebp](https://developers.google.com/speed/webp/download) on `PATH`. |
+
+A missing command is reported before anything renders. `--frame-rate` becomes the animation's frame rate, and
+`--repeat` and `--random-effect` add their playbacks to the same animation. On a terminal, a frame count
+updates in place while frames render, then a line names the frames being drawn with agg. When standard error is
+redirected, only whole lines are written. An interrupted or failed conversion leaves no partial file. asciinema
+itself isn't needed: tte writes the asciicast that agg renders. The [TUI](tui.md#export) exports the same
+formats.
+
 ### Playback
 
 `--play PATH` takes a recording file or a directory. For a directory, every top-level `.tterec` file plays

@@ -41,7 +41,7 @@ from textual.widgets import (
 )
 
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.tui import canvas, clipboard, colors, export, frames, menu, options
+from terminaltexteffects.tui import canvas, clipboard, colors, frames, menu, options
 from terminaltexteffects.tui.drawer import DrawerHandle
 from terminaltexteffects.tui.export_progress import ExportProgress
 from terminaltexteffects.tui.files import FileFormat, FileScreen
@@ -50,6 +50,7 @@ from terminaltexteffects.tui.picker import ColorScreen
 from terminaltexteffects.tui.screens import CommandScreen, HelpScreen
 from terminaltexteffects.tui.theme import TTE_THEME, gradient_text
 from terminaltexteffects.tui.toolbar import Layer, SymbolScreen, TextToolbar
+from terminaltexteffects.utils import export
 from terminaltexteffects.utils.graphics import Color
 
 if typing.TYPE_CHECKING:
