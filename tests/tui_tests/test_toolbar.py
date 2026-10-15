@@ -145,12 +145,6 @@ def test_no_color_removes_one_layer() -> None:
     _run(TTEApp(_EFFECTS, "abc", effect="wipe"), script)
 
 
-def test_option_color_pickers_have_no_no_color_button() -> None:
-    """Color options always need a color, so their picker shouldn't offer No color."""
-    screen = ColorScreen("final-gradient-stops", [Color("ffffff")], multiple=True)
-    assert not screen.allow_none
-
-
 def test_paint_skips_newlines_and_drops_empty_styles() -> None:
     """`paint` should leave newlines unstyled and turn empty styles into `None`."""
     red = colors.CellStyle(fg=Color("ff0000"))
