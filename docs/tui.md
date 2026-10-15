@@ -135,7 +135,7 @@ file is written:
 | Format | What you get | Needs |
 | --- | --- | --- |
 | tterec | A recording that `tte --play` replays in a terminal. See [recording and playback](appguide.md#recording-and-playback). | Nothing else. |
-| GIF | An animation of the canvas, with the last frame held for two seconds. | [agg](https://github.com/asciinema/agg) on `PATH`. |
+| GIF | An animation of the canvas, with the last frame held for two seconds. | [agg](https://github.com/asciinema/agg) 1.7 or later on `PATH`. |
 | WebP | The same animation as a lossless animated WebP, usually much smaller. | agg and `gif2webp` from [libwebp](https://developers.google.com/speed/webp/download) on `PATH`. |
 
 Choosing a format changes the file's suffix, and typing a suffix chooses the format. When a format's tools are

@@ -5,7 +5,7 @@ speed. The recording is converted to an asciicast holding only the effect canvas
 that needs no cropping or trimming. Output can be that GIF, a lossless animated WebP converted from it (the
 default), or an MP4.
 
-Requires `agg` on `PATH`, plus `gif2webp` for WebP output and `ffmpeg` for MP4 output. When `gifsicle` is
+Requires `agg` 1.7 or later on `PATH`, plus `gif2webp` for WebP output and `ffmpeg` for MP4 output. When `gifsicle` is
 installed, `--gifsicle-lossy` applies lossy GIF compression.
 
 Examples:

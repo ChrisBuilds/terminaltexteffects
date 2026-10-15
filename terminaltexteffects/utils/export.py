@@ -33,8 +33,11 @@ FORMATS = (
 )
 """Recording formats, the native recording first."""
 
+AGG_MIN_VERSION = "1.7"
+"""The oldest `agg` release that accepts every option this module passes, such as `--quiet`."""
+
 TOOL_SOURCES = {
-    "agg": "agg from github.com/asciinema/agg",
+    "agg": f"agg {AGG_MIN_VERSION} or later from github.com/asciinema/agg",
     "gif2webp": "gif2webp from libwebp",
 }
 """Where to get each command an export format needs."""
@@ -102,6 +105,8 @@ def _run(command: list[str]) -> None:
     )
     if result.returncode:
         message = f"{command[0]} exited with {result.returncode}: {(result.stderr or result.stdout).strip()}"
+        if command[0] == "agg":
+            message += f"\nGIF and WebP need agg {AGG_MIN_VERSION} or later; check it with: agg --version"
         raise ExportError(message)
 
 

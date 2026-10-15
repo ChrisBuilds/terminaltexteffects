@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 import typing
 from pathlib import Path
 
@@ -33,6 +34,24 @@ def test_missing_tools_are_named_with_their_source(monkeypatch: pytest.MonkeyPat
     assert export.format_problem(_GIF) is None
     assert export.format_problem(export.FORMATS[0]) is None
     assert export.format_problem(_WEBP) == "WebP needs gif2webp from libwebp on PATH."
+    monkeypatch.setattr(export.shutil, "which", lambda _name: None)
+    assert export.format_problem(_GIF) == "GIF needs agg 1.7 or later from github.com/asciinema/agg on PATH."
+
+
+def test_agg_failure_names_the_minimum_version(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An agg that rejects an option, as releases before 1.7 reject `--quiet`, should say which version is needed."""
+    monkeypatch.setattr(export.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr(
+        export.subprocess,
+        "run",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess([], 2, "", "error: Found argument '--quiet'"),
+    )
+    with pytest.raises(export.ExportError) as error:
+        export._run(["agg", "--quiet"])
+    assert str(error.value) == (
+        "agg exited with 2: error: Found argument '--quiet'\n"
+        "GIF and WebP need agg 1.7 or later; check it with: agg --version"
+    )
 
 
 def test_webp_export_renders_a_gif_with_agg_then_converts_it(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

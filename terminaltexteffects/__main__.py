@@ -334,8 +334,8 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
         help=(
             f"Render the effect without displaying it and save the frames to FILE. A {RECORDING_SUFFIX} file (or any "
             "other extension) plays back with --play; a .gif or .webp file is an animation of the canvas, made "
-            "with agg (and gif2webp for WebP) from PATH. Requires --frame-rate greater than 0, which becomes the "
-            "playback rate."
+            f"with agg {export.AGG_MIN_VERSION} or later (and gif2webp for WebP) from PATH. Requires --frame-rate "
+            "greater than 0, which becomes the playback rate."
         ),
     )
     record_play_group.add_argument(
