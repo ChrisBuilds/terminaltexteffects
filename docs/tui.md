@@ -54,8 +54,8 @@ The interface needs a terminal for output. When standard output is redirected, `
   terminal options that affect previews: canvas size and anchors, text wrapping, frame rate, color handling, and tab
   width.
 
-The **Effects** and **Options** checkboxes in the header, or ++ctrl+b++ and ++ctrl+o++, hide those panels to give the
-text more room. The session remembers which panels are shown.
+Click the thin handle to the right of **Effects**, or above **Options**, to hide that panel and give the text more
+room, and click it again to bring the panel back. ++ctrl+b++ and ++ctrl+o++ do the same.
 
 The interface uses a TerminalTextEffects theme in purple, cyan, and white. Other Textual themes are available from
 the command palette (++ctrl+p++).
@@ -157,7 +157,7 @@ renders.
 | ++f8++ | Export the effect to a `.tterec`, GIF, or WebP file. See [Export](#export). |
 | ++tab++ | Move between the effect filter, the effect list, the text, and the options. |
 | ++ctrl+p++ | Open the command palette, including themes. |
-| ++ctrl+q++ | Quit, keeping the session for next time. |
+| ++ctrl+q++ | Quit. |
 
 ## Canvas
 
@@ -188,14 +188,6 @@ The same dialog loads a command: paste a `tte` command, such as one copied from 
 interface selects its effect and applies its options. Options the command leaves out take their command-line
 defaults, so the preview matches what the command plays. Its `--input-file`, if any, is opened, and flags the
 interface doesn't offer, such as `--reuse-canvas`, are listed in a notice and skipped.
-
-## Session
-
-When you quit with ++ctrl+q++, the interface saves the selected effect, the options you changed, the text with its
-colors, and the **Loop** and **Auto** toggles to `$XDG_CONFIG_HOME/terminaltexteffects/tui_session.json`, or
-`~/.config/terminaltexteffects/tui_session.json` when `XDG_CONFIG_HOME` isn't set. The next start restores them.
-Text you pipe in or open with `-i`, and an effect named on the command line, take the place of the saved ones.
-Delete the file to start fresh.
 
 ## Files
 

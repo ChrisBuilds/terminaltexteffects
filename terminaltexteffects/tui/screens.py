@@ -126,7 +126,7 @@ KEYS: tuple[tuple[str, str], ...] = (
     ("F8", "Export the effect to a tterec, GIF, or WebP file"),
     ("Tab", "Move between the effect filter, effect list, text, and options"),
     ("Ctrl+P", "Command palette, including themes"),
-    ("Ctrl+Q", "Quit, keeping the session for next time"),
+    ("Ctrl+Q", "Quit"),
 )
 """Keys listed on the help screen."""
 

@@ -1,4 +1,4 @@
-"""Pilot tests for playback controls, the effect filter, commands, and the session."""
+"""Pilot tests for playback controls, the effect filter, commands, and panels."""
 
 from __future__ import annotations
 
@@ -184,38 +184,6 @@ def test_pasted_command_sets_the_effect_options_and_text(tmp_path: Path) -> None
     _run(TTEApp(_EFFECTS, "Hi", effect="beams"), script)
 
 
-def test_session_is_restored(tmp_path: Path) -> None:
-    """Quitting should save the session, and the next start should restore it."""
-    path = tmp_path / "session.json"
-
-    async def first(app: TTEApp, pilot: Pilot[None]) -> None:
-        await app.apply_command("tte --frame-rate 30 wipe --wipe-delay 2")
-        app.query_one("#loop", Checkbox).value = True
-        await pilot.press("ctrl+b")
-        app.editor.load_text("remember me")
-        await pilot.pause()
-        app.save_session()
-
-    _run(TTEApp(_EFFECTS, "", session_path=path), first)
-
-    async def second(app: TTEApp, pilot: Pilot[None]) -> None:  # noqa: ARG001
-        assert app.effect_name == "wipe"
-        assert _editor(app, "wipe", "wipe_delay").value == 2
-        assert _editor(app, "terminal", "frame_rate").value == 30
-        assert app.query_one("#loop", Checkbox).value is True
-        assert not app.query_one("#effects-panel").display
-        assert app.query_one("#options").display
-        assert app.editor.text == "remember me"
-
-    _run(TTEApp(_EFFECTS, "", session_path=path), second)
-
-    async def explicit(app: TTEApp, pilot: Pilot[None]) -> None:  # noqa: ARG001
-        assert app.effect_name == "beams"
-        assert app.editor.text == "given"
-
-    _run(TTEApp(_EFFECTS, "given", effect="beams", session_path=path), explicit)
-
-
 def test_fit_and_maximize_the_canvas() -> None:
     """Ctrl+T should fit the canvas to the text, and Ctrl+G should grow it to the whole area."""
 
@@ -328,7 +296,7 @@ def test_long_text_leaves_the_outline_visible() -> None:
 
 
 def test_panels_hide_to_give_the_text_room() -> None:
-    """The header checkboxes and their keys should hide the effect list and options panel, growing the text area."""
+    """The drawer handles and their keys should hide the effect list and options panel, growing the text area."""
 
     async def script(app: TTEApp, pilot: Pilot[None]) -> None:
         area = app._effect_area()
@@ -337,13 +305,17 @@ def test_panels_hide_to_give_the_text_room() -> None:
         await pilot.pause()
         assert not app.query_one("#effects-panel").display
         assert app.focused is app.editor
-        await pilot.click("#show-options")
+        await pilot.click("#options-drawer")
         await pilot.pause()
         assert not app.query_one("#options").display
         grown = app._effect_area()
         assert grown.width > area.width
         assert grown.height > area.height
-        await pilot.press("ctrl+b", "ctrl+o")
+        assert (
+            "▶" in app.query_one("#effects-drawer").render_line(app.query_one("#effects-drawer").size.height // 2).text
+        )
+        await pilot.click("#effects-drawer")
+        await pilot.press("ctrl+o")
         await pilot.pause()
         assert app.query_one("#effects-panel").display
         assert app.query_one("#options").display

@@ -41,7 +41,8 @@ from textual.widgets import (
 )
 
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.tui import canvas, clipboard, colors, export, frames, menu, options, session
+from terminaltexteffects.tui import canvas, clipboard, colors, export, frames, menu, options
+from terminaltexteffects.tui.drawer import DrawerHandle
 from terminaltexteffects.tui.export_progress import ExportProgress
 from terminaltexteffects.tui.files import FileFormat, FileScreen
 from terminaltexteffects.tui.picker import ColorScreen
@@ -841,22 +842,20 @@ class TTEApp(App[None]):
         width: auto;
         color: $text-muted;
     }
-    #header Checkbox {
-        margin-right: 2;
-        padding: 0;
-        background: transparent;
-    }
     #main {
         height: 1fr;
     }
     #effects-panel {
-        width: 18;
+        width: 17;
         height: 1fr;
         border: round $primary;
+        /* The drawer handle beside the panel stands in for its right border. */
+        border-right: none;
         border-title-color: $text;
     }
     #effects-panel:focus-within {
         border: round $secondary;
+        border-right: none;
     }
     #effect-filter {
         background: $boost;
@@ -997,8 +996,8 @@ class TTEApp(App[None]):
         Binding("f4", "command", "Command", priority=True),
         Binding("f6", "reset", "Reset options", priority=True, show=False),
         Binding("f8", "export", "Export", priority=True),
-        Binding("ctrl+b", "toggle_panel('show-effects')", "Effect list", priority=True, show=False),
-        Binding("ctrl+o", "toggle_panel('show-options')", "Options panel", priority=True, show=False),
+        Binding("ctrl+b", "toggle_panel('effects-drawer')", "Effect list", priority=True, show=False),
+        Binding("ctrl+o", "toggle_panel('options-drawer')", "Options panel", priority=True, show=False),
         Binding("ctrl+q", "quit", "Quit", priority=True),
     ]
 
@@ -1008,7 +1007,6 @@ class TTEApp(App[None]):
         text: str = "",
         input_file: str | None = None,
         effect: str | None = None,
-        session_path: Path | None = None,
     ) -> None:
         """Initialize the application.
 
@@ -1017,17 +1015,13 @@ class TTEApp(App[None]):
             text (str): Initial text, which may contain ANSI colors.
             input_file (str | None): File the text came from, used as the default save path.
             effect (str | None): Effect to select initially.
-            session_path (Path | None): File the session is restored from at startup and saved to on quit. No
-                session is kept when it is `None`.
 
         """
         super().__init__()
         self.effect_resource_map = dict(sorted(effect_resource_map.items()))
         self.input_file = input_file
-        self.session_path = session_path
         self._file_text: str | None = None
         self._initial_text = text
-        self._restored_text = False
         self._initial_effect = effect if effect in self.effect_resource_map else None
         self.effect_name = self._initial_effect or next(iter(self.effect_resource_map))
         self._listed = list(self.effect_resource_map)
@@ -1057,14 +1051,13 @@ class TTEApp(App[None]):
         """Create the header, effect list, playback bar, editor, canvas, and options panel."""
         with Horizontal(id="header"):
             yield Static(gradient_text("TerminalTextEffects"), id="title")
-            yield self._panel_toggle("Effects", "show-effects", "Show the effect list (Ctrl+B)")
-            yield self._panel_toggle("Options", "show-options", "Show the options panel (Ctrl+O)")
             yield Static("F1 help", id="hint")
         with Horizontal(id="main"):
             with Vertical(id="effects-panel") as effects_panel:
                 effects_panel.border_title = "Effects"
                 yield EffectFilter(placeholder="Filter effects", id="effect-filter", compact=True)
                 yield OptionList(*self.effect_resource_map, id="effects")
+            yield DrawerHandle("left", "Effect list", "Ctrl+B", id="effects-drawer")
             with Vertical(id="right"):
                 with Horizontal(id="transport"):
                     yield from self._transport_buttons(
@@ -1089,6 +1082,7 @@ class TTEApp(App[None]):
                 with Vertical(id="stage"):
                     yield ColorTextArea(id="editor")
                     yield CanvasView(id="canvas")
+        yield DrawerHandle("bottom", "Options", "Ctrl+O", id="options-drawer")
         with Vertical(id="options"), TabbedContent():
             with TabPane("Effect", id="effect-tab"), VerticalScroll():
                 yield Vertical(id="effect-options", classes="option-grid")
@@ -1096,12 +1090,6 @@ class TTEApp(App[None]):
                 yield Vertical(id="terminal-options", classes="option-grid")
         yield ExportProgress(id="export-progress")
         yield Footer()
-
-    @staticmethod
-    def _panel_toggle(label: str, toggle_id: str, tooltip: str) -> Checkbox:
-        toggle = Checkbox(label, value=True, id=toggle_id, compact=True, tooltip=tooltip)
-        toggle.can_focus = False
-        return toggle
 
     @staticmethod
     def _transport_buttons(*buttons: tuple[str, str, str]) -> Iterator[Button]:
@@ -1112,16 +1100,15 @@ class TTEApp(App[None]):
             yield button
 
     async def on_mount(self) -> None:
-        """Restore the last session, load the initial text, and show the selected effect's options."""
+        """Load the initial text and show the selected effect's options."""
         self.query_one("#stage").border_title = "Text"
         self.query_one("#loop", Checkbox).tooltip = "Replay the effect when it finishes"
         self.query_one(
             "#auto-replay", Checkbox
         ).tooltip = "Replay the effect when an option changes or another effect is highlighted"
-        self._restore_session()
         self._load_text(self._initial_text)
         if self.input_file:
-            self._file_text = self._file_contents(self.input_file) if self._restored_text else self.editor.text
+            self._file_text = self.editor.text
         terminal_grid = self.query_one("#terminal-options")
         await terminal_grid.mount_all(self._editors(_TERMINAL_SCOPE))
         effect_list = self.query_one("#effects", OptionList)
@@ -1131,80 +1118,9 @@ class TTEApp(App[None]):
         self.query_one("#stage").set_interval(_STATUS_INTERVAL, self._update_status)
         self.query_one("#editor").focus()
 
-    # Session ---------------------------------------------------------------------------------------------------
-
-    def _restore_session(self) -> None:
-        """Apply the saved session. Values that no longer parse and effects that are not installed are skipped."""
-        if self.session_path is None:
-            return
-        saved = session.load_session(self.session_path)
-        if saved is None:
-            return
-        for scope, values in saved.values.items():
-            if scope != _TERMINAL_SCOPE and scope not in self.effect_resource_map:
-                continue
-            fields = {option.name: option for option in self._scope_fields(scope)}
-            for name, text in values.items():
-                option = fields.get(name)
-                if option is None:
-                    continue
-                try:
-                    value = option.parse(text)
-                except ValueError:
-                    continue
-                if value != option.default:
-                    self._values.setdefault(scope, {})[name] = value
-        if self._initial_effect is None and saved.effect in self.effect_resource_map:
-            self.effect_name = saved.effect
-        if not self._initial_text and saved.text:
-            self._initial_text = saved.text
-            self._restored_text = True
-            if self.input_file is None:
-                self.input_file = saved.input_file
-        self.query_one("#loop", Checkbox).value = saved.loop
-        self.query_one("#auto-replay", Checkbox).value = saved.auto_replay
-        self.query_one("#show-effects", Checkbox).value = saved.show_effects
-        self.query_one("#show-options", Checkbox).value = saved.show_options
-
-    def save_session(self) -> None:
-        """Save the selected effect, changed options, text, playback toggles, and shown panels to the session file."""
-        if self.session_path is None:
-            return
-        values = {
-            scope: {
-                option.name: option.format(scope_values[option.name])
-                for option in self._scope_fields(scope)
-                if option.name in scope_values
-            }
-            for scope, scope_values in self._values.items()
-            if scope_values
-        }
-        saved = session.Session(
-            effect=self.effect_name,
-            values=values,
-            text=self.editor.colored_text(),
-            input_file=self.input_file,
-            loop=self.query_one("#loop", Checkbox).value,
-            auto_replay=self.query_one("#auto-replay", Checkbox).value,
-            show_effects=self.query_one("#show-effects", Checkbox).value,
-            show_options=self.query_one("#show-options", Checkbox).value,
-        )
-        # The session is a convenience, so a read-only config directory should not stop the app from quitting.
-        with contextlib.suppress(OSError):
-            session.save_session(self.session_path, saved)
-
-    @staticmethod
-    def _file_contents(path: str) -> str | None:
-        """Return the text of the file at `path`, or `None` when it cannot be read."""
-        try:
-            return Path(path).expanduser().read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
-            return None
-
     async def action_quit(self) -> None:
-        """Save the session and quit."""
+        """Stop playback and quit."""
         self._cancel_playback()
-        self.save_session()
         self.exit()
 
     # Effects list ----------------------------------------------------------------------------------------------
@@ -1750,18 +1666,19 @@ class TTEApp(App[None]):
             timeout=8,
         )
 
-    def action_toggle_panel(self, toggle_id: str) -> None:
-        """Show or hide the panel that the header checkbox `toggle_id` controls."""
-        self.query_one(f"#{toggle_id}", Checkbox).toggle()
+    def action_toggle_panel(self, handle_id: str) -> None:
+        """Show or hide the panel of the drawer handle `handle_id`."""
+        self.query_one(f"#{handle_id}", DrawerHandle).toggle()
 
-    @on(Checkbox.Changed, "#show-effects, #show-options")
-    def _panel_toggled(self, event: Checkbox.Changed) -> None:
+    @on(DrawerHandle.Toggled)
+    def _panel_toggled(self, event: DrawerHandle.Toggled) -> None:
         """Show or hide the effect list or the options panel, giving its room to the text area."""
         event.stop()
-        panel = self.query_one("#effects-panel" if event.checkbox.id == "show-effects" else "#options")
-        if not event.value and panel.has_focus_within:
+        handle = event.handle
+        panel = self.query_one("#effects-panel" if handle.id == "effects-drawer" else "#options")
+        if not handle.open and panel.has_focus_within:
             self.editor.focus()
-        panel.display = event.value
+        panel.display = handle.open
         self.call_after_refresh(self._refresh_subtitle)
 
     def on_resize(self, event: Resize) -> None:
