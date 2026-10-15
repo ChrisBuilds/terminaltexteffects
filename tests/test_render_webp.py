@@ -28,18 +28,18 @@ def write_recording(path: Path, frames: list[str], frame_rate: int = 10) -> None
 def test_parse_frame_reads_truecolor_xterm_and_reset_sequences() -> None:
     """Colors apply to the symbols after them and carry over to the next row until reset."""
     rows = render_webp.parse_frame("\x1b[38;2;255;0;0ma\x1b[48;5;21mb\n\x1b[0mc\x1b[1;7md", 2, 2)
-    assert rows[0] == [Cell("a", RED, BACKGROUND), Cell("b", RED, (0, 0, 255))]
-    assert rows[1] == [
+    assert rows[0] == (Cell("a", RED, BACKGROUND), Cell("b", RED, (0, 0, 255)))
+    assert rows[1] == (
         Cell("c", FOREGROUND, BACKGROUND),
         Cell("d", FOREGROUND, BACKGROUND, render_webp.BOLD | render_webp.REVERSE),
-    ]
+    )
 
 
 def test_parse_frame_gives_wide_symbols_two_cells() -> None:
     """A wide symbol is followed by an empty cell it covers, and short frames are padded with blank cells."""
     rows = render_webp.parse_frame("字", 3, 2)
     blank = Cell(" ", FOREGROUND, BACKGROUND)
-    assert rows == [[Cell("字", FOREGROUND, BACKGROUND), Cell("", FOREGROUND, BACKGROUND), blank], [blank] * 3]
+    assert rows == [(Cell("字", FOREGROUND, BACKGROUND), Cell("", FOREGROUND, BACKGROUND), blank), (blank,) * 3]
 
 
 def test_frame_times_skip_frames_evenly_and_hold_the_first() -> None:

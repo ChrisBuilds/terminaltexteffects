@@ -19,7 +19,7 @@ import sys
 import tempfile
 import typing
 from dataclasses import dataclass
-from functools import cache
+from functools import cache, lru_cache
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -113,6 +113,7 @@ def _xterm(index: int) -> RGB:
     return (value >> 16, (value >> 8) & 0xFF, value & 0xFF)
 
 
+@cache
 def _apply_sgr(parameters: str, fg: RGB, bg: RGB, attributes: int) -> tuple[RGB, RGB, int]:
     """Return the colors and attributes after the SGR sequence with `parameters`."""
     values = [int(value) for value in parameters.split(";") if value] or [0]
@@ -145,26 +146,40 @@ def _apply_sgr(parameters: str, fg: RGB, bg: RGB, attributes: int) -> tuple[RGB,
     return fg, bg, attributes
 
 
-def parse_frame(frame: str, width: int, height: int) -> list[list[Cell]]:
+def parse_frame(frame: str, width: int, height: int) -> list[tuple[Cell, ...]]:
     """Return the frame as `height` rows of `width` cells.
 
     Colors and attributes carry over from one row to the next, as they do in a terminal.
     """
-    fg, bg, attributes = FOREGROUND, BACKGROUND, 0
-    rows: list[list[Cell]] = []
+    state = (FOREGROUND, BACKGROUND, 0)
+    rows: list[tuple[Cell, ...]] = []
     for line in frame.split("\n")[:height]:
-        row: list[Cell] = []
-        for parameters, symbol in _TOKEN.findall(line):
-            if not symbol:
-                fg, bg, attributes = _apply_sgr(parameters, fg, bg, attributes)
-                continue
-            row.append(Cell(symbol, fg, bg, attributes))
-            if get_symbol_cell_width(symbol) == 2:
-                row.append(Cell("", fg, bg, attributes))
-        row += [Cell(" ", FOREGROUND, BACKGROUND)] * (width - len(row))
-        rows.append(row[:width])
-    rows += [[Cell(" ", FOREGROUND, BACKGROUND)] * width for _ in range(height - len(rows))]
+        row, state = _parse_row(line, width, state)
+        rows.append(row)
+    rows += [(Cell(" ", FOREGROUND, BACKGROUND),) * width] * (height - len(rows))
     return rows
+
+
+_State = tuple[RGB, RGB, int]
+
+
+@lru_cache(maxsize=4096)
+def _parse_row(line: str, width: int, state: _State) -> tuple[tuple[Cell, ...], _State]:
+    """Return the cells of one row and the colors and attributes after it.
+
+    Most rows repeat from one frame to the next, so parsed rows are cached, which also lets `FrameDrawer` skip them.
+    """
+    fg, bg, attributes = state
+    row: list[Cell] = []
+    for parameters, symbol in _TOKEN.findall(line):
+        if not symbol:
+            fg, bg, attributes = _apply_sgr(parameters, fg, bg, attributes)
+            continue
+        row.append(Cell(symbol, fg, bg, attributes))
+        if get_symbol_cell_width(symbol) == 2:
+            row.append(Cell("", fg, bg, attributes))
+    row += [Cell(" ", FOREGROUND, BACKGROUND)] * (width - len(row))
+    return tuple(row[:width]), (fg, bg, attributes)
 
 
 @dataclass(frozen=True)
@@ -294,13 +309,15 @@ class FrameDrawer:
         size = (width * fonts.cell_width + 2 * self.padding, height * fonts.cell_height + 2 * self.padding)
         self.image = Image.new("RGB", size, BACKGROUND)
         self._draw = ImageDraw.Draw(self.image)
-        self._previous: list[list[Cell]] | None = None
+        self._previous: list[tuple[Cell, ...]] | None = None
 
-    def draw(self, rows: list[list[Cell]]) -> bool:
+    def draw(self, rows: list[tuple[Cell, ...]]) -> bool:
         """Draw `rows`, returning whether any cell changed since the previous frame."""
         changed = False
         for y, row in enumerate(rows):
             previous = self._previous[y] if self._previous is not None else None
+            if previous is row:
+                continue
             for x, cell in enumerate(row):
                 if previous is not None and previous[x] == cell:
                     continue

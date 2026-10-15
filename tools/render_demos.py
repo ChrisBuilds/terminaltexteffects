@@ -2,9 +2,10 @@
 
 Each demo is rendered ahead of time with `tte --record`, so frame timing is exact and independent of machine
 speed. WebP output, the default, is drawn straight from the recording with Pillow and encoded losslessly with
-`img2webp`, keeping every frame and every color (see `render_webp`). A demo can set a near-lossless level instead.
-GIF and MP4 output convert the recording to an asciicast holding only the effect canvas, which `agg` renders to a
-GIF that needs no cropping or trimming.
+`img2webp`, keeping every frame and every color (see `render_webp`). Demos in `NEAR_LOSSLESS_DEMOS` use
+near-lossless encoding, which shrinks them noticeably without visible change. GIF and MP4 output convert the
+recording to an asciicast holding only the effect canvas, which `agg` renders to a GIF that needs no cropping or
+trimming. Demos render in parallel, one per CPU core.
 
 Requires `img2webp` from libwebp for WebP output, and `agg` 1.7 or later for GIF and MP4 output, plus `ffmpeg` for
 MP4. When `gifsicle` is installed, `--gifsicle-lossy` applies lossy GIF compression.
@@ -20,11 +21,13 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import functools
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -56,12 +59,38 @@ class Demo:
     end_hold: float = 2.0
     agg_args: tuple[str, ...] = field(default=())
     effects_dir: Path | None = None
-    near_lossless: int | None = None
 
 
 # Built-in effects render from `demo.txt` with default options. Add an entry here to change the options for a
 # demo, or to add a demo that is not named after its effect.
 DEMO_OVERRIDES: dict[str, Demo] = {}
+
+NEAR_LOSSLESS_LEVEL = 60
+"""The near-lossless level for `NEAR_LOSSLESS_DEMOS`, which changes pixel values by a few steps at most."""
+
+# Demos whose WebP near-lossless encoding shrinks by 15% or more. The rest gain little or grow, so they stay lossless.
+NEAR_LOSSLESS_DEMOS = frozenset(
+    {
+        "beams",
+        "colorshift",
+        "crumble",
+        "expand",
+        "fireworks",
+        "highlight",
+        "middleout",
+        "overflow",
+        "randomsequence",
+        "rings",
+        "scattered",
+        "slice",
+        "slide",
+        "paint_colors_dynamic",
+        "paint_colors_ignore",
+        "paint_diagonal",
+        "paint_radial",
+        "paint_vertical",
+    },
+)
 
 # Effect Guide visuals. Each one shows exactly what the reader sees when running the command next to it, so it uses
 # the same input file. Each example effect lives in its own directory under `docs/effectguide/examples/`, which is
@@ -301,44 +330,47 @@ def render_mp4(gif: Path, mp4: Path) -> None:
     run(command)
 
 
-def try_render(name: str, demo: Demo, out_dir: Path, args: argparse.Namespace) -> bool:
-    """Render one demo, reporting a failure instead of raising.
-
-    Returns:
-        bool: Whether the demo rendered.
-
-    """
-    near_lossless = demo.near_lossless if args.near_lossless is None else args.near_lossless
-    options = RenderOptions(
-        fps=args.fps,
-        gifsicle_lossy=args.gifsicle_lossy,
-        encoding=Encoding(near_lossless if near_lossless != NEAR_LOSSLESS_OFF else None),
-        fonts=args.fonts,
-    )
-    try:
-        render(name, demo, out_dir, args.formats, options)
-    except (CommandError, RenderError) as error:
-        print(f"{name}: {error}", file=sys.stderr)
-        return False
-    return True
-
-
 @dataclass(frozen=True)
 class RenderOptions:
     """Command-line choices that apply to every demo.
 
-    `fps` of `None` keeps every recorded frame. `encoding` applies to WebP output.
+    `fps` of `None` keeps every recorded frame. `near_lossless` of `None` uses each demo's own level for WebP output.
     """
 
-    fps: int | None
-    gifsicle_lossy: int | None
-    encoding: Encoding
-    fonts: Fonts | None
+    formats: tuple[str, ...]
+    fps: int | None = None
+    gifsicle_lossy: int | None = None
+    near_lossless: int | None = None
+    font: str = FONT
+    fallback_fonts: tuple[str, ...] = ()
 
 
-def render(name: str, demo: Demo, out_dir: Path, formats: list[str], options: RenderOptions) -> None:
-    """Render one demo to each requested format, named `<name>_demo.<format>`."""
+@functools.cache
+def load_fonts(font: str, fallback_fonts: tuple[str, ...]) -> Fonts:
+    """Load the WebP fonts once in each worker process."""
+    return Fonts(font, fallback_fonts)
+
+
+def try_render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> tuple[bool, str]:
+    """Render one demo, reporting a failure instead of raising.
+
+    Returns:
+        tuple[bool, str]: Whether the demo rendered, and its file sizes or the error.
+
+    """
+    try:
+        return True, render(name, demo, out_dir, options)
+    except (CommandError, RenderError) as error:
+        return False, f"{name}: {error}"
+
+
+def render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> str:
+    """Render one demo to each requested format, named `<name>_demo.<format>`, and return their sizes."""
+    formats = options.formats
     fps = options.fps or demo.frame_rate
+    near_lossless = options.near_lossless
+    if near_lossless is None:
+        near_lossless = NEAR_LOSSLESS_LEVEL if name in NEAR_LOSSLESS_DEMOS else NEAR_LOSSLESS_OFF
     with tempfile.TemporaryDirectory(prefix="tte-demo-") as temp:
         work = Path(temp)
         record(demo, work / "demo.tterec")
@@ -347,8 +379,8 @@ def render(name: str, demo: Demo, out_dir: Path, formats: list[str], options: Re
                 work / "demo.tterec",
                 out_dir / f"{name}_demo.webp",
                 fps=fps,
-                encoding=options.encoding,
-                fonts=options.fonts,
+                encoding=Encoding(None if near_lossless == NEAR_LOSSLESS_OFF else near_lossless),
+                fonts=load_fonts(options.font, options.fallback_fonts),
                 start_hold=demo.start_hold,
                 end_hold=demo.end_hold,
             )
@@ -364,7 +396,7 @@ def render(name: str, demo: Demo, out_dir: Path, formats: list[str], options: Re
                     compress_gif(gif, options.gifsicle_lossy)
                 shutil.move(gif, out_dir / f"{name}_demo.gif")
     sizes = ", ".join(f"{fmt} {(out_dir / f'{name}_demo.{fmt}').stat().st_size // 1024} KB" for fmt in formats)
-    print(f"{name}: {sizes}")
+    return f"{name}: {sizes}"
 
 
 def required_tools(formats: list[str], *, gifsicle: bool) -> list[str]:
@@ -412,7 +444,13 @@ def main() -> int:
         choices=range(101),
         metavar="LEVEL",
         help=f"WebP near-lossless level for every demo, from 0 (strongest) to {NEAR_LOSSLESS_OFF} (lossless) "
-        "(default: each demo's level, lossless unless set)",
+        f"(default: {NEAR_LOSSLESS_LEVEL} for demos it shrinks noticeably, lossless for the rest)",
+    )
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=os.cpu_count() or 1,
+        help="demos to render at once (default: one per CPU core)",
     )
     parser.add_argument("--font", default=FONT, help=f"font path or file name for WebP output (default: {FONT})")
     parser.add_argument(
@@ -433,6 +471,8 @@ def main() -> int:
         parser.error("name at least one demo, or pass --all")
     if unknown := [name for name in selected if name not in available]:
         parser.error(f"unknown demo: {', '.join(unknown)}")
+    if args.jobs < 1:
+        parser.error("--jobs must be at least 1")
     if missing := [
         tool
         for tool in required_tools(args.formats, gifsicle=args.gifsicle_lossy is not None)
@@ -440,15 +480,29 @@ def main() -> int:
     ]:
         parser.error(f"missing required tools: {', '.join(missing)}")
 
-    args.fonts = None
+    options = RenderOptions(
+        formats=tuple(args.formats),
+        fps=args.fps,
+        gifsicle_lossy=args.gifsicle_lossy,
+        near_lossless=args.near_lossless,
+        font=args.font,
+        fallback_fonts=tuple(args.fallback_font),
+    )
     if "webp" in args.formats:
         try:
-            args.fonts = Fonts(args.font, args.fallback_font)
+            load_fonts(options.font, options.fallback_fonts)
         except RenderError as error:
             parser.error(str(error))
 
     args.out.mkdir(parents=True, exist_ok=True)
-    results = [try_render(name, available[name], args.out, args) for name in selected]
+    # Each demo records and encodes on one core, so demos render in parallel.
+    with ProcessPoolExecutor(max_workers=args.jobs) as executor:
+        futures = [executor.submit(try_render, name, available[name], args.out, options) for name in selected]
+        results = []
+        for future in as_completed(futures):
+            rendered, message = future.result()
+            print(message, file=sys.stdout if rendered else sys.stderr, flush=True)
+            results.append(rendered)
     return 0 if all(results) else 1
 
 
