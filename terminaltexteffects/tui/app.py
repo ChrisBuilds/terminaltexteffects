@@ -119,11 +119,10 @@ class ColorTextArea(TextArea):
         self.attach_colors(text, styles)
 
     def get_component_rich_style(self, *names: str, partial: bool = False, default: Style | None = None) -> Style:
-        """Return a component style, keeping only the background of the cursor line so text colors show on it."""
-        style = super().get_component_rich_style(*names, partial=partial, default=default)
+        """Return a component style, with no cursor line style, so text and background colors show on that line."""
         if names == ("text-area--cursor-line",):
-            return Style(bgcolor=style.bgcolor)
-        return style
+            return Style()
+        return super().get_component_rich_style(*names, partial=partial, default=default)
 
     def show_canvas(self, rect: canvas.CanvasRect, area: canvas.CanvasRect, anchor: str) -> None:
         """Outline the canvas at `rect`, inside the effect `area`, for a canvas placed by `anchor`."""

@@ -207,9 +207,10 @@ class SymbolScreen(ModalScreen[None]):
     def _chosen(self, message: SymbolGrid.Chosen) -> None:
         self._insert(message.symbol)
 
-    def on_click(self, event: events.Click) -> None:
-        """Close the palette when clicking outside it."""
-        if event.widget is self:
+    def on_mouse_down(self, event: events.MouseDown) -> None:
+        """Close the palette when any mouse button is pressed outside it."""
+        if not self.query_one(Vertical).region.contains_point(event.screen_offset):
+            event.stop()
             self.dismiss(None)
 
     def action_close(self) -> None:

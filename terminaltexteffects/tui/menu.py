@@ -110,8 +110,9 @@ class ContextMenu(ModalScreen["str | None"]):
         self.dismiss(event.option.id)
 
     def on_mouse_down(self, event: events.MouseDown) -> None:
-        """Close the menu when the mouse is pressed outside it."""
-        if event.widget is self:
+        """Close the menu when any mouse button is pressed outside it."""
+        if not self.query_one(MenuList).region.contains_point(event.screen_offset):
+            event.stop()
             self.dismiss(None)
 
     def action_close(self) -> None:

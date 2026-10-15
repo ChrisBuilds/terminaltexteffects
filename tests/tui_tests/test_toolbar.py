@@ -69,15 +69,19 @@ def test_colors_show_on_the_cursor_line() -> None:
         editor = app.editor
         editor.focus()
         editor.move_cursor((0, 4))
-        editor.pen = colors.CellStyle(fg=Color("ff0000"))
+        editor.pen = colors.CellStyle(fg=Color("ff0000"), bg=Color("0000ff"))
         await pilot.press("x")
         await pilot.pause()
         styles = [segment.style for segment in editor.render_line(0) if segment.text.startswith("x")]
         assert styles
-        assert styles[0] is not None
-        assert styles[0].color is not None
-        assert styles[0].color.triplet is not None
-        assert styles[0].color.triplet.hex == "#ff0000"
+        style = styles[0]
+        assert style is not None
+        assert style.color is not None
+        assert style.color.triplet is not None
+        assert style.color.triplet.hex == "#ff0000"
+        assert style.bgcolor is not None
+        assert style.bgcolor.triplet is not None
+        assert style.bgcolor.triplet.hex == "#0000ff"
 
     _run(TTEApp(_EFFECTS, "abcd\nefgh", effect="wipe"), script)
 
