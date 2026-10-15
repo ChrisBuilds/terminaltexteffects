@@ -1,12 +1,13 @@
 """Render effect demo animations without screen recording.
 
 Each demo is rendered ahead of time with `tte --record`, so frame timing is exact and independent of machine
-speed. The recording is converted to an asciicast holding only the effect canvas, which `agg` renders to a GIF
-that needs no cropping or trimming. Output can be that GIF, a lossless animated WebP converted from it (the
-default), or an MP4.
+speed. WebP output, the default, is drawn straight from the recording with Pillow and encoded by `img2webp` with
+near-lossless preprocessing, keeping every color with no visible change (see `render_webp`). GIF and MP4 output
+convert the recording to an asciicast holding only the effect canvas, which `agg` renders to a GIF that needs no
+cropping or trimming. Demos render in parallel, one per CPU core.
 
-Requires `agg` 1.7 or later on `PATH`, plus `gif2webp` for WebP output and `ffmpeg` for MP4 output. When `gifsicle` is
-installed, `--gifsicle-lossy` applies lossy GIF compression.
+Requires `img2webp` from libwebp for WebP output, and `agg` 1.7 or later for GIF and MP4 output, plus `ffmpeg` for
+MP4. When `gifsicle` is installed, `--gifsicle-lossy` applies lossy GIF compression.
 
 Examples:
     ./.venv/bin/python tools/render_demos.py --list
@@ -19,15 +20,22 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import functools
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from terminaltexteffects.utils.export import agg_fps_cap, recording_to_cast
+
+# The WebP renderer needs Pillow, which is only installed on Python 3.10 and later, so it is imported when used.
+if TYPE_CHECKING:
+    from tools.render_webp import Fonts
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = PROJECT_ROOT / "tests" / "testinput" / "demo.txt"
@@ -37,6 +45,12 @@ TUTORIAL_INPUT = GUIDE_EXAMPLES / "tutorial_input.txt"
 CONCEPT_INPUT = GUIDE_EXAMPLES / "concept_input.txt"
 COLOR_INPUT = GUIDE_EXAMPLES / "color_input.txt"
 FORMATS = ("gif", "webp", "mp4")
+NEAR_LOSSLESS = 60
+"""The WebP near-lossless level, which changes pixel values by a few steps at most and shrinks most demos."""
+NEAR_LOSSLESS_OFF = 100
+"""The near-lossless level that leaves WebP output lossless."""
+DEFAULT_FPS = 60
+"""The highest output frame rate. Demos record at 60 fps, so WebP output keeps every frame."""
 
 
 @dataclass(frozen=True)
@@ -267,11 +281,6 @@ def compress_gif(gif: Path, lossy: int) -> None:
     run(["gifsicle", "--batch", "-O3", f"--lossy={lossy}", str(gif)])
 
 
-def render_webp(gif: Path, webp: Path) -> None:
-    """Convert the GIF to a lossless animated WebP, which keeps every pixel and frame delay."""
-    run(["gif2webp", "-quiet", "-min_size", str(gif), "-o", str(webp)])
-
-
 def render_mp4(gif: Path, mp4: Path) -> None:
     """Convert the GIF to an H.264 MP4 that browsers can autoplay inline."""
     command = [
@@ -301,46 +310,84 @@ def render_mp4(gif: Path, mp4: Path) -> None:
     run(command)
 
 
-def try_render(name: str, demo: Demo, out_dir: Path, args: argparse.Namespace) -> bool:
+@dataclass(frozen=True)
+class RenderOptions:
+    """Command-line choices that apply to every demo.
+
+    `near_lossless` applies to WebP output.
+    """
+
+    formats: tuple[str, ...]
+    font: str
+    fps: int = DEFAULT_FPS
+    gifsicle_lossy: int | None = None
+    near_lossless: int = NEAR_LOSSLESS
+    fallback_fonts: tuple[str, ...] = ()
+
+
+@functools.cache
+def load_fonts(font: str, fallback_fonts: tuple[str, ...]) -> Fonts:
+    """Load the WebP fonts once in each worker process."""
+    from tools.render_webp import Fonts  # noqa: PLC0415
+
+    return Fonts(font, fallback_fonts)
+
+
+def try_render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> tuple[bool, str]:
     """Render one demo, reporting a failure instead of raising.
 
     Returns:
-        bool: Whether the demo rendered.
+        tuple[bool, str]: Whether the demo rendered, and its file sizes or the error.
 
     """
     try:
-        render(name, demo, out_dir, args.formats, fps=args.fps, gifsicle_lossy=args.gifsicle_lossy)
+        return True, render(name, demo, out_dir, options)
     except CommandError as error:
-        print(f"{name}: {error}", file=sys.stderr)
-        return False
-    return True
+        return False, f"{name}: {error}"
 
 
-def render(name: str, demo: Demo, out_dir: Path, formats: list[str], *, fps: int, gifsicle_lossy: int | None) -> None:
-    """Render one demo to each requested format, named `<name>_demo.<format>`."""
+def render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> str:
+    """Render one demo to each requested format, named `<name>_demo.<format>`, and return their sizes."""
+    formats = options.formats
+    fps = min(options.fps, demo.frame_rate)
+    near_lossless = options.near_lossless
     with tempfile.TemporaryDirectory(prefix="tte-demo-") as temp:
         work = Path(temp)
         record(demo, work / "demo.tterec")
-        non_ascii = recording_to_cast(work / "demo.tterec", work / "demo.cast", demo.start_hold)
-        gif = work / "demo.gif"
-        render_gif(work / "demo.cast", gif, demo, fps=fps, non_ascii=non_ascii)
-        # WebP and MP4 come from the uncompressed GIF so lossy GIF compression does not carry into them.
         if "webp" in formats:
-            render_webp(gif, out_dir / f"{name}_demo.webp")
-        if "mp4" in formats:
-            render_mp4(gif, out_dir / f"{name}_demo.mp4")
-        if "gif" in formats:
-            if gifsicle_lossy is not None:
-                compress_gif(gif, gifsicle_lossy)
-            shutil.move(gif, out_dir / f"{name}_demo.gif")
+            from tools.render_webp import Encoding, RenderError, render_webp  # noqa: PLC0415
+
+            try:
+                render_webp(
+                    work / "demo.tterec",
+                    out_dir / f"{name}_demo.webp",
+                    fps=fps,
+                    encoding=Encoding(None if near_lossless == NEAR_LOSSLESS_OFF else near_lossless),
+                    fonts=load_fonts(options.font, options.fallback_fonts),
+                    start_hold=demo.start_hold,
+                    end_hold=demo.end_hold,
+                )
+            except RenderError as error:
+                raise CommandError(str(error)) from error
+        if "gif" in formats or "mp4" in formats:
+            non_ascii = recording_to_cast(work / "demo.tterec", work / "demo.cast", demo.start_hold)
+            gif = work / "demo.gif"
+            render_gif(work / "demo.cast", gif, demo, fps=fps, non_ascii=non_ascii)
+            # MP4 comes from the uncompressed GIF so lossy GIF compression does not carry into it.
+            if "mp4" in formats:
+                render_mp4(gif, out_dir / f"{name}_demo.mp4")
+            if "gif" in formats:
+                if options.gifsicle_lossy is not None:
+                    compress_gif(gif, options.gifsicle_lossy)
+                shutil.move(gif, out_dir / f"{name}_demo.gif")
     sizes = ", ".join(f"{fmt} {(out_dir / f'{name}_demo.{fmt}').stat().st_size // 1024} KB" for fmt in formats)
-    print(f"{name}: {sizes}")
+    return f"{name}: {sizes}"
 
 
 def required_tools(formats: list[str], *, gifsicle: bool) -> list[str]:
     """Return the external tools needed for the requested output."""
-    tools = ["agg"]
-    tools += ["gif2webp"] if "webp" in formats else []
+    tools = ["agg"] if "gif" in formats or "mp4" in formats else []
+    tools += ["img2webp"] if "webp" in formats else []
     tools += ["ffmpeg"] if "mp4" in formats else []
     tools += ["gifsicle"] if gifsicle else []
     return tools
@@ -370,8 +417,36 @@ def main() -> int:
         default=["webp"],
         help="comma-separated output formats: gif, webp, mp4 (default: webp)",
     )
-    parser.add_argument("--fps", type=int, default=30, help="maximum output frame rate (default: 30)")
+    parser.add_argument(
+        "--fps",
+        type=int,
+        default=DEFAULT_FPS,
+        help=f"maximum output frame rate (default: {DEFAULT_FPS})",
+    )
     parser.add_argument("--gifsicle-lossy", type=int, metavar="LEVEL", help="apply gifsicle lossy compression")
+    parser.add_argument(
+        "--near-lossless",
+        type=int,
+        default=NEAR_LOSSLESS,
+        choices=range(101),
+        metavar="LEVEL",
+        help=f"WebP near-lossless level for every demo, from 0 (strongest) to {NEAR_LOSSLESS_OFF} (lossless) "
+        f"(default: {NEAR_LOSSLESS})",
+    )
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=os.cpu_count() or 1,
+        help="demos to render at once (default: one per CPU core)",
+    )
+    parser.add_argument("--font", help="font path or file name for WebP output (default: DejaVu Sans Mono)")
+    parser.add_argument(
+        "--fallback-font",
+        action="append",
+        default=[],
+        metavar="FONT",
+        help="font for symbols the main font lacks, tried before the built-in list (repeatable)",
+    )
     args = parser.parse_args()
 
     available = GUIDE_DEMOS if args.guide else demos()
@@ -383,6 +458,8 @@ def main() -> int:
         parser.error("name at least one demo, or pass --all")
     if unknown := [name for name in selected if name not in available]:
         parser.error(f"unknown demo: {', '.join(unknown)}")
+    if args.jobs < 1:
+        parser.error("--jobs must be at least 1")
     if missing := [
         tool
         for tool in required_tools(args.formats, gifsicle=args.gifsicle_lossy is not None)
@@ -390,8 +467,35 @@ def main() -> int:
     ]:
         parser.error(f"missing required tools: {', '.join(missing)}")
 
+    font = args.font or ""
+    if "webp" in args.formats:
+        try:
+            from tools.render_webp import FONT, RenderError  # noqa: PLC0415
+        except ImportError as error:
+            parser.error(f"WebP output needs Pillow, installed on Python 3.10 or later ({error})")
+        font = font or FONT
+        try:
+            load_fonts(font, tuple(args.fallback_font))
+        except RenderError as error:
+            parser.error(str(error))
+    options = RenderOptions(
+        formats=tuple(args.formats),
+        font=font,
+        fps=args.fps,
+        gifsicle_lossy=args.gifsicle_lossy,
+        near_lossless=args.near_lossless,
+        fallback_fonts=tuple(args.fallback_font),
+    )
+
     args.out.mkdir(parents=True, exist_ok=True)
-    results = [try_render(name, available[name], args.out, args) for name in selected]
+    # Each demo records and encodes on one core, so demos render in parallel.
+    with ProcessPoolExecutor(max_workers=args.jobs) as executor:
+        futures = [executor.submit(try_render, name, available[name], args.out, options) for name in selected]
+        results = []
+        for future in as_completed(futures):
+            rendered, message = future.result()
+            print(message, file=sys.stdout if rendered else sys.stderr, flush=True)
+            results.append(rendered)
     return 0 if all(results) else 1
 
 
