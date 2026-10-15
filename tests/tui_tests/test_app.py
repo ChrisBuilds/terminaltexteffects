@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
     from pathlib import Path
 
+    import pytest
     from textual.pilot import Pilot
 
 _, _EFFECTS = build_parser(include_user_effects=False)
@@ -236,6 +237,31 @@ def test_export_writes_a_recording(tmp_path: Path) -> None:
             header = reader.header
             assert (header.width, header.height) == (width, height)
             assert reader.validate() > 0
+
+    _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)
+
+
+def test_export_ends_when_the_effect_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """An effect that raises during export should report the error and hide the progress panel."""
+    import terminaltexteffects.__main__ as cli  # noqa: PLC0415
+
+    def broken(*_args: object, **_kwargs: object) -> None:
+        msg = "effect broke"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(cli, "_record_playbacks", broken)
+    notices: list[str] = []
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        monkeypatch.setattr(app, "notify", lambda message, **_kwargs: notices.append(message))
+        await pilot.press("f8")
+        await pilot.pause()
+        app.screen.query_one("#path", Input).value = str(tmp_path / "wipe.tterec")
+        await pilot.press("enter")
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+        assert not app.query_one(ExportProgress).display
+        assert notices == ["Export failed: RuntimeError: effect broke"]
 
     _run(TTEApp(_EFFECTS, "Hello", effect="wipe"), script)
 

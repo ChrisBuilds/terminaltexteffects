@@ -100,6 +100,7 @@ def test_paste_commands_per_platform() -> None:
     """Each platform should have its clipboard-reading command first."""
     assert clipboard.paste_commands("darwin") == (("pbpaste",),)
     assert clipboard.paste_commands("linux")[0] == ("wl-paste", "--no-newline")
+    assert "[Console]::Out.Write(" in clipboard.paste_commands("win32")[0][-1]
 
 
 def test_cut_and_paste_keep_colors(monkeypatch: pytest.MonkeyPatch) -> None:
