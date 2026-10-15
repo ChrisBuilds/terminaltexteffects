@@ -13,6 +13,7 @@ import typing
 from collections import deque
 from pathlib import Path
 
+from rich.cells import cell_len
 from rich.segment import Segment
 from rich.style import Style
 from rich.text import Text
@@ -852,6 +853,8 @@ class TTEApp(App[None]):
         border: none;
         padding: 0;
         height: 1fr;
+        /* Scrollbars would cover the canvas outline at the text area's edges. The text still scrolls. */
+        scrollbar-size: 0 0;
     }
     #canvas {
         display: none;
@@ -1458,6 +1461,9 @@ class TTEApp(App[None]):
         subtitle = f"canvas {rect.width}x{rect.height}"
         if (rect.width, rect.height) != (area.width, area.height):
             subtitle += f" of {area.width}x{area.height}"
+        lines = self.editor.document.lines
+        if len(lines) > area.height or max(map(cell_len, lines), default=0) > area.width:
+            subtitle += " · more text, scroll to see"
         errors = self._current_errors()
         if errors:
             subtitle = f"[{len(errors)} invalid option{'s' if len(errors) != 1 else ''}] " + subtitle

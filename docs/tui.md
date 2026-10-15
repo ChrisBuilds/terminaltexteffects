@@ -166,7 +166,8 @@ an effect plays. Text outside the canvas is dimmed because the effect won't show
 the canvas, and **canvas-width** and **canvas-height** update to match. The outline is drawn on the edges that move
 with **anchor-canvas**: with the default `nw` anchor, the right and bottom edges. The text area keeps one free column
 or row beyond each of those edges, so effects draw in a slightly smaller area than the text area, and the outline
-stays visible when the canvas fills that area. Dragging an edge all the way out sets that dimension to `0`, the
+stays visible when the canvas fills that area. The text area shows no scrollbars, so they never cover the
+outline: scroll with the mouse wheel or the cursor keys, and the subtitle says when there is more text than fits. Dragging an edge all the way out sets that dimension to `0`, the
 whole area.
 
 ## Commands

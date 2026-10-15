@@ -306,3 +306,19 @@ def test_open_dropdowns_hide_option_tooltips() -> None:
         assert editor.tooltip == tooltip
 
     _run(TTEApp(_EFFECTS, "Hi", effect="slide"), script)
+
+
+def test_long_text_leaves_the_outline_visible() -> None:
+    """Text larger than the area should not add scrollbars over the outline, and the subtitle should say it scrolls."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        editor = app.editor
+        await pilot.pause()
+        assert editor.scrollbar_size_vertical == 0
+        assert editor.scrollbar_size_horizontal == 0
+        assert "scroll to see" in str(app.query_one("#stage").border_subtitle)
+        editor.load_text("short")
+        await pilot.pause()
+        assert "scroll to see" not in str(app.query_one("#stage").border_subtitle)
+
+    _run(TTEApp(_EFFECTS, "\n".join("x" * 200 for _ in range(60)), effect="wipe"), script)
