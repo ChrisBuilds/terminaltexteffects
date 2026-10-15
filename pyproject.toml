@@ -182,6 +182,7 @@ test = [
     "towncrier==26.9.0",
     "diff-cover>=10.6.0; python_version >= '3.10'",
     "textual>=8.0",
+    { include-group = "demos" },
 ]
 hooks = [
     { include-group = "quality" },
@@ -198,6 +199,9 @@ dev = [
     "mkdocs-material>=9.6.22",
     "mkdocstrings-python>=1.11.1",
     "pymdown-extensions>=11.0.1,<13",
+]
+demos = [
+    "pillow>=11",
 ]
 artifacts = [
     "hatchling>=1.27",
