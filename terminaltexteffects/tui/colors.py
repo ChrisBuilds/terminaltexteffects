@@ -102,7 +102,8 @@ def carry_styles(
 
     Replaced characters keep the styles of the characters they replace, position by position. Inserted characters
     take the style of the character before them on the same line, as typing extends a colored word. When
-    `insert_style` is given, inserted and replaced characters take it instead.
+    `insert_style` is given, inserted and replaced characters take it instead, and an empty `insert_style` leaves
+    them unstyled.
     """
     new_styles: StyleList = [None] * len(new_text)
     matcher = difflib.SequenceMatcher(None, old_text, new_text, autojunk=False)
@@ -115,7 +116,7 @@ def carry_styles(
                 if new_text[index] == "\n":
                     continue
                 if insert_style is not None:
-                    new_styles[index] = insert_style
+                    new_styles[index] = insert_style if insert_style != CellStyle() else None
                 elif offset < len(replaced):
                     new_styles[index] = replaced[offset]
                 elif index and new_text[index - 1] != "\n":

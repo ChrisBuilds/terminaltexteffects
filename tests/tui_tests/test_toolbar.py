@@ -107,8 +107,13 @@ def test_text_colors_paint_the_selection_and_new_text() -> None:
         editor.selection = Selection((0, 0), (0, 1))
         await pilot.click("#clear-color")
         await pilot.pause()
-        assert editor.pen is None
+        assert editor.pen == colors.CellStyle()
         assert editor.color_styles == [None, red, None, None, red]
+        # Typing after the red character stays plain once the colors are cleared.
+        editor.move_cursor((0, 5))
+        await pilot.press("z")
+        await pilot.pause()
+        assert editor.color_styles == [None, red, None, None, red, None]
 
     _run(TTEApp(_EFFECTS, "abcd", effect="wipe"), script)
 

@@ -102,7 +102,10 @@ class ColorTextArea(TextArea):
         self.canvas_anchor = "nw"
         self._drag_edges: set[canvas.Edge] = set()
         self.pen: colors.CellStyle | None = None
-        """Style given to typed and inserted text, or `None` to extend the style of the character before."""
+        """Style given to typed and inserted text, or `None` to extend the style of the character before.
+
+        An empty `CellStyle` types plain text, even next to colored text.
+        """
         self.attach_colors(text, styles)
 
     def get_component_rich_style(self, *names: str, partial: bool = False, default: Style | None = None) -> Style:
@@ -1464,7 +1467,8 @@ class TTEApp(App[None]):
     @on(TextToolbar.ClearColor)
     def _clear_text_color(self) -> None:
         editor = self._back_to_text()
-        editor.pen = None
+        # Type plain text from here on, rather than extending the color of the character before the cursor.
+        editor.pen = colors.CellStyle()
         editor.paint_selection(lambda _style: None)
         self._show_pen()
 
