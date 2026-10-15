@@ -8,6 +8,7 @@ import random
 import struct
 import sys
 import zlib
+from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
@@ -22,11 +23,10 @@ from terminaltexteffects.engine import terminal as terminal_module
 from terminaltexteffects.engine._recording import MAGIC, RecordingHeader, RecordingReader, RecordingWriter
 from terminaltexteffects.engine.base_effect import BaseEffectIterator
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
-from terminaltexteffects.utils import ansitools
+from terminaltexteffects.utils import ansitools, export
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
-    from pathlib import Path
 
 pytestmark = [pytest.mark.smoke]
 
@@ -820,3 +820,122 @@ def test_thunderstorm_storm_follows_frame_clock() -> None:
     assert storm_frames >= 20
     assert iterator.terminal.clock() - iterator.storm_start_time >= 1  # type: ignore[attr-defined]
     assert not iterator.strike_in_progress  # type: ignore[attr-defined]
+
+
+@pytest.fixture
+def export_tools(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
+    """Report agg and gif2webp on `PATH`, and record their commands instead of running them."""
+    commands: list[list[str]] = []
+
+    def run(command: list[str]) -> None:
+        commands.append(command)
+        Path(command[-1]).write_bytes(command[0].encode())
+
+    monkeypatch.setattr(export.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr(export, "_run", run)
+    return commands
+
+
+@pytest.mark.usefixtures("piped_input")
+@pytest.mark.parametrize(("suffix", "tools"), [(".gif", ["agg"]), (".WEBP", ["agg", "gif2webp"])])
+def test_record_converts_gif_and_webp_by_suffix(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    export_tools: list[list[str]],
+    suffix: str,
+    tools: list[str],
+) -> None:
+    """A .gif or .webp path renders a recording and converts it at the recording frame rate."""
+    path = tmp_path / f"out{suffix}"
+    _run(monkeypatch, "--record", str(path), "--frame-rate", "24", "--repeat", "2", "wipe")
+    assert [command[0] for command in export_tools] == tools
+    agg = export_tools[0]
+    assert agg[agg.index("--fps-cap") + 1] == "24"
+    assert path.read_bytes() == tools[-1].encode()
+    assert list(tmp_path.iterdir()) == [path]
+    error = capsys.readouterr().err
+    name = export.format_for(path).name
+    assert f"frames to {name} with {' and '.join(tools)}\n" in error
+    assert "frames in 2 segments" in error
+    assert f"at 24 fps) to {path}" in error
+    assert "\r" not in error
+
+
+@pytest.mark.usefixtures("piped_input")
+def test_record_shows_frame_count_on_a_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    export_tools: list[list[str]],
+) -> None:
+    """On a terminal, the frame count updates in place and is erased before the next line."""
+    monkeypatch.setattr(__main__, "_is_terminal", lambda _stream: True)
+    monkeypatch.setattr(__main__, "_PROGRESS_INTERVAL", 0.0)
+    _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
+    error = capsys.readouterr().err
+    assert error.startswith("\rRendering frame 1\rRendering frame 2")
+    assert "\r\x1b[KDrawing " in error
+    assert export_tools
+
+
+@pytest.mark.usefixtures("piped_input")
+def test_record_reports_missing_tools_before_rendering(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A missing converter fails with its name and source before any frame renders."""
+    monkeypatch.setattr(export.shutil, "which", lambda name: None if name == "gif2webp" else f"/bin/{name}")
+    monkeypatch.setattr(__main__, "_create_effect", Mock(side_effect=AssertionError("rendered")))
+    error = _run_error(monkeypatch, capsys, "--record", str(tmp_path / "out.webp"), "wipe")
+    assert error == "Error: WebP needs gif2webp from libwebp on PATH.\n"
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_record_empty_input_skips_the_tool_check(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Empty input stays a successful no-op even when the converter is missing."""
+    monkeypatch.setattr(Terminal, "get_piped_input", lambda: " \n")
+    monkeypatch.setattr(export.shutil, "which", lambda _name: None)
+    _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
+    assert capsys.readouterr().err == ""
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.usefixtures("piped_input")
+def test_record_conversion_failure_leaves_no_file(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A converter that fails reports its error and leaves no output."""
+
+    def run(command: list[str]) -> None:
+        message = f"{command[0]} exited with 2: bad font"
+        raise export.ExportError(message)
+
+    monkeypatch.setattr(export.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr(export, "_run", run)
+    error = _run_error(monkeypatch, capsys, "--record", str(tmp_path / "out.gif"), "wipe")
+    assert error.endswith("Error: agg exited with 2: bad font\n")
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.usefixtures("piped_input")
+def test_record_interrupted_conversion_leaves_no_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Ctrl+C while converting exits with status 1 and leaves no partial output."""
+
+    def run(command: list[str]) -> None:
+        Path(command[-1]).write_bytes(b"partial")
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(export.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr(export, "_run", run)
+    with pytest.raises(SystemExit) as error:
+        _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
+    assert error.value.code == 1
+    assert list(tmp_path.iterdir()) == []

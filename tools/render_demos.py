@@ -5,7 +5,7 @@ speed. The recording is converted to an asciicast holding only the effect canvas
 that needs no cropping or trimming. Output can be that GIF, a lossless animated WebP converted from it (the
 default), or an MP4.
 
-Requires `agg` on `PATH`, plus `gif2webp` for WebP output and `ffmpeg` for MP4 output. When `gifsicle` is
+Requires `agg` 1.7 or later on `PATH`, plus `gif2webp` for WebP output and `ffmpeg` for MP4 output. When `gifsicle` is
 installed, `--gifsicle-lossy` applies lossy GIF compression.
 
 Examples:
@@ -27,7 +27,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from terminaltexteffects.tui.export import recording_to_cast
+from terminaltexteffects.utils.export import recording_to_cast
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = PROJECT_ROOT / "tests" / "testinput" / "demo.txt"

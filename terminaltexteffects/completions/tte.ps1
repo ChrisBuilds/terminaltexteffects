@@ -188,7 +188,7 @@
         "max": 1,
         "choices": [],
         "file": true,
-        "help": "Render the effect without displaying it and save the frames to FILE (use the .tterec extension). Requires --frame-rate greater than 0, which becomes the playback rate."
+        "help": "Render the effect without displaying it and save the frames to FILE. A .tterec file (or any other extension) plays back with --play; a .gif or .webp file is an animation of the canvas, made with agg 1.7 or later (and gif2webp for WebP) from PATH. Requires --frame-rate greater than 0, which becomes the playback rate."
       },
       "--play": {
         "min": 1,

@@ -1,13 +1,14 @@
-"""Export recordings from the TUI as GIF or animated WebP.
+"""Convert recordings to GIF or animated WebP.
 
 A recording is converted to an asciicast holding only the effect canvas, which `agg` renders to a GIF. WebP output
-converts that GIF with `gif2webp`, which keeps every pixel and frame delay. This is the pipeline
-`tools/render_demos.py` uses for the documentation demos. This module does not import Textual.
+converts that GIF with `gif2webp`, which keeps every pixel and frame delay. `tte --record`, the TUI's Export, and
+`tools/render_demos.py` for the documentation demos all use this pipeline.
 """
 
 from __future__ import annotations
 
 import json
+import secrets
 import shutil
 import subprocess
 import tempfile
@@ -30,10 +31,13 @@ FORMATS = (
     ExportFormat("GIF", ".gif", ("agg",)),
     ExportFormat("WebP", ".webp", ("agg", "gif2webp")),
 )
-"""Recording formats offered by the TUI, the native recording first."""
+"""Recording formats, the native recording first."""
+
+AGG_MIN_VERSION = "1.7"
+"""The oldest `agg` release that accepts every option this module passes, such as `--quiet`."""
 
 TOOL_SOURCES = {
-    "agg": "agg from github.com/asciinema/agg",
+    "agg": f"agg {AGG_MIN_VERSION} or later from github.com/asciinema/agg",
     "gif2webp": "gif2webp from libwebp",
 }
 """Where to get each command an export format needs."""
@@ -101,21 +105,27 @@ def _run(command: list[str]) -> None:
     )
     if result.returncode:
         message = f"{command[0]} exited with {result.returncode}: {(result.stderr or result.stdout).strip()}"
+        if command[0] == "agg":
+            message += f"\nGIF and WebP need agg {AGG_MIN_VERSION} or later; check it with: agg --version"
         raise ExportError(message)
 
 
 def export_recording(recording: Path, output: Path, fmt: ExportFormat, *, fps: int) -> None:
     """Convert `recording` to `output` in the GIF or WebP format `fmt`, at most `fps` frames per second.
 
+    The file is converted in a temporary directory and replaces `output` only when conversion completes, so a
+    failed or interrupted export leaves no partial file.
+
     Raises:
         ExportError: If a needed command is missing or fails.
+        OSError: If `output` cannot be written.
 
     """
     with tempfile.TemporaryDirectory(prefix="tte-export-") as folder:
         work = Path(folder)
         cast = work / "effect.cast"
         non_ascii = recording_to_cast(recording, cast)
-        gif = output if fmt.suffix == ".gif" else work / "effect.gif"
+        gif = work / "effect.gif"
         _run(
             [
                 "agg",
@@ -133,5 +143,19 @@ def export_recording(recording: Path, output: Path, fmt: ExportFormat, *, fps: i
                 str(gif),
             ],
         )
+        converted = gif
         if fmt.suffix == ".webp":
-            _run(["gif2webp", "-quiet", "-min_size", str(gif), "-o", str(output)])
+            converted = work / "effect.webp"
+            _run(["gif2webp", "-quiet", "-min_size", str(gif), "-o", str(converted)])
+        _replace(output, converted)
+
+
+def _replace(output: Path, converted: Path) -> None:
+    """Copy `converted` next to `output`, then move it into place so `output` is never left partly written."""
+    temporary = output.with_name(f".{output.name}.{secrets.token_hex(8)}.tmp")
+    try:
+        shutil.copyfile(converted, temporary)
+        temporary.replace(output)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
