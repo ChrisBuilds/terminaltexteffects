@@ -1,7 +1,8 @@
 """Convert recordings to GIF or animated WebP.
 
 A recording is converted to an asciicast holding only the effect canvas, which `agg` renders to a GIF. WebP output
-converts that GIF with `gif2webp`, which keeps every pixel and frame delay. `tte --record`, the TUI's Export, and
+converts that GIF with `gif2webp`, which keeps every pixel and frame delay. When `gifsicle` is installed, GIF output
+is optimized with it. `tte --record`, the TUI's Export, and
 `tools/render_demos.py` for the documentation demos all use this pipeline.
 """
 
@@ -44,6 +45,12 @@ TOOL_SOURCES = {
 
 END_HOLD = 2.0
 """Seconds the last frame of a GIF or WebP is shown before the animation repeats."""
+
+GIF_MAX_FPS = 50
+"""The highest frame rate a GIF can play, since GIF frame delays are whole hundredths of a second."""
+
+GIFSICLE_LOSSY = 20
+"""The `gifsicle --lossy` level for GIF output, which shrinks GIFs by about a tenth without visible change."""
 
 
 class ExportError(Exception):
@@ -92,6 +99,15 @@ def recording_to_cast(recording: Path, cast: Path, start_hold: float = 0.0) -> b
     return non_ascii
 
 
+def agg_fps_cap(fps: int) -> int:
+    """Return the `agg --fps-cap` that keeps every frame of a `fps` frames per second asciicast.
+
+    `agg` drops many frames when the cap equals the asciicast's frame rate, so the cap is one above it. Frame rates
+    above `GIF_MAX_FPS` are capped there, and `agg` keeps the timing correct by dropping frames evenly.
+    """
+    return min(fps, GIF_MAX_FPS) + 1
+
+
 def _run(command: list[str]) -> None:
     executable = shutil.which(command[0])
     if executable is None:
@@ -112,6 +128,8 @@ def _run(command: list[str]) -> None:
 
 def export_recording(recording: Path, output: Path, fmt: ExportFormat, *, fps: int) -> None:
     """Convert `recording` to `output` in the GIF or WebP format `fmt`, at most `fps` frames per second.
+
+    GIF output is optimized with `gifsicle` when it is on `PATH`.
 
     The file is converted in a temporary directory and replaces `output` only when conversion completes, so a
     failed or interrupted export leaves no partial file.
@@ -135,7 +153,7 @@ def export_recording(recording: Path, output: Path, fmt: ExportFormat, *, fps: i
                 "--font-size",
                 "14",
                 "--fps-cap",
-                str(fps),
+                str(agg_fps_cap(fps)),
                 "--last-frame-duration",
                 str(END_HOLD),
                 *(["--renderer", "resvg"] if non_ascii else []),
@@ -145,8 +163,12 @@ def export_recording(recording: Path, output: Path, fmt: ExportFormat, *, fps: i
         )
         converted = gif
         if fmt.suffix == ".webp":
+            # Converted from agg's GIF: gifsicle's lossy noise would make the lossless WebP larger.
             converted = work / "effect.webp"
             _run(["gif2webp", "-quiet", "-min_size", str(gif), "-o", str(converted)])
+        elif shutil.which("gifsicle") is not None:
+            converted = work / "optimized.gif"
+            _run(["gifsicle", "-O3", f"--lossy={GIFSICLE_LOSSY}", str(gif), "-o", str(converted)])
         _replace(output, converted)
 
 
