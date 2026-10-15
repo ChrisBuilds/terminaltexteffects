@@ -61,29 +61,29 @@ The interface uses a TerminalTextEffects theme in purple, cyan, and white. Other
 the command palette (++ctrl+p++).
 
 Option inputs follow each option's type: a checkbox for on/off options, a list for fixed choices such as gradient
-directions and easing functions, which opens inside the options panel and scrolls, and a text box for everything else. Text boxes use the same spelling as the
-command line. Lists are space separated, such as `ff0000 00ff00 0000ff`, and colors show a swatch. Hover over an
-option to see its help, how to write its value with an example, and its default. An invalid value
-turns its name and field red, with the reason in its tooltip, and the effect won't play until it is fixed. Changed
-options have their names highlighted. Clearing a field and leaving it, or pressing ++shift+f6++ on an option,
-returns that option to its default. Each effect keeps its own values while the interface is open. The
-selected effect's description is shown along the bottom of the options panel.
+directions and easing functions, which opens inside the options panel and scrolls, and a text box for everything
+else. Text boxes use the same spelling as the command line. Lists are space separated, such as `ff0000 00ff00
+0000ff`, and colors show a swatch. Hover over an option to see its help, how to write its value with an example, and
+its default. An invalid value turns its name and field red, with the reason in its tooltip, and the effect won't
+play until it is fixed. Changed options have their names highlighted. Clearing a field and leaving it, or pressing
+++shift+f6++ on an option, returns that option to its default. Each effect keeps its own values while the interface
+is open. The selected effect's description is shown along the bottom of the options panel.
 
 ### Picking colors
 
 Color options open a color picker when you press ++f7++ or ++enter++ in the field, or click the swatch, which shows
 each color as a square. Choose from the 256 XTerm colors in the palette, type a hex value, or drag the hue,
-saturation, and lightness bars. Palette
-colors stay XTerm colors on the command line, and any other change gives an RGB hex color. For gradient options,
-the picker edits the list of stops: select a stop, change its color, and add, remove, or reorder stops while a bar
-previews the gradient. Press ++ctrl+s++ or choose **Apply** to keep the colors, or ++escape++ to discard them.
+saturation, and lightness bars. Palette colors stay XTerm colors on the command line, and any other change gives an
+RGB hex color. For gradient options, the picker edits the list of stops: select a stop, change its color, and add,
+remove, or reorder stops while a bar previews the gradient. Press ++ctrl+s++ or choose **Apply** to keep the colors,
+or ++escape++ to discard them.
 
 ### Text toolbar
 
 **Text** and **Background** open the color picker for the text color and the background color. A picked color
 applies to the selected text and to text you type or insert afterwards. **No color** in the picker removes just that
-color, keeping the other one. **Clear** removes both colors from the selected text and stops coloring new text. Each chip shows its current color, or a hatched square when there is
-none.
+color, keeping the other one. **Clear** removes both colors from the selected text and stops coloring new text. Each
+chip shows its current color, or a hatched square when there is none.
 
 **Gradient** shows the current gradient. Click it with text selected to spread the gradient across the selection:
 the box around the selected characters runs from the first stop to the last in the gradient's direction. Click its
@@ -114,8 +114,9 @@ canvas. Right-clicking keeps the selection, so the menu can cut or copy it.
 
 ++f5++ or **Play** plays the selected effect. While it plays, ++f5++ or ++space++ pauses and resumes it, and
 ++right++ pauses it and shows one frame at a time. Once the effect has finished or been stopped, **Play** plays it
-again from the start, as does ++ctrl+r++ at any time. ++f9++ plays a random effect from the listed effects. The effect plays on a black background. ++escape++, or a click on the effect, returns to the text, and a
-click puts the cursor where you clicked.
+again from the start, as does ++ctrl+r++ at any time. ++f9++ plays a random effect from the listed effects. The
+effect plays on a black background. ++escape++, or a click on the effect, returns to the text, and a click puts the
+cursor where you clicked.
 
 Turn on **Loop** to replay the effect a second after it finishes. Loops replay the frames of the first run, so they
 start at once, and stop reusing them when you change an option or the text. Turn on **Auto** to replay the effect
@@ -172,21 +173,22 @@ where you typed it. To preview an effect on a smaller canvas, set **canvas-width
 Canvas tab. Setting either to `-1` sizes it to the text, as the command line does by default. **Fit** (++ctrl+t++)
 sets the canvas to the size of the text, and **Max** (++ctrl+g++) sets it back to the whole text area.
 
-A cyan outline of full blocks marks the canvas, one cell outside it, and stays visible while you edit and while
-an effect plays, with **CANVAS** in the middle of its bottom edge, or of its top edge when only that one moves. Text outside the canvas is dimmed because the
-effect won't show it. An edge lights up white under the mouse, and a corner lights both of its edges. Drag the
-outline to resize the canvas, and **canvas-width** and **canvas-height** update to match. The outline is drawn on the edges that move
-with **anchor-canvas**: with the default `nw` anchor, the right and bottom edges. The text area keeps one free column
-or row beyond each of those edges, so effects draw in a slightly smaller area than the text area, and the outline
-stays visible when the canvas fills that area. The text area shows no scrollbars, so they never cover the
-outline: scroll with the mouse wheel or the cursor keys, and the subtitle says when there is more text than fits. Dragging an edge all the way out sets that dimension to `0`, the
+A cyan outline of full blocks marks the canvas, one cell outside it, and stays visible while you edit and while an
+effect plays, with **CANVAS** in the middle of its bottom edge, or of its top edge when only that one moves. Text
+outside the canvas is dimmed because the effect won't show it. An edge lights up white under the mouse, and a corner
+lights both of its edges. Drag the outline to resize the canvas, and **canvas-width** and **canvas-height** update
+to match. The outline is drawn on the edges that move with **anchor-canvas**: with the default `nw` anchor, the
+right and bottom edges. The text area keeps one free column or row beyond each of those edges, so effects draw in a
+slightly smaller area than the text area, and the outline stays visible when the canvas fills that area. The text
+area shows no scrollbars, so they never cover the outline: scroll with the mouse wheel or the cursor keys, and the
+subtitle says when there is more text than fits. Dragging an edge all the way out sets that dimension to `0`, the
 whole area.
 
 ## Commands
 
 ++f4++ shows the `tte` command that plays the effect with the current options, with a button to copy it. Copying
 uses the terminal's clipboard and also the system clipboard command (`pbcopy` on macOS, `clip` on Windows, and
-`wl-copy`, `xclip`, or `xsel` elsewhere), since many terminals ignore clipboard requests from applications. The exported
+`wl-copy`, `xclip`, or `xsel` elsewhere), since many terminals ignore clipboard requests from applications. The
 command includes the canvas settings when they differ from the command-line defaults, so the effect plays the same
 way in your terminal.
 
