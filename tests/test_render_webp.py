@@ -112,3 +112,24 @@ def test_missing_glyphs_come_from_a_fallback_font(fonts: render_webp.Fonts) -> N
     if fallback is fonts.regular:
         pytest.skip("no installed font has half-width katakana")
     assert render_webp._has_glyph(fallback, "ｱ")
+
+
+def test_render_keeps_the_last_frame_when_skipping_frames(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    fonts: render_webp.Fonts,
+) -> None:
+    """Halving the frame rate still shows the final recorded frame, at its own time."""
+    write_recording(tmp_path / "demo.tterec", ["ab\ncd", "ef\ngh", "ij\nkl", "mn\nop"])
+    arguments: list[str] = []
+
+    def run(command: list[str], **kwargs: Path) -> subprocess.CompletedProcess[str]:
+        work = kwargs["cwd"]
+        arguments.extend((work / command[1]).read_text(encoding="utf-8").split())
+        (work / "out.webp").write_bytes(b"webp")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(render_webp.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr(render_webp.subprocess, "run", run)
+    render_webp.render_webp(tmp_path / "demo.tterec", tmp_path / "demo.webp", fps=5, fonts=fonts, end_hold=1.0)
+    assert [arguments[i + 1] for i, value in enumerate(arguments) if value == "-d"] == ["200", "100", "1100"]

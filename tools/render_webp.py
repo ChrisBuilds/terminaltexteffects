@@ -404,18 +404,26 @@ def render_webp(
         header = reader.header
         drawer = FrameDrawer(fonts, header.width, header.height)
         frames: list[tuple[str, int]] = []
-        wanted = frame_times(sys.maxsize, header.frame_rate, fps, start_hold)
-        index, start = next(wanted)
-        last = -1
-        for last, frame in enumerate(reader.frames()):
-            if last != index:
-                continue
-            changed = drawer.draw(parse_frame(frame, header.width, header.height))
-            if changed or not frames:
+
+        def add(frame: str, start: int) -> None:
+            if drawer.draw(parse_frame(frame, header.width, header.height)) or not frames:
                 name = f"{len(frames):06d}.png"
                 drawer.image.save(work / name, compress_level=1)
                 frames.append((name, start))
+
+        wanted = frame_times(sys.maxsize, header.frame_rate, fps, start_hold)
+        index, start = next(wanted)
+        last, skipped = -1, ""
+        for last, frame in enumerate(reader.frames()):
+            if last != index:
+                skipped = frame
+                continue
+            add(frame, start)
+            skipped = ""
             index, start = next(wanted)
+        # Frames skipped to lower the frame rate never include the last, which shows the finished effect.
+        if skipped:
+            add(skipped, round((last / header.frame_rate + start_hold) * 1000))
         if not frames:
             message = f"{recording} has no frames."
             raise RenderError(message)
