@@ -85,6 +85,12 @@ applies to the selected text and to text you type or insert afterwards. **No col
 color, keeping the other one. **Clear** removes both colors from the selected text and stops coloring new text. Each chip shows its current color, or a hatched square when there is
 none.
 
+**Gradient** shows the current gradient. Click it with text selected to spread the gradient across the selection:
+the box around the selected characters runs from the first stop to the last in the gradient's direction. Click its
+**▾**, or click it with nothing selected, to build the gradient: edit its stops in the color picker, set the steps
+between stops and the direction (horizontal, vertical, diagonal, or radial), and choose whether it colors the text or
+its background. With text selected, the dialog applies the new gradient right away.
+
 **Symbols** opens a palette of blocks, single and rounded lines, double lines, shapes, and arrows. Click a symbol,
 or move with the arrow keys and press ++enter++, to insert it at the cursor, replacing any selected text. The palette
 stays open so you can insert several symbols, and ++escape++ or a click outside closes it.

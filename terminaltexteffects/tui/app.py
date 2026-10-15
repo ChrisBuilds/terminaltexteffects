@@ -45,6 +45,7 @@ from terminaltexteffects.tui import canvas, clipboard, colors, export, frames, m
 from terminaltexteffects.tui.drawer import DrawerHandle
 from terminaltexteffects.tui.export_progress import ExportProgress
 from terminaltexteffects.tui.files import FileFormat, FileScreen
+from terminaltexteffects.tui.gradient import DIRECTIONS, GradientChip, GradientScreen, TextGradient
 from terminaltexteffects.tui.picker import ColorScreen
 from terminaltexteffects.tui.screens import CommandScreen, HelpScreen
 from terminaltexteffects.tui.theme import TTE_THEME, gradient_text
@@ -266,6 +267,25 @@ class ColorTextArea(TextArea):
     def _index(self, location: tuple[int, int]) -> int:
         row, column = location
         return self._line_starts[min(row, len(self._line_starts) - 1)] + column
+
+    def paint_gradient(self, gradient: TextGradient) -> bool:
+        """Spread `gradient` over the selected characters, and return whether any were selected."""
+        start, end = sorted(self.selection)
+        if start == end:
+            return False
+        text = self.text
+        styles: colors.StyleList = self._color_styles or [None] * len(text)
+        painted = colors.paint_gradient(
+            text,
+            styles,
+            self._index(start),
+            self._index(end),
+            gradient.build(),
+            DIRECTIONS[gradient.direction],
+            gradient.layer,
+        )
+        self.attach_colors(text, painted)
+        return True
 
     def paint_selection(self, update: typing.Callable[[colors.CellStyle | None], colors.CellStyle | None]) -> bool:
         """Apply `update` to the styles of the selected characters, and return whether any were selected."""
@@ -1041,6 +1061,8 @@ class TTEApp(App[None]):
         self._playback_key: tuple[typing.Any, ...] | None = None
         self._recorded: tuple[tuple[typing.Any, ...], list[frames.Frame]] | None = None
         self._color_hint_shown = False
+        self._gradient = TextGradient()
+        """Gradient the toolbar's gradient chip applies to the selection."""
         self.copied_to_system_clipboard = False
         self._export_suffix = export.FORMATS[0].suffix
         self.state: typing.Literal["editing", "playing", "paused", "finished"] = "editing"
@@ -1648,6 +1670,35 @@ class TTEApp(App[None]):
             self._suggest_color_handling()
 
         self.push_screen(ColorScreen(title, [current or Color("ffffff")], multiple=False, allow_none=True), apply)
+
+    @on(GradientChip.Apply)
+    def _apply_gradient(self) -> None:
+        """Color the selection with the gradient, or open the gradient dialog when nothing is selected."""
+        editor = self._back_to_text()
+        if editor.selection.is_empty:
+            self._edit_gradient()
+            return
+        editor.paint_gradient(self._gradient)
+        # Deselect so the new colors show instead of the selection highlight.
+        editor.move_cursor(editor.selection.end)
+        self._suggest_color_handling()
+
+    @on(GradientChip.Edit)
+    def _edit_gradient(self) -> None:
+        """Open the gradient dialog, and apply the new gradient to the selection when there is one."""
+        editor = self._back_to_text()
+
+        def built(result: TextGradient | None) -> None:
+            editor.focus()
+            if result is None:
+                return
+            self._gradient = result
+            self.query_one(GradientChip).show(result)
+            if editor.paint_gradient(result):
+                editor.move_cursor(editor.selection.end)
+                self._suggest_color_handling()
+
+        self.push_screen(GradientScreen(self._gradient, has_selection=not editor.selection.is_empty), built)
 
     @on(TextToolbar.ClearColor)
     def _clear_text_color(self) -> None:

@@ -16,6 +16,8 @@ from textual.strip import Strip
 from textual.widget import Widget
 from textual.widgets import Button, Static
 
+from terminaltexteffects.tui.gradient import GradientChip, TextGradient
+
 if typing.TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -219,7 +221,7 @@ class SymbolScreen(ModalScreen[None]):
 
 
 class TextToolbar(Horizontal):
-    """Text and background color chips, a button to clear colors, and a button that opens the symbol palette.
+    """Text and background color chips, a gradient chip, a button to clear colors, and a symbol palette button.
 
     None of its parts take focus, so the editor keeps the cursor and selection while the toolbar is used.
     """
@@ -244,6 +246,13 @@ class TextToolbar(Horizontal):
     TextToolbar #symbols {
         margin-left: 2;
     }
+    TextToolbar GradientChip {
+        margin-right: 1;
+        background: $boost;
+    }
+    TextToolbar GradientChip:hover {
+        background: $primary 40%;
+    }
     """
 
     class PickColor(Message):
@@ -266,9 +275,10 @@ class TextToolbar(Horizontal):
             self.at = at
 
     def compose(self) -> ComposeResult:
-        """Create the color chips, the clear button, and the symbols button."""
+        """Create the color chips, the gradient chip, the clear button, and the symbols button."""
         yield PenSwatch("fg", id="pen-fg")
         yield PenSwatch("bg", id="pen-bg")
+        yield GradientChip(TextGradient(), id="gradient")
         yield self._button("Clear", "clear-color", "Clear the text colors and the selection's colors")
         yield self._button("Ω Symbols ▾", "symbols", "Insert block, line, shape, and arrow symbols")
 

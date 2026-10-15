@@ -7,14 +7,16 @@ edits, and rebuilds colored input for the effect. This module does not import Te
 
 from __future__ import annotations
 
+import dataclasses
 import difflib
 import typing
 from dataclasses import dataclass
 
 from terminaltexteffects.engine.terminal_input import VirtualScreenParser
+from terminaltexteffects.utils.geometry import Coord
 
 if typing.TYPE_CHECKING:
-    from terminaltexteffects.utils.graphics import Color
+    from terminaltexteffects.utils.graphics import Color, Gradient
 
 
 @dataclass(frozen=True)
@@ -141,6 +143,44 @@ def paint(
             continue
         style = update(painted[index])
         painted[index] = style if style != CellStyle() else None
+    return painted
+
+
+def paint_gradient(
+    text: str,
+    styles: StyleList,
+    start: int,
+    end: int,
+    gradient: Gradient,
+    direction: Gradient.Direction,
+    layer: typing.Literal["fg", "bg"],
+) -> StyleList:
+    """Return `styles` with `gradient` spread over the characters of `text` from `start` to `end`.
+
+    The gradient covers the box around those characters, with the first line and column at its start, as
+    `Gradient.build_coordinate_color_mapping` lays it out for `direction`. Each character's `layer` color is set to
+    the color at its line and column. Newlines keep no style.
+    """
+    cells: list[tuple[int, int, int]] = []
+    row = text.count("\n", 0, max(0, start))
+    column = max(0, start) - (text.rfind("\n", 0, max(0, start)) + 1)
+    for index in range(max(0, start), min(end, len(text))):
+        if text[index] == "\n":
+            row += 1
+            column = 0
+            continue
+        cells.append((index, row, column))
+        column += 1
+    if not cells:
+        return list(styles)
+    rows = [cell_row for _, cell_row, _ in cells]
+    columns = [cell_column for _, _, cell_column in cells]
+    top, left = min(rows), min(columns)
+    mapping = gradient.build_coordinate_color_mapping(1, max(rows) - top + 1, 1, max(columns) - left + 1, direction)
+    painted = list(styles)
+    for index, cell_row, cell_column in cells:
+        color = mapping[Coord(cell_column - left + 1, cell_row - top + 1)]
+        painted[index] = dataclasses.replace(painted[index] or CellStyle(), **{layer: color})
     return painted
 
 

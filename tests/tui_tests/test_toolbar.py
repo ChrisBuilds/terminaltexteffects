@@ -5,14 +5,16 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
+from textual.widgets import Input, Select
 from textual.widgets.text_area import Selection
 
 from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.tui import colors
 from terminaltexteffects.tui.app import TTEApp
+from terminaltexteffects.tui.gradient import GradientScreen, TextGradient
 from terminaltexteffects.tui.picker import ColorScreen
 from terminaltexteffects.tui.toolbar import SYMBOL_GROUPS, SymbolGrid, SymbolScreen, TextToolbar
-from terminaltexteffects.utils.graphics import Color
+from terminaltexteffects.utils.graphics import Color, Gradient
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -151,3 +153,54 @@ def test_paint_skips_newlines_and_drops_empty_styles() -> None:
     painted = colors.paint("a\nb", [None, None, None], 0, 3, lambda _style: red)
     assert painted == [red, None, red]
     assert colors.paint("ab", [red, red], 0, 1, lambda _style: colors.CellStyle()) == [None, red]
+
+
+def test_paint_gradient_spreads_over_the_selection_box() -> None:
+    """The gradient should run across the box around the selected characters and skip newlines."""
+    red, blue = Color("ff0000"), Color("0000ff")
+    gradient = Gradient(red, blue, steps=4)
+    text = "ab\ncd"
+    across = colors.paint_gradient(text, [None] * 5, 0, 5, gradient, Gradient.Direction.HORIZONTAL, "fg")
+    assert [style.fg if style else None for style in across] == [red, blue, None, red, blue]
+    down = colors.paint_gradient(text, [None] * 5, 1, 4, gradient, Gradient.Direction.VERTICAL, "bg")
+    assert [style.bg if style else None for style in down] == [None, red, None, blue, None]
+
+
+def test_gradient_chip_applies_and_builds_gradients() -> None:
+    """The chip should color the selection, open the builder without one, and the builder should change the gradient."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        editor = app.editor
+        editor.focus()
+        start, end = TextGradient().stops[0], TextGradient().stops[-1]
+        editor.selection = Selection((0, 0), (0, 4))
+        await pilot.click("#gradient", offset=(1, 0))
+        await pilot.pause()
+        styles = editor.color_styles
+        assert styles is not None
+        assert styles[0] == colors.CellStyle(fg=start)
+        assert styles[3] == colors.CellStyle(fg=end)
+        assert editor.selection.is_empty
+        await pilot.click("#gradient", offset=(1, 0))
+        await pilot.pause()
+        screen = app.screen
+        assert isinstance(screen, GradientScreen)
+        screen.query_one("#layer", Select).value = "bg"
+        screen.query_one("#steps", Input).value = "0"
+        await pilot.pause()
+        assert screen.query_one("#steps", Input).has_class("-invalid")
+        assert screen.gradient.steps == TextGradient().steps
+        await pilot.click("#apply")
+        await pilot.pause()
+        assert app._gradient.layer == "bg"
+        editor.selection = Selection((0, 0), (0, 4))
+        await pilot.click("#gradient", offset=(app.query_one("#gradient").size.width - 1, 0))
+        await pilot.pause()
+        assert isinstance(app.screen, GradientScreen)
+        await pilot.click("#apply")
+        await pilot.pause()
+        styles = editor.color_styles
+        assert styles is not None
+        assert styles[0] == colors.CellStyle(fg=start, bg=start)
+
+    _run(TTEApp(_EFFECTS, "abcd", effect="wipe"), script)
