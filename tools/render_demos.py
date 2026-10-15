@@ -27,7 +27,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from terminaltexteffects.utils.export import recording_to_cast
+from terminaltexteffects.utils.export import agg_fps_cap, recording_to_cast
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = PROJECT_ROOT / "tests" / "testinput" / "demo.txt"
@@ -251,7 +251,7 @@ def render_gif(cast: Path, gif: Path, demo: Demo, *, fps: int, non_ascii: bool) 
         "--font-size",
         "14",
         "--fps-cap",
-        str(fps),
+        str(agg_fps_cap(min(fps, demo.frame_rate))),
         "--last-frame-duration",
         str(demo.end_hold),
         *(["--renderer", "resvg"] if non_ascii else []),

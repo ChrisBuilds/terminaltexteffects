@@ -65,14 +65,48 @@ def test_webp_export_renders_a_gif_with_agg_then_converts_it(tmp_path: Path, mon
         Path(command[-1]).write_bytes(command[0].encode())
 
     monkeypatch.setattr(export, "_run", run)
+    monkeypatch.setattr(export.shutil, "which", lambda name: f"/bin/{name}")
     recording = tmp_path / "effect.tterec"
     _write_recording(recording)
     export.export_recording(recording, tmp_path / "out.webp", _WEBP, fps=30)
     assert [command[0] for command in commands] == ["agg", "gif2webp"]
-    assert "--fps-cap" in commands[0]
-    assert commands[0][commands[0].index("--fps-cap") + 1] == "30"
+    assert commands[0][commands[0].index("--fps-cap") + 1] == "31"
+    assert commands[1][-3] == commands[0][-1]
     assert (tmp_path / "out.webp").read_bytes() == b"gif2webp"
     assert sorted(path.name for path in tmp_path.iterdir()) == ["effect.tterec", "out.webp"]
+
+
+@pytest.mark.parametrize(("gifsicle", "expected"), [(True, ["agg", "gifsicle"]), (False, ["agg"])])
+def test_gif_export_uses_gifsicle_when_installed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    gifsicle: bool,  # noqa: FBT001
+    expected: list[str],
+) -> None:
+    """GIF output should be optimized with gifsicle when it is on PATH, and written straight from agg otherwise."""
+    commands: list[list[str]] = []
+
+    def run(command: list[str]) -> None:
+        commands.append(command)
+        Path(command[-1]).write_bytes(command[0].encode())
+
+    monkeypatch.setattr(export, "_run", run)
+    monkeypatch.setattr(export.shutil, "which", lambda name: f"/bin/{name}" if gifsicle or name != "gifsicle" else None)
+    recording = tmp_path / "effect.tterec"
+    _write_recording(recording)
+    export.export_recording(recording, tmp_path / "out.gif", _GIF, fps=30)
+    assert [command[0] for command in commands] == expected
+    if gifsicle:
+        assert commands[1][:2] == ["gifsicle", "-O3"]
+        assert commands[1][2] == f"--lossy={export.GIFSICLE_LOSSY}"
+        assert commands[1][3] == commands[0][-1]
+    assert (tmp_path / "out.gif").read_bytes() == expected[-1].encode()
+
+
+@pytest.mark.parametrize(("fps", "cap"), [(1, 2), (24, 25), (30, 31), (50, 51), (60, 51), (120, 51)])
+def test_agg_fps_cap_is_one_above_the_frame_rate(fps: int, cap: int) -> None:
+    """The cap should sit one above the frame rate, up to the fastest rate a GIF can play."""
+    assert export.agg_fps_cap(fps) == cap
 
 
 def test_failed_export_keeps_the_existing_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

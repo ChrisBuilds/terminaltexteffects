@@ -175,7 +175,7 @@ tte -i banner.txt --frame-rate 30 --record banner.webp wipe
 
 | Extension | What you get | Needs |
 | --- | --- | --- |
-| `.gif` | An animation of the canvas, with the last frame held for two seconds. | [agg](https://github.com/asciinema/agg) 1.7 or later on `PATH`. |
+| `.gif` | An animation of the canvas, with the last frame held for two seconds. | [agg](https://github.com/asciinema/agg) 1.7 or later on `PATH`. When [gifsicle](https://www.lcdf.org/gifsicle/) is also on `PATH`, it makes the GIF about 10% smaller with no visible change. |
 | `.webp` | The same animation as a lossless animated WebP, usually much smaller. | agg and `gif2webp` from [libwebp](https://developers.google.com/speed/webp/download) on `PATH`. |
 
 A missing command is reported before anything renders. `--frame-rate` becomes the animation's frame rate, and

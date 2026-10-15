@@ -837,22 +837,26 @@ def export_tools(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
 
 
 @pytest.mark.usefixtures("piped_input")
-@pytest.mark.parametrize(("suffix", "tools"), [(".gif", ["agg"]), (".WEBP", ["agg", "gif2webp"])])
+@pytest.mark.parametrize(
+    ("suffix", "commands", "tools"),
+    [(".gif", ["agg", "gifsicle"], ["agg"]), (".WEBP", ["agg", "gif2webp"], ["agg", "gif2webp"])],
+)
 def test_record_converts_gif_and_webp_by_suffix(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
     export_tools: list[list[str]],
     suffix: str,
+    commands: list[str],
     tools: list[str],
 ) -> None:
     """A .gif or .webp path renders a recording and converts it at the recording frame rate."""
     path = tmp_path / f"out{suffix}"
     _run(monkeypatch, "--record", str(path), "--frame-rate", "24", "--repeat", "2", "wipe")
-    assert [command[0] for command in export_tools] == tools
+    assert [command[0] for command in export_tools] == commands
     agg = export_tools[0]
-    assert agg[agg.index("--fps-cap") + 1] == "24"
-    assert path.read_bytes() == tools[-1].encode()
+    assert agg[agg.index("--fps-cap") + 1] == "25"
+    assert path.read_bytes() == commands[-1].encode()
     assert list(tmp_path.iterdir()) == [path]
     error = capsys.readouterr().err
     name = export.format_for(path).name
