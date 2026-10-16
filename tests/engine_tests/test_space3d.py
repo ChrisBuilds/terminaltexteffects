@@ -96,6 +96,20 @@ def test_rotation_about_uses_degrees_and_named_axes() -> None:
         space3d.rotation_about((0, 0, 0), 10)
 
 
+@pytest.mark.parametrize("shape", [None, space3d.Cube(10)])
+def test_body_shape_is_read_only(shape: space3d.Shape | None) -> None:
+    """Replacing a shape cannot desynchronize cached geometry and texture layouts."""
+    _, space = make_space()
+    body = space.body(shape)
+    anchor = body.anchor(1, 2, 3)
+    mesh = body.mesh
+    with pytest.raises(AttributeError):
+        body.shape = space3d.Sphere(5)  # type: ignore[misc]
+    assert body.shape is shape
+    assert body.mesh is mesh
+    assert_vec_close(anchor.world_point(), g3.Vec3(1, 2, 3))
+
+
 # Step-by-step transforms
 
 
