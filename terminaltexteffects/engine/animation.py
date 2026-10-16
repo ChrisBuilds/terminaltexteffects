@@ -347,11 +347,17 @@ class Scene:
         Attributes:
             DISTANCE (int): Sync scene progress to the active path's traveled distance.
             STEP (int): Sync scene progress to the active path's current step count.
+            LIGHT (int): Sync scene frames to the active 3D mount's `light`, from the first frame in shadow to the
+                last facing the light.
+            DEPTH (int): Sync scene frames to the active 3D mount's `nearness`, from the first frame at the far side
+                of its body to the last at the near side.
 
         """
 
         DISTANCE = auto()
         STEP = auto()
+        LIGHT = auto()
+        DEPTH = auto()
 
     def __init__(
         self,
@@ -1100,11 +1106,12 @@ class Animation:
         """Progress the Scene and apply the next visual to the character.
 
         Behavior:
-            * Synced scenes select a frame based on the active motion path's progress.
+            * Synced scenes select a frame based on the active motion path's progress, or on the active 3D mount's
+              light or nearness for `SyncMetric.LIGHT` and `SyncMetric.DEPTH`.
             * Eased scenes select a frame using cumulative duration boundaries and easing progress.
             * All other scenes advance by consuming frame duration through `Scene.get_next_visual()`.
-            * If a synced scene no longer has an active motion path, the final frame is applied and
-              the scene is marked complete.
+            * If a synced scene no longer has an active motion path (or mount, for the 3D metrics), the final
+              frame is applied and the scene is marked complete.
             * When a non-looping scene completes, it is reset, deactivated, and a `SCENE_COMPLETE`
               event is triggered.
         """
@@ -1125,16 +1132,30 @@ class Animation:
         self._complete_scene_if_finished(scene)
 
     def _step_synced_scene(self, scene: Scene) -> None:
-        """Apply the frame that matches the active motion path's progress."""
+        """Apply the frame that matches the active motion path's progress or the active mount's reading."""
+        if scene.sync in (Scene.SyncMetric.LIGHT, Scene.SyncMetric.DEPTH):
+            mount = self.character.motion.mount
+            if mount is None:
+                self._finish_synced_scene(scene)
+                return
+            reading = mount.light if scene.sync is Scene.SyncMetric.LIGHT else mount.nearness
+            final_frame_index = len(scene.frames) - 1
+            frame_index = round(final_frame_index * min(max(reading, 0.0), 1.0))
+            self.current_character_visual = scene.frames[frame_index].character_visual
+            return
         active_path = self.character.motion.active_path
         if active_path is None:
-            self.current_character_visual = scene.frames[-1].character_visual
-            scene.played_frames.extend(scene.frames)
-            scene.frames.clear()
+            self._finish_synced_scene(scene)
             return
 
         frame_index = self._synced_scene_frame_index(scene, active_path)
         self.current_character_visual = scene.frames[frame_index].character_visual
+
+    def _finish_synced_scene(self, scene: Scene) -> None:
+        """Apply the final frame and mark the synced scene complete once its motion source is gone."""
+        self.current_character_visual = scene.frames[-1].character_visual
+        scene.played_frames.extend(scene.frames)
+        scene.frames.clear()
 
     def _synced_scene_frame_index(self, scene: Scene, active_path: motion.Path) -> int:
         """Return the scene frame index for the active path's progress."""

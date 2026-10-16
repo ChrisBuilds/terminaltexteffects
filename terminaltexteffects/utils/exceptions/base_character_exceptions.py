@@ -8,6 +8,7 @@ from terminaltexteffects.utils.exceptions.base_terminaltexteffects_exception imp
 
 if TYPE_CHECKING:
     from terminaltexteffects import Coord, EventHandler, Path, Scene, Waypoint
+    from terminaltexteffects.engine.space3d import Mount
 
 
 class InvalidSymbolError(TerminalTextEffectsError):
@@ -42,20 +43,21 @@ class EventRegistrationCallerError(TerminalTextEffectsError):
         - SEGMENT_* -> Path
         - PATH_*    -> Path
         - SCENE_*   -> Scene
+        - MOUNT_*   -> Mount
     """
 
     def __init__(
         self,
         event: EventHandler.Event,
-        caller: Scene | Waypoint | Path | str,
-        required: type[Scene | Waypoint | Path],
+        caller: Scene | Waypoint | Path | Mount | str,
+        required: type[Scene | Waypoint | Path | Mount],
     ) -> None:
         """Initialize an EventRegistrationCallerError.
 
         Args:
             event (EventHandler.Event): The event that was registered.
-            caller (Scene | Waypoint | Path | str): The object provided to trigger the event.
-            required (Scene | Waypoint | Path): The valid caller types for the event.
+            caller (Scene | Waypoint | Path | Mount | str): The object provided to trigger the event.
+            required (Scene | Waypoint | Path | Mount): The valid caller types for the event.
 
         """
         self.event = event
@@ -85,21 +87,23 @@ class EventRegistrationTargetError(TerminalTextEffectsError):
         - SET_COORDINATE   -> Coord
         - CALLBACK         -> EventHandler.Callback
         - RESET_APPEARANCE -> None
+        - MOUNT, UNMOUNT   -> Mount
     """
 
     def __init__(
         self,
         action: EventHandler.Action,
-        target: Scene | Path | int | Coord | EventHandler.Callback | str | None,
-        required: type[Scene | Path | int | Coord | EventHandler.Callback | str | None],
+        target: Scene | Path | Mount | int | Coord | EventHandler.Callback | str | None,
+        required: type[Scene | Path | Mount | int | Coord | EventHandler.Callback | str | None],
     ) -> None:
         """Initialize an EventRegistrationTargetError.
 
         Args:
             action (EventHandler.Action): The action that was registered.
-            target (Scene | Path | int | Coord | EventHandler.Callback | str | None): The target provided to the action.
-            required (type[Scene | Path | int | Coord | EventHandler.Callback | str | None]): The valid target
-                types.
+            target (Scene | Path | Mount | int | Coord | EventHandler.Callback | str | None): The target provided to
+                the action.
+            required (type[Scene | Path | Mount | int | Coord | EventHandler.Callback | str | None]): The valid
+                target types.
 
         """
         self.action = action
@@ -124,18 +128,18 @@ class DuplicateEventRegistrationError(TerminalTextEffectsError):
     def __init__(
         self,
         event: EventHandler.Event,
-        caller: Scene | Waypoint | Path,
+        caller: Scene | Waypoint | Path | Mount,
         action: EventHandler.Action,
-        target: Scene | Path | int | Coord | EventHandler.Callback | str | None,
+        target: Scene | Path | Mount | int | Coord | EventHandler.Callback | str | None,
     ) -> None:
         """Initialize a DuplicateEventRegistrationError.
 
         Args:
             event (EventHandler.Event): The event that was already registered.
-            caller (Scene | Waypoint | Path): The caller object that was already registered.
+            caller (Scene | Waypoint | Path | Mount): The caller object that was already registered.
             action (EventHandler.Action): The action that was already registered.
-            target (Scene | Path | int | Coord | EventHandler.Callback | str | None): The target that was already
-                registered.
+            target (Scene | Path | Mount | int | Coord | EventHandler.Callback | str | None): The target that was
+                already registered.
 
         """
         self.event = event

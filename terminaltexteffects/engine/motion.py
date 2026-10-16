@@ -26,6 +26,7 @@ from terminaltexteffects.utils.geometry import Coord
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character  # pragma: no cover
+    from terminaltexteffects.engine.space3d import Mount  # pragma: no cover
 
 
 @dataclass(frozen=True)
@@ -330,6 +331,7 @@ class Motion:
         current_coord (Coord): current coordinate
         previous_coord (Coord): previous coordinate
         active_path (Path | None): active path
+        mount (Mount | None): active 3D mount, which supplies the position instead of a path
 
     Methods:
         set_coordinate:
@@ -348,9 +350,13 @@ class Motion:
             Activates the first waypoint in the path.
         deactivate_path:
             Unsets the current path if the current path is path.
+        activate_mount:
+            Hands the character's position to a 3D mount.
+        deactivate_mount:
+            Releases the character from its 3D mount.
         move:
             Moves the character one step closer to the target position based on an easing function if
-                present, otherwise linearly.
+                present, otherwise linearly, or to its mount's anchor.
 
     """
 
@@ -366,6 +372,7 @@ class Motion:
         self.current_coord: Coord = Coord(character.input_coord.column, character.input_coord.row)
         self.previous_coord: Coord = Coord(-1, -1)
         self.active_path: Path | None = None
+        self.mount: Mount | None = None
         # Detect callback-driven restarts even when the active path's identity is unchanged.
         self._path_generation = 0
 
@@ -453,10 +460,10 @@ class Motion:
         """Return whether movement is complete.
 
         Returns:
-            bool: True if the character has no active path, False otherwise.
+            bool: True if the character has no active path and no active mount, False otherwise.
 
         """
-        return self.active_path is None
+        return self.active_path is None and self.mount is None
 
     def chain_paths(self, paths: list[Path], *, loop: bool = False) -> None:
         """Create a chain of paths.
@@ -505,6 +512,9 @@ class Motion:
         the path has a layer, it sets the character's layer to it. Finally, it triggers the PATH_ACTIVATED event
         for the character.
 
+        If the character is mounted, the mount is released first (with its `MOUNT_RELEASED` event), so the path
+        starts from wherever the character is.
+
         Args:
             path (Path | str): The path to activate. Must be the Path itself, or the Path's ID.
 
@@ -517,6 +527,9 @@ class Motion:
             found_path = path
         if not found_path.waypoints:
             raise ActivateEmptyPathError(found_path.path_id)
+        if self.mount is not None:
+            self.deactivate_mount()
+            self._drop_callback_mount()
         self.active_path = found_path
         self._path_generation += 1
         first_waypoint = self.active_path.waypoints[0]
@@ -591,8 +604,70 @@ class Motion:
             self.active_path = None
             self._path_generation += 1
 
+    def activate_mount(self, mount: Mount) -> None:
+        """Hand the character's position to a 3D mount, created with `Space3D.new_mount`.
+
+        Mounting deactivates the active path and leaves the active scene alone. A character already on another
+        mount is released from it first. Activating the mount the character is already on does nothing. From the
+        next tick, `move()` takes the position from the mount, blending from where the character is if the mount
+        has `blend_frames`, and a `MOUNT_COMPLETE` event follows when it arrives.
+
+        Args:
+            mount (Mount): The mount to ride. It must have been created for this character.
+
+        Raises:
+            ValueError: If the mount was created for a different character.
+
+        """
+        if mount.character is not self.character:
+            msg = "The mount was created for a different character."
+            raise ValueError(msg)
+        if self.mount is mount:
+            return
+        if self.mount is not None:
+            self.deactivate_mount()
+            self._drop_callback_mount()
+        if self.active_path is not None:
+            self.deactivate_path()
+        self.mount = mount
+        mount._begin()
+
+    def deactivate_mount(self, mount: Mount | None = None) -> None:
+        """Release the character from its mount. It stays where it is, ready for a path or another mount.
+
+        The mount restores what it changed itself (its depth layering and hiding), then a `MOUNT_RELEASED`
+        event is triggered.
+
+        Args:
+            mount (Mount | None): Release only if this is the active mount. `None` releases any active mount.
+
+        """
+        active = self.mount
+        if active is None or (mount is not None and mount is not active):
+            return
+        self.mount = None
+        active._end()
+        self.character.event_handler._handle_event(self.character.event_handler.Event.MOUNT_RELEASED, active)
+
+    def _drop_callback_mount(self) -> None:
+        """End a mount that a `MOUNT_RELEASED` callback activated, so the caller's own request wins.
+
+        No event is triggered, so a callback that mounts on every release can't loop.
+        """
+        if self.mount is not None:
+            replacement, self.mount = self.mount, None
+            replacement._end()
+
+    def _follow_mount(self) -> None:
+        """Move to the cell the active mount reports and trigger `MOUNT_COMPLETE` when the blend finishes."""
+        mount = self.mount
+        assert mount is not None
+        self.current_coord, arrived = mount._step()
+        if arrived:
+            self.character.event_handler._handle_event(self.character.event_handler.Event.MOUNT_COMPLETE, mount)
+
     def move(self) -> None:
-        """Move the character along the active path.
+        """Move the character along the active path, or to its mount's anchor.
 
         The character's current coordinate is updated to the next step in the active path. If the active path
         is completed, an event is triggered based on whether the path is set to loop or not. Looping paths are
@@ -611,11 +686,17 @@ class Motion:
         If a segment or holding callback deactivates, replaces, or restarts the path,
         processing of the old traversal stops. Callback coordinates are preserved and
         any newly activated traversal begins moving on the next tick.
+
+        A mounted character moves to the cell its mount reports for this tick and triggers `MOUNT_COMPLETE` on
+        the tick it finishes blending onto the anchor.
         """
         # preserve previous coordinate to allow for clearing the location in the terminal
         self.previous_coord = self.current_coord
 
-        if not self.active_path or not self.active_path.segments:
+        mounted = self.mount is not None
+        if mounted:
+            self._follow_mount()
+        if mounted or not self.active_path or not self.active_path.segments:
             return
         path = self.active_path
         path_generation = self._path_generation
