@@ -120,3 +120,12 @@ on a drawn body from layer 0 or above reads on top.
   character wins instead, which looks random on a turning body.
 - Only cell centers are tested, so a part of a shape thinner than a cell, such as a narrow rim seen edge-on, can
   fall between centers and vanish for a frame.
+
+## Mounted anchors at the near plane
+
+`mount.projected` reports whether the anchor can be projected at its current pose. While the
+anchor is closer than `camera.near` (including behind the camera), its character is automatically
+hidden on its tick. The mount retains its last valid coordinate, depth, facing, and light readings;
+check `projected` before using them. It restores visibility when the anchor returns, unless
+backface hiding still applies. A character already hidden by the effect stays hidden. Releasing
+a mount restores visibility only if the mount hid it.
