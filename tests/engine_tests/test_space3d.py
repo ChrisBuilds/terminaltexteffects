@@ -184,6 +184,28 @@ def test_clipping_and_backface_hiding_share_visibility_ownership() -> None:
     assert character.is_visible
 
 
+@pytest.mark.parametrize("clipped", [False, True])
+def test_mount_reapplies_hiding_after_effect_reveals_character(*, clipped: bool) -> None:
+    """Effect visibility changes cannot leave clipped or back-facing mounted text visible."""
+    terminal, space = make_space()
+    character = terminal.get_characters()[0]
+    terminal.set_character_visibility(character, is_visible=True)
+    body = space.body()
+    space.mount(character, body.anchor(0, 0, 0, normal="z"), hide_when_facing_away=True)
+    if clipped:
+        body.set_position(z=space.camera.distance)
+    else:
+        body.rotate("y", 180)
+    tick(space, [character])
+    assert not character.is_visible
+    terminal.set_character_visibility(character, is_visible=True)
+    tick(space, [character])
+    assert not character.is_visible
+    body.set_position().set_rotation()
+    tick(space, [character])
+    assert character.is_visible
+
+
 def test_reset_clears_queued_tweens() -> None:
     """Reset clears queued tweens."""
     _, space = make_space()

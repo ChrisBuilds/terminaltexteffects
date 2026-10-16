@@ -1474,7 +1474,7 @@ class Mount:
             self.character.layer = self._base_layer + layer
             self.character._set_depth_order(nearness - layer)
         hide = not self.projected or (self.hide_when_facing_away and self.arrived and not self.facing)
-        if hide and not self._hidden and self.character.is_visible:
+        if hide and self.character.is_visible:
             self._hidden = True
             self.space.terminal.set_character_visibility(self.character, is_visible=False)
         elif not hide and self._hidden:
