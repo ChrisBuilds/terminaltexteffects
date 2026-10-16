@@ -988,3 +988,28 @@ def test_mesh_surface_points_never_coincide(count: int) -> None:
     points = space3d.Cube(20).surface_points(count)
     assert len(points) == count
     assert len({point for point, _normal in points}) == count
+
+
+@pytest.mark.parametrize("local", [False, True])
+@pytest.mark.parametrize("frames", [0, 1, 4])
+def test_local_spin_matches_body_axis_rotation(*, local: bool, frames: int) -> None:
+    """A tilted body's local turn composes on the right, including immediate tweens."""
+    _, space = make_space()
+    tilt = space3d.rotation_about("z", 35)
+    turn = space3d.rotation_about("y", 90)
+    expected = tilt * turn if local else turn * tilt
+    body = space.body().set_rotation(tilt).spin("y", turns=0.25, frames=frames, local=local)
+    for _ in range(frames):
+        space.step()
+    assert_same_rotation(body.rotation, expected)
+    body.set_rotation(tilt).rotate("y", 90, local=local)
+    assert_same_rotation(body.rotation, expected)
+
+
+def test_local_spin_follows_concurrent_world_turn() -> None:
+    """A concurrent world turn carries the local spin axis along with the body."""
+    _, space = make_space()
+    body = space.body().spin("z", turns=0.25, frames=4).spin("y", turns=0.25, frames=4, local=True, together=True)
+    for _ in range(4):
+        space.step()
+    assert_same_rotation(body.rotation, space3d.rotation_about("z", 90) * space3d.rotation_about("y", 90))

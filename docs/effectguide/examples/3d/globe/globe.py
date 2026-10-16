@@ -41,7 +41,7 @@ class GlobeIterator(BaseEffectIterator[GlobeConfig]):
         # More segments and rings make a rounder outline. back="dim" shows the far side through the text's spaces.
         globe = self.space.body(Sphere(radius=20, segments=48, rings=24)).draw(Textured(back="dim"))
         globe.rotate("z", -15).rotate("x", 15)
-        globe.spin("y", turns=1, frames=480, ease=easing.in_out_sine)
+        globe.spin("y", turns=1, frames=480, ease=easing.in_out_sine, local=True)
         self.text_shown = False
 
     def __next__(self) -> str:

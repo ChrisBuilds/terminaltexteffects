@@ -706,9 +706,10 @@ class Body:
 
     # Step-by-step transforms
 
-    def rotate(self, axis: Axis, degrees: float) -> Body:
-        """Turn the body `degrees` about a world `axis` through its origin, now."""
-        return self._set(rotation=rotation_about(axis, degrees) * self._rotation)
+    def rotate(self, axis: Axis, degrees: float, *, local: bool = False) -> Body:
+        """Turn about a world `axis` through the origin, or a body axis with `local=True`, now."""
+        turn = rotation_about(axis, degrees)
+        return self._set(rotation=self._rotation * turn if local else turn * self._rotation)
 
     def move_by(self, x: float = 0.0, y: float = 0.0, z: float = 0.0) -> Body:
         """Move the body by `(x, y, z)` columns, now."""
@@ -745,13 +746,18 @@ class Body:
         ease: EasingFunction | None = None,
         *,
         together: bool = False,
+        local: bool = False,
     ) -> Body:
-        """Queue `turns` full turns about a world `axis` over `frames` frames. Spins running together tumble."""
+        """Queue full turns about a world `axis`, or a body axis with `local=True`.
+
+        The local axis follows the current orientation, including other concurrent turns.
+        """
         unit = _direction(axis, _AXES, "axis")
         total = 2 * math.pi * turns
 
         def apply(previous: float, current: float) -> None:
-            self._set(rotation=g3.Rotation.about_axis(unit, total * (current - previous)) * self._rotation)
+            turn = g3.Rotation.about_axis(unit, total * (current - previous))
+            self._set(rotation=self._rotation * turn if local else turn * self._rotation)
 
         return self._queue_tween(_Tween(frames, apply, ease), together=together)
 
