@@ -63,7 +63,9 @@ The input text wraps around a sphere that turns once. You see the far side throu
   repeated to fill it ([Texture mapping](textures.md)).
 - **See-through**: `back="dim"` draws the far side's text in dim color wherever the near side has a space
   ([Depth and hidden surfaces](depth.md)).
-- **Tilt**: `rotate("z", -15)` then `rotate("x", 15)` leans the axis like a desk globe before it starts spinning.
+- **Tilt**: `rotate("z", -15)` then `rotate("x", 15)` leans the axis like a desk globe, and
+  `spin("y", ..., local=True)` turns the globe about that leaning axis, which stays put
+  ([Rotation](rotation.md)).
 
 The globe is the most expensive example in the guide, because a round sphere has many triangles and `back="dim"`
 draws it twice. [Performance](performance.md) shows the numbers and what to cut.

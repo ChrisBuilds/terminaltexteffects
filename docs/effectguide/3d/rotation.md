@@ -48,6 +48,8 @@ turns it about the screen's vertical. Use `rotate("y", 5, local=True)` or
 `spin("y", local=True)` to turn about the body's own tipped axis. The local axis follows the body
 when other turns run alongside it.
 
+![Two tilted boxes turn. Left, spin("y") turns about world y, and the box's own axis sweeps a cone. Right, spin("y", local=True) turns about the box's own axis, which stays put](../../img/effectguide/3d/rotation_local.webp)
+
 `settle` still spins about a world axis while returning to rest. `turn_to` and `turn_to_rest`
 target an absolute orientation, so they have no local-axis option.
 

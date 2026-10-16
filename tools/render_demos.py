@@ -25,6 +25,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 
+from terminaltexteffects.engine._recording import RecordingReader, RecordingWriter
 from terminaltexteffects.utils import export
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -54,6 +55,9 @@ class Demo:
     start_hold: float = 0.0
     end_hold: float = 2.0
     effects_dir: Path | None = None
+    end_on_text: bool = True
+    """Keep the closing frames that show only the finished text. The 3D examples swap their shapes for the text when
+    they finish, and that text would open each loop of the animation, so their demos end on the last shape frame."""
 
 
 # Built-in effects render from `demo.txt` with default options. Add an entry here to change the options for a
@@ -182,6 +186,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
             tte_args=CANVAS_3D,
             input_file=CONCEPT_INPUT,
             effects_dir=EXAMPLES_3D / effect,
+            end_on_text=False,
         )
         for name, effect, effect_args in (
             ("cubes", "cubes", ()),
@@ -210,7 +215,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
             ("logo", "logo", ()),
             ("die", "die", ()),
             ("globe", "globe", ()),
-            ("ticker", "ticker", ()),
+            ("ticker", "ticker", ("--message", " HELLO ·")),
             ("wireframes", "wireframes", ()),
         )
     },
@@ -221,6 +226,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
             tte_args=CANVAS_3D,
             input_file=CONCEPT_INPUT,
             effects_dir=EXAMPLES_3D / f"myspin_step{step}",
+            end_on_text=False,
         )
         for step in range(1, 7)
     },
@@ -239,6 +245,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
         tte_args=CANVAS_3D,
         input_file=CONCEPT_INPUT,
         effects_dir=EXAMPLES_3D / "myspin_step6",
+        end_on_text=False,
     ),
     "travel_canvas": Demo(
         effect="travel",
@@ -308,6 +315,19 @@ def record(demo: Demo, path: Path) -> None:
         run(command, os.environ | {"TTE_DEV_EFFECTS_DIR": str(demo.effects_dir), "XDG_CONFIG_HOME": config_home})
 
 
+def drop_final_text(recording: Path) -> None:
+    """Remove the frames at the end of `recording` that repeat its last frame, the finished text."""
+    with RecordingReader(recording) as reader:
+        header = reader.header
+        frames = list(reader.frames())
+    while len(frames) > 1 and frames[-2] == frames[-1]:
+        frames.pop()
+    with RecordingWriter(recording, header) as writer:
+        writer.begin_segment("demo")
+        for frame in frames[:-1] or frames:
+            writer.write_frame(frame)
+
+
 @dataclass(frozen=True)
 class RenderOptions:
     """Command-line choices that apply to every demo."""
@@ -337,6 +357,8 @@ def render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> str:
     with tempfile.TemporaryDirectory(prefix="tte-demo-") as temp:
         recording = Path(temp) / "demo.tterec"
         record(demo, recording)
+        if not demo.end_on_text:
+            drop_final_text(recording)
         for fmt in options.formats:
             missing |= export.export_recording(
                 recording,

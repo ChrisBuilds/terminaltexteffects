@@ -52,6 +52,7 @@ before measuring an edge's angle, so a 45 degree edge on screen is drawn with `/
   and bottom edges are coarse. Wider shapes hide this best.
 - Moving a body by 1 unit in y moves it half a row, so slow vertical motion steps once every two units. Horizontal
   motion steps every unit and looks smoother.
-- Text has the same problem in reverse. A line of text mounted on a face that turns about the x axis loses rows
-  twice as fast as a face turning about y loses columns.
+- Turning doesn't favor either axis. Text on a face turning about x and text turning about y both shrink by the
+  cosine of the angle, so at 60 degrees each shows half its rows or half its columns. The row correction already
+  allowed for tall cells when the text was lifted into 3D.
 - Fonts vary, so the real ratio is somewhere around 1.8 to 2.2. TTE uses 2 because it's close for common fonts.

@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+from terminaltexteffects.engine._recording import RecordingHeader, RecordingReader, RecordingWriter
 from tools import render_demos
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -120,6 +121,28 @@ def test_guide_pages_show_rendered_3d_diagrams() -> None:
     assert shown == set(render_3d_diagrams.DIAGRAMS)
     for name in shown:
         assert (render_3d_diagrams.OUT_DIR / f"{name}.webp").is_file()
+
+
+def test_3d_diagrams_stay_in_bounds() -> None:
+    """No diagram draws a label or marker past the edge of its image."""
+    pytest.importorskip("PIL")
+    from tools import render_3d_diagrams  # noqa: PLC0415 - Needs Pillow, which isn't installed on every Python.
+
+    clipped = {name: render_3d_diagrams.find_clipped(name) for name in render_3d_diagrams.DIAGRAMS}
+    assert {name: items for name, items in clipped.items() if items} == {}
+
+
+def test_drop_final_text_ends_on_the_last_effect_frame(tmp_path: Path) -> None:
+    """Demos that don't end on text lose the closing frames that repeat the finished text."""
+    path = tmp_path / "demo.tterec"
+    header = RecordingHeader("test", width=1, height=1, frame_rate=60)
+    with RecordingWriter(path, header) as writer:
+        writer.begin_segment("demo")
+        for frame in "abcc":
+            writer.write_frame(frame)
+    render_demos.drop_final_text(path)
+    with RecordingReader(path) as reader:
+        assert list(reader.frames()) == ["a", "b"]
 
 
 @pytest.mark.skipif(sys.version_info < (3, 13), reason="argparse wraps usage lines differently before 3.13")
