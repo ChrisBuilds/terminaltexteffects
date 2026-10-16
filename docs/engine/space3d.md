@@ -23,7 +23,8 @@ An effect can change a body one step at a time from `__next__`. `rotate`, `move_
 methods take effect immediately. It can also queue tweens that `Space3D.step()` plays one frame at a time: `spin`,
 `settle`, `turn_to`, `turn_to_rest`, `move_to`, `scale_to`, `random_pose`, `random_position` and `hold`. Each tween
 runs after the previous one, or alongside it with `together=True`, and `on_complete` runs a callback when one
-finishes. Tweens add their change to the body instead of overwriting it, so a spin keeps turning a body that the
+finishes. Callbacks run once every body has moved and every mount has been refreshed, so characters released there
+are handed over at the final pose. Tweens add their change to the body instead of overwriting it, so a spin keeps turning a body that the
 effect is also nudging.
 
 ## Mounting characters
@@ -71,8 +72,9 @@ depth buffer, so overlapping bodies hide each other correctly.
 
 The space draws surfaces with characters it creates, one per covered cell, and never uses the effect's own
 characters. `body.surface_characters` lists the ones showing a body after the last `step()`. An effect can restyle
-them, but each `step()` redraws them. Surface cells are layered by depth, one layer below a mounted character at
-the same depth, so text mounted on a drawn body from the default layer 0 or above reads on top of it.
+them, but each `step()` redraws them. Surface cells are ordered by their exact depth, like mounted characters, and
+count a hair farther than they are, so text mounted on a drawn body from the default layer 0 or above reads on top
+of it.
 
 ```python
 self.die = self.space.body(Cube(16)).draw(Shaded(), faces={0: Textured("1"), 2: Textured("6")})

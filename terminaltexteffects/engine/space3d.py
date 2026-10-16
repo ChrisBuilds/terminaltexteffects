@@ -401,8 +401,11 @@ def _mesh_surface_points(mesh: g3.Mesh, count: int) -> list[tuple[g3.Vec3, g3.Ve
     for a, b, c, normal, area in triangles:
         owed += count * area / total
         share = round(owed) - len(points)
-        for index in range(max(0, share)):
-            # An R2 low-discrepancy sequence folded into the triangle spreads points evenly with no clumps.
+        for _ in range(max(0, share)):
+            # An R2 low-discrepancy sequence folded into the triangle spreads points evenly with no clumps. It
+            # carries on from triangle to triangle rather than restarting, and starts past its first point, which
+            # lands on an edge, so neighboring faces never share a point.
+            index = len(points) + 1
             u = (0.5 + index * 0.7548776662466927) % 1
             v = (0.5 + index * 0.5698402909980532) % 1
             if u + v > 1:
@@ -418,6 +421,8 @@ _DIM = Color("#4a1050")
 _SHADE_SYMBOLS = ".,-~:;=!*#$@"
 _AMBIENT = 0.15
 _TEXT_NUDGE = 1e-6
+_SURFACE_DEPTH_BIAS = 1e-6
+"""How much farther surface cells count than they are, so text mounted exactly on a surface draws on top."""
 
 
 @dataclass(frozen=True)
@@ -897,7 +902,11 @@ class Body:
         return self._queue_tween(_Tween(frames, lambda _previous, _current: None), together=False)
 
     def on_complete(self, callback: Callable[[Body], None]) -> Body:
-        """Call `callback(body)` when the most recently queued tween finishes, or now if nothing is queued."""
+        """Call `callback(body)` when the most recently queued tween finishes, or now if nothing is queued.
+
+        During `Space3D.step`, the callback runs after every body has moved and every mount's readings are
+        refreshed, so releasing characters there leaves them at the final pose.
+        """
         if not self._queue:
             callback(self)
         else:
@@ -933,22 +942,25 @@ class Body:
             self._queue.append([tween])
         return self
 
-    def _advance(self) -> None:
-        """Play one frame of the tweens at the front of the queue."""
+    def _advance(self) -> list[Callable[[Body], None]]:
+        """Play one frame of the tweens at the front of the queue and return the callbacks of those that finished.
+
+        `Space3D.step` calls them once every body has moved and every mount has been refreshed, so a callback that
+        releases characters hands them over at the final pose.
+        """
         if not self._queue:
-            return
+            return []
         group = self._queue[0]
+        finished: list[Callable[[Body], None]] = []
         for tween in group:
             if tween.done:
                 continue
             tween.advance()
             if tween.done:
-                for callback in tween.callbacks:
-                    callback(self)
-                if not self._queue or self._queue[0] is not group:
-                    return  # A callback reset the body or replaced the queue.
+                finished.extend(tween.callbacks)
         if all(tween.done for tween in group):
             self._queue.pop(0)
+        return finished
 
     # Anchors and layouts
 
@@ -1183,14 +1195,14 @@ class Body:
         """Return the look for faces with `tag`."""
         return self._face_looks.get(tag, self._look)
 
-    def _contribute(self, cells: dict[Coord, tuple[float, str, ColorPair, Body]]) -> None:
-        """Add this body's nearest surface in each cell to `cells`, where it beats what is there."""
+    def _contribute(self, cells: dict[Coord, tuple[float, str, ColorPair, Body]], bounds: g3.Bounds) -> None:
+        """Add this body's nearest surface in each cell inside `bounds` to `cells`, where it beats what is there."""
         mesh = self._mesh
         if mesh is None:
             return
         space = self.space
         camera = space.camera
-        pose = {"rotation": self._rotation, "scale": self._scale, "position": self._position}
+        pose = {"rotation": self._rotation, "scale": self._scale, "position": self._position, "bounds": bounds}
         if isinstance(self._look, Wireframe):
             look = self._look
             front = space._pair(look.color)
@@ -1261,13 +1273,15 @@ class Body:
 class _Slot:
     """One pooled surface character and the appearance the space last gave it."""
 
-    __slots__ = ("character", "colors", "frame", "symbol", "visual")
+    __slots__ = ("character", "colors", "frame", "layer", "nearness", "symbol", "visual")
 
     def __init__(self, character: EffectCharacter) -> None:
         self.character = character
         self.symbol = ""
         self.colors: ColorPair | None = None
         self.visual: object = None
+        self.nearness = math.nan
+        self.layer = 0
         self.frame = -1
 
 
@@ -1384,12 +1398,19 @@ class Mount:
         self._refresh()
 
     def _end(self) -> None:
-        """Stop riding and undo what the mount itself changed. Called by `Motion.deactivate_mount`."""
+        """Stop riding and undo what the mount itself changed. Called by `Motion.deactivate_mount`.
+
+        Once any blend is over, the character is left on the cell its anchor last projected to, which is where it
+        shows after this frame's `Space3D.step` even if it hasn't ticked since.
+        """
         self.active = False
         if self.space.mounts.get(self.character) is self:
             del self.space.mounts[self.character]
+        if self._frame >= self.blend_frames:
+            self.character.motion.current_coord = self.coord
         if self.layer_by_depth:
             self.character.layer = self._base_layer
+            self.character._set_depth_order(0.0)
         if self._hidden:
             self._hidden = False
             if not self.character.is_visible:
@@ -1436,7 +1457,12 @@ class Mount:
         if not self.arrived and self._frame >= self.blend_frames:
             self.arrived = just_arrived = True
         if self.layer_by_depth:
-            self.character.layer = self._base_layer + round(self.space.camera.distance - self.depth)
+            # Nearness counts in columns on top of the base layer: the whole part is the layer and the rest orders
+            # characters within it, so any difference in depth decides which is drawn on top.
+            nearness = self.space.camera.distance - self.depth
+            layer = round(nearness)
+            self.character.layer = self._base_layer + layer
+            self.character._set_depth_order(nearness - layer)
         if self.hide_when_facing_away:
             hide = self.arrived and not self.facing
             if hide and not self._hidden and self.character.is_visible:
@@ -1627,10 +1653,11 @@ class Space3D:
         return new
 
     def release(self, character: EffectCharacter) -> None:
-        """Give the character back, if it is mounted in this space. It stays where it is.
+        """Give the character back, if it is mounted in this space, on the cell its anchor last projected to.
 
-        Release undoes only what the mount did: it restores the layer if `layer_by_depth` was on and shows the
-        character if the mount hid it. A `MOUNT_RELEASED` event follows.
+        A character still blending toward its anchor stays where it is. Release undoes only what the mount did: it
+        restores the layer if `layer_by_depth` was on and shows the character if the mount hid it. A
+        `MOUNT_RELEASED` event follows.
         """
         mount = self.mounts.get(character)
         if mount is not None:
@@ -1642,29 +1669,38 @@ class Space3D:
         return any(body.animating for body in self.bodies)
 
     def step(self) -> None:
-        """Play one frame of every body's tweens, refresh every mount's readings and draw the surfaces."""
-        for body in self.bodies:
-            body._advance()
+        """Play one frame of every body's tweens, refresh every mount's readings and draw the surfaces.
+
+        Callbacks of tweens that finished this frame run after the readings are refreshed, so characters released
+        from them are placed at the final pose. Readings are refreshed again after any callbacks, so changes they
+        make show in this frame.
+        """
+        finished = [(body, callback) for body in self.bodies for callback in body._advance()]
+        self._refresh_mounts()
+        if finished:
+            for body, callback in finished:
+                callback(body)
+            self._refresh_mounts()
+        self._draw_surfaces()
+
+    def _refresh_mounts(self) -> None:
+        """Recompute every mount's readings for the current poses."""
         self._stamp += 1
         for mount in tuple(self.mounts.values()):
             mount._refresh()
-        self._draw_surfaces()
 
     def _draw_surfaces(self) -> None:
         """Draw every drawn body into one depth buffer and show it with the pooled characters."""
         cells: dict[Coord, tuple[float, str, ColorPair, Body]] = {}
+        bounds = g3.Bounds.for_canvas(self.terminal.canvas)
         for body in self.bodies:
             body._cells = []
             if body.drawn:
-                body._contribute(cells)
-        canvas = self.terminal.canvas
-        left, right, bottom, top = canvas.left, canvas.right, canvas.bottom, canvas.top
+                body._contribute(cells, bounds)
         distance = self.camera.distance
         stamp = self._stamp
         shown: list[_Slot] = []
         for cell, (depth, symbol, colors, body) in cells.items():
-            if not (left <= cell.column <= right and bottom <= cell.row <= top):
-                continue
             slot = self._slots.get(cell)
             if slot is None:
                 slot = self._slots[cell] = _Slot(self.terminal.add_character(" ", cell))
@@ -1677,8 +1713,13 @@ class Space3D:
             ):
                 animation.set_appearance(symbol, colors)
                 slot.symbol, slot.colors, slot.visual = symbol, colors, animation.current_character_visual
-            # One below a mounted character at the same depth, so text mounted on a surface reads on top.
-            character.layer = round(distance - depth) - 1
+            # Ordered by depth like mounted characters, a hair farther, so text mounted on a surface reads on top.
+            nearness = distance - depth - _SURFACE_DEPTH_BIAS
+            if slot.nearness != nearness or character.layer != slot.layer:
+                layer = round(nearness)
+                character.layer = layer
+                character._set_depth_order(nearness - layer)
+                slot.nearness, slot.layer = nearness, layer
             if not character.is_visible:
                 self.terminal.set_character_visibility(character, is_visible=True)
             slot.frame = stamp

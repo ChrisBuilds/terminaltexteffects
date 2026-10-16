@@ -63,8 +63,9 @@ class _TrackedAnimation(Animation):
             cache.visual_changed(record)
 
 
-def _painter_key(record: _RenderRecord) -> tuple[int, int]:
-    return record.character.layer, record.character.character_id
+def _painter_key(record: _RenderRecord) -> tuple[int, float, int]:
+    character = record.character
+    return character.layer, character._depth_order, character.character_id
 
 
 class RowCache:

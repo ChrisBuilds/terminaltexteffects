@@ -310,8 +310,13 @@ def test_bodies_share_one_depth_buffer() -> None:
     assert not far.surface_characters.keys() & near.surface_characters.keys()
 
 
+def painter_order(character: EffectCharacter) -> tuple[int, float]:
+    """Return what the terminal orders characters by within a cell, ahead of creation order."""
+    return character.layer, character._depth_order
+
+
 def test_surface_cells_layer_by_depth_just_below_mounted_characters() -> None:
-    """Surface cells layer by depth, one below a character mounted at the same depth."""
+    """Surface cells are ordered by depth, just below a character mounted at the same depth."""
     space = make_space()
     body = space.body(space3d.Box(10, 6, 10)).draw()
     character = space.terminal.get_characters()[0]
@@ -319,11 +324,24 @@ def test_surface_cells_layer_by_depth_just_below_mounted_characters() -> None:
     space.step()
     character.tick()
     cell = body.surface_characters[character.motion.current_coord]
-    assert cell.layer == character.layer - 1
+    assert painter_order(cell) < painter_order(character)
+    assert cell.layer == character.layer
     layer = cell.layer
     body.move_by(0, 0, 10)
     space.step()
     assert body.surface_characters[Coord(21, 11)].layer == layer + 10
+
+
+def test_surface_slightly_nearer_than_mounted_text_draws_over_it() -> None:
+    """A surface cell a fraction of a column nearer than a mounted character is drawn over it."""
+    space = make_space()
+    body = space.body(space3d.Box(10, 6, 10)).draw()
+    character = space.terminal.get_characters()[0]
+    space.mount(character, space.body().anchor(0, 0, 4.7))
+    space.step()
+    character.tick()
+    cell = body.surface_characters[character.motion.current_coord]
+    assert painter_order(cell) > painter_order(character)
 
 
 def test_draw_mounted_text_reads_over_its_surface_in_the_frame() -> None:
