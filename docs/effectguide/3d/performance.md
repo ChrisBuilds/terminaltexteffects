@@ -18,32 +18,38 @@ hasn't moved is still drawn every frame, because the space doesn't know whether 
 
 ## Measured costs
 
-These are the guide's own examples on an 80 by 24 canvas, timed with the frame-rate limit off. The numbers come from
-one machine. Yours will differ, but the ratios hold.
+These are the guide's own examples on the concept input, on an 80 by 24 canvas with the frame-rate limit off. Each
+time is the median of five runs, divided by the frames the example produces. They were measured at revision 304871d
+with Python 3.13 on a 2.8 GHz Intel Xeon. Your times will differ with the processor and Python version. Treat them as
+a rough guide to which examples cost more, and measure your own effect on the machines you care about.
 
 | Example | What it draws | Time per frame |
 | --- | --- | --- |
-| [Wireframe solids](recipes.md#wireframe-solids) | Four solids as edges | 1.9 ms |
-| [Card](depth.md) | Mounted text on a plane | 2.9 ms |
-| [Cubes](terminal.md) | Three shaded cubes | 3.1 ms |
-| [Spinning logo](recipes.md#spinning-logo) | Mounted text with lighting scenes | 3.3 ms |
-| [Depth](depth.md) | A cube and a sphere, see-through | 4.0 ms |
-| [Light](light.md) | A shaded sphere | 6.2 ms |
-| [Light](light.md) `--shape torus` | A shaded torus | 7.7 ms |
-| [Gallery](meshes.md) | Ten shapes | 7.8 ms |
-| [Texture](textures.md) `--text` | A textured cube | 8.8 ms |
-| [Globe](recipes.md#globe) | A textured sphere, 48 by 24, back faces shown | 23.5 ms |
+| [Wireframe solids](recipes.md#wireframe-solids) | Four solids as edges | 2.4 ms |
+| [Card](depth.md) | Mounted text on a plane | 3.1 ms |
+| [Cubes](terminal.md) | Three shaded cubes | 3.5 ms |
+| [Spinning logo](recipes.md#spinning-logo) | Mounted text with lighting scenes | 3.5 ms |
+| [Depth](depth.md) | A cube and a sphere | 4.4 ms |
+| [Depth](depth.md) `--see-through` | The same, with the cube in wireframe | 4.4 ms |
+| [Light](light.md) | A shaded sphere | 6.4 ms |
+| [Light](light.md) `--shape torus` | A shaded torus | 8.3 ms |
+| [Gallery](meshes.md) | Ten shapes | 8.9 ms |
+| [Texture](textures.md) `--text` | A textured cube and a textured sphere | 8.8 ms |
+| [Globe](recipes.md#globe) | A textured sphere, 48 by 24, back faces shown | 26.4 ms |
 
-The globe is the only one over budget, so it plays at about 43 frames per second instead of 60. Here's the same
+The globe is the only one over budget, so it plays at about 38 frames per second instead of 60. Here's the same
 sphere drawn different ways, measuring `step()` alone:
 
 | Sphere, radius 20 | Time per step |
 | --- | --- |
-| 24 by 12, `Shaded()` | 6.2 ms |
-| 48 by 24, `Shaded()` | 12.1 ms |
-| 24 by 12, `Textured(back="dim")` | 11.5 ms |
-| 48 by 24, `Textured()` | 12.8 ms |
-| 48 by 24, `Textured(back="dim")` | 23.4 ms |
+| 24 by 12, `Shaded()` | 5.3 ms |
+| 48 by 24, `Shaded()` | 11.5 ms |
+| 24 by 12, `Textured(back="dim")` | 11.7 ms |
+| 48 by 24, `Textured()` | 12.6 ms |
+| 48 by 24, `Textured(back="dim")` | 22.5 ms |
+
+The script that produced these tables is `tools/perf/guide_3d_costs.py` in a TTE checkout. Run it with
+`python -m tools.perf.guide_3d_costs` from the repository root to measure your own machine.
 
 Two things stand out:
 
@@ -52,8 +58,9 @@ Two things stand out:
 - **Showing back faces doubles it again.** `back="dim"` fills the far side too, so the space rasterizes the shape
   twice.
 
-Mounted characters cost about 9 microseconds each per step. The concept input's 304 characters take under 3 ms. A
-full 200 by 50 screen of text, 5,760 characters, takes about 52 ms, before `update()` moves any of them.
+Mounted characters cost about 7 to 8 microseconds each per step, mounted on one turning plane. The concept input's
+304 characters take about 2 ms. A full 200 by 50 screen of text, 10,000 characters, takes about 80 ms, before
+`update()` moves any of them.
 
 ## In TTE
 
@@ -68,8 +75,8 @@ full 200 by 50 screen of text, 5,760 characters, takes about 52 ms, before `upda
   do by skipping blank input cells.
 - **Release finished characters.** `release_all()` hands characters back to 2D paths, which cost only their own
   `update()`.
-- **Watch the count of drawn bodies.** Ten shapes in the gallery cost about twice one sphere. Many small shapes cost
-  more than a few large ones and read worse (see [3D in a terminal](terminal.md)).
+- **Watch the count of drawn bodies.** The gallery's ten small shapes cost more than the one large sphere in Light.
+  Many small shapes cost more than a few large ones and read worse (see [3D in a terminal](terminal.md)).
 
 ## Measuring
 

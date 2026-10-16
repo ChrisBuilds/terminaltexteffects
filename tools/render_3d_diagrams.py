@@ -157,6 +157,7 @@ class Canvas:
         """Fill a circle, and outline it if `outline` is given."""
         x, y = self._s(center)
         r = radius * SUPERSAMPLE
+        self._check((x - r, y - r, x + r, y + r), f"circle at {center}")
         self.draw.ellipse([x - r, y - r, x + r, y + r], fill=fill, outline=outline, width=round(width * SUPERSAMPLE))
 
     def arc(self, center: Point, radius: float, start: float, end: float, color: RGB, width: float = 2) -> None:
@@ -176,7 +177,15 @@ class Canvas:
         mono: bool = False,
     ) -> None:
         """Draw `text` positioned by its `anchor`, a Pillow anchor such as `"mm"` for its middle."""
-        self.draw.text(self._s(point), text, fill=color, font=self.font(size, mono=mono), anchor=anchor)
+        font = self.font(size, mono=mono)
+        self._check(self.draw.textbbox(self._s(point), text, font=font, anchor=anchor), repr(text))
+        self.draw.text(self._s(point), text, fill=color, font=font, anchor=anchor)
+
+    def _check(self, box: tuple[float, float, float, float], what: str) -> None:
+        """Record `what` if its supersampled bounding `box` reaches past the frame."""
+        left, top, right, bottom = box
+        if left < 0 or top < 0 or right > self.image.width or bottom > self.image.height:
+            CLIPPED.add(what)
 
     def finish(self) -> Image.Image:
         """Return the frame scaled down to its output size."""
@@ -322,7 +331,8 @@ def world_axes() -> list[Image.Image]:
     count = 100
     for index in range(count):
         t = index / count
-        view = View((360, 200), 3.2, yaw=-40 + 30 * math.sin(2 * math.pi * t), pitch=18, distance=400)
+        # Sized so the camera, its label and the axis labels stay inside the image through the whole sweep.
+        view = View((390, 200), 2.7, yaw=-40 + 30 * math.sin(2 * math.pi * t), pitch=18, distance=400)
         canvas = Canvas(720, 400)
         # The canvas: a rectangle on the z = 0 plane with a few rows of text.
         w, h = 40, 24
@@ -480,6 +490,48 @@ def rotation_axes() -> list[Image.Image]:
     return frames
 
 
+def rotation_local() -> list[Image.Image]:
+    """Show a tilted body spun about world y, where its axis sweeps a cone, beside one spun about its own y."""
+    frames = []
+    count = 120
+    mesh = g3.box(44, 96, 44)
+    tilt = Rotation.about_z(math.radians(-30))
+    for index in range(count):
+        turn = Rotation.about_y(2 * math.pi * index / count)
+        canvas = Canvas(840, 360)
+        panels = (
+            ('spin("y")', "Turns about world y. Its own axis (amber) sweeps a cone.", turn * tilt),
+            ('spin("y", local=True)', "Turns about its own axis (amber), which stays put.", tilt * turn),
+        )
+        for panel, (call, caption, pose) in enumerate(panels):
+            center_x = 210 + panel * 420
+            view = View((center_x, 185), 1.2, yaw=-30, pitch=18)
+            canvas.text((center_x, 26), call, TEXT, 14, mono=True)
+            canvas.text((center_x, 334), caption, MUTED, 13)
+            canvas.line(view(g3.Y_AXIS * -100), view(g3.Y_AXIS * 100), FAINT, 2)
+            canvas.text(view(g3.Y_AXIS * 112), "world y", MUTED, 12)
+            if panel == 0:
+                # The path the body's axis tip sweeps while the body turns about world y.
+                path = [
+                    view(Rotation.about_y(2 * math.pi * k / 48).apply(tilt.apply(g3.Y_AXIS * 84))) for k in range(49)
+                ]
+                for a, b in zip(path, path[1:]):
+                    canvas.line(a, b, mix(BACKGROUND, AMBER, 0.45), 1.5)
+            axis = pose.apply(g3.Y_AXIS)
+            end = view(axis * 84)
+            # Only the parts that stick out of the body's ends show. Draw the farther one first, so the body covers it.
+            if view.depth(axis) < 0:
+                canvas.arrow(view(axis * 48), end, AMBER, 3, 12)
+                solid(canvas, view, mesh, pose)
+                canvas.line(view(axis * -84), view(axis * -48), AMBER, 3)
+            else:
+                canvas.line(view(axis * -84), view(axis * -48), AMBER, 3)
+                solid(canvas, view, mesh, pose)
+                canvas.arrow(view(axis * 48), end, AMBER, 3, 12)
+        frames.append(canvas.finish())
+    return frames
+
+
 def rotation_order() -> list[Image.Image]:
     """Show that turning 90 degrees about x then y ends somewhere different from y then x."""
     canvas = Canvas(860, 330)
@@ -516,7 +568,8 @@ def projection() -> list[Image.Image]:
     count = 100
     for index in range(count):
         t = ease(abs(1 - 2 * index / count))
-        canvas = Canvas(860, 380)
+        # Wide enough for the orthographic caption at the right edge.
+        canvas = Canvas(900, 380)
         for panel, (title, perspective) in enumerate((("Perspective", True), ("Orthographic (perspective=0)", False))):
             left = 30 + panel * 430
             screen_x = left + 250
@@ -710,8 +763,9 @@ def lambert() -> list[Image.Image]:
         center = (240, 220)
         nx, ny = math.cos(angle + math.pi / 2), math.sin(angle + math.pi / 2)
         half = 110
-        a = (center[0] - half * ny, center[1] - half * -nx)
-        b = (center[0] + half * ny, center[1] + half * -nx)
+        # The normal is drawn as (nx, -ny) on screen, where y points down, so the face runs along (ny, nx).
+        a = (center[0] - half * ny, center[1] - half * nx)
+        b = (center[0] + half * ny, center[1] + half * nx)
         brightness = max(0.0, math.cos(angle + math.pi / 2 - light_angle))
         canvas.line((a[0], a[1]), (b[0], b[1]), shade(brightness), 8)
         normal_tip = (center[0] + 100 * nx, center[1] - 100 * ny)
@@ -725,7 +779,7 @@ def lambert() -> list[Image.Image]:
         start = -math.degrees(max(angle + math.pi / 2, light_angle))
         end = -math.degrees(min(angle + math.pi / 2, light_angle))
         canvas.arc(center, 40, start, end, MUTED, 2)
-        canvas.text((240, 26), "lambert = cos(angle between normal and light)", TEXT, 14)
+        canvas.text((240, 26), "lambert = max(0, cos(angle between normal and light))", TEXT, 14)
         # The brightness bar and the symbol it picks.
         canvas.text((560, 100), f"lambert = {brightness:.2f}", TEXT, 14, "lm", mono=True)
         canvas.rect(560, 130, 820, 150, None, FAINT)
@@ -810,6 +864,17 @@ def tween_timeline() -> list[Image.Image]:
     return [canvas.finish()]
 
 
+CLIPPED: set[str] = set()
+"""Labels and markers drawn reaching past a frame's edges since this was last cleared, so tests can catch them."""
+
+
+def find_clipped(name: str) -> set[str]:
+    """Render the diagram `name` and return the labels and markers in any frame that reach past its edges."""
+    CLIPPED.clear()
+    DIAGRAMS[name]()
+    return set(CLIPPED)
+
+
 DIAGRAMS: dict[str, Callable[[], list[Image.Image]]] = {
     "cell_sampling": cell_sampling,
     "world_axes": world_axes,
@@ -817,6 +882,7 @@ DIAGRAMS: dict[str, Callable[[], list[Image.Image]]] = {
     "transform_order": transform_order,
     "transform_pipeline": transform_pipeline,
     "rotation_axes": rotation_axes,
+    "rotation_local": rotation_local,
     "rotation_order": rotation_order,
     "projection": projection,
     "perspective_strength": perspective_strength,

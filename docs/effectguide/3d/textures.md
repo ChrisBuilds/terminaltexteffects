@@ -69,7 +69,7 @@ textured.
 - Text is sampled once per cell. Where a surface faces you squarely at its natural size, each character lands in its
   own cell. Where the surface is magnified, by perspective or by scaling up, neighboring cells sample the same
   character, and letters double up. Where it's shrunk or turned away, cells skip characters.
-- Doubling is worst on the near side of a large shape. A gentler `perspective`, a smaller shape or `back="dim"` all
-  help.
+- Doubling is worst on the near side of a large shape. A gentler `perspective` or a smaller shape helps. `back="dim"`
+  doesn't: it only shows the far side through the near side's spaces.
 - Text needs space to read. A face 20 columns wide holds about 20 characters, and fewer as it turns.
 - Bold, dense text such as capitals reads better on a surface than lowercase or punctuation.
