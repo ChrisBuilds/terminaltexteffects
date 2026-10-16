@@ -1,0 +1,75 @@
+# Texture Mapping
+
+A `Textured` look wraps text over a shape's faces, so the surface itself is made of letters. To do that, every point
+on a face needs to know which character of the text belongs there. That lookup is called **texture mapping**.
+
+## The idea
+
+Each face carries **texture coordinates**, usually called **u** and **v**: u runs across the face from 0 to 1, and v
+runs up it from 0 to 1. Any point on the face has a (u, v) position, however the face is turned or stretched on
+screen.
+
+The shape turns (u, v) into a position in the text: a column and a row. TTE keeps the text at its natural size, about
+one character per column across and one per row down, and repeats it when the face is bigger than the text. Wrapped
+shapes, such as cylinders and spheres, run u all the way around, so the text continues across the seam.
+
+![A face with u across and v up, covered by rows of text, and a cylinder seen from above with text wrapped around its side](../../img/effectguide/3d/uv_mapping.webp)
+
+When a cell is filled, the space finds the (u, v) at the cell's center, looks up the character there, and draws it in
+a color from the light. So the text turns, tilts and foreshortens with the surface, while each cell still shows one
+upright character.
+
+## In TTE
+
+The Texture example wraps a grid pattern, or the input text, over a cube and a sphere. Save it as `texture.py`:
+
+```python title="texture.py"
+--8<-- "docs/effectguide/examples/3d/texture/texture.py"
+```
+
+=== "Grid"
+
+    ```bash
+    tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c texture
+    ```
+
+    ![A grid of plus signs and lines wrapped over a turning cube and sphere](../../img/effectguide/texture_grid_demo.webp)
+
+=== "Text"
+
+    ```bash
+    tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c texture --text
+    ```
+
+    ![The input text wrapped over a turning cube and sphere](../../img/effectguide/texture_text_demo.webp)
+
+- `Textured()` wraps the effect's input text. `Textured("...")` wraps any string, with lines separated by `\n`.
+- A grid shows the mapping clearly: watch the squares compress toward the sphere's edges, where the surface turns away.
+- Each face of a `Box` or `Cube` starts the text at its own top left corner. `Prism` and `Pyramid` run the text
+  around their sides. `Cylinder` and `Sphere` wrap it all the way around, starting at the front.
+- Faces without texture coordinates, such as prism and cylinder caps, are drawn in `back_color`.
+- `back="dim"` shows the far side through the spaces in the text (see [Depth](depth.md)).
+- Each cell shows one character, so wide characters such as CJK can't be split across cells and are left blank.
+
+## Under the hood
+
+A mesh face's `uvs` give a (u, v) for each corner. [`rasterize`](../../engine/utils/geometry3d.md) blends them across
+the face, correcting for perspective, and stores the result in each cell's `Fragment.uv`. The shape's
+`texture_cell(fragment)` turns that into a fractional (column, row) in the text:
+
+```python
+column, row = body.shape.texture_cell(fragment)  # For example (12.4, 3.9): column 12, row 3.
+```
+
+A custom shape can override `texture_cell` to lay its text out differently. Return `None` for faces that shouldn't be
+textured.
+
+## At cell resolution
+
+- Text is sampled once per cell. Where a surface faces you squarely at its natural size, each character lands in its
+  own cell. Where the surface is magnified, by perspective or by scaling up, neighboring cells sample the same
+  character, and letters double up. Where it's shrunk or turned away, cells skip characters.
+- Doubling is worst on the near side of a large shape. A gentler `perspective`, a smaller shape or `back="dim"` all
+  help.
+- Text needs space to read. A face 20 columns wide holds about 20 characters, and fewer as it turns.
+- Bold, dense text such as capitals reads better on a surface than lowercase or punctuation.

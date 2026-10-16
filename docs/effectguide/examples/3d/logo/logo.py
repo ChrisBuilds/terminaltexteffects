@@ -1,0 +1,82 @@
+"""Logo: the input text spins like a sign, shaded by the light, and settles back into place.
+
+An Effect Guide recipe.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from terminaltexteffects import Color, Gradient, Scene, easing
+from terminaltexteffects.engine.base_config import BaseConfig
+from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
+from terminaltexteffects.engine.space3d import Body, Space3D
+from terminaltexteffects.utils import argutils
+
+
+def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
+    """Return the command name, effect class, and configuration class TTE registers."""
+    return "logo", Logo, LogoConfig
+
+
+@dataclass
+class LogoConfig(BaseConfig):
+    """Configuration for the Logo effect."""
+
+    parser_spec = argutils.ParserSpec(
+        name="logo",
+        help="The input text spins like a sign and settles back into place.",
+        description="logo | The input text spins like a sign and settles back into place.",
+        epilog="Example: tte --canvas-width 80 --canvas-height 24 --anchor-text c logo",
+    )
+
+
+class LogoIterator(BaseEffectIterator[LogoConfig]):
+    """Produce the frames of the Logo effect."""
+
+    def __init__(self, effect: Logo) -> None:
+        """Mount the text on a plane, color it by the light, and queue the spin."""
+        super().__init__(effect)
+        self.space = Space3D(self.terminal, light="front")
+        self.sign = self.space.body()
+        characters = [c for c in self.terminal.get_characters() if c.input_symbol != " "]
+        shade = Gradient(Color("#3a003a"), Color("#8A008A"), Color("#00D1FF"), Color("#ffffff"), steps=10)
+        for character in characters:
+            # The mount's light reading picks the frame, so the text brightens as it turns toward the light.
+            scene = character.animation.new_scene(sync=Scene.SyncMetric.LIGHT)
+            scene.apply_gradient_to_symbols(character.input_symbol, 1, fg_gradient=shade)
+            character.animation.activate_scene(scene)
+            self.terminal.set_character_visibility(character, is_visible=True)
+            self.active_characters.add(character)
+        self.sign.add_chars(characters, self.sign.text_plane(characters), hide_when_facing_away=True)
+
+        self.sign.spin("y", turns=2, frames=200, ease=easing.in_sine)
+        self.sign.settle("y", turns=1, frames=160, ease=easing.out_back)
+        self.sign.on_complete(self.finish)
+
+    def finish(self, sign: Body) -> None:
+        """Release the text and show it in its input colors."""
+        sign.release_all()
+        for character in self.terminal.get_characters():
+            character.animation.deactivate_scene()
+            character.animation.set_appearance(character.input_symbol)
+
+    def __next__(self) -> str:
+        """Spin the sign until it settles."""
+        if self.space.animating or self.active_characters:
+            self.space.step()
+            self.update()
+            return self.frame
+        raise StopIteration
+
+
+class Logo(BaseEffect[LogoConfig]):
+    """The input text spins like a sign and settles back into place."""
+
+    @property
+    def _config_cls(self) -> type[LogoConfig]:
+        return LogoConfig
+
+    @property
+    def _iterator_cls(self) -> type[LogoIterator]:
+        return LogoIterator

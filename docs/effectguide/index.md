@@ -20,6 +20,7 @@ then the [promotion checklist](https://github.com/ChrisBuilds/terminaltexteffect
 flowchart LR
     start[Start here] --> engine[The Engine]
     start --> writing[Writing Effects]
+    engine --> threed[3D Effects]
     writing -- each step links --> engine
     engine --> reference[API Reference]
     writing --> reference
@@ -27,6 +28,8 @@ flowchart LR
 
 - **The Engine** explains each part of TTE: what it does, how it is designed, and what it can't do. Read it in order
   or come back to a chapter when you need it.
+- **3D Effects** teaches the ideas behind 3D graphics (coordinates, transforms, the camera, depth and light) at the
+  level you need to use TTE's 3D tools, with diagrams and an example effect for each idea. Read it after the Engine.
 - **Writing Effects** is hands-on. Its tutorial rebuilds the built-in [Spray](../effects/spray.md) effect from an
   empty file, one step per page, and each step links the engine chapter it relies on.
 - The **Reference** section, generated from the source, lists every class and function. This guide links to it
