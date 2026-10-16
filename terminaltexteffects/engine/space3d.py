@@ -594,6 +594,14 @@ class _Tween:
         self.progress = eased
 
 
+@dataclass
+class _TweenGroup:
+    """Tweens played together and callbacks owned by their shared lifetime."""
+
+    tweens: list[_Tween]
+    callbacks: list[Callable[[Body], None]] = field(default_factory=list)
+
+
 # Bodies
 
 
@@ -633,7 +641,7 @@ class Body:
         self._rotation = g3.Rotation()
         self._position = self._home
         self._scale = 1.0
-        self._queue: list[list[_Tween]] = []
+        self._queue: list[_TweenGroup] = []
         self._transform: tuple[float, ...] | None = None
         self._extent = max((vertex.length() for vertex in self._mesh.vertices), default=0.0) if self._mesh else 0.0
         self._look: Look | None = None
@@ -916,7 +924,19 @@ class Body:
         if not self._queue:
             callback(self)
         else:
-            self._queue[-1][-1].callbacks.append(callback)
+            self._queue[-1].tweens[-1].callbacks.append(callback)
+        return self
+
+    def on_group_complete(self, callback: Callable[[Body], None]) -> Body:
+        """Call `callback(body)` when the last queued parallel group finishes, or now if none is queued.
+
+        Later groups added after this call do not delay the hook. Like `on_complete`, callbacks run after
+        mount readings refresh, so they can safely release characters at the endpoint pose.
+        """
+        if not self._queue:
+            callback(self)
+        else:
+            self._queue[-1].callbacks.append(callback)
         return self
 
     def _turn_through(
@@ -943,9 +963,9 @@ class Body:
                 callback(self)
             return self
         if together and self._queue:
-            self._queue[-1].append(tween)
+            self._queue[-1].tweens.append(tween)
         else:
-            self._queue.append([tween])
+            self._queue.append(_TweenGroup([tween]))
         return self
 
     def _advance(self) -> list[Callable[[Body], None]]:
@@ -958,14 +978,15 @@ class Body:
             return []
         group = self._queue[0]
         finished: list[Callable[[Body], None]] = []
-        for tween in group:
+        for tween in group.tweens:
             if tween.done:
                 continue
             tween.advance()
             if tween.done:
                 finished.extend(tween.callbacks)
-        if all(tween.done for tween in group):
+        if all(tween.done for tween in group.tweens):
             self._queue.pop(0)
+            finished.extend(group.callbacks)
         return finished
 
     # Anchors and layouts
@@ -1390,6 +1411,11 @@ class Mount:
         self._hidden = False
         self._stamp = -1
 
+    @property
+    def blend_progress(self) -> float:
+        """Fraction of blend frames elapsed, from 0 to 1, before easing; 1 for a zero-frame blend."""
+        return min(self._frame / self.blend_frames, 1.0) if self.blend_frames else 1.0
+
     def _begin(self) -> None:
         """Start riding. Called by `Motion.activate_mount`."""
         start = self.character.motion.current_coord
@@ -1673,6 +1699,11 @@ class Space3D:
     def animating(self) -> bool:
         """Whether any body has tweens queued or playing."""
         return any(body.animating for body in self.bodies)
+
+    @property
+    def blending(self) -> bool:
+        """Whether any active mount is still traveling toward its anchor. Advances on character ticks."""
+        return any(mount.blend_progress < 1.0 for mount in self.mounts.values())
 
     def step(self) -> None:
         """Play one frame of every body's tweens, refresh every mount's readings and draw the surfaces.
