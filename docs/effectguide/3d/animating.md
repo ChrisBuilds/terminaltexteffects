@@ -77,3 +77,14 @@ difference, not an absolute pose. `settle` and `turn_to` use `Rotation.slerp` to
 - Hold a moment at rest before releasing text, so the reader sees it land.
 - After the hand-off, characters are ordinary characters. Their scenes, colors and layers are what you left them as,
   so reset anything the 3D part changed.
+
+## Waiting for a group or a blend
+
+`on_complete(callback)` belongs to the last individual tween. Use
+`body.on_group_complete(callback)` to wait for the longest tween in the last queued parallel group.
+The hook runs after mount readings refresh, so it can release mounted characters at the final pose.
+Groups queued after the hook are independent; cancelling or resetting discards pending hooks.
+
+`space.animating` tracks body tweens. Mount travel is separate: use `space.blending` to wait for
+active blends, or `mount.blend_progress` for the fraction of blend frames elapsed before easing.
+Blends advance when characters tick, and a zero-frame blend reports 1 immediately.

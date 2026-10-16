@@ -165,6 +165,83 @@ def test_reset_from_a_callback_stops_the_rest_of_its_group() -> None:
     assert_vec_close(body.position, g3.Vec3(0, 0, 0))
 
 
+def test_group_complete_waits_for_longest_tween_and_preserves_endpoint() -> None:
+    """A short last tween cannot trigger group handoff before the longest reaches its target."""
+    terminal, space = make_space()
+    body = space.body()
+    character = terminal.get_characters()[0]
+    mount = space.mount(character, body.anchor(0, 0, 0))
+    calls: list[str] = []
+    body.move_to(20, frames=3).spin(frames=1, together=True)
+    body.on_complete(lambda _: calls.append("tween"))
+
+    def release(finished: space3d.Body) -> None:
+        calls.append("group")
+        finished.release_all()
+
+    body.on_group_complete(release)
+    body.hold(2)
+    tick(space, [character])
+    assert calls == ["tween"]
+    assert mount.active
+    tick(space, [character])
+    tick(space, [character])
+    assert calls == ["tween", "group"]
+    assert not mount.active
+    assert character.motion.current_coord == mount.coord
+    assert body.animating  # The later group is independent of the hook.
+
+
+def test_group_complete_empty_and_equal_length_groups() -> None:
+    """Group hooks run immediately for an empty queue and once for tied longest tweens."""
+    _, space = make_space()
+    body = space.body()
+    calls: list[int] = []
+    body.on_group_complete(lambda _: calls.append(0))
+    body.spin(frames=2).move_to(10, frames=2, together=True).on_group_complete(lambda _: calls.append(1))
+    for _ in range(3):
+        space.step()
+    assert calls == [0, 1]
+
+
+def test_mount_blend_progress_is_separate_from_body_animation() -> None:
+    """Space blending follows active character ticks, including release and zero-frame mounts."""
+    terminal, space = make_space()
+    body = space.body()
+    character = terminal.get_characters()[0]
+    mount = space.mount(character, body.anchor(5, 0, 0), blend_frames=2)
+    assert not space.animating
+    assert space.blending
+    assert mount.blend_progress == 0
+    tick(space, [character])
+    assert mount.blend_progress == 0.5
+    assert space.blending
+    tick(space, [character])
+    assert mount.blend_progress == 1
+    assert not space.blending
+    space.mount(character, body.anchor(0, 0, 0), blend_frames=2)
+    assert space.blending
+    space.release(character)
+    assert not space.blending
+    assert space.mount(character, body.anchor(0, 0, 0)).blend_progress == 1
+
+
+def test_group_hook_includes_tweens_appended_later_and_is_cleared_by_reset() -> None:
+    """Group membership can grow after its hook is registered; reset discards the hook."""
+    _, space = make_space()
+    calls: list[int] = []
+    body = space.body().hold(1).on_group_complete(lambda _: calls.append(1))
+    body.move_to(10, frames=3, together=True)
+    space.step()
+    assert not calls
+    space.step()
+    space.step()
+    assert calls == [1]
+    body.hold(1).on_group_complete(lambda _: calls.append(2)).reset().hold(1)
+    space.step()
+    assert calls == [1]
+
+
 # Tweens
 
 
