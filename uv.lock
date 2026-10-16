@@ -1878,6 +1878,10 @@ version = "0.15.0"
 source = { editable = "." }
 
 [package.optional-dependencies]
+all = [
+    { name = "pillow", marker = "python_full_version >= '3.10'" },
+    { name = "textual" },
+]
 docs = [
     { name = "mkdocs", marker = "python_full_version >= '3.10'" },
     { name = "mkdocs-material", marker = "python_full_version >= '3.10'" },
@@ -1962,10 +1966,11 @@ requires-dist = [
     { name = "pillow", marker = "python_full_version >= '3.10' and extra == 'tui'", specifier = ">=12.3" },
     { name = "pymdown-extensions", marker = "python_full_version >= '3.10' and extra == 'docs'", specifier = ">=11.0.1,<13" },
     { name = "requests", marker = "python_full_version >= '3.10' and extra == 'docs'", specifier = ">=2.33.0" },
+    { name = "terminaltexteffects", extras = ["tui", "export"], marker = "extra == 'all'" },
     { name = "textual", marker = "extra == 'tui'", specifier = ">=8.0" },
     { name = "urllib3", marker = "python_full_version >= '3.10' and extra == 'docs'", specifier = ">=2.8.0" },
 ]
-provides-extras = ["tui", "export", "docs"]
+provides-extras = ["tui", "export", "all", "docs"]
 
 [package.metadata.requires-dev]
 artifacts = [
