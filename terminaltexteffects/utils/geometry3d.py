@@ -727,6 +727,41 @@ class Fragment(NamedTuple):
     uv: tuple[float, float] | None
 
 
+def _near_cut(a: Vec3, b: Vec3, camera: Camera) -> tuple[float, Projected]:
+    """Return the world-space edge fraction and projection where an edge crosses the near plane."""
+    fraction = (camera.distance - camera.near - a.z) / (b.z - a.z)
+    point = a.lerp(b, fraction)
+    scale = 1.0 if camera.orthographic else (camera.focal or camera.distance) / camera.near
+    # Use the exact near depth rather than subtracting nearly equal z values again.
+    return fraction, Projected(
+        camera.center_column + point.x * scale,
+        camera.center_row + point.y * scale / camera.row_scale,
+        camera.near,
+    )
+
+
+def _clip_face(
+    face: Face, world: list[Vec3], projected: list[Projected | None], camera: Camera
+) -> tuple[list[Projected], list[tuple[float, float]] | None]:
+    """Clip a convex face against the near plane, interpolating UVs in world space."""
+    corners: list[Projected] = []
+    uvs: list[tuple[float, float]] | None = [] if face.uvs is not None else None
+    for k, end in enumerate(face.indices):
+        start = face.indices[k - 1]
+        a, b = projected[start], projected[end]
+        if (a is None) != (b is None):
+            fraction, cut = _near_cut(world[start], world[end], camera)
+            corners.append(cut)
+            if uvs is not None and face.uvs is not None:
+                first, last = face.uvs[k - 1], face.uvs[k]
+                uvs.append((first[0] + (last[0] - first[0]) * fraction, first[1] + (last[1] - first[1]) * fraction))
+        if b is not None:
+            corners.append(b)
+            if uvs is not None and face.uvs is not None:
+                uvs.append(face.uvs[k])
+    return corners, uvs
+
+
 def rasterize(
     mesh: Mesh,
     camera: Camera,
@@ -742,7 +777,8 @@ def rasterize(
 
     The mesh is scaled, rotated and moved to `position`, then each face is projected and every cell whose center
     it covers is compared with what the buffer already holds; the nearer surface wins. Pass the same `buffer` to
-    several calls to draw several meshes into one view with correct overlap.
+    several calls to draw several meshes into one view with correct overlap. Faces crossing the near plane
+    are clipped, with texture coordinates interpolated at the new corners.
 
     Args:
         mesh (Mesh): The solid to draw.
@@ -774,8 +810,12 @@ def rasterize(
     orthographic, distance = camera.orthographic, camera.distance
     for face_index, face in enumerate(mesh.faces):
         corners = [corner for corner in (projected[i] for i in face.indices) if corner is not None]
+        face_uvs = face.uvs
         if len(corners) < len(face.indices):
-            continue  # Partly behind the camera.
+            corners, clipped_uvs = _clip_face(face, world, projected, camera)
+            face_uvs = tuple(clipped_uvs) if clipped_uvs is not None else None
+        if len(corners) < 3:
+            continue
         rows = [corner.row for corner in corners]
         columns = [corner.column for corner in corners]
         first_row, last_row = math.ceil(min(rows)), math.floor(max(rows))
@@ -796,7 +836,7 @@ def rasterize(
             continue
         for k in range(1, len(corners) - 1):
             triangle = (corners[0], corners[k], corners[k + 1])
-            uvs = (face.uvs[0], face.uvs[k], face.uvs[k + 1]) if face.uvs else None
+            uvs = (face_uvs[0], face_uvs[k], face_uvs[k + 1]) if face_uvs else None
             _fill_triangle(
                 triangle,
                 uvs,
@@ -907,8 +947,8 @@ def wireframe(
 ) -> dict[Coord, EdgeCell]:
     """Return the cells along the mesh's edges.
 
-    Where edges cross, a front edge wins over a hidden one, and otherwise the nearer edge wins. Edges with an end
-    behind the camera are skipped. With `bounds`, such as the canvas, only the cells of each edge inside them are
+    Where edges cross, a front edge wins over a hidden one, and otherwise the nearer edge wins. Edges crossing
+    the near plane retain their visible segment. With `bounds`, only the cells of each edge inside them are
     visited, so an edge reaching far off screen costs no more than one on it.
     """
     rotation = rotation or Rotation()
@@ -929,8 +969,12 @@ def wireframe(
     cells: dict[Coord, EdgeCell] = {}
     for (start, end), front in front_edges.items():
         a, b = projected[start], projected[end]
-        if a is None or b is None:
+        if a is None and b is None:
             continue
+        if a is None:
+            _, a = _near_cut(world[start], world[end], camera)
+        if b is None:
+            _, b = _near_cut(world[start], world[end], camera)
         symbol = line_symbol(b.column - a.column, b.row - a.row, camera.row_scale)
         first, last = a.coord, b.coord
         steps = max(abs(last.column - first.column), abs(last.row - first.row), 1)

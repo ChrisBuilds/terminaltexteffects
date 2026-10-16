@@ -74,7 +74,8 @@ if projected is not None:
 
 - `distance` is how far the camera is from the origin, and `focal` (the same as `distance` unless you set it)
   controls the scaling.
-- `near` clips points closer than that to the camera. A face with any corner behind it isn't drawn.
+- `near` clips points closer than that to the camera. Crossing faces and edges keep their visible portions;
+  texture coordinates are interpolated at the clipped corners.
 - `orthographic=True` turns the scaling off.
 - `view_direction(point)` is the direction from a point toward the camera, which decides which faces turn toward it.
 

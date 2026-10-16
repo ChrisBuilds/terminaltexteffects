@@ -462,8 +462,8 @@ def test_normals_are_in_world_space() -> None:
     assert_vec_close(fragment.normal, rotation.apply(g3.box(8, 8, 8).normals[fragment.face]))
 
 
-def test_faces_behind_the_camera_are_skipped() -> None:
-    """Faces with a corner behind the camera are not drawn."""
+def test_fully_clipped_front_faces_are_skipped() -> None:
+    """A box whose front faces are fully clipped has no front-facing surface left."""
     assert g3.rasterize(g3.box(8, 8, 8), g3.Camera(0, 0, distance=10), position=g3.Vec3(0, 0, 8)) == {}
 
 
@@ -528,11 +528,12 @@ def test_wireframe_prefers_front_edges() -> None:
     assert any(not cell.front for cell in turned.values())
 
 
-def test_wireframe_skips_edges_behind_the_camera() -> None:
-    """Edges with an end behind the camera are not drawn; edges wholly in front still are."""
+def test_wireframe_clips_edges_at_the_near_plane() -> None:
+    """Crossing edges retain the segment between the near plane and the back vertices."""
     cells = g3.wireframe(g3.box(8, 8, 8), g3.Camera(0, 0, distance=10), position=g3.Vec3(0, 0, 8))
     assert cells
-    assert all(cell.depth == pytest.approx(6.0) for cell in cells.values())
+    assert min(cell.depth for cell in cells.values()) == pytest.approx(1.0)
+    assert max(cell.depth for cell in cells.values()) == pytest.approx(6.0)
 
 
 def test_wireframe_skips_an_edge_ending_at_the_camera() -> None:
@@ -628,3 +629,43 @@ def test_rasterize_cell_cache_is_bounded(monkeypatch: pytest.MonkeyPatch) -> Non
     limited = g3.rasterize(g3.box(10, 10, 10), camera)
     assert limited == expected
     assert len(g3._CELLS) <= 4
+
+
+@pytest.mark.parametrize("orthographic", [False, True])
+def test_near_clipped_face_interpolates_depth_and_uvs(*, orthographic: bool) -> None:
+    """A crossing textured plane keeps its visible area with the same analytic depth and UV mapping."""
+    camera = g3.Camera(0, 0, distance=10, near=5, orthographic=orthographic)
+    quad = g3.Mesh(
+        (g3.Vec3(-8, -8, 0), g3.Vec3(8, -8, 16), g3.Vec3(8, 8, 16), g3.Vec3(-8, 8, 0)),
+        (g3.Face((0, 1, 2, 3), uvs=((0, 0), (1, 0), (1, 1), (0, 1)), tag=7),),
+    )
+    bounds = g3.Bounds(-20, 20, -10, 10)
+    cells = g3.rasterize(quad, camera, cull="none", bounds=bounds)
+    assert cells
+    assert Coord(-5 if orthographic else -8, 0) in cells
+    for cell, fragment in cells.items():
+        depth = 2 - cell.column if orthographic else 2 / (1 + cell.column / 10)
+        x = cell.column if orthographic else cell.column * depth / 10
+        y = cell.row * camera.row_scale * (1 if orthographic else depth / 10)
+        assert fragment.depth == pytest.approx(depth)
+        assert fragment.depth >= camera.near - 1e-9
+        assert fragment.uv == pytest.approx(((x + 8) / 16, (y + 8) / 16))
+        assert fragment.tag == 7
+        assert fragment.face == 0
+    # Viewport clipping still matches the unrestricted result cell-for-cell.
+    unbounded = g3.rasterize(quad, camera, cull="none")
+    assert cells == {cell: fragment for cell, fragment in unbounded.items() if bounds.contains(cell)}
+
+
+@pytest.mark.parametrize("orthographic", [False, True])
+def test_near_clipped_wireframe_keeps_boundary_and_rejects_fully_hidden(*, orthographic: bool) -> None:
+    """An edge clipped at an exact integer endpoint has correct near depth in either projection."""
+    camera = g3.Camera(0, 0, distance=10, near=5, orthographic=orthographic)
+    mesh = g3.Mesh((g3.Vec3(-8, 0, 0), g3.Vec3(8, 0, 16), g3.Vec3(8, 4, 16)), (g3.Face((0, 1, 2)),))
+    cells = g3.wireframe(mesh, camera)
+    boundary = Coord(-3 if orthographic else -6, 0)
+    assert boundary in cells
+    assert cells[boundary].depth == pytest.approx(5)
+    assert all(cell.depth >= 5 - 1e-9 for cell in cells.values())
+    assert not g3.wireframe(mesh, camera, position=g3.Vec3(0, 0, 20))
+    assert not g3.rasterize(mesh, camera, position=g3.Vec3(0, 0, 20), cull="none")
