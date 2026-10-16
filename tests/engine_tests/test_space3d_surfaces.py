@@ -65,6 +65,8 @@ def test_draw_needs_a_shape_and_rejects_per_face_wireframes() -> None:
         space.body().draw()
     with pytest.raises(ValueError, match="Wireframe"):
         space.body(space3d.Cube(10)).draw(faces={0: space3d.Wireframe()})
+    with pytest.raises(ValueError, match="Wireframe"):
+        space.body(space3d.Cube(10)).draw(space3d.Wireframe(), faces={0: space3d.Solid()})
 
 
 def test_looks_validate_their_settings() -> None:
@@ -358,3 +360,12 @@ def test_a_far_body_shows_behind_the_far_side_seen_through_text_gaps() -> None:
     center = hollow.surface_characters[Coord(21, 11)]
     assert color(center) == back
     assert Coord(21, 11) not in behind.surface_characters
+
+
+def test_textured_text_keeps_every_drawn_symbol_one_cell_wide() -> None:
+    """Wide characters become two blank cells and symbols that can't be drawn alone become one."""
+    space = make_space()
+    body = space.body(space3d.Box(10, 2, 10)).draw(space3d.Textured("a界b\tc"))
+    space.step()
+    assert rows(body)[0].startswith("a  b c")
+    assert space3d._text_grid("a界b\tc") == (["a  b c"], 6)

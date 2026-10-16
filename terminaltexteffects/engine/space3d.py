@@ -50,8 +50,10 @@ import typing
 from dataclasses import dataclass, field
 
 from terminaltexteffects.utils import geometry3d as g3
+from terminaltexteffects.utils.exceptions import InvalidSymbolError
 from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
+from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -456,6 +458,8 @@ class Solid:
 class Textured:
     """Wrap text over the faces, colored by the light. The text repeats when the surface is larger than it.
 
+    Each cell shows one symbol, so wide characters (such as CJK) are left blank.
+
     Faces without a texture layout (prism and cylinder caps, polyhedra, the torus) are shaded in `back_color`.
 
     Attributes:
@@ -510,8 +514,22 @@ def _gradient(gradient: Gradient | None) -> Gradient:
 
 
 def _text_grid(text: str) -> tuple[list[str], int]:
-    """Split `text` into lines and return them with the widest line's length."""
-    lines = text.splitlines() or [" "]
+    """Split `text` into lines of one-cell symbols and return them with the widest line's length.
+
+    Each surface cell shows one symbol, so wide characters (such as CJK) become two spaces, keeping later columns
+    aligned, and anything that can't be drawn on its own in one cell becomes a space.
+    """
+    lines = []
+    for line in text.splitlines() or [" "]:
+        cells = []
+        for symbol in line:
+            try:
+                width = get_symbol_cell_width(symbol)
+            except InvalidSymbolError:
+                width = 1
+                symbol = " "  # noqa: PLW2901
+            cells.append(symbol if width == 1 else " " * width)
+        lines.append("".join(cells))
     return lines, max(1, *(len(line) for line in lines))
 
 
@@ -1099,14 +1117,17 @@ class Body:
             Body: The body, for chaining.
 
         Raises:
-            ValueError: If the body has no shape, or `faces` includes a `Wireframe` (a wireframe draws the
-                whole body).
+            ValueError: If the body has no shape, or a `Wireframe` is combined with `faces` (a wireframe draws
+                the whole body).
 
         """
         if self.shape is None:
             msg = "Only a body with a shape can be drawn."
             raise ValueError(msg)
         face_looks = dict(faces or {})
+        if isinstance(look, Wireframe) and face_looks:
+            msg = "A Wireframe look draws the whole body, so it can't be combined with per-face looks."
+            raise ValueError(msg)
         if any(isinstance(face_look, Wireframe) for face_look in face_looks.values()):
             msg = "A Wireframe look draws the whole body, so it can't be given per face."
             raise ValueError(msg)
