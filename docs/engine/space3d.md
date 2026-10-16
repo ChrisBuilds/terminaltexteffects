@@ -72,7 +72,7 @@ depth buffer, so overlapping bodies hide each other correctly.
 The space draws surfaces with characters it creates, one per covered cell, and never uses the effect's own
 characters. `body.surface_characters` lists the ones showing a body after the last `step()`. An effect can restyle
 them, but each `step()` redraws them. Surface cells are layered by depth, one layer below a mounted character at
-the same depth, so text mounted on a drawn body reads on top of it.
+the same depth, so text mounted on a drawn body from the default layer 0 or above reads on top of it.
 
 ```python
 self.die = self.space.body(Cube(16)).draw(Shaded(), faces={0: Textured("1"), 2: Textured("6")})

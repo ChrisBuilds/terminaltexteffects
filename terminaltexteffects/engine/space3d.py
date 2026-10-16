@@ -1125,7 +1125,7 @@ class Body:
 
         The space draws surfaces with characters it creates, one per covered cell, so no effect characters are
         used. Each cell is layered by depth, just below a mounted character at the same depth, so text mounted on
-        a drawn body reads on top of it.
+        a drawn body from the default layer 0 or above reads on top of it.
 
         Args:
             look (Look | None): How to draw the body: `Shaded()`, `Solid()`, `Textured()` or `Wireframe()`. With
@@ -1518,10 +1518,11 @@ class Space3D:
             left = min((character.input_coord.column for character in characters), default=0)
             right = max((character.input_coord.column for character in characters), default=-1)
             lines = []
-            for row in sorted(rows, reverse=True):
-                symbols, column = [], left
+            # Every row from top to bottom, so blank input lines stay in the texture.
+            for row in range(max(rows, default=-1), min(rows, default=0) - 1, -1):
+                symbols, column, line = [], left, rows.get(row, {})
                 while column <= right:
-                    symbol = rows[row].get(column, " ")
+                    symbol = line.get(column, " ")
                     symbols.append(symbol)
                     # A wide character already spans the next column, so that column adds nothing.
                     column += get_symbol_cell_width(symbol)

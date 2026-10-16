@@ -382,3 +382,9 @@ def test_input_text_counts_a_wide_character_once() -> None:
     space = make_space("a界b\nxyz")
     assert space.input_text == "a界b\nxyz"
     assert space3d._text_grid(space.input_text)[0] == ["a  b", "xyz"]
+
+
+def test_input_text_keeps_blank_lines() -> None:
+    """A blank line inside the input stays in the default text, so later rows keep their place."""
+    space = make_space("a\n\nb")
+    assert space.input_text == "a\n\nb"
