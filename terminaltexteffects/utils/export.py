@@ -1,7 +1,7 @@
 """Convert recordings to GIF or animated WebP.
 
 Frames are drawn from the recording with Pillow, which `pip install 'terminaltexteffects[export]'` installs on Python
-3.10 and later. Pillow is imported only when exporting, so the rest of TTE does not need it. `tte --record`, the
+3.10 and later. Pillow is imported only when exporting, so the rest of TTE does not need it. `tte --export`, the
 TUI's Export, and `tools/render_demos.py` for the documentation demos all use this module.
 """
 

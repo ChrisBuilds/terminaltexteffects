@@ -77,7 +77,7 @@ previous frame was returned less than one frame period ago, then renders. A fram
 
 Because pacing happens inside `self.frame`, read it once per `next()` call. Your effect logic should count in ticks
 rather than seconds: "release 5 characters per frame" or "hold for 30 frames". When a phase must last a fixed time,
-measure it with `self.terminal.clock()` instead of the system clock. During recording, `tte --record` runs the clock
+measure it with `self.terminal.clock()` instead of the system clock. During recording, `tte --export` runs the clock
 one frame period per frame, so the phase lasts the same number of frames however fast the machine renders.
 
 ## Ending the effect

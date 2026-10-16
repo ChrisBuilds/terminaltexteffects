@@ -212,7 +212,7 @@ def test_build_configs_applies_terminal_args() -> None:
     assert terminal_config.existing_color_handling == "dynamic"
 
 
-@pytest.mark.parametrize("terminal_args", [["--frame-rate", "60"], ["--record", "out.tterec"], ["--seed=1"]])
+@pytest.mark.parametrize("terminal_args", [["--frame-rate", "60"], ["--export", "out.tterec"], ["--seed=1"]])
 def test_build_configs_rejects_non_terminal_args(terminal_args: list[str]) -> None:
     """Only terminal configuration options other than the frame rate are accepted."""
     with pytest.raises(ValueError, match="unsupported terminal argument"):

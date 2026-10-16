@@ -328,7 +328,7 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
     recording_group = parser.add_argument_group("Recording and playback")
     record_play_group = recording_group.add_mutually_exclusive_group()
     record_play_group.add_argument(
-        "--record",
+        "--export",
         type=Path,
         metavar="FILE",
         help=(
@@ -990,25 +990,25 @@ def _check_recording_options(args: argparse.Namespace) -> None:
     """Exit with status `1` when playback-only or recording options are used incorrectly."""
     if args.shuffle:
         _exit_with_error("--shuffle requires --play.")
-    if args.record is not None:
+    if args.export is not None:
         given = _options_given(sys.argv[1:])
         display_options = [given[dest] for dest in ("hold", "alt_screen") if dest in given]
         if display_options:
             _exit_with_error(
-                f"{_join_names(display_options)} cannot be combined with --record, which displays nothing."
+                f"{_join_names(display_options)} cannot be combined with --export, which displays nothing."
             )
         if args.repeat == 0:
-            _exit_with_error("--record cannot be combined with --repeat 0.")
+            _exit_with_error("--export cannot be combined with --repeat 0.")
         if args.frame_rate == 0:
-            _exit_with_error("--record requires --frame-rate greater than 0.")
+            _exit_with_error("--export requires --frame-rate greater than 0.")
 
 
 _PROGRESS_INTERVAL = 0.1
-"""Seconds between updates of the frame count shown while `--record` renders or exports to a terminal."""
+"""Seconds between updates of the frame count shown while `--export` renders or exports to a terminal."""
 
 
 class _RecordingProgress:
-    """Report `--record` progress on standard error.
+    """Report `--export` progress on standard error.
 
     On a terminal, the frame count updates in place while frames render, draw, and encode. Otherwise only whole
     lines are printed.
@@ -1059,7 +1059,7 @@ def _run_recording(
     effect_resource_map: dict[str, tuple[type[BaseEffect], type[BaseConfig]]],
     input_data: str,
 ) -> None:
-    """Run `--record` and report the result, exiting with status `1` on failure or interruption."""
+    """Run `--export` and report the result, exiting with status `1` on failure or interruption."""
     next_recording_factory: Callable[[tuple[int, int]], tuple[str, BaseEffect]] | None = None
     if available_effects is not None:
         next_recording_factory = partial(
@@ -1069,7 +1069,7 @@ def _run_recording(
             input_data,
             effect.terminal_config,
         )
-    fmt = export.format_for(args.record)
+    fmt = export.format_for(args.export)
     progress = _RecordingProgress()
     record = partial(
         _record_playbacks,
@@ -1083,7 +1083,7 @@ def _run_recording(
     try:
         try:
             if fmt is export.FORMATS[0]:
-                header, frame_count, segments = record(args.record)
+                header, frame_count, segments = record(args.export)
             else:
                 with tempfile.TemporaryDirectory(prefix="tte-record-") as folder:
                     recording = Path(folder) / f"effect{RECORDING_SUFFIX}"
@@ -1091,7 +1091,7 @@ def _run_recording(
                     progress.line(f"Drawing {frame_count} frames to {fmt.name}")
                     missing = export.export_recording(
                         recording,
-                        args.record,
+                        args.export,
                         fmt,
                         fps=header.frame_rate,
                         on_progress=lambda step, count, total: progress.export_step(step, count, total or frame_count),
@@ -1101,7 +1101,7 @@ def _run_recording(
     except (EmptyInputError, UnsupportedAnsiSequenceError, RecordingError, export.ExportError) as e:
         _exit_with_error(str(e))
     except OSError as e:
-        _exit_with_error(f"Cannot write recording {str(args.record)!r}: {e.strerror or e}.")
+        _exit_with_error(f"Cannot write recording {str(args.export)!r}: {e.strerror or e}.")
     except KeyboardInterrupt:
         sys.exit(1)
     if missing:
@@ -1109,7 +1109,7 @@ def _run_recording(
         print(f"No installed font has these symbols, drawn as boxes: {symbols}", file=sys.stderr)
     print(
         f"Recorded {frame_count} frames in {segments} segment{'s' if segments != 1 else ''} "
-        f"({header.width}x{header.height} at {header.frame_rate} fps) to {args.record}",
+        f"({header.width}x{header.height} at {header.frame_rate} fps) to {args.export}",
         file=sys.stderr,
     )
 
@@ -1171,7 +1171,7 @@ def _input_or_tui(
         _run_tui(args, effect_resource_map, _read_input(args))
         return None
     _check_recording_options(args)
-    no_effect = not args.effect and not args.random_effect and args.record is None
+    no_effect = not args.effect and not args.random_effect and args.export is None
     if no_effect and not args.input_file and _is_terminal(sys.stdin):
         if _can_open_tui():
             _run_tui(args, effect_resource_map, "")
@@ -1233,9 +1233,9 @@ def main() -> None:
         sys.exit(1)
 
     terminal_config = TerminalConfig._build_config(args)
-    if args.record is not None:
+    if args.export is not None:
         # Fail before rendering when GIF or WebP conversion is impossible, but after empty input has returned.
-        problem = export.format_problem(export.format_for(args.record))
+        problem = export.format_problem(export.format_for(args.export))
         if problem is not None:
             _exit_with_error(problem)
         # Record the canvas alone; playback anchors it within the terminal.
@@ -1249,7 +1249,7 @@ def main() -> None:
         terminal_config,
         None if args.random_effect else args,
     )
-    if args.record is not None:
+    if args.export is not None:
         _run_recording(args, selected_effect_name, effect, available_effects, effect_resource_map, input_data)
         return
     try:

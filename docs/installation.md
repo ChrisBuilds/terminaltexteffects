@@ -66,7 +66,7 @@ Optionally, enable [shell completion](./appguide.md#shell-completion) for effect
 To compose text and preview effects interactively, install the optional `tui` extra, for example
 `pipx install 'terminaltexteffects[tui]'`. See [Interactive Interface](./tui.md).
 
-To save effects as GIF or WebP animations with `--record`, install the optional `export` extra, for example
+To save effects as GIF or WebP animations with `--export`, install the optional `export` extra, for example
 `pipx install 'terminaltexteffects[export]'`. See [GIF and WebP](./appguide.md#gif-and-webp).
 
 The `all` extra installs both: `pipx install 'terminaltexteffects[all]'`.

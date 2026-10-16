@@ -139,13 +139,13 @@ tte -i banner.txt --repeat 0 --random-effect --hold 5 --alt-screen
 
     Recording and playback are available on development `main` and are not in the published 0.15.0 package.
 
-Use `--record FILE` to render an effect once and save its frames, then `--play` to replay them without
+Use `--export FILE` to render an effect once and save its frames, then `--play` to replay them without
 running the effect again. Playback uses far less CPU than rendering, which suits screensavers, background
 displays, and slower hardware that cannot render an effect at full frame rate. Recordings use the `.tterec`
 extension.
 
 ```bash title="Record an effect, then play it until Ctrl+C"
-tte -i banner.txt --record banner.tterec --canvas-width 0 --canvas-height 0 matrix
+tte -i banner.txt --export banner.tterec --canvas-width 0 --canvas-height 0 matrix
 tte --play banner.tterec --repeat 0
 ```
 
@@ -166,11 +166,11 @@ to match the terminal at recording time, so the recording does not depend on the
 
 ### GIF and WebP
 
-When `FILE` ends in `.gif` or `.webp`, `--record` renders the effect the same way and converts it to an
+When `FILE` ends in `.gif` or `.webp`, `--export` renders the effect the same way and converts it to an
 animation of the canvas instead of writing a recording. Any other extension writes a `.tterec` recording.
 
 ```bash title="Record an effect as an animated WebP"
-tte -i banner.txt --frame-rate 30 --record banner.webp wipe
+tte -i banner.txt --frame-rate 30 --export banner.webp wipe
 ```
 
 | Extension | What you get |

@@ -99,7 +99,7 @@ if self.terminal.clock() - self.phase_start >= self.config.phase_seconds:
     self.phase = "next"
 ```
 
-During live output, `clock()` returns `time.monotonic()`. When `tte --record` renders frames ahead of time,
+During live output, `clock()` returns `time.monotonic()`. When `tte --export` renders frames ahead of time,
 the terminal uses a frame clock that advances by `1 / frame_rate` per frame, so a phase lasts the same
 number of frames as it would live and recordings are reproducible with `--seed`. When an effect reads wall-clock
 time directly, a recorded phase runs for that many seconds of rendering time instead, so its length in frames

@@ -23,7 +23,7 @@ COMPLETION_PATHS = {
 }
 
 # Options whose values are filesystem paths.
-_FILE_OPTIONS = frozenset({"--input-file", "--record", "--play"})
+_FILE_OPTIONS = frozenset({"--input-file", "--export", "--play"})
 
 _COMPLETION_CHOICES_BY_TYPE = {
     argutils.CharacterOrderArg.type_parser: argutils.CharacterOrderArg.COMPLETION_CHOICES,

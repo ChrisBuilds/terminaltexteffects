@@ -1,7 +1,7 @@
 """Render effect demo animations without screen recording.
 
-Each demo is recorded ahead of time with `tte --record`, so frame timing is exact and independent of machine
-speed, then drawn as a lossless WebP or a GIF with the same Pillow renderer `tte --record` uses (see
+Each demo is recorded ahead of time with `tte --export`, so frame timing is exact and independent of machine
+speed, then drawn as a lossless WebP or a GIF with the same Pillow renderer `tte --export` uses (see
 `terminaltexteffects.utils.export`). Demos render in parallel, one per CPU core.
 
 Requires Pillow, installed on Python 3.10 and later by `uv sync --group dev`.
@@ -217,7 +217,7 @@ def demos() -> dict[str, Demo]:
 
 
 def record(demo: Demo, path: Path) -> None:
-    """Render the demo effect to a recording with `tte --record`."""
+    """Render the demo effect to a recording with `tte --export`."""
     command = [
         sys.executable,
         "-m",
@@ -226,7 +226,7 @@ def record(demo: Demo, path: Path) -> None:
         str(demo.input_file),
         "--frame-rate",
         str(demo.frame_rate),
-        "--record",
+        "--export",
         str(path),
         *demo.tte_args,
         demo.effect,
