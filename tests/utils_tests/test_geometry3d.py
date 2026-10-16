@@ -9,7 +9,7 @@ import pytest
 
 from terminaltexteffects.engine.canvas import Canvas
 from terminaltexteffects.utils import geometry3d as g3
-from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE, Coord
+from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE, Coord, rasterize_line
 
 pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
@@ -190,6 +190,17 @@ def test_cell_to_world_at_depth_projects_back() -> None:
         assert projected is not None
         assert projected.column == pytest.approx(7)
         assert projected.row == pytest.approx(-3)
+
+
+@pytest.mark.parametrize("focal", [30.0, 60.0, 240.0])
+@pytest.mark.parametrize("row_scale", [1.0, TERMINAL_ROW_SCALE])
+@pytest.mark.parametrize("z", [0.0, 1.0, -15.0])
+def test_cell_to_world_round_trips_with_any_focal_length(focal: float, row_scale: float, z: float) -> None:
+    """Lifting a cell with a non-default focal length or row scale projects back onto it, including at z=0."""
+    camera = g3.Camera(40.5, 12.5, distance=120, focal=focal, row_scale=row_scale)
+    projected = camera.project(camera.cell_to_world(Coord(60, 18), z))
+    assert projected is not None
+    assert projected.coord == Coord(60, 18)
 
 
 def test_rows_are_corrected_for_tall_cells() -> None:
@@ -522,6 +533,68 @@ def test_wireframe_skips_edges_behind_the_camera() -> None:
     cells = g3.wireframe(g3.box(8, 8, 8), g3.Camera(0, 0, distance=10), position=g3.Vec3(0, 0, 8))
     assert cells
     assert all(cell.depth == pytest.approx(6.0) for cell in cells.values())
+
+
+def test_wireframe_skips_an_edge_ending_at_the_camera() -> None:
+    """A vertex exactly at the camera clips its edges instead of raising."""
+    cells = g3.wireframe(g3.box(16, 16, 16), g3.Camera(40.5, 12.5), position=g3.Vec3(8, 8, 112))
+    assert cells
+
+
+def test_rasterize_fills_only_cells_inside_bounds() -> None:
+    """With bounds, rasterize fills exactly the cells of an unbounded fill that are inside them."""
+    camera = g3.Camera(0, 0)
+    mesh = g3.box(30, 30, 30)
+    rotation = g3.Rotation.about_y(0.6) * g3.Rotation.about_x(0.3)
+    bounds = g3.Bounds(-5, 8, -3, 4)
+    full = g3.rasterize(mesh, camera, rotation=rotation)
+    bounded = g3.rasterize(mesh, camera, rotation=rotation, bounds=bounds)
+    assert bounded == {cell: fragment for cell, fragment in full.items() if bounds.contains(cell)}
+
+
+def test_rasterize_skips_geometry_outside_bounds() -> None:
+    """A mesh wholly outside the bounds fills nothing, even when it projects huge."""
+    camera = g3.Camera(40.5, 12.5)
+    cells = g3.rasterize(g3.box(16, 16, 16), camera, position=g3.Vec3(500, 0, 110), bounds=g3.Bounds(1, 80, 1, 24))
+    assert cells == {}
+
+
+@pytest.mark.parametrize("orthographic", [False, True])
+@pytest.mark.parametrize("position", [g3.Vec3(0, 0, 0), g3.Vec3(10, 0, 100), g3.Vec3(-30, 7, 60)])
+def test_wireframe_with_bounds_matches_the_unbounded_cells_inside_them(
+    orthographic: bool,  # noqa: FBT001
+    position: g3.Vec3,
+) -> None:
+    """Bounds return exactly the unbounded wireframe's cells inside them, with the same depths and symbols."""
+    camera = g3.Camera(0, 0, orthographic=orthographic)
+    mesh = g3.box(20, 10, 10)
+    rotation = g3.Rotation.about_y(0.7) * g3.Rotation.about_x(0.4)
+    bounds = g3.Bounds(-6, 9, -4, 3)
+    full = g3.wireframe(mesh, camera, rotation=rotation, position=position)
+    bounded = g3.wireframe(mesh, camera, rotation=rotation, position=position, bounds=bounds)
+    assert bounded == {cell: edge for cell, edge in full.items() if bounds.contains(cell)}
+
+
+def test_bounded_line_cells_match_the_rasterized_line() -> None:
+    """Finding a line's cells inside bounds directly gives the same cells and steps as walking the whole line."""
+    bounds = g3.Bounds(1, 10, 1, 10)
+    for start, end in [
+        (Coord(-30, -30), Coord(1, 2)),
+        (Coord(1, 2), Coord(-30, -30)),
+        (Coord(-200, 5), Coord(300, 7)),
+        (Coord(4, -90), Coord(6, 90)),
+        (Coord(5, 5), Coord(5, 5)),
+        (Coord(20, 20), Coord(30, 30)),
+    ]:
+        expected = [(step, cell) for step, cell in enumerate(rasterize_line(start, end)) if bounds.contains(cell)]
+        assert list(g3._line_cells_in_bounds(start, end, bounds)) == expected
+
+
+def test_wireframe_with_bounds_skips_far_off_screen_edges_quickly() -> None:
+    """Edges that project far past the bounds produce no cells."""
+    camera = g3.Camera(40.5, 12.5)
+    cells = g3.wireframe(g3.box(16, 16, 16), camera, position=g3.Vec3(500, 0, 110), bounds=g3.Bounds(1, 80, 1, 24))
+    assert cells == {}
 
 
 @pytest.mark.parametrize(

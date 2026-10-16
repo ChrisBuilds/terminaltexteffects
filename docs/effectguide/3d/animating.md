@@ -44,8 +44,9 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
   would do the same as a tween.
 - `move_to` and `settle(..., together=True)` run together, so the text turns as it flies in, and lands at rest, where
   every character meets its input cell.
-- `on_complete(callback)` runs when the last queued tween finishes. The example releases the characters there.
-- `release_all()` hands each character back where it stands, with nothing left of the mount, so a new path starts from
+- `on_complete(callback)` runs when the last queued tween finishes, after the final pose is applied. The example
+  releases the characters there.
+- `release_all()` hands each character back on the cell its anchor reached, with nothing left of the mount, so a new path starts from
   exactly that cell.
 
 Other tweens: `turn_to(rotation)`, `turn_to_rest()`, `scale_to(scale)`, `hold(frames)`, and `random_pose()` and

@@ -633,7 +633,10 @@ class Motion:
         mount._begin()
 
     def deactivate_mount(self, mount: Mount | None = None) -> None:
-        """Release the character from its mount. It stays where it is, ready for a path or another mount.
+        """Release the character from its mount, ready for a path or another mount.
+
+        The character is left on the cell its anchor last projected to, or where it is if it was still blending
+        toward the anchor.
 
         The mount restores what it changed itself (its depth layering and hiding), then a `MOUNT_RELEASED`
         event is triggered.

@@ -62,7 +62,8 @@ full 200 by 50 screen of text, 5,760 characters, takes about 52 ms, before `upda
 - **Show back faces only when they add something.** `Textured(back=...)` and `Wireframe(hidden_color=...)` draw the
   far side. Leave them off when the front hides it anyway.
 - **Erase what's off screen or finished.** `body.erase()` stops drawing a body, and `space.step()` hides its surface
-  characters. A body you've moved out of view is still drawn until you erase it.
+  characters. The space only fills cells on the canvas, so a body out of view costs little, but it is still moved
+  and projected every step until you erase it.
 - **Mount only the characters you need.** Mount the visible text, not the spaces between it, as `text_plane` examples
   do by skipping blank input cells.
 - **Release finished characters.** `release_all()` hands characters back to 2D paths, which cost only their own

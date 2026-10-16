@@ -858,3 +858,133 @@ def test_scenes_sync_to_mount_light_and_nearness(metric: Scene.SyncMetric) -> No
     character.tick()
     assert character.animation.current_character_visual.symbol == "e"
     assert character.animation.active_scene_is_complete()
+
+
+# Review fixes (issue #266)
+
+
+def cell_of(space: space3d.Space3D, point: g3.Vec3) -> Coord:
+    """Return the cell `point` projects onto."""
+    projected = space.camera.project(point)
+    assert projected is not None
+    return projected.coord
+
+
+def test_release_from_on_complete_hands_over_at_the_final_pose() -> None:
+    """Characters released when a tween finishes are left where the final pose puts them."""
+    _, space = make_space()
+    character = space.terminal.get_characters()[0]
+    body = space.body()
+    space.mount(character, body.anchor(0, 0, 0))
+    body.move_to(10, frames=2).on_complete(lambda finished: finished.release_all())
+    for _ in range(2):
+        space.step()
+        character.tick()
+    assert character not in space.mounts
+    assert character.motion.current_coord == cell_of(space, body.world_point(g3.ORIGIN))
+
+
+def test_release_from_on_complete_after_a_one_frame_move_reaches_the_target() -> None:
+    """A one-frame move released from its callback still leaves the character at the target."""
+    _, space = make_space()
+    character = space.terminal.get_characters()[0]
+    body = space.body()
+    space.mount(character, body.anchor(0, 0, 0))
+    body.move_to(10, frames=1).on_complete(lambda finished: finished.release_all())
+    space.step()
+    character.tick()
+    assert character.motion.current_coord == cell_of(space, g3.Vec3(10, 0, 0))
+
+
+def test_release_from_on_complete_of_parallel_tweens_uses_the_final_pose() -> None:
+    """Tweens played together finish before the callback releases, so the handoff sees every one of them."""
+    _, space = make_space()
+    character = space.terminal.get_characters()[0]
+    body = space.body()
+    space.mount(character, body.anchor(4, 0, 0))
+    body.move_to(6, frames=3).spin("y", turns=0.5, frames=3, together=True)
+    body.on_complete(lambda finished: finished.release_all())
+    for _ in range(3):
+        space.step()
+        character.tick()
+    # Half a turn about y takes x=4 to x=-4, then the move adds 6.
+    assert character.motion.current_coord == cell_of(space, g3.Vec3(2, 0, 0))
+
+
+def test_a_path_started_on_release_starts_from_the_final_pose() -> None:
+    """A path activated from the release callback begins where the final pose put the character."""
+    _, space = make_space()
+    character = space.terminal.get_characters()[0]
+    body = space.body()
+    space.mount(character, body.anchor(0, 0, 0))
+    target = Coord(1, 1)
+    path = character.motion.new_path(speed=1000)
+    path.new_waypoint(target)
+    starts: list[Coord] = []
+
+    def hand_off(finished: space3d.Body) -> None:
+        finished.release_all()
+        starts.append(character.motion.current_coord)
+        character.motion.activate_path(path)
+
+    body.move_to(5, frames=1).on_complete(hand_off)
+    space.step()
+    character.tick()
+    assert starts == [cell_of(space, body.world_point(g3.ORIGIN))]
+    assert character.motion.current_coord == target
+
+
+def test_callback_changes_to_the_pose_show_in_the_same_frame() -> None:
+    """A pose change made in a completion callback is in that frame's readings."""
+    _, space = make_space()
+    character = space.terminal.get_characters()[0]
+    body = space.body()
+    mount = space.mount(character, body.anchor(0, 0, 0))
+
+    def move(finished: space3d.Body) -> None:
+        finished.set_position(7, 0, 0)
+
+    body.hold(1).on_complete(move)
+    space.step()
+    assert mount.coord == cell_of(space, g3.Vec3(7, 0, 0))
+
+
+def test_nearer_mounted_character_wins_within_one_layer() -> None:
+    """Characters whose depths differ by less than a column are still drawn nearest on top."""
+    terminal = make_terminal("NF")
+    space = space3d.Space3D(terminal)
+    near, far = terminal.get_characters()
+    for character in (near, far):
+        terminal.set_character_visibility(character, is_visible=True)
+    body = space.body()
+    space.mount(near, body.anchor(0, 0, 0.4))
+    space.mount(far, body.anchor(0, 0, 0.2))
+    space.step()
+    near.tick()
+    far.tick()
+    assert near.motion.current_coord == far.motion.current_coord
+    assert near.layer == far.layer
+    assert "N" in terminal.get_formatted_output_string()
+    assert "F" not in terminal.get_formatted_output_string()
+
+
+def test_release_restores_the_order_within_the_layer() -> None:
+    """Releasing a depth-layered character puts it back in creation order on its layer."""
+    terminal = make_terminal("AB")
+    space = space3d.Space3D(terminal)
+    character = terminal.get_characters()[0]
+    space.mount(character, space.body().anchor(0, 0, 0.3))
+    space.step()
+    character.tick()
+    assert character._depth_order == pytest.approx(0.3)
+    space.release(character)
+    assert character._depth_order == 0
+    assert character.layer == 0
+
+
+@pytest.mark.parametrize("count", [12, 24, 60, 100])
+def test_mesh_surface_points_never_coincide(count: int) -> None:
+    """Points spread over a mesh are all distinct, so characters mounted on them never overlap."""
+    points = space3d.Cube(20).surface_points(count)
+    assert len(points) == count
+    assert len({point for point, _normal in points}) == count

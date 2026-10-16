@@ -48,7 +48,7 @@ if typing.TYPE_CHECKING:
     from collections.abc import Callable
 
 _CHARACTER_ID_KEY = attrgetter("_character_id")
-_LAYER_KEY = attrgetter("_layer")
+_LAYER_KEY = attrgetter("_layer", "_depth_order")
 _SPIRAL_SORT_OPTIONS: dict[CharacterOrder, tuple[int, tuple[int, ...]]] = {
     CharacterOrder.SPIRAL_CLOCKWISE: (1, (0,)),
     CharacterOrder.SPIRAL_COUNTER_CLOCKWISE: (-1, (0,)),
@@ -474,6 +474,7 @@ class Terminal:
         self._visible_character_layer_counts: dict[int, int] = {}
         self._visible_characters_by_layer: list[EffectCharacter] = []
         self._visible_character_order_dirty = False
+        self._depth_ordered_character_count = 0
         self._visible_wide_character_count = 0
         self._blank_row = " " * self.visible_right
         self._blank_terminal_state = [self._blank_row] * self.visible_top
@@ -1445,6 +1446,18 @@ class Terminal:
         if self._row_cache is not None:
             self._row_cache.layer_changed(character)
 
+    def _notify_character_depth_order_changed(self, character: EffectCharacter, previous_order: float) -> None:
+        """Track characters ordered by depth within their layer and reorder painting if one is visible."""
+        if not previous_order:
+            self._depth_ordered_character_count += 1
+        if not character._depth_order:
+            self._depth_ordered_character_count -= 1
+        if character not in self._visible_characters:
+            return
+        self._visible_character_order_dirty = True
+        if self._row_cache is not None:
+            self._row_cache.layer_changed(character)
+
     def _notify_character_cell_width_changed(self, character: EffectCharacter, previous_width: int) -> None:
         """Update the visible wide-character count after a visual-width transition."""
         if character not in self._visible_characters:
@@ -1455,8 +1468,8 @@ class Terminal:
             self._visible_wide_character_count += 1
 
     def _get_visible_characters_in_painter_order(self) -> list[EffectCharacter]:
-        """Return visible characters ordered by layer and then character ID."""
-        if len(self._visible_character_layer_counts) <= 1:
+        """Return visible characters ordered by layer, then depth order within the layer, then character ID."""
+        if len(self._visible_character_layer_counts) <= 1 and not self._depth_ordered_character_count:
             return self._visible_characters_by_id
         if self._visible_character_order_dirty:
             self._visible_characters_by_layer = sorted(self._visible_characters_by_id, key=_LAYER_KEY)

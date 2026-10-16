@@ -96,8 +96,10 @@ for cell, fragment in buffer.items():
 - Each `Fragment` holds the nearest surface's depth, normal, face tag and texture coordinates.
 
 Characters are ordered by layer, then by creation order. A mount with `layer_by_depth` sets the character's layer to
-its layer when mounted plus a number that grows as it comes nearer, and restores it on release. Surface cells sit one
-layer below a mounted character at the same depth, so text mounted on a drawn body from layer 0 or above reads on top.
+its layer when mounted plus how much nearer than the origin it is, in whole columns, and restores it on release. The
+rest of a column orders characters within the layer, so the nearer of two characters always draws on top, however
+small the difference. Surface cells are ordered the same way and count a hair farther than they are, so text mounted
+on a drawn body from layer 0 or above reads on top.
 
 ## At cell resolution
 

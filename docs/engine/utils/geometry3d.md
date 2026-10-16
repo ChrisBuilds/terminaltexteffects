@@ -30,4 +30,7 @@ for cell, fragment in g3.rasterize(cube, camera, rotation=turn).items():
 
 Angles are in radians. Rotations compose with `*`: `second * first` applies `first`, then `second`.
 
+`rasterize` and `wireframe` take `bounds=g3.Bounds.for_canvas(canvas)` to fill only cells on the canvas. Without
+bounds they fill every cell a shape covers, which can be a great many for a shape close to the camera.
+
 ::: terminaltexteffects.utils.geometry3d

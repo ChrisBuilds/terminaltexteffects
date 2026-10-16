@@ -32,6 +32,9 @@ class _CharacterOwner(typing.Protocol):
     def _notify_character_layer_changed(self, character: EffectCharacter, previous_layer: int) -> None:
         """Notify the terminal that an owned character's layer changed."""
 
+    def _notify_character_depth_order_changed(self, character: EffectCharacter, previous_order: float) -> None:
+        """Notify the terminal that an owned character's order within its layer changed."""
+
     def _notify_character_cell_width_changed(self, character: EffectCharacter, previous_width: int) -> None:
         """Notify the terminal that an owned character's current visual width changed."""
 
@@ -488,7 +491,8 @@ class EffectCharacter:
         motion (motion.Motion): The motion object that controls the character's movement.
         event_handler (EventHandler): The event handler object that handles events related to the character.
         layer (int): The layer of the character. Lower layers are painted first. When characters on the same layer
-            collide, the character with the higher `character_id` is painted last and wins the collision.
+            collide, the character with the higher `character_id` is painted last and wins the collision. Within a
+            layer, characters placed by depth in 3D (see `Space3D`) are also ordered by their exact depth.
         is_fill_character (bool): Whether the character is a fill character. Fill characters are used to fill
             the empty cells of the Canvas.
         uses_input_preexisting_colors (bool): Whether engine-level `existing_color_handling="always"` should treat
@@ -520,6 +524,7 @@ class EffectCharacter:
         self.motion: motion.Motion = motion.Motion(self)
         self.event_handler: EventHandler = EventHandler(self)
         self._layer = 0
+        self._depth_order = 0.0
         self.is_fill_character = False
         self.uses_input_preexisting_colors = False
         self.links: set[EffectCharacter] = set()
@@ -586,6 +591,19 @@ class EffectCharacter:
         owner = self._terminal_owner_token() if self._terminal_owner_token is not None else None
         if owner is not None:
             owner._notify_character_layer_changed(self, previous_layer)
+
+    def _set_depth_order(self, order: float) -> None:
+        """Set the order within the character's layer, from -0.5 (painted first) to 0.5, used for 3D depth.
+
+        Characters that never set it stay at 0, so they keep their usual place among characters on their layer.
+        """
+        previous_order = self._depth_order
+        if order == previous_order:
+            return
+        self._depth_order = order
+        owner = self._terminal_owner_token() if self._terminal_owner_token is not None else None
+        if owner is not None:
+            owner._notify_character_depth_order_changed(self, previous_order)
 
     @property
     def is_active(self) -> bool:

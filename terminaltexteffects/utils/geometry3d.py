@@ -12,6 +12,7 @@ Classes:
     Vec3: An immutable 3D vector.
     Rotation: A rotation stored as a unit quaternion.
     Projected: A point projected onto the canvas, with its depth.
+    Bounds: A rectangle of canvas cells that drawing is limited to.
     Camera: Projects world-space points onto canvas cells.
     Face: One polygonal face of a mesh.
     Mesh: Vertices and faces describing a solid.
@@ -37,7 +38,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE, Coord, rasterize_line
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
 
     from terminaltexteffects.engine.canvas import Canvas
 
@@ -297,6 +298,32 @@ class Projected(NamedTuple):
         return Coord(_round_half_up(self.column), _round_half_up(self.row))
 
 
+class Bounds(NamedTuple):
+    """A rectangle of canvas cells, inclusive on every side, that `rasterize` and `wireframe` are limited to.
+
+    Attributes:
+        left (int): First column.
+        right (int): Last column.
+        bottom (int): First row.
+        top (int): Last row.
+
+    """
+
+    left: int
+    right: int
+    bottom: int
+    top: int
+
+    @classmethod
+    def for_canvas(cls, canvas: Canvas) -> Bounds:
+        """Return the bounds of `canvas`."""
+        return cls(canvas.left, canvas.right, canvas.bottom, canvas.top)
+
+    def contains(self, coord: Coord) -> bool:
+        """Return whether `coord` is inside the bounds."""
+        return self.left <= coord.column <= self.right and self.bottom <= coord.row <= self.top
+
+
 @dataclass
 class Camera:
     """Projects world-space points onto canvas cells.
@@ -358,14 +385,14 @@ class Camera:
         return [self.project(point) for point in points]
 
     def cell_to_world(self, coord: Coord, z: float = 0.0) -> Vec3:
-        """Return the world point at depth `z` that a camera at rest shows in `coord`.
+        """Return the world point at world z `z` that a camera at rest shows in `coord`.
 
-        On the z=0 plane this is the exact inverse of `project` for both projections, which is how characters are
-        lifted from their canvas cells into 3D.
+        This is the exact inverse of `project` for both projections and any focal length, which is how characters
+        are lifted from their canvas cells into 3D. `z` is a world coordinate, not the camera depth `distance - z`.
         """
         x = coord.column - self.center_column
         y = (coord.row - self.center_row) * self.row_scale
-        if z and not self.orthographic:
+        if not self.orthographic:
             unscale = (self.distance - z) / (self.focal or self.distance)
             x, y = x * unscale, y * unscale
         return Vec3(x, y, z)
@@ -701,6 +728,7 @@ def rasterize(
     position: Vec3 = ORIGIN,
     cull: str = "back",
     buffer: dict[Coord, Fragment] | None = None,
+    bounds: Bounds | None = None,
 ) -> dict[Coord, Fragment]:
     """Fill the mesh's faces into a per-cell depth buffer and return it.
 
@@ -716,6 +744,8 @@ def rasterize(
         position (Vec3): Where the mesh's origin sits in world space.
         cull (str): Skip faces turned `"back"` (away from the camera), `"front"` (toward it), or `"none"`.
         buffer (dict[Coord, Fragment] | None): A buffer to draw into. Defaults to a new one.
+        bounds (Bounds | None): Only fill cells inside these bounds, such as the canvas. Work outside them is
+            skipped, so geometry that projects far off screen stays cheap. Defaults to no limit.
 
     Returns:
         dict[Coord, Fragment]: The nearest surface in each covered cell.
@@ -740,8 +770,13 @@ def rasterize(
             continue  # Partly behind the camera.
         rows = [corner.row for corner in corners]
         columns = [corner.column for corner in corners]
-        if math.ceil(min(rows)) > math.floor(max(rows)) or math.ceil(min(columns)) > math.floor(max(columns)):
-            continue  # Covers no cell center.
+        first_row, last_row = math.ceil(min(rows)), math.floor(max(rows))
+        first_column, last_column = math.ceil(min(columns)), math.floor(max(columns))
+        if bounds is not None:
+            first_row, last_row = max(first_row, bounds.bottom), min(last_row, bounds.top)
+            first_column, last_column = max(first_column, bounds.left), min(last_column, bounds.right)
+        if first_row > last_row or first_column > last_column:
+            continue  # Covers no cell center, or none inside the bounds.
         local = mesh_normals[face_index]
         nx, ny, nz = local.x, local.y, local.z
         normal = Vec3(m00 * nx + m01 * ny + m02 * nz, m10 * nx + m11 * ny + m12 * nz, m20 * nx + m21 * ny + m22 * nz)
@@ -755,7 +790,12 @@ def rasterize(
             triangle = (corners[0], corners[k], corners[k + 1])
             uvs = (face.uvs[0], face.uvs[k], face.uvs[k + 1]) if face.uvs else None
             _fill_triangle(
-                triangle, uvs, (normal, facing, face_index, face.tag), buffer, orthographic=camera.orthographic
+                triangle,
+                uvs,
+                (normal, facing, face_index, face.tag),
+                buffer,
+                orthographic=camera.orthographic,
+                bounds=bounds,
             )
     return buffer
 
@@ -767,8 +807,11 @@ def _fill_triangle(
     buffer: dict[Coord, Fragment],
     *,
     orthographic: bool,
+    bounds: Bounds | None = None,
 ) -> None:
     """Write the triangle into `buffer` at every cell center it covers, where it is nearer than what is there.
+
+    Only cells inside `bounds` are visited, when given.
 
     Under perspective, depth is not linear across the screen but its reciprocal is, so depth and texture
     coordinates are interpolated through `1 / depth` to stay correct on slanted faces.
@@ -778,8 +821,11 @@ def _fill_triangle(
     last_row = math.floor(max(a_row, b_row, c_row))
     first_column = math.ceil(min(a_column, b_column, c_column))
     last_column = math.floor(max(a_column, b_column, c_column))
+    if bounds is not None:
+        first_row, last_row = max(first_row, bounds.bottom), min(last_row, bounds.top)
+        first_column, last_column = max(first_column, bounds.left), min(last_column, bounds.right)
     if first_row > last_row or first_column > last_column:
-        return  # Covers no cell center.
+        return  # Covers no cell center, or none inside the bounds.
     area = (b_column - a_column) * (c_row - a_row) - (c_column - a_column) * (b_row - a_row)
     if abs(area) < _EPSILON:
         return
@@ -849,19 +895,26 @@ def wireframe(
     rotation: Rotation | None = None,
     scale: float = 1.0,
     position: Vec3 = ORIGIN,
+    bounds: Bounds | None = None,
 ) -> dict[Coord, EdgeCell]:
     """Return the cells along the mesh's edges.
 
     Where edges cross, a front edge wins over a hidden one, and otherwise the nearer edge wins. Edges with an end
-    behind the camera are skipped.
+    behind the camera are skipped. With `bounds`, such as the canvas, only the cells of each edge inside them are
+    visited, so an edge reaching far off screen costs no more than one on it.
     """
     rotation = rotation or Rotation()
     world = transform_points(mesh.vertices, rotation, scale=scale, position=position)
     projected = camera.project_points(world)
     normals = transform_points(mesh.normals, rotation)
     front_edges: dict[tuple[int, int], bool] = {}
+    orthographic, distance = camera.orthographic, camera.distance
     for face_index, face in enumerate(mesh.faces):
-        facing = normals[face_index].dot(camera.view_direction(world[face.indices[0]])) > 0
+        # The sign of the normal against the direction toward the camera: `view_direction` without normalizing,
+        # which is undefined for a vertex at the camera.
+        normal, first = normals[face_index], world[face.indices[0]]
+        toward = normal.z if orthographic else normal.z * (distance - first.z) - normal.x * first.x - normal.y * first.y
+        facing = toward > 0
         for start, end in zip(face.indices, face.indices[1:] + face.indices[:1]):
             edge = (min(start, end), max(start, end))
             front_edges[edge] = front_edges.get(edge, False) or facing
@@ -871,9 +924,10 @@ def wireframe(
         if a is None or b is None:
             continue
         symbol = line_symbol(b.column - a.column, b.row - a.row, camera.row_scale)
-        line = rasterize_line(a.coord, b.coord)
-        steps = max(len(line) - 1, 1)
-        for step, cell in enumerate(line):
+        first, last = a.coord, b.coord
+        steps = max(abs(last.column - first.column), abs(last.row - first.row), 1)
+        line = enumerate(rasterize_line(first, last)) if bounds is None else _line_cells_in_bounds(first, last, bounds)
+        for step, cell in line:
             t = step / steps
             # Under perspective, reciprocal depth is what changes linearly along the line on screen.
             depth = a.depth + (b.depth - a.depth) * t if camera.orthographic else 1 / ((1 - t) / a.depth + t / b.depth)
@@ -882,6 +936,43 @@ def wireframe(
                 continue
             cells[cell] = EdgeCell(depth, front, symbol)
     return cells
+
+
+def _ordered(indexes: range, *, forward: bool) -> range:
+    """Return `indexes`, reversed unless `forward`."""
+    return indexes if forward else indexes[::-1]
+
+
+def _line_cells_in_bounds(start: Coord, end: Coord, bounds: Bounds) -> Iterator[tuple[int, Coord]]:
+    """Yield `(step, cell)` for the cells of `rasterize_line(start, end)` inside `bounds`, in the same order.
+
+    Each step of that line moves one cell along its longer axis, and the shorter axis is then the step's share of
+    the run rounded half up, so the cells inside the bounds are found directly instead of walking the whole line.
+    The result matches rasterizing the line and dropping the cells outside, cell for cell.
+    """
+    canonical = (start.column, start.row) <= (end.column, end.row)
+    first, last = (start, end) if canonical else (end, start)
+    column_change, row_change = last.column - first.column, last.row - first.row
+    column_run, row_run = abs(column_change), abs(row_change)
+    column_step = (column_change > 0) - (column_change < 0)
+    row_step = (row_change > 0) - (row_change < 0)
+    steps = max(column_run, row_run)
+    if steps == 0:
+        if bounds.contains(first):
+            yield 0, first
+        return
+    if column_run >= row_run:
+        low, high = sorted(((bounds.left - first.column) * column_step, (bounds.right - first.column) * column_step))
+        for index in _ordered(range(max(0, low), min(steps, high) + 1), forward=canonical):
+            row = first.row + row_step * ((2 * index * row_run + column_run) // (2 * column_run))
+            if bounds.bottom <= row <= bounds.top:
+                yield (index if canonical else steps - index), Coord(first.column + column_step * index, row)
+    else:
+        low, high = sorted(((bounds.bottom - first.row) * row_step, (bounds.top - first.row) * row_step))
+        for index in _ordered(range(max(0, low), min(steps, high) + 1), forward=canonical):
+            column = first.column + column_step * ((2 * index * column_run + row_run) // (2 * row_run))
+            if bounds.left <= column <= bounds.right:
+                yield (index if canonical else steps - index), Coord(column, first.row + row_step * index)
 
 
 def line_symbol(column_change: float, row_change: float, row_scale: float = TERMINAL_ROW_SCALE) -> str:
