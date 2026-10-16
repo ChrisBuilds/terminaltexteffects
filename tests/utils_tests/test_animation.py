@@ -87,6 +87,16 @@ def test_drawer_redraws_only_changed_frames(fonts: animation.Fonts) -> None:
     assert drawer.image.getpixel((pad + width + width // 2, pad)) == RED
 
 
+def test_cleared_cells_leave_no_ink_behind(fonts: animation.Fonts) -> None:
+    """Glyphs stay inside their cells, so redrawing only changed cells matches drawing the frame from scratch."""
+    drawer = animation.FrameDrawer(fonts, 4, 1)
+    for frame in ("#W%&", " W ", "    "):
+        drawer.draw(animation.parse_frame(frame, 4, 1))
+        fresh = animation.FrameDrawer(fonts, 4, 1)
+        fresh.draw(animation.parse_frame(frame, 4, 1))
+        assert ImageChops.difference(drawer.image, fresh.image).getbbox() is None
+
+
 def test_draw_frames_merges_unchanged_frames(tmp_path: Path, fonts: animation.Fonts) -> None:
     """A repeated frame lengthens the frame before it, and the end is when the recording ends."""
     write_recording(tmp_path / "demo.tterec", ["ab\ncd", "ab\ncd", "ef\ngh"])

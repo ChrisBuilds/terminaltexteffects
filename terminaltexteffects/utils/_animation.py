@@ -388,13 +388,25 @@ class FrameDrawer:
             self._draw.rectangle(box, fill=fg)
         elif symbol != " ":
             font = fonts.for_symbol(symbol, fonts.face(cell.attributes))
-            offset = (span - font.getlength(symbol)) / 2
-            self._draw.text((left + offset, top + fonts.baseline), symbol, font=font, fill=fg, anchor="ls")
+            self.image.paste(fg, (left, top), _glyph_mask(font, symbol, span, fonts.cell_height, fonts.baseline))
         if cell.attributes & UNDERLINE:
             self._draw.line((left, top + fonts.baseline + 2, right, top + fonts.baseline + 2), fill=fg)
         if cell.attributes & STRIKE:
             middle = top + fonts.baseline - fonts.size // 3
             self._draw.line((left, middle, right, middle), fill=fg)
+
+
+@lru_cache(maxsize=4096)
+def _glyph_mask(font: ImageFont.FreeTypeFont, symbol: str, width: int, height: int, baseline: int) -> Image.Image:
+    """Return `symbol` centered in a cell `width` by `height` pixels, as a mask of its coverage.
+
+    Ink beyond the cell is cut off. Only changed cells are redrawn, so ink drawn into a neighboring cell would stay
+    there after the symbol that drew it is gone.
+    """
+    mask = Image.new("L", (width, height))
+    offset = (width - font.getlength(symbol)) / 2
+    ImageDraw.Draw(mask).text((offset, baseline), symbol, font=font, fill=255, anchor="ls")
+    return mask
 
 
 def frame_times(frame_count: int, frame_rate: int, fps: int, start_hold: float) -> Iterator[tuple[int, int]]:
