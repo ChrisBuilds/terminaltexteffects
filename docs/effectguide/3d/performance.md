@@ -33,7 +33,7 @@ a rough guide to which examples cost more, and measure your own effect on the ma
 | [Depth](depth.md) `--see-through` | The same, with the cube in wireframe | 4.4 ms |
 | [Light](light.md) | A shaded sphere | 6.4 ms |
 | [Light](light.md) `--shape torus` | A shaded torus | 8.3 ms |
-| [Gallery](meshes.md) | Ten shapes | 8.9 ms |
+| [Gallery](meshes.md) | Ten shapes, two or three at a time | 4.4 ms |
 | [Texture](textures.md) `--text` | A textured cube and a textured sphere | 8.8 ms |
 | [Globe](recipes.md#globe) | A textured sphere, 48 by 24, back faces shown | 26.4 ms |
 
@@ -75,8 +75,9 @@ Mounted characters cost about 7 to 8 microseconds each per step, mounted on one 
   do by skipping blank input cells.
 - **Release finished characters.** `release_all()` hands characters back to 2D paths, which cost only their own
   `update()`.
-- **Watch the count of drawn bodies.** The gallery's ten small shapes cost more than the one large sphere in Light.
-  Many small shapes cost more than a few large ones and read worse (see [3D in a terminal](terminal.md)).
+- **Watch the count of drawn bodies.** All ten gallery shapes at once took about 9 ms a frame. Two or three larger
+  ones at a time take about 4 ms and read better. Many small shapes cost more than a few large ones and read worse
+  (see [3D in a terminal](terminal.md)).
 
 ## Measuring
 

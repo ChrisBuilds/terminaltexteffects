@@ -25,7 +25,7 @@ rounder at a higher cost per frame.
 
 ## In TTE
 
-The Gallery example shows every built-in shape. Save it as `gallery.py`:
+The Gallery example shows every built-in shape, a few at a time so each is large enough to read. Save it as `gallery.py`:
 
 ```python title="gallery.py"
 --8<-- "docs/effectguide/examples/3d/gallery/gallery.py"
@@ -35,7 +35,7 @@ The Gallery example shows every built-in shape. Save it as `gallery.py`:
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c gallery
 ```
 
-![Ten shapes turning in two rows: cube, box, prism, pyramid, tetrahedron, octahedron, icosahedron, cylinder, sphere and torus](../../img/effectguide/gallery_demo.webp)
+![The ten shapes turning two or three at a time: cube, box and prism; pyramid, tetrahedron and octahedron; icosahedron and cylinder; sphere and torus](../../img/effectguide/gallery_demo.webp)
 
 | Shape | Sizes | Faces tagged |
 | --- | --- | --- |
