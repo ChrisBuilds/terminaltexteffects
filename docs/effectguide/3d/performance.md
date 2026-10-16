@@ -62,6 +62,18 @@ Mounted characters cost about 7 to 8 microseconds each per step, mounted on one 
 304 characters take about 2 ms. A full 200 by 50 screen of text, 10,000 characters, takes about 80 ms, before
 `update()` moves any of them.
 
+## Geometry preparation
+
+A two-sided `Textured(back="dim")` body transforms and projects its vertices once per frame,
+then reuses that geometry for the front and back fills. The fills keep independent depth buffers.
+Wireframes reuse edge-to-face adjacency stored on the immutable mesh instead of rebuilding it
+every frame. Adjacency is built on first use, so filled meshes pay no topology cost; wireframe
+meshes retain topology proportional to their edges.
+
+These optimizations do not cache a rendered scene. Camera, light, gradients and body transforms
+are still read each step. Static-scene caching would need to track all of those mutable inputs;
+it remains deferred rather than risking stale output.
+
 ## In TTE
 
 - **Use as few triangles as read well.** At terminal resolution, a sphere with 24 segments and 12 rings looks as

@@ -33,6 +33,7 @@ from __future__ import annotations
 import math
 import sys
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import TYPE_CHECKING, Any, NamedTuple
 
 from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE, Coord, rasterize_line
@@ -453,7 +454,6 @@ class Mesh:
     vertices: tuple[Vec3, ...]
     faces: tuple[Face, ...]
     _normals: tuple[Vec3, ...] = field(init=False, repr=False, compare=False)
-    _edge_faces: tuple[tuple[tuple[int, int], tuple[int, ...]], ...] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         """Validate the faces and compute their outward normals."""
@@ -463,11 +463,6 @@ class Mesh:
                 msg = "A face refers to a vertex the mesh does not have."
                 raise ValueError(msg)
         object.__setattr__(self, "_normals", tuple(self._face_normal(face) for face in self.faces))
-        adjacency: dict[tuple[int, int], list[int]] = {}
-        for face_index, face in enumerate(self.faces):
-            for start, end in zip(face.indices, face.indices[1:] + face.indices[:1]):
-                adjacency.setdefault((min(start, end), max(start, end)), []).append(face_index)
-        object.__setattr__(self, "_edge_faces", tuple((edge, tuple(faces)) for edge, faces in adjacency.items()))
 
     def _face_normal(self, face: Face) -> Vec3:
         """Return a face's outward unit normal using Newell's method, which tolerates near-degenerate corners."""
@@ -484,6 +479,15 @@ class Mesh:
     def normals(self) -> tuple[Vec3, ...]:
         """Each face's outward unit normal, in the same order as `faces`."""
         return self._normals
+
+    @cached_property
+    def _edge_faces(self) -> tuple[tuple[tuple[int, int], tuple[int, ...]], ...]:
+        """Edge adjacency, built only for meshes used in edge layouts or wireframes."""
+        adjacency: dict[tuple[int, int], list[int]] = {}
+        for face_index, face in enumerate(self.faces):
+            for start, end in zip(face.indices, face.indices[1:] + face.indices[:1]):
+                adjacency.setdefault((min(start, end), max(start, end)), []).append(face_index)
+        return tuple((edge, tuple(faces)) for edge, faces in adjacency.items())
 
     def edges(self) -> list[tuple[int, int]]:
         """Return each edge once, as a sorted pair of vertex indexes."""
