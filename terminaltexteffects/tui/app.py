@@ -2096,6 +2096,13 @@ class TTEApp(App[None]):
                 last_update = now
                 self.call_from_thread(progress.show_frames, count)
 
+        def on_step(frame_count: int, step: str, count: int, total: int | None) -> None:
+            nonlocal last_update
+            now = time.monotonic()
+            if now - last_update >= _STATUS_INTERVAL or count == total:
+                last_update = now
+                self.call_from_thread(progress.show_step, step, count, total or frame_count)
+
         missing: frozenset[str] = frozenset()
         try:
             if fmt is export.FORMATS[0]:
@@ -2105,7 +2112,13 @@ class TTEApp(App[None]):
                     recording = Path(folder) / f"effect{export.FORMATS[0].suffix}"
                     header, frame_count, _ = _record_playbacks(recording, effect_name, effect, 1, on_frame=on_frame)
                     self.call_from_thread(progress.show_rendering, fmt.name, frame_count)
-                    missing = export.export_recording(recording, path, fmt, fps=header.frame_rate)
+                    missing = export.export_recording(
+                        recording,
+                        path,
+                        fmt,
+                        fps=header.frame_rate,
+                        on_progress=functools.partial(on_step, frame_count),
+                    )
         except (OSError, RecordingError, ValueError, export.ExportError) as error:
             self.call_from_thread(progress.finish)
             self.call_from_thread(self.notify, f"Export failed: {error}", severity="error")
