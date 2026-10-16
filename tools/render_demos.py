@@ -214,6 +214,35 @@ GUIDE_DEMOS: dict[str, Demo] = {
             ("wireframes", "wireframes", ()),
         )
     },
+    # The Spin tutorial: the finished effect from `dev_effects/`, then each step under one command name.
+    "spin_goal": Demo(
+        effect="spin", tte_args=CANVAS_3D, input_file=CONCEPT_INPUT, effects_dir=PROJECT_ROOT / "dev_effects"
+    ),
+    **{
+        f"myspin_step{step}": Demo(
+            effect="myspin",
+            tte_args=CANVAS_3D,
+            input_file=CONCEPT_INPUT,
+            effects_dir=EXAMPLES_3D / f"myspin_step{step}",
+        )
+        for step in range(1, 7)
+    },
+    "myspin_step6_options": Demo(
+        effect="myspin",
+        effect_args=(
+            "--spin-turns",
+            "1",
+            "--start-distance",
+            "60",
+            "--hide-back",
+            "--final-gradient-stops",
+            "ffb000",
+            "ff5fd7",
+        ),
+        tte_args=CANVAS_3D,
+        input_file=CONCEPT_INPUT,
+        effects_dir=EXAMPLES_3D / "myspin_step6",
+    ),
     "travel_canvas": Demo(
         effect="travel",
         tte_args=("--canvas-width", "60", "--canvas-height", "14", "--anchor-text", "c"),

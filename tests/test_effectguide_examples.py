@@ -110,6 +110,19 @@ def test_guide_pages_show_rendered_guide_demos() -> None:
         assert (PROJECT_ROOT / "docs" / "img" / "effectguide" / f"{name}_demo.webp").is_file()
 
 
+def test_spin_tutorial_ends_with_the_spin_effect() -> None:
+    """The last Spin tutorial step is the development Spin effect, renamed to MySpin."""
+    spin = (PROJECT_ROOT / "dev_effects" / "spin.py").read_text(encoding="utf-8")
+    renamed = re.sub(r"\bSpin", "MySpin", spin)
+    for old, new in (
+        ('"spin"', '"myspin"'),
+        ('"spin |', '"myspin |'),
+        ("terminaltexteffects spin ", "terminaltexteffects myspin "),
+    ):
+        renamed = renamed.replace(old, new)
+    assert (EXAMPLES / "3d" / "myspin_step6" / "myspin.py").read_text(encoding="utf-8") == renamed
+
+
 def test_guide_pages_show_rendered_3d_diagrams() -> None:
     """Pages show only known 3D diagrams, every diagram is shown, and each one has been rendered."""
     pytest.importorskip("PIL")
