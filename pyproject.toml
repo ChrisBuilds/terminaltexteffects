@@ -79,6 +79,8 @@ typing-extensions = false
 # Effect Guide examples are flat community effect modules, loaded one directory at a time. They import names
 # used only in annotations at runtime to keep the tutorial code simple.
 "docs/effectguide/examples/**" = ["INP001", "TC001"]
+# Development effects are flat modules loaded by path, like community effects.
+"dev_effects/**" = ["INP001"]
 
 [tool.pytest.ini_options]
 console_output_style = "progress"

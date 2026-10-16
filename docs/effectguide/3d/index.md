@@ -77,3 +77,5 @@ The concept examples end by swapping their shapes for the input text, so you can
 11. [Animating in 3D](animating.md): tweens, timing and handing the text back to 2D.
 12. [Performance](performance.md): what a frame costs.
 13. [Recipes](recipes.md): a spinning logo, a die, a globe, a ticker and wireframe solids.
+
+Then the [Spin tutorial](spin/01-sheet.md) builds a complete 3D effect in six steps.

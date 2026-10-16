@@ -98,6 +98,13 @@ nav:
       - effectguide/3d/animating.md
       - effectguide/3d/performance.md
       - effectguide/3d/recipes.md
+      - Spin tutorial:
+        - effectguide/3d/spin/01-sheet.md
+        - effectguide/3d/spin/02-spin.md
+        - effectguide/3d/spin/03-perspective.md
+        - effectguide/3d/spin/04-shading.md
+        - effectguide/3d/spin/05-settle.md
+        - effectguide/3d/spin/06-options.md
     - Writing Effects:
       - Tutorial:
         - effectguide/tutorial/01-scaffold.md
