@@ -2,7 +2,8 @@
 
 Each frame is drawn cell by cell in a monospace font, with the colors and attributes of the recorded ANSI sequences.
 Only cells that changed since the previous frame are redrawn, and frames identical to the one before are merged into
-a longer frame. Frames are kept as temporary PNG files, so memory use does not grow with the recording's length.
+a longer frame. Frames are kept as temporary compressed files, so memory use does not grow with the recording's
+length.
 
 WebP output is lossless. GIF output maps every frame to one palette of up to 255 colors sampled from the frames, and
 stores only the changed area of each frame, with unchanged pixels inside it transparent.
@@ -21,6 +22,8 @@ import shutil
 import subprocess
 import sys
 import typing
+import zlib
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import cache, lru_cache
 from pathlib import Path
@@ -32,7 +35,7 @@ from terminaltexteffects.utils.hexterm import xterm_to_hex
 from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Callable, Iterator, Sequence
 
 RGB = tuple[int, int, int]
 
@@ -427,7 +430,7 @@ def frame_times(frame_count: int, frame_rate: int, fps: int, start_hold: float) 
 
 @dataclass(frozen=True)
 class Frames:
-    """Frames drawn from a recording, saved as PNG files: each file and its start time in milliseconds.
+    """Frames drawn from a recording, saved as files `load_frame` reads: each file and its start time in milliseconds.
 
     `end` is when the recording ends, in milliseconds, and `missing` holds the symbols no font has.
     """
@@ -439,25 +442,41 @@ class Frames:
     missing: frozenset[str]
 
 
-def draw_frames(recording: Path, folder: Path, *, fps: int, fonts: Fonts, start_hold: float = 0.0) -> Frames:
-    """Draw `recording` at up to `fps` frames per second, saving each distinct frame as a PNG file in `folder`.
+def draw_frames(
+    recording: Path,
+    folder: Path,
+    *,
+    fps: int,
+    fonts: Fonts,
+    start_hold: float = 0.0,
+    on_frame: Callable[[int], None] | None = None,
+) -> Frames:
+    """Draw `recording` at up to `fps` frames per second, saving each distinct frame as a file in `folder`.
 
-    The first frame is held for `start_hold` extra seconds.
+    The first frame is held for `start_hold` extra seconds. `on_frame` is called with the number of recorded frames
+    read so far after each one.
 
     Raises:
         RenderError: If the recording has no frames.
 
     """
-    with RecordingReader(recording) as reader:
+    # Each frame is compressed and saved on a background thread while the next is drawn. zlib releases the GIL, and
+    # waiting for the previous save before starting the next keeps one frame in flight.
+    with RecordingReader(recording) as reader, ThreadPoolExecutor(1, thread_name_prefix="tte-frames") as writer:
         header = reader.header
         drawer = FrameDrawer(fonts, header.width, header.height)
         paths: list[Path] = []
         starts: list[int] = []
+        saving: Future[None] | None = None
 
         def add(frame: str, start: int) -> None:
+            nonlocal saving
             if drawer.draw(parse_frame(frame, header.width, header.height)) or not paths:
-                path = folder / f"{len(paths):06d}.png"
-                drawer.image.save(path, compress_level=1)
+                path = folder / f"{len(paths):06d}{FRAME_SUFFIX}"
+                pixels = drawer.image.tobytes()
+                if saving is not None:
+                    saving.result()
+                saving = writer.submit(_save_frame, pixels, path)
                 paths.append(path)
                 starts.append(start)
 
@@ -465,6 +484,8 @@ def draw_frames(recording: Path, folder: Path, *, fps: int, fonts: Fonts, start_
         index, start = next(wanted)
         last, skipped = -1, ""
         for last, frame in enumerate(reader.frames()):
+            if on_frame is not None:
+                on_frame(last + 1)
             if last != index:
                 skipped = frame
                 continue
@@ -474,6 +495,8 @@ def draw_frames(recording: Path, folder: Path, *, fps: int, fonts: Fonts, start_
         # Frames skipped to lower the frame rate never include the last, which shows the finished effect.
         if skipped:
             add(skipped, round((last / header.frame_rate + start_hold) * 1000))
+        if saving is not None:
+            saving.result()
     if not paths:
         message = f"{recording} has no frames."
         raise RenderError(message)
@@ -481,46 +504,123 @@ def draw_frames(recording: Path, folder: Path, *, fps: int, fonts: Fonts, start_
     return Frames(paths, starts, end, drawer.image.size, frozenset(fonts.missing))
 
 
-class _FrameFiles(Image.Image):
-    """A multi-frame image that loads each frame from its file when Pillow seeks to it, holding one at a time."""
+FRAME_SUFFIX = ".rgb.z"
+"""The suffix of drawn frame files, which hold the frame's RGB pixels compressed with zlib."""
 
-    def __init__(self, paths: Sequence[Path], size: tuple[int, int]) -> None:
-        super().__init__()
+FRAME_COMPRESSION = 1
+"""The zlib level for drawn frames, which compresses about three times faster than PNG and to a smaller file."""
+
+
+def load_frame(path: Path, size: tuple[int, int]) -> Image.Image:
+    """Return the RGB frame of `size` that `draw_frames` saved at `path`."""
+    return Image.frombytes("RGB", size, zlib.decompress(path.read_bytes()))
+
+
+def _save_frame(pixels: bytes, path: Path) -> None:
+    path.write_bytes(zlib.compress(pixels, FRAME_COMPRESSION))
+
+
+class _FrameReader:
+    """Load the frames at `order` in turn, reading the next on a background thread while the current one is encoded.
+
+    zlib releases the GIL, so loading overlaps the encoder's work, and only one frame is read ahead.
+    """
+
+    def __init__(self, paths: Sequence[Path], size: tuple[int, int], order: Sequence[int]) -> None:
         self._paths = paths
+        self._size = size
+        self._following = dict(zip(order, order[1:]))
+        self._executor = ThreadPoolExecutor(1, thread_name_prefix="tte-frames")
+        self._ahead: tuple[int, Future[Image.Image]] | None = None
+
+    def load(self, index: int) -> Image.Image:
+        """Return frame `index`, and start reading the frame after it."""
+        if self._ahead is not None and self._ahead[0] == index:
+            image = self._ahead[1].result()
+        else:
+            image = load_frame(self._paths[index], self._size)
+        following = self._following.get(index)
+        if following is not None:
+            self._ahead = (following, self._executor.submit(load_frame, self._paths[following], self._size))
+        else:
+            self._ahead = None
+        return image
+
+    def close(self) -> None:
+        """Stop the background thread."""
+        self._executor.shutdown(cancel_futures=True)
+
+    def __enter__(self) -> _FrameReader:
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self.close()
+
+
+class _FrameFiles(Image.Image):
+    """A multi-frame image that loads each frame from its file when Pillow seeks to it, holding one at a time.
+
+    `on_frame` is called with the number of frames loaded so far each time a later frame is loaded.
+    """
+
+    def __init__(
+        self,
+        reader: _FrameReader,
+        frame_count: int,
+        size: tuple[int, int],
+        on_frame: Callable[[int], None] | None = None,
+    ) -> None:
+        super().__init__()
+        self._reader = reader
+        self._on_frame = on_frame
         self._mode = "RGB"
         self._size = size
-        self.n_frames = len(paths)
+        self.n_frames = frame_count
         self._index = -1
         self.seek(0)
 
     def seek(self, frame: int) -> None:
         if frame != self._index:
-            with Image.open(self._paths[frame]) as image:
-                self.im = image.convert("RGB").im
+            self.im = self._reader.load(frame).im
+            if self._on_frame is not None and frame > self._index:
+                self._on_frame(frame + 1)
             self._index = frame
 
     def tell(self) -> int:
         return self._index
 
 
-def write_webp(frames: Frames, output: Path, *, end_hold: float = 2.0, minimize_size: bool = False) -> None:
+def write_webp(
+    frames: Frames,
+    output: Path,
+    *,
+    end_hold: float = 2.0,
+    on_frame: Callable[[int, int], None] | None = None,
+) -> None:
     """Write `frames` to the lossless animated WebP `output`, holding the last frame for `end_hold` seconds.
 
-    `minimize_size` makes the file a few percent smaller, at about three times the encoding time.
+    Only the first frame is a keyframe. Keyframes only help a player seek, which looping playback doesn't need, and
+    each one makes the encoder try the frame twice. Without them encoding is several times faster and the file is
+    as small as with libwebp's `minimize_size`. `on_frame` is called with the number of frames encoded so far and
+    the total as each frame is encoded.
     """
     ends = [*frames.starts[1:], frames.end + round(end_hold * 1000)]
     durations = [end - start for start, end in zip(frames.starts, ends)]
-    _FrameFiles(frames.paths, frames.size).save(
-        output,
-        format="WEBP",
-        save_all=True,
-        duration=durations,
-        loop=0,
-        lossless=True,
-        quality=75,
-        method=4,
-        minimize_size=minimize_size,
-    )
+    total = len(frames.paths)
+    report = None if on_frame is None else (lambda count: on_frame(count, total))
+    with _FrameReader(frames.paths, frames.size, range(total)) as reader:
+        _FrameFiles(reader, total, frames.size, report).save(
+            output,
+            format="WEBP",
+            save_all=True,
+            duration=durations,
+            loop=0,
+            lossless=True,
+            quality=75,
+            method=4,
+            kmin=0,
+            kmax=0,
+        )
 
 
 GIF_MAX_FPS = 50
@@ -579,18 +679,21 @@ def _palette_samples(frames: Frames, indices: Sequence[int]) -> list[Image.Image
     width, height = frames.size
     count = max(1, min(PALETTE_SAMPLES, PALETTE_PIXELS // (width * height), len(indices)))
     chosen = sorted({indices[round(step * (len(indices) - 1) / max(count - 1, 1))] for step in range(count)})
-    samples = []
-    for index in chosen:
-        with Image.open(frames.paths[index]) as image:
-            samples.append(image.convert("RGB"))
-    return samples
+    return [load_frame(frames.paths[index], frames.size) for index in chosen]
 
 
-def write_gif(frames: Frames, output: Path, *, end_hold: float = 2.0) -> None:
+def write_gif(
+    frames: Frames,
+    output: Path,
+    *,
+    end_hold: float = 2.0,
+    on_frame: Callable[[int, int], None] | None = None,
+) -> None:
     """Write `frames` to the animated GIF `output`, holding the last frame for `end_hold` seconds.
 
     Every frame is mapped to one palette, without dithering. After the first frame, each frame stores only the area
-    that changed, with unchanged pixels inside it transparent, and is drawn over the frame before.
+    that changed, with unchanged pixels inside it transparent, and is drawn over the frame before. `on_frame` is
+    called with the number of frames encoded so far and the total as each frame is encoded.
     """
     delays = gif_delays(frames.starts, frames.end + round(end_hold * 1000))
     palette = gif_palette(_palette_samples(frames, [index for index, _ in delays]))
@@ -600,13 +703,14 @@ def write_gif(frames: Frames, output: Path, *, end_hold: float = 2.0) -> None:
     canvas = Image.new("P", frames.size)
     canvas.putpalette([*palette, 0, 0, 0])
     header, _ = GifImagePlugin.getheader(canvas, info={"loop": 0, "transparency": transparent})
-    with output.open("wb") as file:
+    with output.open("wb") as file, _FrameReader(frames.paths, frames.size, [index for index, _ in delays]) as reader:
         file.writelines(header)
         previous: Image.Image | None = None
         pending: tuple[Image.Image, tuple[int, int], int] | None = None
-        for index, delay in delays:
-            with Image.open(frames.paths[index]) as image:
-                indices = image.convert("RGB").quantize(palette=palette_image, dither=Image.Dither.NONE)
+        for count, (index, delay) in enumerate(delays, 1):
+            if on_frame is not None:
+                on_frame(count, len(delays))
+            indices = reader.load(index).quantize(palette=palette_image, dither=Image.Dither.NONE)
             current = Image.frombytes("L", frames.size, indices.tobytes())
             if previous is None:
                 piece, offset = current, (0, 0)

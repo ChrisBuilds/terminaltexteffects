@@ -50,6 +50,27 @@ def test_export_writes_the_format(tmp_path: Path, fmt: export.ExportFormat, magi
     assert sorted(path.name for path in tmp_path.iterdir()) == ["effect.tterec", output.name]
 
 
+def test_export_reports_drawing_then_encoding(tmp_path: Path) -> None:
+    """Progress should count the recorded frames while drawing, then the frames written while encoding."""
+    pytest.importorskip("PIL")
+    recording = tmp_path / "effect.tterec"
+    _write_recording(recording)
+    steps: list[tuple[str, int, int | None]] = []
+    export.export_recording(
+        recording,
+        tmp_path / "out.webp",
+        _WEBP,
+        fps=30,
+        on_progress=lambda step, count, total: steps.append((step, count, total)),
+    )
+    assert steps == [
+        (export.DRAWING, 1, None),
+        (export.DRAWING, 2, None),
+        (export.ENCODING, 1, 2),
+        (export.ENCODING, 2, 2),
+    ]
+
+
 def test_failed_export_keeps_the_existing_file(tmp_path: Path) -> None:
     """A conversion that fails should leave the previous output untouched and no temporary file."""
     pytest.importorskip("PIL")

@@ -834,8 +834,17 @@ def export_calls(monkeypatch: pytest.MonkeyPatch) -> list[_ExportCall]:
     """Report Pillow as installed, and record GIF and WebP conversions instead of drawing them."""
     calls: list[_ExportCall] = []
 
-    def export_recording(_recording: Path, output: Path, fmt: export.ExportFormat, *, fps: int) -> frozenset[str]:
+    def export_recording(
+        _recording: Path,
+        output: Path,
+        fmt: export.ExportFormat,
+        *,
+        fps: int,
+        on_progress: Callable[[str, int, int | None], None],
+    ) -> frozenset[str]:
         calls.append(_ExportCall(output, fmt, fps))
+        on_progress(export.DRAWING, 1, None)
+        on_progress(export.ENCODING, 1, 1)
         output.write_bytes(fmt.name.encode())
         return frozenset()
 
@@ -904,13 +913,30 @@ def test_record_shows_frame_count_on_a_terminal(
     capsys: pytest.CaptureFixture[str],
     export_calls: list[_ExportCall],
 ) -> None:
-    """On a terminal, the frame count updates in place and is erased before the next line."""
+    """On a terminal, the frame count updates in place through rendering, drawing, and encoding."""
     monkeypatch.setattr(__main__, "_is_terminal", lambda _stream: True)
     monkeypatch.setattr(__main__, "_PROGRESS_INTERVAL", 0.0)
     _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
     error = capsys.readouterr().err
-    assert error.startswith("\rRendering frame 1\rRendering frame 2")
-    assert "\r\x1b[KDrawing " in error
+    assert error.startswith("\r\x1b[KRendering frame 1\r\x1b[KRendering frame 2")
+    frame_count = error.split("\r\x1b[KDrawing ")[1].split(" frames")[0]
+    assert f"\r\x1b[KDrawing frame 1 of {frame_count}\r\x1b[KEncoding frame 1 of 1\r\x1b[K" in error
+    assert export_calls
+
+
+@pytest.mark.usefixtures("piped_input")
+def test_record_shows_only_whole_lines_when_piped(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    export_calls: list[_ExportCall],
+) -> None:
+    """Without a terminal, no frame counts are written, only whole lines."""
+    monkeypatch.setattr(__main__, "_is_terminal", lambda _stream: False)
+    _run(monkeypatch, "--record", str(tmp_path / "out.webp"), "wipe")
+    error = capsys.readouterr().err
+    assert "\r" not in error
+    assert "frame 1 of" not in error
     assert export_calls
 
 

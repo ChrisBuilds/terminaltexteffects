@@ -17,6 +17,9 @@ from pathlib import Path
 
 from terminaltexteffects.engine._recording import RECORDING_SUFFIX
 
+if typing.TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 class ExportFormat(typing.NamedTuple):
     """An output format for recordings: its name, file suffix, and whether it is drawn with Pillow."""
@@ -41,6 +44,13 @@ PILLOW_PYTHON = sys.version_info >= (3, 10)
 
 END_HOLD = 2.0
 """Seconds the last frame of a GIF or WebP is shown before the animation repeats."""
+
+
+DRAWING = "Drawing"
+"""The export step that draws each recorded frame as an image."""
+
+ENCODING = "Encoding"
+"""The export step that compresses the drawn frames into the GIF or WebP file."""
 
 
 class ExportError(Exception):
@@ -77,13 +87,15 @@ def export_recording(
     fallback_fonts: typing.Sequence[str] = (),
     start_hold: float = 0.0,
     end_hold: float = END_HOLD,
-    minimize_size: bool = False,
+    on_progress: Callable[[str, int, int | None], None] | None = None,
 ) -> frozenset[str]:
     """Convert `recording` to `output` in the GIF or WebP format `fmt`, at most `fps` frames per second.
 
     The first frame is held for `start_hold` extra seconds and the last for `end_hold` seconds before the animation
-    repeats. `font` and `fallback_fonts` choose the fonts, as `Fonts` describes, and `minimize_size` makes WebP files
-    a few percent smaller at about three times the encoding time.
+    repeats. `font` and `fallback_fonts` choose the fonts, as `Fonts` describes.
+
+    `on_progress` is called after each frame with the step, `DRAWING` or `ENCODING`, the frames done in that step,
+    and the step's total. The total is `None` while drawing, since the recording's frame count isn't stored in it.
 
     The file is converted in a temporary directory and replaces `output` only when conversion completes, so a
     failed or interrupted export leaves no partial file.
@@ -106,11 +118,20 @@ def export_recording(
         converted = work / f"effect{fmt.suffix}"
         try:
             fonts = _animation.Fonts(font, fallback_fonts)
-            frames = _animation.draw_frames(recording, work, fps=fps, fonts=fonts, start_hold=start_hold)
+            drawn = None if on_progress is None else (lambda count: on_progress(DRAWING, count, None))
+            encoded = None if on_progress is None else (lambda count, total: on_progress(ENCODING, count, total))
+            frames = _animation.draw_frames(
+                recording,
+                work,
+                fps=fps,
+                fonts=fonts,
+                start_hold=start_hold,
+                on_frame=drawn,
+            )
             if fmt.suffix == ".gif":
-                _animation.write_gif(frames, converted, end_hold=end_hold)
+                _animation.write_gif(frames, converted, end_hold=end_hold, on_frame=encoded)
             else:
-                _animation.write_webp(frames, converted, end_hold=end_hold, minimize_size=minimize_size)
+                _animation.write_webp(frames, converted, end_hold=end_hold, on_frame=encoded)
         except _animation.RenderError as error:
             raise ExportError(str(error)) from error
         _replace(output, converted)

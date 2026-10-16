@@ -1004,13 +1004,14 @@ def _check_recording_options(args: argparse.Namespace) -> None:
 
 
 _PROGRESS_INTERVAL = 0.1
-"""Seconds between updates of the frame count shown while `--record` renders to a terminal."""
+"""Seconds between updates of the frame count shown while `--record` renders or exports to a terminal."""
 
 
 class _RecordingProgress:
     """Report `--record` progress on standard error.
 
-    On a terminal, the frame count updates in place while frames render. Otherwise only whole lines are printed.
+    On a terminal, the frame count updates in place while frames render, draw, and encode. Otherwise only whole
+    lines are printed.
     """
 
     def __init__(self) -> None:
@@ -1020,13 +1021,20 @@ class _RecordingProgress:
 
     def frame(self, count: int) -> None:
         """Show `count` frames rendered, at most every `_PROGRESS_INTERVAL` seconds, on a terminal."""
+        self._update(f"Rendering frame {count}")
+
+    def export_step(self, step: str, count: int, total: int) -> None:
+        """Show `count` of `total` frames done in export `step`, at most every `_PROGRESS_INTERVAL` seconds."""
+        self._update(f"{step} frame {count} of {total}", final=count == total)
+
+    def _update(self, message: str, *, final: bool = False) -> None:
         if not self._live:
             return
         now = time.monotonic()
-        if now - self._last_update < _PROGRESS_INTERVAL:
+        if now - self._last_update < _PROGRESS_INTERVAL and not final:
             return
         self._last_update = now
-        sys.stderr.write(f"\rRendering frame {count}")
+        sys.stderr.write(f"\r\x1b[K{message}")
         sys.stderr.flush()
         self._shown = True
 
@@ -1081,7 +1089,13 @@ def _run_recording(
                     recording = Path(folder) / f"effect{RECORDING_SUFFIX}"
                     header, frame_count, segments = record(recording)
                     progress.line(f"Drawing {frame_count} frames to {fmt.name}")
-                    missing = export.export_recording(recording, args.record, fmt, fps=header.frame_rate)
+                    missing = export.export_recording(
+                        recording,
+                        args.record,
+                        fmt,
+                        fps=header.frame_rate,
+                        on_progress=lambda step, count, total: progress.export_step(step, count, total or frame_count),
+                    )
         finally:
             progress.clear()
     except (EmptyInputError, UnsupportedAnsiSequenceError, RecordingError, export.ExportError) as e:

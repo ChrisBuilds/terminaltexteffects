@@ -279,7 +279,6 @@ def render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> str:
                 fallback_fonts=options.fallback_fonts,
                 start_hold=demo.start_hold,
                 end_hold=demo.end_hold,
-                minimize_size=True,
             )
     sizes = ", ".join(f"{fmt} {(out_dir / f'{name}_demo.{fmt}').stat().st_size // 1024} KB" for fmt in options.formats)
     note = f" (no font has {' '.join(sorted(missing))}; pass --fallback-font FONT)" if missing else ""

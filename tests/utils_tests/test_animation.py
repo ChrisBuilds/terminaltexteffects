@@ -101,8 +101,20 @@ def test_draw_frames_merges_unchanged_frames(tmp_path: Path, fonts: animation.Fo
     """A repeated frame lengthens the frame before it, and the end is when the recording ends."""
     write_recording(tmp_path / "demo.tterec", ["ab\ncd", "ab\ncd", "ef\ngh"])
     frames = animation.draw_frames(tmp_path / "demo.tterec", tmp_path, fps=10, fonts=fonts)
-    assert [path.name for path in frames.paths] == ["000000.png", "000001.png"]
+    assert [path.name for path in frames.paths] == ["000000.rgb.z", "000001.rgb.z"]
     assert (frames.starts, frames.end) == ([0, 200], 300)
+
+
+def test_draw_and_encode_report_each_frame(tmp_path: Path, fonts: animation.Fonts) -> None:
+    """Drawing counts recorded frames, merged ones included, and encoding counts up to the frames it writes."""
+    write_recording(tmp_path / "demo.tterec", ["ab\ncd", "ab\ncd", "ef\ngh"])
+    drawn: list[int] = []
+    frames = animation.draw_frames(tmp_path / "demo.tterec", tmp_path, fps=10, fonts=fonts, on_frame=drawn.append)
+    assert drawn == [1, 2, 3]
+    for write in (animation.write_webp, animation.write_gif):
+        encoded: list[tuple[int, int]] = []
+        write(frames, tmp_path / "demo", on_frame=lambda count, total, seen=encoded: seen.append((count, total)))
+        assert encoded == [(1, 2), (2, 2)]
 
 
 def test_webp_keeps_every_frame_and_its_duration(tmp_path: Path, fonts: animation.Fonts) -> None:
@@ -116,8 +128,8 @@ def test_webp_keeps_every_frame_and_its_duration(tmp_path: Path, fonts: animatio
             webp.seek(index)
             webp.load()
             assert webp.info["duration"] == [200, 1100][index]
-            with Image.open(path) as expected:
-                assert ImageChops.difference(webp.convert("RGB"), expected.convert("RGB")).getbbox() is None
+            expected = animation.load_frame(path, frames.size)
+            assert ImageChops.difference(webp.convert("RGB"), expected).getbbox() is None
 
 
 def test_gif_draws_each_frame_over_the_last(tmp_path: Path, fonts: animation.Fonts) -> None:
@@ -130,9 +142,8 @@ def test_gif_draws_each_frame_over_the_last(tmp_path: Path, fonts: animation.Fon
         for index, path in enumerate(frames.paths):
             gif.seek(index)
             assert gif.info["duration"] == [100, 100, 1100][index]
-            with Image.open(path) as expected:
-                difference = ImageChops.difference(gif.convert("RGB"), expected.convert("RGB"))
-                assert max(high for _, high in ImageStat.Stat(difference).extrema) <= 8
+            difference = ImageChops.difference(gif.convert("RGB"), animation.load_frame(path, frames.size))
+            assert max(high for _, high in ImageStat.Stat(difference).extrema) <= 8
 
 
 def test_missing_glyphs_come_from_a_fallback_font(fonts: animation.Fonts) -> None:

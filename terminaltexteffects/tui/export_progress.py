@@ -15,8 +15,9 @@ if typing.TYPE_CHECKING:
 class ExportProgress(Vertical):
     """An overlay in the bottom-right corner with a busy bar, the frames rendered so far, and the elapsed time.
 
-    The total frame count isn't known until the effect finishes, so the bar is indeterminate. The panel floats
-    over the screen, so showing it never changes the layout or the canvas size.
+    The total frame count isn't known until the effect finishes, so the bar is indeterminate while frames render,
+    then fills as a GIF or WebP is drawn and encoded. The panel floats over the screen, so showing it never changes
+    the layout or the canvas size.
     """
 
     DEFAULT_CSS = """
@@ -65,6 +66,7 @@ class ExportProgress(Vertical):
         self.border_title = f"Exporting {effect_name}"
         self._started = time.monotonic()
         self.display = True
+        self.query_one(ProgressBar).update(total=None, progress=0)
         self._set_detail("Rendering frames…")
 
     def show_frames(self, count: int) -> None:
@@ -74,6 +76,11 @@ class ExportProgress(Vertical):
     def show_rendering(self, format_name: str, frame_count: int) -> None:
         """Show that the `frame_count` rendered frames are being drawn to a `format_name` file."""
         self._set_detail(f"Drawing {frame_count:,} frames to {format_name}")
+
+    def show_step(self, step: str, count: int, total: int) -> None:
+        """Show that `count` of `total` frames are done in the GIF or WebP export `step`."""
+        self.query_one(ProgressBar).update(total=total, progress=count)
+        self._set_detail(f"{step} frame {count:,} of {total:,}")
 
     def finish(self) -> None:
         """Hide the panel."""
