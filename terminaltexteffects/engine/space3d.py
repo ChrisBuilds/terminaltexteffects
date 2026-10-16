@@ -730,7 +730,9 @@ class Body:
             if tween.done:
                 for callback in tween.callbacks:
                     callback(self)
-        if self._queue and self._queue[0] is group and all(tween.done for tween in group):
+                if not self._queue or self._queue[0] is not group:
+                    return  # A callback reset the body or replaced the queue.
+        if all(tween.done for tween in group):
             self._queue.pop(0)
 
     # Anchors and layouts

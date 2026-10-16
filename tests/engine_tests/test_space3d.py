@@ -136,6 +136,21 @@ def test_reset_clears_queued_tweens() -> None:
     assert not body.animating
 
 
+def test_reset_from_a_callback_stops_the_rest_of_its_group() -> None:
+    """Reset from an `on_complete` callback stops the other tweens in that group the same frame."""
+    _, space = make_space()
+    body = space.body()
+
+    def reset(finished: space3d.Body) -> None:
+        finished.reset()
+
+    body.hold(1).on_complete(reset)
+    body.move_to(10, 0, 0, frames=5, together=True)
+    space.step()
+    assert not body.animating
+    assert_vec_close(body.position, g3.Vec3(0, 0, 0))
+
+
 # Tweens
 
 
