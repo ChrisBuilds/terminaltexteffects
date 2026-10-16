@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Gradient, Scene, easing
+from terminaltexteffects import Color, ColorPair, Gradient, Scene, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.space3d import Body, Space3D
@@ -57,9 +57,14 @@ class LogoIterator(BaseEffectIterator[LogoConfig]):
     def finish(self, sign: Body) -> None:
         """Release the text and show it in its input colors."""
         sign.release_all()
+        # "always" reapplies input colors by itself. "dynamic" needs them passed, and "ignore" leaves them off.
+        dynamic = self.terminal.config.existing_color_handling == "dynamic"
         for character in self.terminal.get_characters():
+            colors = None
+            if dynamic:
+                colors = ColorPair(fg=character.animation.input_fg_color, bg=character.animation.input_bg_color)
             character.animation.deactivate_scene()
-            character.animation.set_appearance(character.input_symbol)
+            character.animation.set_appearance(character.input_symbol, colors)
 
     def __next__(self) -> str:
         """Spin the sign until it settles."""
