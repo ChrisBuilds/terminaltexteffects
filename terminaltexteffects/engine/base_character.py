@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from types import MappingProxyType
 
-from terminaltexteffects.engine import animation, motion
+from terminaltexteffects.engine import animation, motion, space3d
 from terminaltexteffects.utils.exceptions import (
     DuplicateEventRegistrationError,
     EventRegistrationCallerError,
@@ -63,11 +63,19 @@ class EventHandler:
         """
         self.character = character
         self.registered_events: dict[
-            tuple[EventHandler.Event, animation.Scene | motion.Waypoint | motion.Path],
+            tuple[EventHandler.Event, animation.Scene | motion.Waypoint | motion.Path | space3d.Mount],
             list[
                 tuple[
                     EventHandler.Action,
-                    animation.Scene | motion.Waypoint | motion.Path | int | Coord | EventHandler.Callback | str | None,
+                    animation.Scene
+                    | motion.Waypoint
+                    | motion.Path
+                    | space3d.Mount
+                    | int
+                    | Coord
+                    | EventHandler.Callback
+                    | str
+                    | None,
                 ]
             ],
         ] = {}
@@ -85,6 +93,9 @@ class EventHandler:
             PATH_HOLDING (Event): A path has entered the holding state.
             SCENE_ACTIVATED (Event): An animation scene has been activated.
             SCENE_COMPLETE (Event): An animation scene has completed.
+            MOUNT_COMPLETE (Event): A 3D mount has finished blending, so the character rides its anchor. The
+                caller is the `Mount`.
+            MOUNT_RELEASED (Event): The character has been released from a 3D mount. The caller is the `Mount`.
 
         """
 
@@ -95,6 +106,8 @@ class EventHandler:
         PATH_HOLDING = auto()
         SCENE_ACTIVATED = auto()
         SCENE_COMPLETE = auto()
+        MOUNT_COMPLETE = auto()
+        MOUNT_RELEASED = auto()
 
     class Action(Enum):
         """Actions that can be taken when an event is triggered.
@@ -113,6 +126,10 @@ class EventHandler:
             SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
             SET_COORDINATE (Action): Sets the coordinate of the character. The action target is the coordinate.
             CALLBACK (Action): Calls a callback function. The action target is an EventHandler.Callback object.
+            MOUNT (Action): Mounts the character on a 3D anchor. The action target is a `Mount` made with
+                `Space3D.new_mount`.
+            UNMOUNT (Action): Releases the character from its 3D mount. The action target is the `Mount`, or None
+                to release any active mount.
 
         """
 
@@ -124,6 +141,8 @@ class EventHandler:
         SET_LAYER = auto()
         SET_COORDINATE = auto()
         CALLBACK = auto()
+        MOUNT = auto()
+        UNMOUNT = auto()
 
     @dataclass(init=False)
     class Callback:
@@ -162,7 +181,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str,
         action: typing.Literal[Action.ACTIVATE_SCENE],
         target: animation.Scene | str,
     ) -> None: ...
@@ -170,7 +189,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str,
         action: typing.Literal[Action.DEACTIVATE_SCENE],
         target: animation.Scene | str | None = ...,
     ) -> None: ...
@@ -178,7 +197,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str,
         action: typing.Literal[Action.ACTIVATE_PATH],
         target: motion.Path | str,
     ) -> None: ...
@@ -186,7 +205,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str,
         action: typing.Literal[Action.DEACTIVATE_PATH],
         target: motion.Path | str | None = ...,
     ) -> None: ...
@@ -194,7 +213,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str,
         action: typing.Literal[Action.SET_COORDINATE],
         target: Coord,
     ) -> None: ...
@@ -202,7 +221,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str,
         action: typing.Literal[Action.SET_LAYER],
         target: int,
     ) -> None: ...
@@ -210,7 +229,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str,
         action: typing.Literal[Action.CALLBACK],
         target: Callback,
     ) -> None: ...
@@ -218,16 +237,32 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str,
         action: typing.Literal[Action.RESET_APPEARANCE],
         target: None = None,
+    ) -> None: ...
+    @typing.overload
+    def register_event(
+        self,
+        event: Event,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str,
+        action: typing.Literal[Action.MOUNT],
+        target: space3d.Mount,
+    ) -> None: ...
+    @typing.overload
+    def register_event(
+        self,
+        event: Event,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str,
+        action: typing.Literal[Action.UNMOUNT],
+        target: space3d.Mount | None = ...,
     ) -> None: ...
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str,
         action: Action,
-        target: animation.Scene | motion.Path | int | Coord | Callback | str | None = None,
+        target: animation.Scene | motion.Path | space3d.Mount | int | Coord | Callback | str | None = None,
     ) -> None:
         """Register an event to be handled by the EventHandler.
 
@@ -237,13 +272,16 @@ class EventHandler:
         `PATH_HOLDING` and segment events require their corresponding object instances.
         For `ACTIVATE_PATH`, `DEACTIVATE_PATH`, `ACTIVATE_SCENE`, and `DEACTIVATE_SCENE`,
         string targets are resolved from registered path or scene IDs. `DEACTIVATE_PATH`,
-        `DEACTIVATE_SCENE`, and `RESET_APPEARANCE` may use `None` where supported by the action.
+        `DEACTIVATE_SCENE`, `UNMOUNT`, and `RESET_APPEARANCE` may use `None` where supported by the action.
+        `MOUNT_COMPLETE` and `MOUNT_RELEASED` take the `Mount` as the caller.
 
         Args:
             event (Event): The event to register.
-            caller (animation.Scene | motion.Waypoint | motion.Path | str): The object that triggers the event.
+            caller (animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | str): The object that triggers
+                the event.
             action (Action): The action to take when the event is triggered.
-            target (animation.Scene | motion.Path | int | Coord | Callback | str | None): The target of the action.
+            target (animation.Scene | motion.Path | space3d.Mount | int | Coord | Callback | str | None): The target
+                of the action.
 
         Raises:
             EventRegistrationCallerError: If the caller object is not the required type for the
@@ -295,7 +333,11 @@ class EventHandler:
                 raise SceneNotFoundError(scene_id=target)
             target = scene_query_result
 
-        elif action in (EventHandler.Action.DEACTIVATE_PATH, EventHandler.Action.DEACTIVATE_SCENE) and target is None:
+        elif (
+            action
+            in (EventHandler.Action.DEACTIVATE_PATH, EventHandler.Action.DEACTIVATE_SCENE, EventHandler.Action.UNMOUNT)
+            and target is None
+        ):
             pass
 
         elif (action is EventHandler.Action.RESET_APPEARANCE and target is not None) or (
@@ -303,7 +345,7 @@ class EventHandler:
         ):
             raise EventRegistrationTargetError(action, target, _ACTION_TARGET_TYPES[action])
 
-        assert isinstance(caller, (motion.Path, animation.Scene, motion.Waypoint))
+        assert isinstance(caller, (motion.Path, animation.Scene, motion.Waypoint, space3d.Mount))
         new_event = (event, caller)
         new_action = (action, target)
 
@@ -316,7 +358,11 @@ class EventHandler:
 
         self.registered_events[new_event].append(new_action)
 
-    def _handle_event(self, event: Event, caller: animation.Scene | motion.Waypoint | motion.Path) -> None:
+    def _handle_event(
+        self,
+        event: Event,
+        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount,
+    ) -> None:
         """Handle a registered event by executing all associated actions.
 
         This method processes an event triggered by a caller object (Scene, Waypoint, or Path) and
@@ -335,10 +381,13 @@ class EventHandler:
         - SET_LAYER: Sets the character's rendering layer
         - SET_COORDINATE: Sets the character's current coordinate
         - CALLBACK: Executes a custom callback function with the character and additional arguments
+        - MOUNT: Mounts the character on a 3D anchor
+        - UNMOUNT: Releases a specific mount or, when the target is `None`, any active mount
 
         Args:
             event (Event): The event to handle. Must be one of the Event enum values.
-            caller (animation.Scene | motion.Waypoint | motion.Path): The object that triggered the event.
+            caller (animation.Scene | motion.Waypoint | motion.Path | space3d.Mount): The object that triggered the
+                event.
                 The caller type must match the expected type for the given event (e.g., PATH_COMPLETE
                 events must be triggered by motion.Path objects).
 
@@ -378,25 +427,32 @@ class EventHandler:
                 self.character.motion.current_coord = target  # type: ignore[assignment]
             elif action is EventHandler.Action.CALLBACK:
                 target.callback(self.character, *target.args)  # type: ignore[union-attr]
+            elif action is EventHandler.Action.MOUNT:
+                self.character.motion.activate_mount(target)  # type: ignore[arg-type]
+            elif action is EventHandler.Action.UNMOUNT:
+                self.character.motion.deactivate_mount(target)  # type: ignore[arg-type]
 
 
 # Registration rules are shared; per-character event actions remain independent.
-_EVENT_CALLER_TYPES: typing.Mapping[EventHandler.Event, type[animation.Scene | motion.Waypoint | motion.Path]] = (
-    MappingProxyType(
-        {
-            EventHandler.Event.SEGMENT_ENTERED: motion.Waypoint,
-            EventHandler.Event.SEGMENT_EXITED: motion.Waypoint,
-            EventHandler.Event.PATH_ACTIVATED: motion.Path,
-            EventHandler.Event.PATH_COMPLETE: motion.Path,
-            EventHandler.Event.PATH_HOLDING: motion.Path,
-            EventHandler.Event.SCENE_ACTIVATED: animation.Scene,
-            EventHandler.Event.SCENE_COMPLETE: animation.Scene,
-        },
-    )
+_EVENT_CALLER_TYPES: typing.Mapping[
+    EventHandler.Event,
+    type[animation.Scene | motion.Waypoint | motion.Path | space3d.Mount],
+] = MappingProxyType(
+    {
+        EventHandler.Event.SEGMENT_ENTERED: motion.Waypoint,
+        EventHandler.Event.SEGMENT_EXITED: motion.Waypoint,
+        EventHandler.Event.PATH_ACTIVATED: motion.Path,
+        EventHandler.Event.PATH_COMPLETE: motion.Path,
+        EventHandler.Event.PATH_HOLDING: motion.Path,
+        EventHandler.Event.SCENE_ACTIVATED: animation.Scene,
+        EventHandler.Event.SCENE_COMPLETE: animation.Scene,
+        EventHandler.Event.MOUNT_COMPLETE: space3d.Mount,
+        EventHandler.Event.MOUNT_RELEASED: space3d.Mount,
+    },
 )
 _ACTION_TARGET_TYPES: typing.Mapping[
     EventHandler.Action,
-    type[animation.Scene | motion.Path | int | Coord | EventHandler.Callback | None],
+    type[animation.Scene | motion.Path | space3d.Mount | int | Coord | EventHandler.Callback | None],
 ] = MappingProxyType(
     {
         EventHandler.Action.ACTIVATE_PATH: motion.Path,
@@ -407,6 +463,8 @@ _ACTION_TARGET_TYPES: typing.Mapping[
         EventHandler.Action.SET_LAYER: int,
         EventHandler.Action.SET_COORDINATE: Coord,
         EventHandler.Action.CALLBACK: EventHandler.Callback,
+        EventHandler.Action.MOUNT: space3d.Mount,
+        EventHandler.Action.UNMOUNT: space3d.Mount,
     },
 )
 
