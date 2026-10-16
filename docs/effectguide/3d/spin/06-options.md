@@ -38,7 +38,8 @@ The final gradient options use the shared `FinalGradientStopsArg`, `FinalGradien
 
 With `--existing-color-handling dynamic`, each character keeps its input colors. `build` reads them into
 `final_colors` instead of the gradient color. A character with an input foreground still shades from the shadow color
-to that foreground. One with no foreground keeps its input colors in a single frame throughout.
+to that foreground, over its input background. One with no foreground keeps its input colors in a single frame
+throughout. Spaces with an input background are mounted too, since their color shows.
 
 ## Run it
 

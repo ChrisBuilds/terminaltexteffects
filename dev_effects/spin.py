@@ -177,7 +177,12 @@ class SpinIterator(BaseEffectIterator[SpinConfig]):
             self.terminal.canvas.text_right,
             self.config.final_gradient_direction,
         )
-        characters = [character for character in self.terminal.get_characters() if character.input_symbol != " "]
+        # Spaces are invisible, so only those with an input background color are worth mounting.
+        characters = [
+            character
+            for character in self.terminal.get_characters()
+            if character.input_symbol != " " or character.animation.input_bg_color is not None
+        ]
         for character in characters:
             if dynamic:
                 colors = ColorPair(fg=character.animation.input_fg_color, bg=character.animation.input_bg_color)
@@ -185,13 +190,15 @@ class SpinIterator(BaseEffectIterator[SpinConfig]):
                 colors = ColorPair(fg=final_gradient_mapping[character.input_coord])
             self.final_colors[character] = colors
             # The mount's light reading picks the frame: shadow when the text faces away, the final color facing
-            # the viewer. Input colors without a foreground keep their colors throughout.
+            # the viewer. The background, if any, stays the same, and input colors without a foreground keep their
+            # colors throughout.
             scene = character.animation.new_scene(sync=Scene.SyncMetric.LIGHT)
             if colors.fg is None:
                 scene.add_frame(character.input_symbol, 1, colors=colors)
             else:
                 shade = Gradient(self.config.shadow_color, typing.cast("Color", colors.fg), steps=self.SHADE_STEPS)
-                scene.apply_gradient_to_symbols(character.input_symbol, 1, fg_gradient=shade)
+                for color in shade.spectrum:
+                    scene.add_frame(character.input_symbol, 1, colors=ColorPair(fg=color, bg=colors.bg))
             character.animation.activate_scene(scene)
             self.terminal.set_character_visibility(character, is_visible=True)
             self.active_characters.add(character)
