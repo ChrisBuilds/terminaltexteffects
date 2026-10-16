@@ -926,7 +926,8 @@ class EdgeCell(NamedTuple):
 
     Attributes:
         depth (float): Distance from the camera. Smaller is nearer.
-        front (bool): Whether the edge borders a face turned toward the camera.
+        front (bool): Whether the edge borders a face turned toward the camera and, with `depth_test`,
+            is not behind the filled surface at this cell.
         symbol (str): A line symbol following the edge's on-screen slope.
 
     """
@@ -944,12 +945,17 @@ def wireframe(
     scale: float = 1.0,
     position: Vec3 = ORIGIN,
     bounds: Bounds | None = None,
+    depth_test: bool = False,
 ) -> dict[Coord, EdgeCell]:
     """Return the cells along the mesh's edges.
 
     Where edges cross, a front edge wins over a hidden one, and otherwise the nearer edge wins. Edges crossing
     the near plane retain their visible segment. With `bounds`, only the cells of each edge inside them are
     visited, so an edge reaching far off screen costs no more than one on it.
+
+    By default, `front` classifies adjacent face orientation, which only approximates visibility for concave
+    meshes. With `depth_test=True`, cells behind the mesh's filled surface are also classified as hidden.
+    This adds a rasterization pass, restricted to the same `bounds`.
     """
     rotation = rotation or Rotation()
     world = transform_points(mesh.vertices, rotation, scale=scale, position=position)
@@ -966,6 +972,11 @@ def wireframe(
         for start, end in zip(face.indices, face.indices[1:] + face.indices[:1]):
             edge = (min(start, end), max(start, end))
             front_edges[edge] = front_edges.get(edge, False) or facing
+    surface = (
+        rasterize(mesh, camera, rotation=rotation, scale=scale, position=position, cull="none", bounds=bounds)
+        if depth_test
+        else {}
+    )
     cells: dict[Coord, EdgeCell] = {}
     for (start, end), front in front_edges.items():
         a, b = projected[start], projected[end]
@@ -983,10 +994,12 @@ def wireframe(
             t = step / steps
             # Under perspective, reciprocal depth is what changes linearly along the line on screen.
             depth = a.depth + (b.depth - a.depth) * t if camera.orthographic else 1 / ((1 - t) / a.depth + t / b.depth)
+            fragment = surface.get(cell)
+            visible = front and (fragment is None or depth <= fragment.depth + _EPSILON)
             current = cells.get(cell)
-            if current is not None and (current.front, -current.depth) >= (front, -depth):
+            if current is not None and (current.front, -current.depth) >= (visible, -depth):
                 continue
-            cells[cell] = EdgeCell(depth, front, symbol)
+            cells[cell] = EdgeCell(depth, visible, symbol)
     return cells
 
 

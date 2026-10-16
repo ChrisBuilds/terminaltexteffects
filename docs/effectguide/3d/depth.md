@@ -78,6 +78,17 @@ As the card turns edge-on, its columns crowd into fewer cells and only one chara
 you see the back of the card, so the text reads mirrored. `hide_when_facing_away=True` hides each character while its
 side faces away, as a solid card would.
 
+## Hidden wireframe lines
+
+By default, `Wireframe` calls an edge front-facing when an adjacent face points toward the
+camera. This is a fast approximation for convex solids; concave and custom meshes can have
+front-facing edges behind another part of the mesh. Use
+`Wireframe(depth_test=True, hidden_color=None)` for hidden-line removal against the same mesh's
+filled depth buffer. A hidden color instead draws those occluded lines in that color.
+The low-level `geometry3d.wireframe` accepts the same `depth_test=True` option. It adds a fill
+pass within the viewport and tests depth at terminal cell centers, so cell rounding can affect silhouettes.
+
+
 ## Under the hood
 
 [`geometry3d.rasterize`](../../engine/utils/geometry3d.md) fills a mesh into a buffer and returns it:

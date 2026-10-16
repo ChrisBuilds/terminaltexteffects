@@ -505,12 +505,15 @@ class Wireframe:
 
     Attributes:
         color (Color): Color of edges on faces turned toward the viewer.
-        hidden_color (Color | None): Color of edges on the far side, or `None` to leave them out.
+        hidden_color (Color | None): Color of hidden edges, or `None` to leave them out.
+        depth_test (bool): Test edges against the mesh's filled depth buffer. Use for concave meshes; the default
+            only tests adjacent face orientation.
 
     """
 
     color: Color = Color("#00D1FF")
     hidden_color: Color | None = _DIM
+    depth_test: bool = False
 
 
 Look = typing.Union[Shaded, Solid, Textured, Wireframe]
@@ -1244,7 +1247,7 @@ class Body:
             look = self._look
             front = space._pair(look.color)
             hidden = space._pair(look.hidden_color) if look.hidden_color is not None else None
-            for cell, edge in g3.wireframe(mesh, camera, **pose).items():
+            for cell, edge in g3.wireframe(mesh, camera, depth_test=look.depth_test, **pose).items():
                 if edge.front:
                     _offer(cells, cell, edge.depth, edge.symbol, front, self)
                 elif hidden is not None:
