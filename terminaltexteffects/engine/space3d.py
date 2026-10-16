@@ -438,6 +438,8 @@ class Shaded:
         if not self.symbols:
             msg = "Shaded needs at least one symbol."
             raise ValueError(msg)
+        for symbol in self.symbols:
+            _check_one_cell(symbol)
 
 
 @dataclass(frozen=True)
@@ -445,13 +447,20 @@ class Solid:
     """Fill faces with one symbol, colored by the light.
 
     Attributes:
-        symbol (str): The fill symbol.
+        symbol (str): The fill symbol, one cell wide.
         gradient (Gradient | None): Colors from unlit to fully lit. `None` uses the TTE brand colors.
+
+    Raises:
+        ValueError: If `symbol` is not one printable character one cell wide.
 
     """
 
     symbol: str = "█"
     gradient: Gradient | None = None
+
+    def __post_init__(self) -> None:
+        """Validate the symbol."""
+        _check_one_cell(self.symbol)
 
 
 @dataclass(frozen=True)
@@ -511,6 +520,17 @@ def _gradient(gradient: Gradient | None) -> Gradient:
     if _default_gradient is None:
         _default_gradient = Gradient(*(Color(stop) for stop in _BRAND_STOPS), steps=12)
     return _default_gradient
+
+
+def _check_one_cell(symbol: str) -> None:
+    """Raise `ValueError` unless `symbol` is one printable symbol one cell wide, as each surface cell needs."""
+    try:
+        width = get_symbol_cell_width(symbol)
+    except InvalidSymbolError:
+        width = 0
+    if width != 1:
+        msg = f"Surface symbols must be one printable character one cell wide, not {symbol!r}."
+        raise ValueError(msg)
 
 
 def _text_grid(text: str) -> tuple[list[str], int]:
@@ -1497,10 +1517,16 @@ class Space3D:
                 rows.setdefault(character.input_coord.row, {})[character.input_coord.column] = character.input_symbol
             left = min((character.input_coord.column for character in characters), default=0)
             right = max((character.input_coord.column for character in characters), default=-1)
-            self._input_text = "\n".join(
-                "".join(rows[row].get(column, " ") for column in range(left, right + 1)).rstrip()
-                for row in sorted(rows, reverse=True)
-            )
+            lines = []
+            for row in sorted(rows, reverse=True):
+                symbols, column = [], left
+                while column <= right:
+                    symbol = rows[row].get(column, " ")
+                    symbols.append(symbol)
+                    # A wide character already spans the next column, so that column adds nothing.
+                    column += get_symbol_cell_width(symbol)
+                lines.append("".join(symbols).rstrip())
+            self._input_text = "\n".join(lines)
         return self._input_text
 
     def _pair(self, color: Color) -> ColorPair:

@@ -75,6 +75,12 @@ def test_looks_validate_their_settings() -> None:
         space3d.Shaded(symbols="")
     with pytest.raises(ValueError, match="back"):
         space3d.Textured(back="show")  # type: ignore[arg-type]
+    for bad in ("界", "ab", "\t"):
+        with pytest.raises(ValueError, match="one cell wide"):
+            space3d.Solid(bad)
+    for bad in ("界", "\t"):
+        with pytest.raises(ValueError, match="one cell wide"):
+            space3d.Shaded(symbols=f".{bad}")
 
 
 def test_draw_defaults_to_shaded_and_fills_the_projected_shape() -> None:
@@ -369,3 +375,10 @@ def test_textured_text_keeps_every_drawn_symbol_one_cell_wide() -> None:
     space.step()
     assert rows(body)[0].startswith("a  b c")
     assert space3d._text_grid("a界b\tc") == (["a  b c"], 6)
+
+
+def test_input_text_counts_a_wide_character_once() -> None:
+    """The default text keeps input columns: a wide character's second column adds no extra gap."""
+    space = make_space("a界b\nxyz")
+    assert space.input_text == "a界b\nxyz"
+    assert space3d._text_grid(space.input_text)[0] == ["a  b", "xyz"]
