@@ -616,11 +616,14 @@ class Motion:
             mount (Mount): The mount to ride. It must have been created for this character.
 
         Raises:
-            ValueError: If the mount was created for a different character.
+            ValueError: If the mount was created for a different character or its body has been removed.
 
         """
         if mount.character is not self.character:
             msg = "The mount was created for a different character."
+            raise ValueError(msg)
+        if mount.anchor.body._removed:
+            msg = "The mount's body has been removed from its space."
             raise ValueError(msg)
         if self.mount is mount:
             return

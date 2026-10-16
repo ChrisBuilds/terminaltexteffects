@@ -64,6 +64,18 @@ Mounting and paths are both part of a character's `Motion`, so they hand off cle
   scenes through the [event handler](../engine/events.md). `space.new_mount()` creates a mount for the `MOUNT` action
   without starting it.
 
+## Lifecycle
+
+`body.cancel()` discards queued tweens and completion callbacks while keeping the current pose.
+`reset()` also restores the starting pose. Both allow new tweens afterwards.
+
+Use `space.remove(body)` to stop tracking a body: it cancels tweens, releases mounts, and hides
+surface cells immediately. Repeated removal is harmless; a body from another space is rejected.
+Removed bodies are no longer drawn or stepped and their anchors cannot be mounted again.
+Create a new body to add geometry back. `space.clear()` removes all current bodies.
+The space retains its surface-character pool for reuse; `erase()` alone only stops surface drawing.
+
+
 ## Under the hood
 
 A tween is a function of progress from 0 to 1. Each frame, `step()` advances the front of each body's queue by one

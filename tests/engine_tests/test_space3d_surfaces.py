@@ -99,6 +99,31 @@ def test_draw_defaults_to_shaded_and_fills_the_projected_shape() -> None:
     assert all(symbol(character) in ".,-~:;=!*#$@" for character in cells.values())
 
 
+def test_remove_and_clear_hide_surfaces_immediately_and_reuse_pool() -> None:
+    """Removal hides owned surface slots immediately; later bodies can reuse the space pool."""
+    space = make_space()
+    first = space.body(space3d.Cube(8)).draw()
+    second = space.body(space3d.Cube(8), at=(12, 0, 0)).draw()
+    space.step()
+    old_cells = list(first.surface_characters.values())
+    other_cells = list(second.surface_characters.values())
+    assert old_cells
+    assert other_cells
+    space.remove(first)
+    assert not first.surface_characters
+    assert not first.drawn
+    assert all(not cell.is_visible for cell in old_cells)
+    assert all(cell.is_visible for cell in other_cells)
+    space.clear()
+    assert not space.bodies
+    assert not space.mounts
+    assert all(not cell.is_visible for cell in space.surface_characters.values())
+    third = space.body(space3d.Cube(8)).draw()
+    space.step()
+    assert set(third.surface_characters.values()) == set(old_cells)
+    assert all(cell.is_visible for cell in old_cells)
+
+
 def test_erase_hides_the_cells_at_the_next_step() -> None:
     """Erase hides the body's cells at the next step and keeps the pooled characters."""
     space = make_space()
