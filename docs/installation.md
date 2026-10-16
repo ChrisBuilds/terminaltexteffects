@@ -69,6 +69,8 @@ To compose text and preview effects interactively, install the optional `tui` ex
 To save effects as GIF or WebP animations with `--record`, install the optional `export` extra, for example
 `pipx install 'terminaltexteffects[export]'`. See [GIF and WebP](./appguide.md#gif-and-webp).
 
+The `all` extra installs both: `pipx install 'terminaltexteffects[all]'`.
+
 [Application Usage](./appguide.md){ .md-button }
 
 ## Library
