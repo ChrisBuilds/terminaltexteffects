@@ -1348,6 +1348,8 @@ class Mount:
         light (float): How directly the surface faces the light, 0 to 1. 1 without a normal.
         active (bool): Whether the character is currently mounted with it.
         arrived (bool): Whether the blend has finished, so the character sits on the anchor.
+        projected (bool): Whether the anchor is on or beyond the near plane and can be projected. Characters
+            are hidden while this is false; the other readings retain their last valid values.
 
     """
 
@@ -1376,6 +1378,7 @@ class Mount:
         self.ease = ease
         self.layer_by_depth = layer_by_depth
         self.hide_when_facing_away = hide_when_facing_away
+        self.projected = False
         self.coord = character.motion.current_coord
         self.depth = space.camera.distance
         self.nearness = 1.0
@@ -1431,6 +1434,7 @@ class Mount:
         camera = self.space.camera
         world = body.world_point(self.anchor.point)
         projected = camera.project(world)
+        self.projected = projected is not None
         if projected is None:
             return
         self.coord = projected.coord
@@ -1469,14 +1473,13 @@ class Mount:
             layer = round(nearness)
             self.character.layer = self._base_layer + layer
             self.character._set_depth_order(nearness - layer)
-        if self.hide_when_facing_away:
-            hide = self.arrived and not self.facing
-            if hide and not self._hidden and self.character.is_visible:
-                self._hidden = True
-                self.space.terminal.set_character_visibility(self.character, is_visible=False)
-            elif not hide and self._hidden:
-                self._hidden = False
-                self.space.terminal.set_character_visibility(self.character, is_visible=True)
+        hide = not self.projected or (self.hide_when_facing_away and self.arrived and not self.facing)
+        if hide and not self._hidden and self.character.is_visible:
+            self._hidden = True
+            self.space.terminal.set_character_visibility(self.character, is_visible=False)
+        elif not hide and self._hidden:
+            self._hidden = False
+            self.space.terminal.set_character_visibility(self.character, is_visible=True)
         return coord, just_arrived
 
 
