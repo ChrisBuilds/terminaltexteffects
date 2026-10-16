@@ -38,7 +38,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE, Coord, rasterize_line
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
 
     from terminaltexteffects.engine.canvas import Canvas
 
@@ -900,8 +900,8 @@ def wireframe(
     """Return the cells along the mesh's edges.
 
     Where edges cross, a front edge wins over a hidden one, and otherwise the nearer edge wins. Edges with an end
-    behind the camera are skipped. With `bounds`, such as the canvas, edges are clipped to them before their cells
-    are walked, so only cells inside are returned.
+    behind the camera are skipped. With `bounds`, such as the canvas, only the cells of each edge inside them are
+    visited, so an edge reaching far off screen costs no more than one on it.
     """
     rotation = rotation or Rotation()
     world = transform_points(mesh.vertices, rotation, scale=scale, position=position)
@@ -924,19 +924,13 @@ def wireframe(
         if a is None or b is None:
             continue
         symbol = line_symbol(b.column - a.column, b.row - a.row, camera.row_scale)
-        if bounds is not None:
-            clipped = _clip_segment(a, b, bounds, orthographic=orthographic)
-            if clipped is None:
-                continue
-            a, b = clipped
-        line = rasterize_line(a.coord, b.coord)
-        steps = max(len(line) - 1, 1)
-        for step, cell in enumerate(line):
+        first, last = a.coord, b.coord
+        steps = max(abs(last.column - first.column), abs(last.row - first.row), 1)
+        line = enumerate(rasterize_line(first, last)) if bounds is None else _line_cells_in_bounds(first, last, bounds)
+        for step, cell in line:
             t = step / steps
             # Under perspective, reciprocal depth is what changes linearly along the line on screen.
             depth = a.depth + (b.depth - a.depth) * t if camera.orthographic else 1 / ((1 - t) / a.depth + t / b.depth)
-            if bounds is not None and not bounds.contains(cell):
-                continue
             current = cells.get(cell)
             if current is not None and (current.front, -current.depth) >= (front, -depth):
                 continue
@@ -944,50 +938,41 @@ def wireframe(
     return cells
 
 
-def _clip_segment(
-    a: Projected, b: Projected, bounds: Bounds, *, orthographic: bool
-) -> tuple[Projected, Projected] | None:
-    """Return the part of the on-screen segment from `a` to `b` that rounds into `bounds`, or `None` if none does.
+def _ordered(indexes: range, *, forward: bool) -> range:
+    """Return `indexes`, reversed unless `forward`."""
+    return indexes if forward else indexes[::-1]
 
-    Ends already inside are returned unchanged, so lines on screen rasterize exactly as without bounds. A new end
-    gets the depth found along the line on screen, through reciprocal depth under perspective.
+
+def _line_cells_in_bounds(start: Coord, end: Coord, bounds: Bounds) -> Iterator[tuple[int, Coord]]:
+    """Yield `(step, cell)` for the cells of `rasterize_line(start, end)` inside `bounds`, in the same order.
+
+    Each step of that line moves one cell along its longer axis, and the shorter axis is then the step's share of
+    the run rounded half up, so the cells inside the bounds are found directly instead of walking the whole line.
+    The result matches rasterizing the line and dropping the cells outside, cell for cell.
     """
-    # Cells round to the nearest center, so a cell's area reaches half a cell past its center.
-    low_column, high_column = bounds.left - 0.5, bounds.right + 0.5
-    low_row, high_row = bounds.bottom - 0.5, bounds.top + 0.5
-    if (
-        low_column <= a.column <= high_column
-        and low_row <= a.row <= high_row
-        and low_column <= b.column <= high_column
-        and low_row <= b.row <= high_row
-    ):
-        return a, b
-    # Liang-Barsky: narrow the range of t along the segment to where it is inside every edge of the bounds.
-    column_change, row_change = b.column - a.column, b.row - a.row
-    start, end = 0.0, 1.0
-    for change, gap in (
-        (-column_change, a.column - low_column),
-        (column_change, high_column - a.column),
-        (-row_change, a.row - low_row),
-        (row_change, high_row - a.row),
-    ):
-        if abs(change) < _EPSILON:
-            if gap < 0:
-                return None  # Parallel to this edge and outside it.
-            continue
-        t = gap / change
-        if change < 0:
-            start = max(start, t)
-        else:
-            end = min(end, t)
-        if start > end:
-            return None
-
-    def at(t: float) -> Projected:
-        depth = a.depth + (b.depth - a.depth) * t if orthographic else 1 / ((1 - t) / a.depth + t / b.depth)
-        return Projected(a.column + column_change * t, a.row + row_change * t, depth)
-
-    return (a if start == 0 else at(start)), (b if end == 1 else at(end))
+    canonical = (start.column, start.row) <= (end.column, end.row)
+    first, last = (start, end) if canonical else (end, start)
+    column_change, row_change = last.column - first.column, last.row - first.row
+    column_run, row_run = abs(column_change), abs(row_change)
+    column_step = (column_change > 0) - (column_change < 0)
+    row_step = (row_change > 0) - (row_change < 0)
+    steps = max(column_run, row_run)
+    if steps == 0:
+        if bounds.contains(first):
+            yield 0, first
+        return
+    if column_run >= row_run:
+        low, high = sorted(((bounds.left - first.column) * column_step, (bounds.right - first.column) * column_step))
+        for index in _ordered(range(max(0, low), min(steps, high) + 1), forward=canonical):
+            row = first.row + row_step * ((2 * index * row_run + column_run) // (2 * column_run))
+            if bounds.bottom <= row <= bounds.top:
+                yield (index if canonical else steps - index), Coord(first.column + column_step * index, row)
+    else:
+        low, high = sorted(((bounds.bottom - first.row) * row_step, (bounds.top - first.row) * row_step))
+        for index in _ordered(range(max(0, low), min(steps, high) + 1), forward=canonical):
+            column = first.column + column_step * ((2 * index * column_run + row_run) // (2 * row_run))
+            if bounds.left <= column <= bounds.right:
+                yield (index if canonical else steps - index), Coord(column, first.row + row_step * index)
 
 
 def line_symbol(column_change: float, row_change: float, row_scale: float = TERMINAL_ROW_SCALE) -> str:

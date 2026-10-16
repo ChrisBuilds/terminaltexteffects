@@ -9,7 +9,7 @@ import pytest
 
 from terminaltexteffects.engine.canvas import Canvas
 from terminaltexteffects.utils import geometry3d as g3
-from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE, Coord
+from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE, Coord, rasterize_line
 
 pytestmark = [pytest.mark.utils, pytest.mark.smoke]
 
@@ -559,23 +559,35 @@ def test_rasterize_skips_geometry_outside_bounds() -> None:
     assert cells == {}
 
 
-def test_wireframe_with_bounds_keeps_lines_on_screen_and_clips_the_rest() -> None:
-    """Bounds leave on-screen lines unchanged and clip long lines to the cells inside them."""
-    camera = g3.Camera(0, 0)
+@pytest.mark.parametrize("orthographic", [False, True])
+@pytest.mark.parametrize("position", [g3.Vec3(0, 0, 0), g3.Vec3(10, 0, 100), g3.Vec3(-30, 7, 60)])
+def test_wireframe_with_bounds_matches_the_unbounded_cells_inside_them(
+    orthographic: bool,  # noqa: FBT001
+    position: g3.Vec3,
+) -> None:
+    """Bounds return exactly the unbounded wireframe's cells inside them, with the same depths and symbols."""
+    camera = g3.Camera(0, 0, orthographic=orthographic)
     mesh = g3.box(20, 10, 10)
-    on_screen = g3.wireframe(mesh, camera)
-    assert g3.wireframe(mesh, camera, bounds=g3.Bounds(-20, 20, -10, 10)) == on_screen
-    bounds = g3.Bounds(-4, 4, -2, 2)
-    # Moved so the front face's left edge runs down the middle of the bounds and well past them.
-    position = g3.Vec3(10, 0, 100)
-    clipped = g3.wireframe(mesh, camera, bounds=bounds, position=position)
-    assert clipped
-    assert all(bounds.contains(cell) for cell in clipped)
-    # Clipping a line keeps its cells and depths where it crosses the bounds.
-    full = g3.wireframe(mesh, camera, position=position)
-    for cell, edge in clipped.items():
-        assert cell in full
-        assert edge.depth == pytest.approx(full[cell].depth, abs=0.5)
+    rotation = g3.Rotation.about_y(0.7) * g3.Rotation.about_x(0.4)
+    bounds = g3.Bounds(-6, 9, -4, 3)
+    full = g3.wireframe(mesh, camera, rotation=rotation, position=position)
+    bounded = g3.wireframe(mesh, camera, rotation=rotation, position=position, bounds=bounds)
+    assert bounded == {cell: edge for cell, edge in full.items() if bounds.contains(cell)}
+
+
+def test_bounded_line_cells_match_the_rasterized_line() -> None:
+    """Finding a line's cells inside bounds directly gives the same cells and steps as walking the whole line."""
+    bounds = g3.Bounds(1, 10, 1, 10)
+    for start, end in [
+        (Coord(-30, -30), Coord(1, 2)),
+        (Coord(1, 2), Coord(-30, -30)),
+        (Coord(-200, 5), Coord(300, 7)),
+        (Coord(4, -90), Coord(6, 90)),
+        (Coord(5, 5), Coord(5, 5)),
+        (Coord(20, 20), Coord(30, 30)),
+    ]:
+        expected = [(step, cell) for step, cell in enumerate(rasterize_line(start, end)) if bounds.contains(cell)]
+        assert list(g3._line_cells_in_bounds(start, end, bounds)) == expected
 
 
 def test_wireframe_with_bounds_skips_far_off_screen_edges_quickly() -> None:
