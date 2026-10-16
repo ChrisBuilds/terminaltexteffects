@@ -43,10 +43,13 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 one frame at a time in `step()`. `rotate(axis, degrees)` turns the body by that much right away instead, which is
 useful when your own code decides the angle each frame.
 
-Both turn about the **world's** axes, not the body's own. `rotate("y", 5)` on a body you've already tipped forward
-turns it about the screen's vertical, not about its own tipped axis. To spin a tipped body about its own axis, set
-its rotation each frame as the [ticker recipe](recipes.md#ticker-on-a-cylinder) does:
-`body.set_rotation(tilt * rotation_about("y", angle))`.
+Both turn about the **world's** axes by default. `rotate("y", 5)` on a body you've already tipped forward
+turns it about the screen's vertical. Use `rotate("y", 5, local=True)` or
+`spin("y", local=True)` to turn about the body's own tipped axis. The local axis follows the body
+when other turns run alongside it.
+
+`settle` still spins about a world axis while returning to rest. `turn_to` and `turn_to_rest`
+target an absolute orientation, so they have no local-axis option.
 
 ### Tumbling
 
