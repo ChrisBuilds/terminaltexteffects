@@ -456,3 +456,12 @@ def test_effectcharacter_tick_scene_and_path(effectcharacter: EffectCharacter) -
 def test_effectcharacter_equal_invalid_type(effectcharacter: EffectCharacter) -> None:
     """Test that __eq__ returns NotImplemented when comparing with an invalid type."""
     assert effectcharacter.__eq__("a") is NotImplemented
+
+
+def test_effectcharacter_hashes_by_character_id() -> None:
+    """Sets of characters iterate in the same order on every run, since the hash doesn't depend on memory address."""
+    first = EffectCharacter(7, "a", 1, 1)
+    twin = EffectCharacter(7, "a", 1, 1)
+    assert hash(first) == 7
+    assert first != twin
+    assert len({first, twin}) == 2
