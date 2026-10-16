@@ -610,7 +610,8 @@ class EffectCharacter:
         """Returns whether the character is currently active.
 
         A character is active when its animation has an incomplete active scene or its
-        motion has an incomplete active path.
+        motion has an incomplete active path or an active mount. A mount keeps the character active
+        after its blend finishes, until it is released.
 
         Returns:
             bool: True if the character is active, False if not.

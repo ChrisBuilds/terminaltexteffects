@@ -88,3 +88,13 @@ if projected is not None:
   input.
 - Nothing may come nearer than the camera's `near` distance. With `perspective=2` the camera is only 60 columns away,
   so a body moved to z = 60 disappears.
+
+## Coordinates and mutable settings
+
+World **z** increases toward the viewer. Camera **depth** is `camera.distance - world_z`,
+so smaller depth is nearer. `cell_to_world(coord, z=...)` accepts world z; `Projected.depth`
+and `Mount.depth` report camera depth. Both are measured in columns.
+
+Camera settings are mutable. Construction checks positive `distance`, `focal` (when set), `near`
+and `row_scale`, and requires `near < distance`. Assignments do not revalidate: preserve those
+constraints when changing a field. With `focal=None`, focal length follows the current distance.

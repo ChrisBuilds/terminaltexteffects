@@ -331,7 +331,11 @@ class Camera:
     The camera sits on the +z axis, `distance` columns from the origin, looking toward it. Perspective projection
     scales points by `focal / depth`; with the default `focal` equal to `distance`, points on the z=0 plane keep
     their size, so a character lifted onto that plane with `cell_to_world` projects back onto its own cell.
-    Orthographic projection ignores depth for size, which flattens the view.
+    Orthographic projection ignores depth for size, which flattens the view. World z increases toward the
+    viewer; camera depth is `distance - z` and decreases toward the viewer in both projections.
+
+    Settings are mutable and validated only on construction. When changing fields, keep the same positive-value
+    constraints and `near < distance`; assignments do not revalidate. `focal=None` follows the current distance.
 
     Args:
         center_column (float): Canvas column under the world origin.
@@ -339,7 +343,7 @@ class Camera:
         distance (float): Distance from the camera to the origin, in columns. Smaller values exaggerate perspective.
         focal (float | None): Focal length; `None` uses `distance`.
         orthographic (bool): Project without perspective.
-        near (float): Points nearer than this depth are behind the camera and are not projected.
+        near (float): Minimum camera depth, in columns. Points with `distance - z < near` are not projected.
         row_scale (float): World units per row, correcting for tall cells.
 
     Raises:
@@ -371,7 +375,7 @@ class Camera:
         return cls((canvas.left + canvas.right) / 2, (canvas.bottom + canvas.top) / 2, **settings)
 
     def project(self, point: Vec3) -> Projected | None:
-        """Return where `point` lands on the canvas, or `None` if it is behind the camera."""
+        """Project a world point, or return `None` when its camera depth `distance - point.z` is below `near`."""
         depth = self.distance - point.z
         if depth < self.near:
             return None
@@ -435,6 +439,10 @@ class Face:
 @dataclass(frozen=True)
 class Mesh:
     """Vertices and faces describing a solid, centered on its own origin.
+
+    Built-in mesh factories expect positive dimensions. Dimensions are intentionally unchecked: zero can
+    collapse faces, and negative values can reverse winding and normals. Their shading and texture behavior
+    is not guaranteed. Custom faces should be flat, convex and consistently wound outward.
 
     Attributes:
         vertices (tuple[Vec3, ...]): Corner positions in the mesh's own space.
