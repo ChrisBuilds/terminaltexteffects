@@ -20,10 +20,16 @@ if TYPE_CHECKING:
 EFFECT_DEMOS = render_demos.PROJECT_ROOT / "docs" / "img" / "effects_demos"
 GUIDE_DEMOS = render_demos.PROJECT_ROOT / "docs" / "img" / "effectguide"
 
-pytestmark = pytest.mark.skipif(
-    sys.platform != "linux",
-    reason="Demos are rendered and checked on Linux, where floating-point results match CI.",
-)
+pytestmark = [
+    pytest.mark.skipif(
+        sys.platform != "linux",
+        reason="Demos are rendered and checked on Linux, where floating-point results match CI.",
+    ),
+    pytest.mark.skipif(
+        sys.version_info < (3, 10),
+        reason="Python 3.9 iterates sets of characters in a different order, so seeded demos differ.",
+    ),
+]
 
 
 def rerender_command(name: str, out_dir: Path) -> str:
