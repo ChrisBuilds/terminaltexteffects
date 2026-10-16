@@ -144,7 +144,9 @@ class Shape:
     """Base class for body shapes. Sizes are in columns.
 
     A shape gives a body faces, vertices and edges to lay anchors on. Subclasses build a `geometry3d.Mesh` in
-    `build_mesh`.
+    `build_mesh`. Built-in shapes expect positive dimensions, which are intentionally not validated. Zero or
+    negative sizes can collapse faces or reverse winding; shading and texture layouts are not guaranteed for
+    those sizes. Body scale, in contrast, is validated and must remain positive.
     """
 
     def build_mesh(self) -> g3.Mesh:
@@ -879,7 +881,7 @@ class Body:
         Args:
             x (tuple[float, float] | None): Range for x. `None` uses the middle half of the canvas width.
             y (tuple[float, float] | None): Range for y. `None` uses the middle half of the canvas height.
-            z (tuple[float, float]): Range for z.
+            z (tuple[float, float]): Range for world z, increasing toward the viewer; not camera depth.
             frames (int): Frames the move takes. 0 jumps.
             ease (EasingFunction | None): Easing for the move.
             together (bool): Run alongside the previously queued tween.
@@ -970,7 +972,7 @@ class Body:
         Args:
             x (float): Columns right of the body's origin, before the body turns.
             y (float): Columns up.
-            z (float): Columns toward the viewer.
+            z (float): World columns toward the viewer, before the body turns; not camera depth.
             normal (Axis | None): Which way the surface faces there. Mounts on anchors with a normal report
                 `facing` and `light`.
 
@@ -1335,7 +1337,7 @@ class Mount:
         layer_by_depth (bool): Raise nearer characters' layers so they draw over farther ones.
         hide_when_facing_away (bool): Hide the character while its anchor faces away from the viewer.
         coord (Coord): The cell the anchor projects onto.
-        depth (float): Distance from the camera. Smaller is nearer.
+        depth (float): Camera depth `space.camera.distance - world_z`, in columns. Smaller is nearer.
         nearness (float): 1 at the nearest point the body can reach at its size, 0 at the farthest.
         facing (bool): Whether the anchor's surface faces the viewer. True without a normal.
         facing_amount (float): -1 facing directly away, 0 edge-on, 1 facing the viewer. 1 without a normal.

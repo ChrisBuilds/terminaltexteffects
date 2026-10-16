@@ -94,3 +94,10 @@ one. A `Shape` adds what a body needs on top of its mesh: `surface_points` for s
 - Thin parts, like a torus's tube seen edge-on, can fall between cell centers. Keep every part a few cells thick.
 - Flat faces show as flat patches of one symbol. That's what makes a cube read as a cube, and why a low-detail
   sphere looks faceted.
+
+## Dimension contracts
+
+Use positive dimensions for built-in shapes and mesh factories. They intentionally do not check
+dimension signs: zero can collapse faces, and negative sizes can reverse winding and normals.
+Shading and texture layouts for those sizes are not guaranteed. Body scale is a separate transform
+and explicitly rejects non-positive values. Custom mesh faces should be flat, convex, and wound outward.
