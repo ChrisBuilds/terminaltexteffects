@@ -1056,9 +1056,12 @@ class Mount:
             self.character.layer = self._base_layer + round(self.space.camera.distance - self.depth)
         if self.hide_when_facing_away:
             hide = self.arrived and not self.facing
-            if hide != self._hidden:
-                self._hidden = hide
-                self.space.terminal.set_character_visibility(self.character, is_visible=not hide)
+            if hide and not self._hidden and self.character.is_visible:
+                self._hidden = True
+                self.space.terminal.set_character_visibility(self.character, is_visible=False)
+            elif not hide and self._hidden:
+                self._hidden = False
+                self.space.terminal.set_character_visibility(self.character, is_visible=True)
         return coord, just_arrived
 
 

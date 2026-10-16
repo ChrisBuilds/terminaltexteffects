@@ -561,6 +561,23 @@ def test_hide_when_facing_away_waits_for_the_blend_and_shows_again_when_facing()
     assert character.is_visible
 
 
+def test_hide_when_facing_away_leaves_a_character_the_effect_hid() -> None:
+    """Hide when facing away leaves a character the effect hid itself hidden."""
+    terminal, space = make_space()
+    character = terminal.get_characters()[0]
+    body = space.body().rotate("y", 180)
+    space.mount(character, body.anchor(0, 0, 5, normal="z"), hide_when_facing_away=True)
+    tick(space, [character])
+    assert not character.is_visible
+    body.rotate("y", 180)
+    tick(space, [character])
+    assert not character.is_visible
+    body.rotate("y", 180)
+    tick(space, [character])
+    space.release(character)
+    assert not character.is_visible
+
+
 def test_activating_a_path_releases_the_mount() -> None:
     """Activating a path releases the mount."""
     terminal, space = make_space()
@@ -582,6 +599,32 @@ def test_activating_a_path_releases_the_mount() -> None:
     assert path.segments[0].start.coord == Coord(21, 11)
     character.tick()
     assert character.motion.current_coord == Coord(1, 1)
+
+
+def test_a_mount_from_a_release_callback_does_not_block_the_path_or_mount() -> None:
+    """A mount activated by a release callback gives way to the path or mount that released it."""
+    terminal, space = make_space()
+    character = terminal.get_characters()[0]
+    body = space.body()
+    first = space.new_mount(character, body.anchor(0, 0, 0))
+    fallback = space.new_mount(character, body.anchor(4, 0, 0))
+    character.event_handler.register_event(
+        EventHandler.Event.MOUNT_RELEASED, first, EventHandler.Action.MOUNT, fallback
+    )
+    character.motion.activate_mount(first)
+    path = character.motion.new_path(speed=100)
+    path.new_waypoint(Coord(1, 1))
+    character.motion.activate_path(path)
+    assert character.motion.mount is None
+    assert not fallback.active
+    assert space.mounts == {}
+    character.tick()
+    assert character.motion.current_coord == Coord(1, 1)
+    character.motion.activate_mount(first)
+    third = space.new_mount(character, body.anchor(8, 0, 0))
+    character.motion.activate_mount(third)
+    assert character.motion.mount is third
+    assert space.mounts == {character: third}
 
 
 def test_mounting_again_switches_mounts() -> None:

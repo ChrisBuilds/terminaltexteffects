@@ -529,6 +529,7 @@ class Motion:
             raise ActivateEmptyPathError(found_path.path_id)
         if self.mount is not None:
             self.deactivate_mount()
+            self._drop_callback_mount()
         self.active_path = found_path
         self._path_generation += 1
         first_waypoint = self.active_path.waypoints[0]
@@ -625,6 +626,7 @@ class Motion:
             return
         if self.mount is not None:
             self.deactivate_mount()
+            self._drop_callback_mount()
         if self.active_path is not None:
             self.deactivate_path()
         self.mount = mount
@@ -646,6 +648,15 @@ class Motion:
         self.mount = None
         active._end()
         self.character.event_handler._handle_event(self.character.event_handler.Event.MOUNT_RELEASED, active)
+
+    def _drop_callback_mount(self) -> None:
+        """End a mount that a `MOUNT_RELEASED` callback activated, so the caller's own request wins.
+
+        No event is triggered, so a callback that mounts on every release can't loop.
+        """
+        if self.mount is not None:
+            replacement, self.mount = self.mount, None
+            replacement._end()
 
     def _follow_mount(self) -> None:
         """Move to the cell the active mount reports and trigger `MOUNT_COMPLETE` when the blend finishes."""
