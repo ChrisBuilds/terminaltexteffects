@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import typing
+from dataclasses import replace
 
 import pytest
 
@@ -213,6 +214,62 @@ def test_default_gradient_uses_the_brand_colors() -> None:
     body = space.body(space3d.Cube(10)).draw(space3d.Solid())
     space.step()
     assert color(body.surface_characters[Coord(21, 11)]) == Color("#ffffff")
+
+
+@pytest.mark.parametrize("row_scale", [1.0, 2.0, 3.0])
+def test_textured_row_density_follows_camera(row_scale: float) -> None:
+    """Each projected terminal row samples the corresponding texture row for any cell ratio."""
+    space = make_space()
+    space.camera.row_scale = row_scale
+    body = space.body(space3d.Box(8, 12, 4)).draw(space3d.Textured("AAAA\nBBBB\nCCCC\nDDDD"))
+    space.step()
+    center = space.camera.center_row
+    top = center + 6 / row_scale
+    for coord, character in body.surface_characters.items():
+        expected_row = int((top - coord.row) + 1e-7) % 4
+        assert symbol(character) == "ABCD"[expected_row]
+
+
+@pytest.mark.parametrize(
+    ("look", "expected"),
+    [
+        (space3d.Textured("ABCD\nEFGH", offset=(1, 1)), "G"),
+        (space3d.Textured("ABCD\nEFGH", offset=(-2, -1)), "H"),
+        (space3d.Textured("ABCD\nEFGH", scale=2), "A"),
+        (space3d.Textured("ABCD\nEFGH", offset=(100, 100), repeat=False), "H"),
+        (space3d.Textured("ABCD\nEFGH", offset=(-100, -100), repeat=False), "A"),
+    ],
+)
+def test_texture_controls_sample_text_without_moving_geometry(look: space3d.Textured, expected: str) -> None:
+    """Offset, scale and clamping transform text sampling while leaving the body pose alone."""
+    space = make_space()
+    body = space.body(space3d.Cube(8)).draw(look)
+    fragment = g3.Fragment(1, g3.Z_AXIS, True, 0, 0, (0.125, 1.0))  # noqa: FBT003
+    assert body._sample(look, fragment) == expected
+    assert body.position == g3.ORIGIN
+    assert body.rotation == g3.Rotation()
+
+
+@pytest.mark.parametrize("scale", [0, -1, float("inf"), float("nan")])
+def test_texture_scale_rejects_invalid_values(scale: float) -> None:
+    """Invalid text sizes fail when constructing the look."""
+    with pytest.raises(ValueError, match="scale"):
+        space3d.Textured(scale=scale)
+
+
+def test_texture_offset_can_be_animated_by_replacing_the_look() -> None:
+    """Replacing an immutable look scrolls the text without changing surface coordinates or body pose."""
+    space = make_space()
+    look = space3d.Textured("ABCD")
+    body = space.body(space3d.Cube(8)).draw(look)
+    space.step()
+    before = {coord: symbol(character) for coord, character in body.surface_characters.items()}
+    body.draw(replace(look, offset=(1, 0)))
+    space.step()
+    after = {coord: symbol(character) for coord, character in body.surface_characters.items()}
+    assert after.keys() == before.keys()
+    assert all(after[coord] == "BCDA"["ABCD".index(value)] for coord, value in before.items())
+    assert body.rotation == g3.Rotation()
 
 
 def test_textured_cube_shows_the_input_text_on_its_front_face() -> None:

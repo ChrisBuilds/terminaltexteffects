@@ -73,3 +73,26 @@ textured.
   doesn't: it only shows the far side through the near side's spaces.
 - Text needs space to read. A face 20 columns wide holds about 20 characters, and fewer as it turns.
 - Bold, dense text such as capitals reads better on a surface than lowercase or punctuation.
+
+## Scrolling, repetition and text size
+
+`Textured(offset=(column, row))` adds an offset in text cells before sampling. Positive columns
+scroll left; positive rows scroll up. `repeat=True` wraps the text in both directions.
+`repeat=False` clamps samples outside the text to the nearest edge cell. `scale=2` doubles each
+character's footprint in both dimensions; scale must be finite and positive. Row density follows
+`space.camera.row_scale`, including when it differs from the usual tall-cell ratio.
+
+Looks are immutable. Animate an offset by replacing the look each frame, without turning the body:
+
+```python
+from dataclasses import replace
+from terminaltexteffects.engine.space3d import Textured
+
+look = Textured("A scrolling message")
+# In the effect's frame loop, with elapsed_frames advanced by the effect:
+body.draw(replace(look, offset=(elapsed_frames / 4, 0)))
+space.step()
+```
+
+For custom shapes, `texture_cell` continues to return rows in the default terminal cell ratio;
+the renderer converts those rows to the camera's ratio before applying scale and offset.

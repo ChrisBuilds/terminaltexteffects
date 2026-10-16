@@ -472,7 +472,7 @@ class Solid:
 
 @dataclass(frozen=True)
 class Textured:
-    """Wrap text over the faces, colored by the light. The text repeats when the surface is larger than it.
+    """Wrap text over the faces, colored by the light. Text repeats by default or clamps with `repeat=False`.
 
     Each cell shows one symbol, so wide characters (such as CJK) are left blank.
 
@@ -484,6 +484,9 @@ class Textured:
         back (str): `"hide"` draws spaces in the text as blank surface. `"dim"` lets the far side show through
             them, drawn in `back_color`.
         back_color (Color): Color of the far side and of faces without a texture layout.
+        offset (tuple[float, float]): Text column and row added before sampling. Positive values scroll left/up.
+        repeat (bool): Repeat the text, or clamp sampling to its edge cells when false.
+        scale (float): Positive text size multiplier in both dimensions; 2 doubles each character's footprint.
 
     """
 
@@ -491,11 +494,20 @@ class Textured:
     gradient: Gradient | None = None
     back: typing.Literal["hide", "dim"] = "hide"
     back_color: Color = _DIM
+    offset: tuple[float, float] = (0.0, 0.0)
+    repeat: bool = True
+    scale: float = 1.0
 
     def __post_init__(self) -> None:
-        """Validate `back`."""
+        """Validate texture sampling settings."""
         if self.back not in ("hide", "dim"):
             msg = 'back must be "hide" or "dim".'
+            raise ValueError(msg)
+        if not math.isfinite(self.scale) or self.scale <= 0:
+            msg = "Texture scale must be finite and positive."
+            raise ValueError(msg)
+        if len(self.offset) != 2 or not all(math.isfinite(value) for value in self.offset):
+            msg = "Texture offset must contain two finite coordinates."
             raise ValueError(msg)
 
 
@@ -1305,8 +1317,15 @@ class Body:
             return None
         lines, width = self._texts[id(look)]
         # The nudge keeps cells that land exactly on a text column boundary from rounding down a column.
-        line = lines[math.floor(place[1] + _TEXT_NUDGE) % len(lines)]
-        column = math.floor(place[0] + _TEXT_NUDGE) % width
+        row = math.floor(
+            place[1] * g3.TERMINAL_ROW_SCALE / self.space.camera.row_scale / look.scale + look.offset[1] + _TEXT_NUDGE
+        )
+        column = math.floor(place[0] / look.scale + look.offset[0] + _TEXT_NUDGE)
+        if look.repeat:
+            row, column = row % len(lines), column % width
+        else:
+            row, column = min(max(row, 0), len(lines) - 1), min(max(column, 0), width - 1)
+        line = lines[row]
         return line[column] if column < len(line) else " "
 
 
