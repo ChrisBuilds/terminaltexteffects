@@ -544,3 +544,14 @@ def test_lambert_shading() -> None:
     assert g3.lambert(g3.Z_AXIS, g3.Z_AXIS * 5) == pytest.approx(1)
     assert g3.lambert(g3.Z_AXIS, g3.Vec3(1, 0, 1)) == pytest.approx(math.cos(math.pi / 4))
     assert g3.lambert(g3.Z_AXIS, -g3.Z_AXIS) == 0
+
+
+def test_rasterize_cell_cache_is_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The shared cell cache starts over when full, and rasterizing still covers every cell."""
+    camera = g3.Camera(center_column=40, center_row=12, orthographic=True)
+    expected = g3.rasterize(g3.box(10, 10, 10), camera)
+    monkeypatch.setattr(g3, "_CELLS", {})
+    monkeypatch.setattr(g3, "_CELL_CACHE_LIMIT", 4)
+    limited = g3.rasterize(g3.box(10, 10, 10), camera)
+    assert limited == expected
+    assert len(g3._CELLS) <= 4

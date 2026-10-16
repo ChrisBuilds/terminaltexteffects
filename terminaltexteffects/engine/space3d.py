@@ -22,6 +22,10 @@ Mounting is part of `Motion`: a mounted character takes its position from the mo
 active, and raises `MOUNT_COMPLETE` and `MOUNT_RELEASED` events. Activating a path releases the mount, and
 mounting deactivates the path, so characters pass between 2D paths and 3D freely.
 
+A body with a shape can also be drawn as a filled surface with `Body.draw` and a look (`Shaded`, `Solid`,
+`Textured` or `Wireframe`). The space draws surfaces with characters it creates and manages, one per covered
+cell, so the effect's own characters are never used for them.
+
 World units are terminal columns. The origin is the canvas center, +x is right, +y is up and +z points toward the
 viewer. Angles are degrees, and axes are `"x"`, `"y"`, `"z"`, `"diagonal"` or any `(x, y, z)` direction.
 
@@ -32,6 +36,7 @@ Classes:
     Mount: A character's link to an anchor, with the 3D readings an effect can use.
     Shape: Base class for body shapes. `Cube`, `Box`, `Prism`, `Pyramid`, `Tetrahedron`, `Octahedron`,
         `Icosahedron`, `Cylinder`, `Sphere` and `Torus` are provided.
+    Shaded, Solid, Textured, Wireframe: Looks for drawing a body as a surface.
 
 Functions:
     rotation_about: Returns a rotation of some degrees about a named axis or direction.
@@ -46,6 +51,7 @@ from dataclasses import dataclass, field
 
 from terminaltexteffects.utils import geometry3d as g3
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -65,11 +71,15 @@ __all__ = [
     "Octahedron",
     "Prism",
     "Pyramid",
+    "Shaded",
     "Shape",
+    "Solid",
     "Space3D",
     "Sphere",
     "Tetrahedron",
+    "Textured",
     "Torus",
+    "Wireframe",
     "rotation_about",
 ]
 
@@ -147,6 +157,32 @@ class Shape:
         """
         return _mesh_surface_points(self.build_mesh(), count)
 
+    def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:  # noqa: ARG002
+        """Return where a drawn cell falls in a `Textured` look's text, as a fractional (column, row).
+
+        Row 0 is the top line of the text, and one unit is about one cell at the body's own size. Returns `None`
+        for faces without texture coordinates, which a `Textured` look shades instead. Shapes without a texture
+        layout return `None` everywhere.
+        """
+        return None
+
+
+def _face_cell(
+    fragment: g3.Fragment, width: float, height: float, offset: float = 0.0, around: float | None = None
+) -> tuple[float, float] | None:
+    """Map a fragment's texture coordinates on a `width` by `height` face to a text (column, row).
+
+    `offset` shifts the column, and on a shape that wraps all the way `around` (its perimeter in columns), the
+    column restarts there, so the text begins exactly at `offset`.
+    """
+    if fragment.uv is None:
+        return None
+    u, v = fragment.uv
+    column = offset + u * width
+    if around is not None:
+        column %= around
+    return column, (1 - v) * height / g3.TERMINAL_ROW_SCALE
+
 
 @dataclass(frozen=True)
 class Box(Shape):
@@ -160,6 +196,12 @@ class Box(Shape):
         """Return the box mesh."""
         return g3.box(self.width, self.height, self.depth)
 
+    def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
+        """Return the text cell for a fragment. Each face shows the text from its own top left corner."""
+        width = self.depth if fragment.tag in (1, 3) else self.width
+        height = self.depth if fragment.tag in (4, 5) else self.height
+        return _face_cell(fragment, width, height)
+
 
 @dataclass(frozen=True)
 class Cube(Shape):
@@ -170,6 +212,10 @@ class Cube(Shape):
     def build_mesh(self) -> g3.Mesh:
         """Return the cube mesh."""
         return g3.box(self.size, self.size, self.size)
+
+    def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
+        """Return the text cell for a fragment. Each face shows the text from its own top left corner."""
+        return _face_cell(fragment, self.size, self.size)
 
 
 @dataclass(frozen=True)
@@ -184,6 +230,11 @@ class Prism(Shape):
         """Return the prism mesh."""
         return g3.prism(self.sides, self.radius, self.height)
 
+    def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
+        """Return the text cell for a fragment, starting at the left edge of the front. Caps have none."""
+        side = 2 * self.radius * math.sin(math.pi / self.sides)
+        return _face_cell(fragment, side, self.height, (fragment.tag + self.sides / 4) * side, self.sides * side)
+
 
 @dataclass(frozen=True)
 class Pyramid(Shape):
@@ -196,6 +247,12 @@ class Pyramid(Shape):
     def build_mesh(self) -> g3.Mesh:
         """Return the pyramid mesh."""
         return g3.pyramid(self.sides, self.radius, self.height)
+
+    def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
+        """Return the text cell for a fragment, starting at the left edge of the front. The base has none."""
+        side = 2 * self.radius * math.sin(math.pi / self.sides)
+        slant = math.hypot(self.height, self.radius * math.cos(math.pi / self.sides))
+        return _face_cell(fragment, side, slant, (fragment.tag + self.sides / 4) * side, self.sides * side)
 
 
 @dataclass(frozen=True)
@@ -243,6 +300,11 @@ class Cylinder(Shape):
         """Return the cylinder mesh."""
         return g3.cylinder(self.radius, self.height, self.segments)
 
+    def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
+        """Return the text cell for a fragment, starting at the left edge of the front. Caps have none."""
+        around = 2 * math.pi * self.radius
+        return _face_cell(fragment, around, self.height, around / 4, around)
+
     def surface_points(self, count: int) -> list[tuple[g3.Vec3, g3.Vec3]]:
         """Return about `count` points in even rings around the side."""
         circumference = 2 * math.pi * self.radius
@@ -275,6 +337,11 @@ class Sphere(Shape):
     def build_mesh(self) -> g3.Mesh:
         """Return the sphere mesh."""
         return g3.uv_sphere(self.radius, self.segments, self.rings)
+
+    def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
+        """Return the text cell for a fragment, starting at the left edge of the front, from pole to pole."""
+        around = 2 * math.pi * self.radius
+        return _face_cell(fragment, around, math.pi * self.radius, around / 4, around)
 
     def surface_points(self, count: int) -> list[tuple[g3.Vec3, g3.Vec3]]:
         """Return `count` points spread evenly over the sphere (a Fibonacci lattice)."""
@@ -340,6 +407,112 @@ def _mesh_surface_points(mesh: g3.Mesh, count: int) -> list[tuple[g3.Vec3, g3.Ve
                 u, v = 1 - u, 1 - v
             points.append((a + (b - a) * u + (c - a) * v, normal))
     return points
+
+
+# Looks
+
+_BRAND_STOPS = ("#8A008A", "#00D1FF", "#ffffff")
+_DIM = Color("#4a1050")
+_SHADE_SYMBOLS = ".,-~:;=!*#$@"
+_AMBIENT = 0.15
+_TEXT_NUDGE = 1e-6
+
+
+@dataclass(frozen=True)
+class Shaded:
+    """Fill faces with a symbol and color picked by how directly each face meets the light.
+
+    Attributes:
+        gradient (Gradient | None): Colors from unlit to fully lit. `None` uses the TTE brand colors.
+        symbols (str): Symbols from unlit to fully lit.
+
+    """
+
+    gradient: Gradient | None = None
+    symbols: str = _SHADE_SYMBOLS
+
+    def __post_init__(self) -> None:
+        """Validate the symbols."""
+        if not self.symbols:
+            msg = "Shaded needs at least one symbol."
+            raise ValueError(msg)
+
+
+@dataclass(frozen=True)
+class Solid:
+    """Fill faces with one symbol, colored by the light.
+
+    Attributes:
+        symbol (str): The fill symbol.
+        gradient (Gradient | None): Colors from unlit to fully lit. `None` uses the TTE brand colors.
+
+    """
+
+    symbol: str = "█"
+    gradient: Gradient | None = None
+
+
+@dataclass(frozen=True)
+class Textured:
+    """Wrap text over the faces, colored by the light. The text repeats when the surface is larger than it.
+
+    Faces without a texture layout (prism and cylinder caps, polyhedra, the torus) are shaded in `back_color`.
+
+    Attributes:
+        text (str | None): The text to wrap. `None` uses the effect's input text.
+        gradient (Gradient | None): Colors from unlit to fully lit. `None` uses the TTE brand colors.
+        back (str): `"hide"` draws spaces in the text as blank surface. `"dim"` lets the far side show through
+            them, drawn in `back_color`.
+        back_color (Color): Color of the far side and of faces without a texture layout.
+
+    """
+
+    text: str | None = None
+    gradient: Gradient | None = None
+    back: typing.Literal["hide", "dim"] = "hide"
+    back_color: Color = _DIM
+
+    def __post_init__(self) -> None:
+        """Validate `back`."""
+        if self.back not in ("hide", "dim"):
+            msg = 'back must be "hide" or "dim".'
+            raise ValueError(msg)
+
+
+@dataclass(frozen=True)
+class Wireframe:
+    """Draw only the edges, with symbols that follow each edge's slope.
+
+    Attributes:
+        color (Color): Color of edges on faces turned toward the viewer.
+        hidden_color (Color | None): Color of edges on the far side, or `None` to leave them out.
+
+    """
+
+    color: Color = Color("#00D1FF")
+    hidden_color: Color | None = _DIM
+
+
+Look = typing.Union[Shaded, Solid, Textured, Wireframe]
+"""How a body is drawn: `Shaded`, `Solid`, `Textured` or `Wireframe`."""
+
+_default_gradient: Gradient | None = None
+
+
+def _gradient(gradient: Gradient | None) -> Gradient:
+    """Return `gradient`, or the shared brand gradient."""
+    global _default_gradient  # noqa: PLW0603
+    if gradient is not None:
+        return gradient
+    if _default_gradient is None:
+        _default_gradient = Gradient(*(Color(stop) for stop in _BRAND_STOPS), steps=12)
+    return _default_gradient
+
+
+def _text_grid(text: str) -> tuple[list[str], int]:
+    """Split `text` into lines and return them with the widest line's length."""
+    lines = text.splitlines() or [" "]
+    return lines, max(1, *(len(line) for line in lines))
 
 
 # Tweens
@@ -420,6 +593,10 @@ class Body:
         self._queue: list[list[_Tween]] = []
         self._transform: tuple[float, ...] | None = None
         self._extent = max((vertex.length() for vertex in self._mesh.vertices), default=0.0) if self._mesh else 0.0
+        self._look: Look | None = None
+        self._face_looks: dict[int, Look] = {}
+        self._texts: dict[int, tuple[list[str], int]] = {}
+        self._cells: list[_Slot] = []
 
     # Reading the transform
 
@@ -903,6 +1080,169 @@ class Body:
             if mount.anchor.body is self:
                 self.space.release(character)
 
+    # Surfaces
+
+    def draw(self, look: Look | None = None, *, faces: typing.Mapping[int, Look] | None = None) -> Body:
+        """Draw the body as a surface from the next `Space3D.step` on, replacing any earlier look.
+
+        The space draws surfaces with characters it creates, one per covered cell, so no effect characters are
+        used. Each cell is layered by depth, just below a mounted character at the same depth, so text mounted on
+        a drawn body reads on top of it.
+
+        Args:
+            look (Look | None): How to draw the body: `Shaded()`, `Solid()`, `Textured()` or `Wireframe()`. With
+                no `faces`, `None` means `Shaded()`.
+            faces (Mapping[int, Look] | None): Looks for faces by tag (see each shape), such as one per side of a
+                die. Faces not listed use `look`, or are left out when `look` is `None`.
+
+        Returns:
+            Body: The body, for chaining.
+
+        Raises:
+            ValueError: If the body has no shape, or `faces` includes a `Wireframe` (a wireframe draws the
+                whole body).
+
+        """
+        if self.shape is None:
+            msg = "Only a body with a shape can be drawn."
+            raise ValueError(msg)
+        face_looks = dict(faces or {})
+        if any(isinstance(face_look, Wireframe) for face_look in face_looks.values()):
+            msg = "A Wireframe look draws the whole body, so it can't be given per face."
+            raise ValueError(msg)
+        self._look = Shaded() if look is None and not face_looks else look
+        self._face_looks = face_looks
+        self._texts = {}
+        for each in (self._look, *face_looks.values()):
+            if isinstance(each, Textured) and id(each) not in self._texts:
+                self._texts[id(each)] = _text_grid(each.text if each.text is not None else self.space.input_text)
+        return self
+
+    def erase(self) -> Body:
+        """Stop drawing the body. Its cells are hidden at the next `Space3D.step`."""
+        self._look = None
+        self._face_looks = {}
+        self._texts = {}
+        return self
+
+    @property
+    def drawn(self) -> bool:
+        """Whether the body is drawn as a surface."""
+        return self._look is not None or bool(self._face_looks)
+
+    @property
+    def surface_characters(self) -> dict[Coord, EffectCharacter]:
+        """The characters showing this body after the last `Space3D.step`, by cell.
+
+        They belong to the space and are redrawn every step, so changes an effect makes to them last until then.
+        """
+        return {slot.character.input_coord: slot.character for slot in self._cells}
+
+    def _face_look(self, tag: int) -> Look | None:
+        """Return the look for faces with `tag`."""
+        return self._face_looks.get(tag, self._look)
+
+    def _contribute(self, cells: dict[Coord, tuple[float, str, ColorPair, Body]]) -> None:
+        """Add this body's nearest surface in each cell to `cells`, where it beats what is there."""
+        mesh = self._mesh
+        if mesh is None:
+            return
+        space = self.space
+        camera = space.camera
+        pose = {"rotation": self._rotation, "scale": self._scale, "position": self._position}
+        if isinstance(self._look, Wireframe):
+            look = self._look
+            front = space._pair(look.color)
+            hidden = space._pair(look.hidden_color) if look.hidden_color is not None else None
+            for cell, edge in g3.wireframe(mesh, camera, **pose).items():
+                if edge.front:
+                    _offer(cells, cell, edge.depth, edge.symbol, front, self)
+                elif hidden is not None:
+                    _offer(cells, cell, edge.depth, edge.symbol, hidden, self)
+            return
+        # Shading depends only on the face, so it is worked out once per face rather than per cell.
+        styles: dict[int, tuple[Look | None, str, ColorPair, ColorPair]] = {}
+        for cell, fragment in g3.rasterize(mesh, camera, cull="back", **pose).items():
+            style = styles.get(fragment.face)
+            if style is None:
+                style = styles[fragment.face] = self._face_style(fragment)
+            look, symbol, colors, fallback = style
+            if look is None:
+                continue
+            if isinstance(look, Textured):
+                sampled = self._sample(look, fragment)
+                if sampled is None:
+                    colors = fallback  # A face without a texture layout is shaded instead.
+                elif sampled == " " and look.back == "dim":
+                    continue  # Let the far side show through.
+                else:
+                    symbol = sampled
+            _offer(cells, cell, fragment.depth, symbol, colors, self)
+        if any(isinstance(each, Textured) and each.back == "dim" for each in (self._look, *self._face_looks.values())):
+            for cell, fragment in g3.rasterize(mesh, camera, cull="front", **pose).items():
+                look = self._face_look(fragment.tag)
+                if isinstance(look, Textured) and look.back == "dim":
+                    symbol = self._sample(look, fragment) or " "
+                    _offer(cells, cell, fragment.depth, symbol, space._pair(look.back_color), self)
+
+    def _face_style(self, fragment: g3.Fragment) -> tuple[Look | None, str, ColorPair, ColorPair]:
+        """Return a face's look, symbol, lit colors and colors for untextured faces, from its angle to the light."""
+        look = self._face_look(fragment.tag)
+        space = self.space
+        shade = g3.lambert(fragment.normal, space.light)
+        lit = _AMBIENT + (1 - _AMBIENT) * shade
+        ramp = _SHADE_SYMBOLS[min(len(_SHADE_SYMBOLS) - 1, int(shade * len(_SHADE_SYMBOLS)))]
+        if isinstance(look, Shaded):
+            symbol = look.symbols[min(len(look.symbols) - 1, int(shade * len(look.symbols)))]
+            colors = space._pair(_gradient(look.gradient).get_color_at_fraction(shade))
+            return look, symbol, colors, colors
+        if isinstance(look, Solid):
+            colors = space._pair(_gradient(look.gradient).get_color_at_fraction(lit))
+            return look, look.symbol, colors, colors
+        if isinstance(look, Textured):
+            colors = space._pair(_gradient(look.gradient).get_color_at_fraction(lit))
+            return look, ramp, colors, space._pair(look.back_color)
+        return None, ramp, space._pair(_DIM), space._pair(_DIM)
+
+    def _sample(self, look: Textured, fragment: g3.Fragment) -> str | None:
+        """Return the text symbol at a fragment, or `None` where its face has no texture layout."""
+        shape = self.shape
+        place = shape.texture_cell(fragment) if shape is not None else None
+        if place is None:
+            return None
+        lines, width = self._texts[id(look)]
+        # The nudge keeps cells that land exactly on a text column boundary from rounding down a column.
+        line = lines[math.floor(place[1] + _TEXT_NUDGE) % len(lines)]
+        column = math.floor(place[0] + _TEXT_NUDGE) % width
+        return line[column] if column < len(line) else " "
+
+
+class _Slot:
+    """One pooled surface character and the appearance the space last gave it."""
+
+    __slots__ = ("character", "colors", "frame", "symbol", "visual")
+
+    def __init__(self, character: EffectCharacter) -> None:
+        self.character = character
+        self.symbol = ""
+        self.colors: ColorPair | None = None
+        self.visual: object = None
+        self.frame = -1
+
+
+def _offer(
+    cells: dict[Coord, tuple[float, str, ColorPair, Body]],
+    cell: Coord,
+    depth: float,
+    symbol: str,
+    colors: ColorPair,
+    body: Body,
+) -> None:
+    """Put a drawn cell into `cells` if it is nearer than what is there."""
+    current = cells.get(cell)
+    if current is None or depth < current[0]:
+        cells[cell] = (depth, symbol, colors, body)
+
 
 @dataclass(frozen=True, eq=False)
 class Anchor:
@@ -1121,6 +1461,38 @@ class Space3D:
         self.mounts: dict[EffectCharacter, Mount] = {}
         self.rng: random.Random = rng if rng is not None else typing.cast("random.Random", random)
         self._stamp = 0
+        self._slots: dict[Coord, _Slot] = {}
+        self._shown: list[_Slot] = []
+        self._pairs: dict[Color, ColorPair] = {}
+        self._input_text: str | None = None
+
+    @property
+    def input_text(self) -> str:
+        """The effect's input text, top line first, as `Textured` looks wrap it by default."""
+        if self._input_text is None:
+            characters = self.terminal.get_characters()
+            rows: dict[int, dict[int, str]] = {}
+            for character in characters:
+                rows.setdefault(character.input_coord.row, {})[character.input_coord.column] = character.input_symbol
+            left = min((character.input_coord.column for character in characters), default=0)
+            right = max((character.input_coord.column for character in characters), default=-1)
+            self._input_text = "\n".join(
+                "".join(rows[row].get(column, " ") for column in range(left, right + 1)).rstrip()
+                for row in sorted(rows, reverse=True)
+            )
+        return self._input_text
+
+    def _pair(self, color: Color) -> ColorPair:
+        """Return a shared foreground `ColorPair` for `color`, so unchanged cells can be spotted by identity."""
+        pair = self._pairs.get(color)
+        if pair is None:
+            pair = self._pairs[color] = ColorPair(fg=color)
+        return pair
+
+    @property
+    def surface_characters(self) -> dict[Coord, EffectCharacter]:
+        """Every character the space has created to draw surfaces, shown or not, by cell."""
+        return {cell: slot.character for cell, slot in self._slots.items()}
 
     def body(self, shape: Shape | None = None, *, at: tuple[float, float, float] = (0, 0, 0)) -> Body:
         """Create a body, with a shape or as a plain frame of reference for anchors.
@@ -1222,9 +1594,49 @@ class Space3D:
         return any(body.animating for body in self.bodies)
 
     def step(self) -> None:
-        """Play one frame of every body's tweens and refresh every mount's readings."""
+        """Play one frame of every body's tweens, refresh every mount's readings and draw the surfaces."""
         for body in self.bodies:
             body._advance()
         self._stamp += 1
         for mount in tuple(self.mounts.values()):
             mount._refresh()
+        self._draw_surfaces()
+
+    def _draw_surfaces(self) -> None:
+        """Draw every drawn body into one depth buffer and show it with the pooled characters."""
+        cells: dict[Coord, tuple[float, str, ColorPair, Body]] = {}
+        for body in self.bodies:
+            body._cells = []
+            if body.drawn:
+                body._contribute(cells)
+        canvas = self.terminal.canvas
+        left, right, bottom, top = canvas.left, canvas.right, canvas.bottom, canvas.top
+        distance = self.camera.distance
+        stamp = self._stamp
+        shown: list[_Slot] = []
+        for cell, (depth, symbol, colors, body) in cells.items():
+            if not (left <= cell.column <= right and bottom <= cell.row <= top):
+                continue
+            slot = self._slots.get(cell)
+            if slot is None:
+                slot = self._slots[cell] = _Slot(self.terminal.add_character(" ", cell))
+            character = slot.character
+            animation = character.animation
+            if (
+                slot.symbol != symbol
+                or slot.colors is not colors
+                or slot.visual is not animation.current_character_visual
+            ):
+                animation.set_appearance(symbol, colors)
+                slot.symbol, slot.colors, slot.visual = symbol, colors, animation.current_character_visual
+            # One below a mounted character at the same depth, so text mounted on a surface reads on top.
+            character.layer = round(distance - depth) - 1
+            if not character.is_visible:
+                self.terminal.set_character_visibility(character, is_visible=True)
+            slot.frame = stamp
+            body._cells.append(slot)
+            shown.append(slot)
+        for slot in self._shown:
+            if slot.frame != stamp:
+                self.terminal.set_character_visibility(slot.character, is_visible=False)
+        self._shown = shown
