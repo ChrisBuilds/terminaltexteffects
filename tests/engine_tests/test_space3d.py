@@ -172,6 +172,28 @@ def test_remove_from_callback_skips_removed_body_completion() -> None:
     assert not calls
 
 
+@pytest.mark.parametrize("parallel", [False, True])
+def test_cancel_during_completion_skips_already_collected_callbacks(*, parallel: bool) -> None:
+    """Cancellation invalidates this frame's old callbacks but permits newly queued work on the next frame."""
+    _, space = make_space()
+    calls: list[str] = []
+    body = space.body()
+
+    def cancel(finished: space3d.Body) -> None:
+        calls.append("cancel")
+        finished.cancel().hold(1).on_complete(lambda _: calls.append("new"))
+
+    body.hold(1).on_complete(cancel)
+    if parallel:
+        body.spin(frames=1, together=True)
+    body.on_complete(lambda _: calls.append("stale"))
+    space.step()
+    assert calls == ["cancel"]
+    assert body.animating
+    space.step()
+    assert calls == ["cancel", "new"]
+
+
 def test_scale_must_stay_positive() -> None:
     """Scale must stay positive."""
     _, space = make_space()

@@ -630,6 +630,7 @@ class Body:
         self.shape = shape
         self._mesh = shape.build_mesh() if shape is not None else None
         self._removed = False
+        self._callback_generation = 0
         self._home = g3.Vec3(*at)
         self._rotation = g3.Rotation()
         self._position = self._home
@@ -735,6 +736,7 @@ class Body:
     def cancel(self) -> Body:
         """Discard queued tweens and their callbacks, keeping the current pose."""
         self._queue.clear()
+        self._callback_generation += 1
         return self
 
     def reset(self) -> Body:
@@ -1721,11 +1723,11 @@ class Space3D:
         from them are placed at the final pose. Readings are refreshed again after any callbacks, so changes they
         make show in this frame.
         """
-        finished = [(body, callback) for body in self.bodies for callback in body._advance()]
+        finished = [(body, body._callback_generation, callback) for body in self.bodies for callback in body._advance()]
         self._refresh_mounts()
         if finished:
-            for body, callback in finished:
-                if not body._removed:
+            for body, generation, callback in finished:
+                if not body._removed and body._callback_generation == generation:
                     callback(body)
             self._refresh_mounts()
         self._draw_surfaces()
