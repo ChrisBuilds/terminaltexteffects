@@ -134,6 +134,7 @@ nav:
         - engine/utils/easing.md
         - engine/utils/exceptions.md
         - engine/utils/geometry.md
+        - engine/utils/geometry3d.md
         - engine/utils/gradient.md
         - engine/utils/hexterm.md
         - SpanningTree:
