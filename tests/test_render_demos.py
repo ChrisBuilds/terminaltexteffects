@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import sys
+from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING
 
 import pytest
@@ -84,3 +86,29 @@ def test_manifest_keeps_other_demos(tmp_path: Path) -> None:
     render_demos.write_manifest(tmp_path, {"beams": "a", "burn": "b"})
     render_demos.write_manifest(tmp_path, {"burn": "c"})
     assert render_demos.read_manifest(tmp_path) == {"beams": "a", "burn": "c"}
+
+
+@pytest.mark.parametrize(
+    ("formats", "manifest"),
+    [("webp", {"beams": "fingerprint of beams"}), ("gif", {})],
+)
+def test_main_renders_each_demo_once_and_records_webp_fingerprints(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    formats: str,
+    manifest: dict[str, str],
+) -> None:
+    """A demo named twice renders once, and only WebP renders, which are committed, update the manifest."""
+    pytest.importorskip("PIL")
+    rendered: list[str] = []
+
+    def try_render(name: str, *_: object) -> tuple[str, str]:
+        rendered.append(name)
+        return name, f"fingerprint of {name}"
+
+    monkeypatch.setattr(render_demos, "try_render", try_render)
+    monkeypatch.setattr(render_demos, "ProcessPoolExecutor", ThreadPoolExecutor)
+    monkeypatch.setattr(sys, "argv", ["render_demos", "beams", "beams", "--formats", formats, "--out", str(tmp_path)])
+    assert render_demos.main() == 0
+    assert rendered == ["beams"]
+    assert render_demos.read_manifest(tmp_path) == manifest

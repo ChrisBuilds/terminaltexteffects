@@ -480,7 +480,7 @@ def main() -> int:
     if args.list:
         print("\n".join(available))
         return 0
-    selected = list(available) if args.all else args.demos
+    selected = list(available) if args.all else list(dict.fromkeys(args.demos))
     if not selected:
         parser.error("name at least one demo, or pass --all")
     if unknown := [name for name in selected if name not in available]:
@@ -512,7 +512,9 @@ def main() -> int:
             print(message, file=sys.stderr if demo_fingerprint is None else sys.stdout, flush=True)
             if demo_fingerprint is not None:
                 fingerprints[futures[future]] = demo_fingerprint
-    write_manifest(args.out, fingerprints)
+    # The manifest describes the committed WebP demos, so a GIF-only render leaves it alone.
+    if "webp" in options.formats:
+        write_manifest(args.out, fingerprints)
     return 0 if len(fingerprints) == len(selected) else 1
 
 
