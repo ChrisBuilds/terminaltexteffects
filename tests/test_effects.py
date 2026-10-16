@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import subprocess
+import sys
 from itertools import count
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -9,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Literal
 import pytest
 
 from terminaltexteffects.effects import effect_colorshift, effect_matrix, effect_thunderstorm
+from terminaltexteffects.engine._recording import RecordingReader
 from terminaltexteffects.engine.terminal import Terminal
 from terminaltexteffects.utils.exceptions import EmptyInputError
 
@@ -166,3 +169,33 @@ def test_canvas_anchoring_large_small_canvas(
     with effect_instance.terminal_output() as terminal:
         for frame in effect_instance:
             terminal.print(frame)
+
+
+@pytest.mark.parametrize("effect_args", [("burn",), ("thunderstorm", "--storm-time", "2")])
+def test_seeded_export_repeats_exactly(effect_args: tuple[str, ...], tmp_path: Path) -> None:
+    """Two exports with the same seed record the same frames, even in separate processes."""
+    frames = []
+    for run in range(2):
+        path = tmp_path / f"run{run}.tterec"
+        subprocess.run(  # noqa: S603 - Runs this checkout's CLI with fixed arguments.
+            [
+                sys.executable,
+                "-m",
+                "terminaltexteffects",
+                "--input-file",
+                str(TEST_INPUT_DIR / "demo.txt"),
+                "--frame-rate",
+                "60",
+                "--seed",
+                "7",
+                "--export",
+                str(path),
+                *effect_args,
+            ],
+            check=True,
+            capture_output=True,
+            timeout=120,
+        )
+        with RecordingReader(path) as reader:
+            frames.append(list(reader.frames()))
+    assert frames[0] == frames[1]

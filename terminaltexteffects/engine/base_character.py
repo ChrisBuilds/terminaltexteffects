@@ -644,6 +644,14 @@ class EffectCharacter:
             char._link(self, bidirectional=False)
         self.links.add(char)
 
+    def __hash__(self) -> int:
+        """Hash by `character_id`, so sets of characters iterate in the same order on every run.
+
+        Equality stays identity. Hashing by memory address made the order of `active_characters` vary between runs,
+        and with it the order effects drew random numbers, so `--seed` didn't reproduce some effects.
+        """
+        return self._character_id
+
     def __repr__(self) -> str:
         """Return a string representation of the EffectCharacter instance."""
         return (
