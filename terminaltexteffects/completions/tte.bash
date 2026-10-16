@@ -44,11 +44,11 @@ _shtab_tte_unstable_option_strings=(-h --help --unstable-color --explosion-ease 
 _shtab_tte_vhstape_option_strings=(-h --help --glitch-line-colors --glitch-wave-colors --noise-colors --glitch-line-chance --noise-chance --total-glitch-time --final-gradient-stops --final-gradient-steps --final-gradient-direction)
 _shtab_tte_waves_option_strings=(-h --help --wave-symbols --wave-gradient-stops --wave-gradient-steps --wave-count --wave-length --wave-direction --reverse-wave-direction --travel-speed --wave-easing --final-gradient-stops --final-gradient-steps --final-gradient-direction)
 _shtab_tte_wipe_option_strings=(-h --help --wipe-direction --reverse-wipe-direction --wipe-delay --wipe-ease --final-gradient-stops --final-gradient-steps --final-gradient-frames --final-gradient-direction)
-_shtab_tte_option_strings=(-h --help --input-file -i --version -v --print-completion --tui --random-effect -R --repeat --seed --include-effects --exclude-effects --record --play --hold --shuffle --alt-screen --tab-width --xterm-colors --no-color --terminal-background-color --existing-color-handling --wrap-text --frame-rate --canvas-width --canvas-height --anchor-canvas --anchor-text --ignore-terminal-dimensions --reuse-canvas --no-eol --no-restore-cursor)
+_shtab_tte_option_strings=(-h --help --input-file -i --version -v --print-completion --tui --random-effect -R --repeat --seed --include-effects --exclude-effects --export --play --hold --shuffle --alt-screen --tab-width --xterm-colors --no-color --terminal-background-color --existing-color-handling --wrap-text --frame-rate --canvas-width --canvas-height --anchor-canvas --anchor-text --ignore-terminal-dimensions --reuse-canvas --no-eol --no-restore-cursor)
 
 _shtab_tte___input_file_COMPGEN=_shtab_compgen_files
 _shtab_tte__i_COMPGEN=_shtab_compgen_files
-_shtab_tte___record_COMPGEN=_shtab_compgen_files
+_shtab_tte___export_COMPGEN=_shtab_compgen_files
 _shtab_tte___play_COMPGEN=_shtab_compgen_files
 
 _shtab_tte_beams___final_gradient_direction_choices=(diagonal horizontal vertical radial)

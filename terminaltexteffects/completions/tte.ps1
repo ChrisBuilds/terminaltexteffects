@@ -183,7 +183,7 @@
         "file": false,
         "help": "Space-separated list of Effects to exclude when randomly selecting an effect"
       },
-      "--record": {
+      "--export": {
         "min": 1,
         "max": 1,
         "choices": [],

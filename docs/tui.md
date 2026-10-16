@@ -140,7 +140,7 @@ file is written:
 
 Choosing a format changes the file's suffix, and typing a suffix chooses the format. When Pillow is missing, the
 dialog says so and won't save GIF or WebP. Exporting needs a **frame-rate** above `0`, and GIF and WebP play at
-that rate. The command line makes the same files with [`--record`](appguide.md#gif-and-webp).
+that rate. The command line makes the same files with [`--export`](appguide.md#gif-and-webp).
 
 ## Keys
 

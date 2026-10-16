@@ -96,7 +96,7 @@ def test_record_matches_live_frames(
 ) -> None:
     """A recording holds exactly the frames the effect yields for the same seed and canvas."""
     path = tmp_path / "wipe.tterec"
-    _run(monkeypatch, "--record", str(path), "--seed", "7", "wipe")
+    _run(monkeypatch, "--export", str(path), "--seed", "7", "wipe")
     random.seed(7)
     config = TerminalConfig._build_config()
     config.frame_rate = 0
@@ -118,7 +118,7 @@ def test_record_does_not_write_to_terminal_or_sleep(
     """Recording renders without terminal output or frame-rate sleeps."""
     sleep = Mock()
     monkeypatch.setattr(terminal_module.time, "sleep", sleep)
-    _run(monkeypatch, "--record", str(tmp_path / "out.tterec"), "--frame-rate", "1", "wipe")
+    _run(monkeypatch, "--export", str(tmp_path / "out.tterec"), "--frame-rate", "1", "wipe")
     sleep.assert_not_called()
     assert capsys.readouterr().out == ""
 
@@ -129,7 +129,7 @@ def test_record_random_effects_as_segments(monkeypatch: pytest.MonkeyPatch, tmp_
     path = tmp_path / "playlist.tterec"
     _run(
         monkeypatch,
-        "--record",
+        "--export",
         str(path),
         "--random-effect",
         "--include-effects",
@@ -151,7 +151,7 @@ def test_record_random_effects_as_segments(monkeypatch: pytest.MonkeyPatch, tmp_
 def test_record_repeat_records_fresh_playbacks(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Repeating a fixed effect records each playback as its own segment."""
     path = tmp_path / "out.tterec"
-    _run(monkeypatch, "--record", str(path), "--repeat", "2", "wipe")
+    _run(monkeypatch, "--export", str(path), "--repeat", "2", "wipe")
     _, frames, segments = _read_frames(path)
     assert segments == ["wipe", "wipe"]
     assert frames[: len(frames) // 2] == frames[len(frames) // 2 :]
@@ -172,7 +172,7 @@ def test_record_interrupt_leaves_no_file(monkeypatch: pytest.MonkeyPatch, tmp_pa
 
     monkeypatch.setattr(BaseEffectIterator, "frame", property(interrupting_frame))
     with pytest.raises(SystemExit) as error:
-        _run(monkeypatch, "--record", str(tmp_path / "out.tterec"), "wipe")
+        _run(monkeypatch, "--export", str(tmp_path / "out.tterec"), "wipe")
     assert error.value.code == 1
     assert list(tmp_path.iterdir()) == []
 
@@ -180,8 +180,8 @@ def test_record_interrupt_leaves_no_file(monkeypatch: pytest.MonkeyPatch, tmp_pa
 @pytest.mark.parametrize(
     ("arguments", "message"),
     [
-        (("--repeat", "0", "wipe"), "--record cannot be combined with --repeat 0."),
-        (("--frame-rate", "0", "wipe"), "--record requires --frame-rate greater than 0."),
+        (("--repeat", "0", "wipe"), "--export cannot be combined with --repeat 0."),
+        (("--frame-rate", "0", "wipe"), "--export requires --frame-rate greater than 0."),
     ],
 )
 @pytest.mark.usefixtures("piped_input")
@@ -193,7 +193,7 @@ def test_record_rejects_invalid_options(
     message: str,
 ) -> None:
     """Infinite repeats and unthrottled frame rates cannot be recorded."""
-    assert message in _run_error(monkeypatch, capsys, "--record", str(tmp_path / "out.tterec"), *arguments)
+    assert message in _run_error(monkeypatch, capsys, "--export", str(tmp_path / "out.tterec"), *arguments)
     assert list(tmp_path.iterdir()) == []
 
 
@@ -204,7 +204,7 @@ def test_record_reports_unsupported_input(
 ) -> None:
     """Input the engine rejects fails the recording with an error and leaves no file."""
     monkeypatch.setattr(Terminal, "get_piped_input", lambda: "Hello\x1b]0;title\x07")
-    error = _run_error(monkeypatch, capsys, "--record", str(tmp_path / "out.tterec"), "wipe")
+    error = _run_error(monkeypatch, capsys, "--export", str(tmp_path / "out.tterec"), "wipe")
     assert "Unsupported ANSI/control sequence" in error
     assert list(tmp_path.iterdir()) == []
 
@@ -216,15 +216,15 @@ def test_record_reports_unwritable_path(
     tmp_path: Path,
 ) -> None:
     """A recording path in a missing directory fails with a clear error."""
-    error = _run_error(monkeypatch, capsys, "--record", str(tmp_path / "missing" / "out.tterec"), "wipe")
+    error = _run_error(monkeypatch, capsys, "--export", str(tmp_path / "missing" / "out.tterec"), "wipe")
     assert "Cannot write recording" in error
 
 
 def test_play_rejects_record_combination(capsys: pytest.CaptureFixture[str]) -> None:
-    """--record and --play are mutually exclusive at parse time."""
+    """--export and --play are mutually exclusive at parse time."""
     parser, _ = __main__.build_parser(include_user_effects=False)
     with pytest.raises(SystemExit) as error:
-        parser.parse_args(["--record", "a.tterec", "--play", "b.tterec"])
+        parser.parse_args(["--export", "a.tterec", "--play", "b.tterec"])
     assert error.value.code == 2
     assert "not allowed with argument" in capsys.readouterr().err
 
@@ -237,28 +237,28 @@ def test_play_rejects_record_combination(capsys: pytest.CaptureFixture[str]) -> 
         (("--play", "x.tterec", "-i", "input.txt"), "--play cannot be combined"),
         (("--shuffle", "wipe"), "Error: --shuffle requires --play."),
         (
-            ("--record", "out.tterec", "--hold", "1", "wipe"),
-            "Error: --hold cannot be combined with --record, which displays nothing.",
+            ("--export", "out.tterec", "--hold", "1", "wipe"),
+            "Error: --hold cannot be combined with --export, which displays nothing.",
         ),
         (
-            ("--record", "out.tterec", "--alt-screen", "wipe"),
-            "Error: --alt-screen cannot be combined with --record, which displays nothing.",
+            ("--export", "out.tterec", "--alt-screen", "wipe"),
+            "Error: --alt-screen cannot be combined with --export, which displays nothing.",
         ),
         (
-            ("--record", "out.tterec", "--hold", "0", "wipe"),
-            "Error: --hold cannot be combined with --record, which displays nothing.",
+            ("--export", "out.tterec", "--hold", "0", "wipe"),
+            "Error: --hold cannot be combined with --export, which displays nothing.",
         ),
         (
-            ("--record", "out.tterec", "--hold=0", "wipe"),
-            "Error: --hold cannot be combined with --record, which displays nothing.",
+            ("--export", "out.tterec", "--hold=0", "wipe"),
+            "Error: --hold cannot be combined with --export, which displays nothing.",
         ),
         (
-            ("--record", "out.tterec", "--alt-s", "wipe"),
-            "Error: --alt-screen cannot be combined with --record, which displays nothing.",
+            ("--export", "out.tterec", "--alt-s", "wipe"),
+            "Error: --alt-screen cannot be combined with --export, which displays nothing.",
         ),
         (
-            ("--record", "out.tterec", "--hold", "1", "--alt-screen", "wipe"),
-            "Error: --hold and --alt-screen cannot be combined with --record, which displays nothing.",
+            ("--export", "out.tterec", "--hold", "1", "--alt-screen", "wipe"),
+            "Error: --hold and --alt-screen cannot be combined with --export, which displays nothing.",
         ),
     ],
 )
@@ -276,10 +276,10 @@ def test_playback_option_conflicts(
 @pytest.mark.parametrize(
     ("arguments", "expected"),
     [
-        (["--record", "x.tterec", "--hold", "0", "wipe"], {"record", "hold"}),
-        (["--record", "x.tterec", "--frame-rate", "30", "matrix", "--rain-time", "2"], {"record", "frame_rate"}),
-        (["--record", "x.tterec", "plugindemo", "--hold", "3"], {"record"}),
-        (["--record", "x.tterec", "plugindemo", "--alt-screen"], {"record"}),
+        (["--export", "x.tterec", "--hold", "0", "wipe"], {"export", "hold"}),
+        (["--export", "x.tterec", "--frame-rate", "30", "matrix", "--rain-time", "2"], {"export", "frame_rate"}),
+        (["--export", "x.tterec", "plugindemo", "--hold", "3"], {"export"}),
+        (["--export", "x.tterec", "plugindemo", "--alt-screen"], {"export"}),
     ],
 )
 def test_options_given_ignores_options_after_the_effect(arguments: list[str], expected: set[str]) -> None:
@@ -387,7 +387,7 @@ def test_play_accepts_playback_options(monkeypatch: pytest.MonkeyPatch, tmp_path
 def test_play_round_trip_matches_recording(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, printed: Mock) -> None:
     """Playback prints every recorded frame, placed on the anchored canvas."""
     path = tmp_path / "wipe.tterec"
-    _run(monkeypatch, "--record", str(path), "wipe")
+    _run(monkeypatch, "--export", str(path), "wipe")
     _, frames, _ = _read_frames(path)
     stdin = Mock(side_effect=AssertionError("playback must not read stdin"))
     monkeypatch.setattr(Terminal, "get_piped_input", stdin)
@@ -864,7 +864,7 @@ def test_record_converts_gif_and_webp_by_suffix(
 ) -> None:
     """A .gif or .webp path renders a recording and converts it at the recording frame rate."""
     path = tmp_path / f"out{suffix}"
-    _run(monkeypatch, "--record", str(path), "--frame-rate", "24", "--repeat", "2", "wipe")
+    _run(monkeypatch, "--export", str(path), "--frame-rate", "24", "--repeat", "2", "wipe")
     fmt = export.format_for(path)
     assert export_calls == [_ExportCall(path, fmt, 24)]
     assert path.read_bytes() == fmt.name.encode()
@@ -887,7 +887,7 @@ def test_record_draws_gif_and_webp_with_pillow(
     """GIF and WebP files are drawn from the recording with Pillow when it is installed."""
     pytest.importorskip("PIL")
     path = tmp_path / f"out{suffix}"
-    _run(monkeypatch, "--record", str(path), "--frame-rate", "24", "wipe")
+    _run(monkeypatch, "--export", str(path), "--frame-rate", "24", "wipe")
     assert path.read_bytes().startswith(magic)
     assert list(tmp_path.iterdir()) == [path]
 
@@ -901,7 +901,7 @@ def test_record_names_symbols_no_font_has(
 ) -> None:
     """Symbols drawn as missing-glyph boxes are listed after the export."""
     monkeypatch.setattr(export, "export_recording", lambda *_args, **_kwargs: frozenset({"b", "a"}))
-    _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
+    _run(monkeypatch, "--export", str(tmp_path / "out.gif"), "wipe")
     assert "No installed font has these symbols, drawn as boxes: a b\n" in capsys.readouterr().err
     assert not export_calls
 
@@ -916,7 +916,7 @@ def test_record_shows_frame_count_on_a_terminal(
     """On a terminal, the frame count updates in place through rendering, drawing, and encoding."""
     monkeypatch.setattr(__main__, "_is_terminal", lambda _stream: True)
     monkeypatch.setattr(__main__, "_PROGRESS_INTERVAL", 0.0)
-    _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
+    _run(monkeypatch, "--export", str(tmp_path / "out.gif"), "wipe")
     error = capsys.readouterr().err
     assert error.startswith("\r\x1b[KRendering frame 1\r\x1b[KRendering frame 2")
     frame_count = error.split("\r\x1b[KDrawing ")[1].split(" frames")[0]
@@ -933,7 +933,7 @@ def test_record_shows_only_whole_lines_when_piped(
 ) -> None:
     """Without a terminal, no frame counts are written, only whole lines."""
     monkeypatch.setattr(__main__, "_is_terminal", lambda _stream: False)
-    _run(monkeypatch, "--record", str(tmp_path / "out.webp"), "wipe")
+    _run(monkeypatch, "--export", str(tmp_path / "out.webp"), "wipe")
     error = capsys.readouterr().err
     assert "\r" not in error
     assert "frame 1 of" not in error
@@ -950,7 +950,7 @@ def test_record_reports_missing_pillow_before_rendering(
     monkeypatch.setattr(export, "pillow_available", lambda: False)
     monkeypatch.setattr(export, "PILLOW_PYTHON", True)
     monkeypatch.setattr(__main__, "_create_effect", Mock(side_effect=AssertionError("rendered")))
-    error = _run_error(monkeypatch, capsys, "--record", str(tmp_path / "out.webp"), "wipe")
+    error = _run_error(monkeypatch, capsys, "--export", str(tmp_path / "out.webp"), "wipe")
     assert error == f"Error: WebP export needs Pillow; install it with: {export.INSTALL_HINT}\n"
     assert list(tmp_path.iterdir()) == []
 
@@ -963,7 +963,7 @@ def test_record_empty_input_skips_the_pillow_check(
     """Empty input stays a successful no-op even when Pillow is missing."""
     monkeypatch.setattr(Terminal, "get_piped_input", lambda: " \n")
     monkeypatch.setattr(export, "pillow_available", lambda: False)
-    _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
+    _run(monkeypatch, "--export", str(tmp_path / "out.gif"), "wipe")
     assert capsys.readouterr().err == ""
     assert list(tmp_path.iterdir()) == []
 
@@ -981,7 +981,7 @@ def test_record_conversion_failure_leaves_no_file(
         raise export.ExportError(message)
 
     monkeypatch.setattr(export, "export_recording", export_recording)
-    error = _run_error(monkeypatch, capsys, "--record", str(tmp_path / "out.gif"), "wipe")
+    error = _run_error(monkeypatch, capsys, "--export", str(tmp_path / "out.gif"), "wipe")
     assert error.endswith("Error: No monospace font was found; install DejaVu Sans Mono.\n")
     assert list(tmp_path.iterdir()) == []
 
@@ -995,6 +995,6 @@ def test_record_interrupted_conversion_leaves_no_file(monkeypatch: pytest.Monkey
 
     monkeypatch.setattr(export, "export_recording", export_recording)
     with pytest.raises(SystemExit) as error:
-        _run(monkeypatch, "--record", str(tmp_path / "out.gif"), "wipe")
+        _run(monkeypatch, "--export", str(tmp_path / "out.gif"), "wipe")
     assert error.value.code == 1
     assert list(tmp_path.iterdir()) == []
