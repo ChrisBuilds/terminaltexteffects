@@ -654,6 +654,8 @@ class Body:
         self.space = space
         self._shape = shape
         self._mesh = shape.build_mesh() if shape is not None else None
+        self._removed = False
+        self._callback_generation = 0
         self._home = g3.Vec3(*at)
         self._rotation = g3.Rotation()
         self._position = self._home
@@ -764,9 +766,15 @@ class Body:
         """Set the body's size multiplier, now. Raises `ValueError` unless `scale` is positive."""
         return self._set(scale=scale)
 
+    def cancel(self) -> Body:
+        """Discard queued tweens and their callbacks, keeping the current pose."""
+        self._queue.clear()
+        self._callback_generation += 1
+        return self
+
     def reset(self) -> Body:
         """Return the body to the pose it was created in and clear its queued tweens, now."""
-        self._queue.clear()
+        self.cancel()
         return self._set(rotation=g3.Rotation(), position=self._home, scale=1.0)
 
     # Tweens
@@ -1422,6 +1430,9 @@ class Mount:
         if anchor.body.space is not space:
             msg = "The anchor's body belongs to a different space."
             raise ValueError(msg)
+        if anchor.body._removed:
+            msg = "The anchor's body has been removed from its space."
+            raise ValueError(msg)
         self.space = space
         self.character = character
         self.anchor = anchor
@@ -1647,6 +1658,37 @@ class Space3D:
         self.bodies.append(new_body)
         return new_body
 
+    def remove(self, body: Body) -> None:
+        """Remove an owned body, cancel its tweens, release its mounts and hide its surface cells now.
+
+        Repeated removal is harmless. Removed bodies are no longer drawn or stepped, and their anchors cannot
+        be mounted again. Create a new body to add geometry back. Surface characters stay pooled for reuse.
+
+        Raises:
+            ValueError: If the body belongs to another space.
+
+        """
+        if body.space is not self:
+            msg = "The body belongs to a different space."
+            raise ValueError(msg)
+        if body._removed:
+            return
+        body._removed = True
+        self.bodies.remove(body)
+        body.cancel()
+        body.release_all()
+        body.erase()
+        for slot in body._cells:
+            self.terminal.set_character_visibility(slot.character, is_visible=False)
+        removed = {id(slot) for slot in body._cells}
+        self._shown = [slot for slot in self._shown if id(slot) not in removed]
+        body._cells.clear()
+
+    def clear(self) -> None:
+        """Remove all current bodies, releasing their mounts and hiding their surface cells immediately."""
+        for body in tuple(self.bodies):
+            self.remove(body)
+
     def new_mount(
         self,
         character: EffectCharacter,
@@ -1744,11 +1786,12 @@ class Space3D:
         from them are placed at the final pose. Readings are refreshed again after any callbacks, so changes they
         make show in this frame.
         """
-        finished = [(body, callback) for body in self.bodies for callback in body._advance()]
+        finished = [(body, body._callback_generation, callback) for body in self.bodies for callback in body._advance()]
         self._refresh_mounts()
         if finished:
-            for body, callback in finished:
-                callback(body)
+            for body, generation, callback in finished:
+                if not body._removed and body._callback_generation == generation:
+                    callback(body)
             self._refresh_mounts()
         self._draw_surfaces()
 

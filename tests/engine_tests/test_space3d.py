@@ -130,6 +130,84 @@ def test_step_transforms_apply_immediately_and_chain() -> None:
     assert body.scale == 1.0
 
 
+def test_cancel_discards_tweens_and_callbacks_without_changing_pose() -> None:
+    """Cancel freezes the current transform and permits new animation from that pose."""
+    _, space = make_space()
+    calls: list[int] = []
+    body = space.body().spin(frames=4).move_to(10, frames=4, together=True).on_complete(lambda _: calls.append(1))
+    space.step()
+    pose = (body.rotation, body.position, body.scale)
+    assert body.cancel() is body
+    for _ in range(5):
+        space.step()
+    assert (body.rotation, body.position, body.scale) == pose
+    assert not body.animating
+    assert not calls
+    body.move_to(20, frames=1)
+    space.step()
+    assert body.position.x == 20
+
+
+def test_remove_releases_mounts_and_rejects_stale_anchors() -> None:
+    """Removing a body releases its characters and rejects activation without disturbing another mount."""
+    terminal, space = make_space()
+    character = terminal.get_characters()[0]
+    body = space.body().move_to(10, frames=2)
+    anchor = body.anchor(0, 0, 0)
+    mount = space.mount(character, anchor)
+    tick(space, [character])
+    space.remove(body)
+    assert not space.bodies
+    assert not space.mounts
+    assert character.motion.mount is None
+    assert not mount.active
+    assert not body.animating
+    space.remove(body)
+    with pytest.raises(ValueError, match="removed"):
+        space.new_mount(character, anchor)
+    other = space.mount(character, space.body().anchor(0, 0, 0))
+    with pytest.raises(ValueError, match="removed"):
+        character.motion.activate_mount(mount)
+    assert character.motion.mount is other
+    _, foreign = make_space()
+    with pytest.raises(ValueError, match="different space"):
+        foreign.remove(body)
+
+
+def test_remove_from_callback_skips_removed_body_completion() -> None:
+    """A removed body cannot run a pending completion callback later in the same frame."""
+    _, space = make_space()
+    first, second = space.body(), space.body()
+    calls: list[int] = []
+    first.hold(1).on_complete(lambda _: space.remove(second))
+    second.hold(1).on_complete(lambda _: calls.append(1))
+    space.step()
+    assert space.bodies == [first]
+    assert not calls
+
+
+@pytest.mark.parametrize("parallel", [False, True])
+def test_cancel_during_completion_skips_already_collected_callbacks(*, parallel: bool) -> None:
+    """Cancellation invalidates this frame's old callbacks but permits newly queued work on the next frame."""
+    _, space = make_space()
+    calls: list[str] = []
+    body = space.body()
+
+    def cancel(finished: space3d.Body) -> None:
+        calls.append("cancel")
+        finished.cancel().hold(1).on_complete(lambda _: calls.append("new"))
+
+    body.hold(1).on_complete(cancel)
+    if parallel:
+        body.spin(frames=1, together=True)
+    body.on_complete(lambda _: calls.append("stale"))
+    space.step()
+    assert calls == ["cancel"]
+    assert body.animating
+    space.step()
+    assert calls == ["cancel", "new"]
+
+
 def test_scale_must_stay_positive() -> None:
     """Scale must stay positive."""
     _, space = make_space()
