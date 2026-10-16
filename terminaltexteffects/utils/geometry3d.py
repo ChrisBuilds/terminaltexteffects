@@ -743,7 +743,9 @@ def rasterize(
         for k in range(1, len(corners) - 1):
             triangle = (corners[0], corners[k], corners[k + 1])
             uvs = (face.uvs[0], face.uvs[k], face.uvs[k + 1]) if face.uvs else None
-            _fill_triangle(triangle, uvs, (normal, facing, face_index, face.tag), buffer)
+            _fill_triangle(
+                triangle, uvs, (normal, facing, face_index, face.tag), buffer, orthographic=camera.orthographic
+            )
     return buffer
 
 
@@ -752,8 +754,14 @@ def _fill_triangle(
     uvs: tuple[tuple[float, float], tuple[float, float], tuple[float, float]] | None,
     surface: tuple[Vec3, bool, int, int],
     buffer: dict[Coord, Fragment],
+    *,
+    orthographic: bool,
 ) -> None:
-    """Write the triangle into `buffer` at every cell center it covers, where it is nearer than what is there."""
+    """Write the triangle into `buffer` at every cell center it covers, where it is nearer than what is there.
+
+    Under perspective, depth is not linear across the screen but its reciprocal is, so depth and texture
+    coordinates are interpolated through `1 / depth` to stay correct on slanted faces.
+    """
     a, b, c = triangle
     area = (b.column - a.column) * (c.row - a.row) - (c.column - a.column) * (b.row - a.row)
     if abs(area) < _EPSILON:
@@ -768,7 +776,13 @@ def _fill_triangle(
             weight_c = 1 - weight_a - weight_b
             if weight_a < -_EPSILON or weight_b < -_EPSILON or weight_c < -_EPSILON:
                 continue
-            depth = weight_a * a.depth + weight_b * b.depth + weight_c * c.depth
+            if orthographic:
+                depth = weight_a * a.depth + weight_b * b.depth + weight_c * c.depth
+            else:
+                weight_a, weight_b, weight_c = weight_a / a.depth, weight_b / b.depth, weight_c / c.depth
+                inverse = weight_a + weight_b + weight_c
+                depth = 1 / inverse
+                weight_a, weight_b, weight_c = weight_a * depth, weight_b * depth, weight_c * depth
             cell = Coord(column, row)
             current = buffer.get(cell)
             if current is not None and current.depth <= depth:
@@ -829,7 +843,9 @@ def wireframe(
         line = rasterize_line(a.coord, b.coord)
         steps = max(len(line) - 1, 1)
         for step, cell in enumerate(line):
-            depth = a.depth + (b.depth - a.depth) * step / steps
+            t = step / steps
+            # Under perspective, reciprocal depth is what changes linearly along the line on screen.
+            depth = a.depth + (b.depth - a.depth) * t if camera.orthographic else 1 / ((1 - t) / a.depth + t / b.depth)
             current = cells.get(cell)
             if current is not None and (current.front, -current.depth) >= (front, -depth):
                 continue

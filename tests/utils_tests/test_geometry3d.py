@@ -456,6 +456,39 @@ def test_faces_behind_the_camera_are_skipped() -> None:
     assert g3.rasterize(g3.box(8, 8, 8), g3.Camera(0, 0, distance=10), position=g3.Vec3(0, 0, 8)) == {}
 
 
+def test_perspective_depth_matches_slanted_surface() -> None:
+    """Depth on a slanted face under perspective is the true distance to the surface, not a screen-space blend."""
+    # The plane z = x, seen by a camera at rest: a cell at column offset dx sees it at depth d / (1 + dx / f).
+    camera = g3.Camera(0, 0, distance=60)
+    quad = g3.Mesh(
+        (g3.Vec3(-20, -10, -20), g3.Vec3(20, -10, 20), g3.Vec3(20, 10, 20), g3.Vec3(-20, 10, -20)),
+        (g3.Face((0, 1, 2, 3), uvs=((0, 0), (1, 0), (1, 1), (0, 1))),),
+    )
+    buffer = g3.rasterize(quad, camera, cull="none")
+    assert buffer
+    for cell, fragment in buffer.items():
+        expected = 60 / (1 + cell.column / 60)
+        assert fragment.depth == pytest.approx(expected)
+        # Texture u runs linearly with world x, which is column * depth / focal on this plane.
+        assert fragment.uv is not None
+        assert fragment.uv[0] == pytest.approx((cell.column * expected / 60 + 20) / 40)
+
+
+def test_perspective_wireframe_depth_matches_edge() -> None:
+    """Wireframe depth along a receding edge follows the edge in 3D under perspective."""
+    camera = g3.Camera(0, 0, distance=60)
+    edge = g3.Mesh((g3.Vec3(-20, 0, -20), g3.Vec3(20, 0, 20), g3.Vec3(0, 5, 0)), (g3.Face((0, 1, 2)),))
+    cells = g3.wireframe(edge, camera)
+    start, end = camera.project(g3.Vec3(-20, 0, -20)), camera.project(g3.Vec3(20, 0, 20))
+    assert start is not None
+    assert end is not None
+    middle = [cell for cell in cells if cell.row == 0 and start.coord.column < cell.column < end.coord.column]
+    steps = end.coord.column - start.coord.column
+    for cell in middle:
+        t = (cell.column - start.coord.column) / steps
+        assert cells[cell].depth == pytest.approx(1 / ((1 - t) / start.depth + t / end.depth))
+
+
 def test_edge_on_faces_draw_nothing() -> None:
     """A face seen exactly edge-on has no area and adds no cells."""
     flat = g3.Mesh((g3.Vec3(0, -4, -4), g3.Vec3(0, -4, 4), g3.Vec3(0, 4, 4)), (g3.Face((0, 1, 2)),))
@@ -488,7 +521,7 @@ def test_wireframe_skips_edges_behind_the_camera() -> None:
     """Edges with an end behind the camera are not drawn; edges wholly in front still are."""
     cells = g3.wireframe(g3.box(8, 8, 8), g3.Camera(0, 0, distance=10), position=g3.Vec3(0, 0, 8))
     assert cells
-    assert {cell.depth for cell in cells.values()} == {6.0}
+    assert all(cell.depth == pytest.approx(6.0) for cell in cells.values())
 
 
 @pytest.mark.parametrize(
