@@ -2096,6 +2096,7 @@ class TTEApp(App[None]):
                 last_update = now
                 self.call_from_thread(progress.show_frames, count)
 
+        missing: frozenset[str] = frozenset()
         try:
             if fmt is export.FORMATS[0]:
                 header, frame_count, _ = _record_playbacks(path, effect_name, effect, 1, on_frame=on_frame)
@@ -2104,7 +2105,7 @@ class TTEApp(App[None]):
                     recording = Path(folder) / f"effect{export.FORMATS[0].suffix}"
                     header, frame_count, _ = _record_playbacks(recording, effect_name, effect, 1, on_frame=on_frame)
                     self.call_from_thread(progress.show_rendering, fmt.name, frame_count)
-                    export.export_recording(recording, path, fmt, fps=header.frame_rate)
+                    missing = export.export_recording(recording, path, fmt, fps=header.frame_rate)
         except (OSError, RecordingError, ValueError, export.ExportError) as error:
             self.call_from_thread(progress.finish)
             self.call_from_thread(self.notify, f"Export failed: {error}", severity="error")
@@ -2118,5 +2119,7 @@ class TTEApp(App[None]):
         )
         if fmt is export.FORMATS[0]:
             summary += f" Play it with: tte --play {path}"
+        if missing:
+            summary += f" No installed font has these symbols, drawn as boxes: {' '.join(sorted(missing))}"
         self.call_from_thread(progress.finish)
         self.call_from_thread(self.notify, summary)

@@ -21,7 +21,7 @@ Put the module in a public repository or Gist, with:
 
 | Item | Why |
 | --- | --- |
-| A short demo | People decide from the animation. A screen recording, or an [asciinema](https://asciinema.org) recording converted with [agg](https://github.com/asciinema/agg), works. |
+| A short demo | People decide from the animation. A screen recording works, or an animated WebP from [`tte --record`](../../appguide.md#gif-and-webp). |
 | The supported TTE version | Engine APIs can change between releases. State the version you tested with, such as "TTE 0.16.0". |
 | Install and run steps | Where to put the file, any dependencies, and an example command. |
 | The options | `tte <effect> -h` output, or a list of options and their defaults. |

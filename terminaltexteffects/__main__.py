@@ -333,9 +333,9 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
         metavar="FILE",
         help=(
             f"Render the effect without displaying it and save the frames to FILE. A {RECORDING_SUFFIX} file (or any "
-            "other extension) plays back with --play; a .gif or .webp file is an animation of the canvas, made "
-            f"with agg {export.AGG_MIN_VERSION} or later (and gif2webp for WebP) from PATH. Requires --frame-rate "
-            "greater than 0, which becomes the playback rate."
+            "other extension) plays back with --play; a .gif or .webp file is an animation of the canvas, which "
+            f"needs Pillow ({export.INSTALL_HINT}). Requires --frame-rate greater than 0, which becomes the playback "
+            "rate."
         ),
     )
     record_play_group.add_argument(
@@ -1071,6 +1071,7 @@ def _run_recording(
         next_playback_factory=next_recording_factory,
         on_frame=progress.frame,
     )
+    missing: frozenset[str] = frozenset()
     try:
         try:
             if fmt is export.FORMATS[0]:
@@ -1079,8 +1080,8 @@ def _run_recording(
                 with tempfile.TemporaryDirectory(prefix="tte-record-") as folder:
                     recording = Path(folder) / f"effect{RECORDING_SUFFIX}"
                     header, frame_count, segments = record(recording)
-                    progress.line(f"Drawing {frame_count} frames to {fmt.name} with {' and '.join(fmt.tools)}")
-                    export.export_recording(recording, args.record, fmt, fps=header.frame_rate)
+                    progress.line(f"Drawing {frame_count} frames to {fmt.name}")
+                    missing = export.export_recording(recording, args.record, fmt, fps=header.frame_rate)
         finally:
             progress.clear()
     except (EmptyInputError, UnsupportedAnsiSequenceError, RecordingError, export.ExportError) as e:
@@ -1089,6 +1090,9 @@ def _run_recording(
         _exit_with_error(f"Cannot write recording {str(args.record)!r}: {e.strerror or e}.")
     except KeyboardInterrupt:
         sys.exit(1)
+    if missing:
+        symbols = " ".join(sorted(missing))
+        print(f"No installed font has these symbols, drawn as boxes: {symbols}", file=sys.stderr)
     print(
         f"Recorded {frame_count} frames in {segments} segment{'s' if segments != 1 else ''} "
         f"({header.width}x{header.height} at {header.frame_rate} fps) to {args.record}",

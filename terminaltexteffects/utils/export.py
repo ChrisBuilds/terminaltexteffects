@@ -1,56 +1,46 @@
 """Convert recordings to GIF or animated WebP.
 
-A recording is converted to an asciicast holding only the effect canvas, which `agg` renders to a GIF. WebP output
-converts that GIF with `gif2webp`, which keeps every pixel and frame delay. When `gifsicle` is installed, GIF output
-is optimized with it. `tte --record`, the TUI's Export, and
-`tools/render_demos.py` for the documentation demos all use this pipeline.
+Frames are drawn from the recording with Pillow, which `pip install 'terminaltexteffects[export]'` installs on Python
+3.10 and later. Pillow is imported only when exporting, so the rest of TTE does not need it. `tte --record`, the
+TUI's Export, and `tools/render_demos.py` for the documentation demos all use this module.
 """
 
 from __future__ import annotations
 
-import json
+import importlib.util
 import secrets
 import shutil
-import subprocess
+import sys
 import tempfile
 import typing
 from pathlib import Path
 
-from terminaltexteffects.engine._recording import RECORDING_SUFFIX, RecordingReader
+from terminaltexteffects.engine._recording import RECORDING_SUFFIX
 
 
 class ExportFormat(typing.NamedTuple):
-    """An output format for recordings: its name, file suffix, and the commands it needs on `PATH`."""
+    """An output format for recordings: its name, file suffix, and whether it is drawn with Pillow."""
 
     name: str
     suffix: str
-    tools: tuple[str, ...]
+    needs_pillow: bool
 
 
 FORMATS = (
-    ExportFormat("tterec", RECORDING_SUFFIX, ()),
-    ExportFormat("GIF", ".gif", ("agg",)),
-    ExportFormat("WebP", ".webp", ("agg", "gif2webp")),
+    ExportFormat("tterec", RECORDING_SUFFIX, needs_pillow=False),
+    ExportFormat("GIF", ".gif", needs_pillow=True),
+    ExportFormat("WebP", ".webp", needs_pillow=True),
 )
 """Recording formats, the native recording first."""
 
-AGG_MIN_VERSION = "1.7"
-"""The oldest `agg` release that accepts every option this module passes, such as `--quiet`."""
+INSTALL_HINT = "pip install 'terminaltexteffects[export]'"
+"""The command that installs what GIF and WebP export needs."""
 
-TOOL_SOURCES = {
-    "agg": f"agg {AGG_MIN_VERSION} or later from github.com/asciinema/agg",
-    "gif2webp": "gif2webp from libwebp",
-}
-"""Where to get each command an export format needs."""
+PILLOW_PYTHON = sys.version_info >= (3, 10)
+"""Whether this Python can install a Pillow release the `export` extra allows, which needs 3.10 or later."""
 
 END_HOLD = 2.0
 """Seconds the last frame of a GIF or WebP is shown before the animation repeats."""
-
-GIF_MAX_FPS = 50
-"""The highest frame rate a GIF can play, since GIF frame delays are whole hundredths of a second."""
-
-GIFSICLE_LOSSY = 20
-"""The `gifsicle --lossy` level for GIF output, which shrinks GIFs by about a tenth without visible change."""
 
 
 class ExportError(Exception):
@@ -63,113 +53,68 @@ def format_for(path: Path) -> ExportFormat:
     return next((fmt for fmt in FORMATS if fmt.suffix == suffix), FORMATS[0])
 
 
-def missing_tools(fmt: ExportFormat) -> list[str]:
-    """Return the commands `fmt` needs that are not on `PATH`."""
-    return [tool for tool in fmt.tools if shutil.which(tool) is None]
+def pillow_available() -> bool:
+    """Return whether Pillow can be imported."""
+    return importlib.util.find_spec("PIL") is not None
 
 
 def format_problem(fmt: ExportFormat) -> str | None:
-    """Return why `fmt` can't be used here, naming the missing commands and where to get them, or `None`."""
-    missing = missing_tools(fmt)
-    if not missing:
+    """Return why `fmt` can't be used here and how to fix it, or `None`."""
+    if not fmt.needs_pillow or pillow_available():
         return None
-    return f"{fmt.name} needs " + " and ".join(TOOL_SOURCES.get(tool, tool) for tool in missing) + " on PATH."
+    if not PILLOW_PYTHON:
+        return f"{fmt.name} export needs Python 3.10 or later."
+    return f"{fmt.name} export needs Pillow; install it with: {INSTALL_HINT}"
 
 
-def recording_to_cast(recording: Path, cast: Path, start_hold: float = 0.0) -> bool:
-    """Write the recording as an asciicast v2 file holding only the canvas.
-
-    Every frame is drawn from the top-left corner with the cursor hidden, at the recording's frame period.
-    The first frame is shown for an extra `start_hold` seconds.
-
-    Returns:
-        bool: Whether any frame contains non-ASCII text, which needs the `resvg` renderer in `agg`.
-
-    """
-    non_ascii = False
-    with RecordingReader(recording) as reader, cast.open("w", encoding="utf-8") as out:
-        header = reader.header
-        period = 1 / header.frame_rate
-        out.write(json.dumps({"version": 2, "width": header.width, "height": header.height}) + "\n")
-        for index, frame in enumerate(reader.frames()):
-            non_ascii = non_ascii or not frame.isascii()
-            prefix = "\x1b[?25l\x1b[2J\x1b[H" if index == 0 else "\x1b[H"
-            time = 0.0 if index == 0 else start_hold + index * period
-            out.write(json.dumps([round(time, 6), "o", prefix + frame.replace("\n", "\r\n")]) + "\n")
-    return non_ascii
-
-
-def agg_fps_cap(fps: int) -> int:
-    """Return the `agg --fps-cap` that keeps every frame of a `fps` frames per second asciicast.
-
-    `agg` drops many frames when the cap equals the asciicast's frame rate, so the cap is one above it. Frame rates
-    above `GIF_MAX_FPS` are capped there, and `agg` keeps the timing correct by dropping frames evenly.
-    """
-    return min(fps, GIF_MAX_FPS) + 1
-
-
-def _run(command: list[str]) -> None:
-    executable = shutil.which(command[0])
-    if executable is None:
-        message = f"{command[0]} is not installed or not on PATH."
-        raise ExportError(message)
-    result = subprocess.run(  # noqa: S603 (separated arguments, no shell)
-        [executable, *command[1:]],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode:
-        message = f"{command[0]} exited with {result.returncode}: {(result.stderr or result.stdout).strip()}"
-        if command[0] == "agg":
-            message += f"\nGIF and WebP need agg {AGG_MIN_VERSION} or later; check it with: agg --version"
-        raise ExportError(message)
-
-
-def export_recording(recording: Path, output: Path, fmt: ExportFormat, *, fps: int) -> None:
+def export_recording(
+    recording: Path,
+    output: Path,
+    fmt: ExportFormat,
+    *,
+    fps: int,
+    font: str | None = None,
+    fallback_fonts: typing.Sequence[str] = (),
+    start_hold: float = 0.0,
+    end_hold: float = END_HOLD,
+    minimize_size: bool = False,
+) -> frozenset[str]:
     """Convert `recording` to `output` in the GIF or WebP format `fmt`, at most `fps` frames per second.
 
-    GIF output is optimized with `gifsicle` when it is on `PATH`.
+    The first frame is held for `start_hold` extra seconds and the last for `end_hold` seconds before the animation
+    repeats. `font` and `fallback_fonts` choose the fonts, as `Fonts` describes, and `minimize_size` makes WebP files
+    a few percent smaller at about three times the encoding time.
 
     The file is converted in a temporary directory and replaces `output` only when conversion completes, so a
     failed or interrupted export leaves no partial file.
 
+    Returns:
+        frozenset[str]: Symbols no installed font has, which are drawn as missing-glyph boxes.
+
     Raises:
-        ExportError: If a needed command is missing or fails.
+        ExportError: If Pillow is missing, no font can be loaded, or the recording has no frames.
         OSError: If `output` cannot be written.
 
     """
+    problem = format_problem(fmt)
+    if problem is not None:
+        raise ExportError(problem)
+    from terminaltexteffects.utils import _animation  # noqa: PLC0415 (Pillow is optional)
+
     with tempfile.TemporaryDirectory(prefix="tte-export-") as folder:
         work = Path(folder)
-        cast = work / "effect.cast"
-        non_ascii = recording_to_cast(recording, cast)
-        gif = work / "effect.gif"
-        _run(
-            [
-                "agg",
-                "--quiet",
-                "--theme",
-                "asciinema",
-                "--font-size",
-                "14",
-                "--fps-cap",
-                str(agg_fps_cap(fps)),
-                "--last-frame-duration",
-                str(END_HOLD),
-                *(["--renderer", "resvg"] if non_ascii else []),
-                str(cast),
-                str(gif),
-            ],
-        )
-        converted = gif
-        if fmt.suffix == ".webp":
-            # Converted from agg's GIF: gifsicle's lossy noise would make the lossless WebP larger.
-            converted = work / "effect.webp"
-            _run(["gif2webp", "-quiet", "-min_size", str(gif), "-o", str(converted)])
-        elif shutil.which("gifsicle") is not None:
-            converted = work / "optimized.gif"
-            _run(["gifsicle", "-O3", f"--lossy={GIFSICLE_LOSSY}", str(gif), "-o", str(converted)])
+        converted = work / f"effect{fmt.suffix}"
+        try:
+            fonts = _animation.Fonts(font, fallback_fonts)
+            frames = _animation.draw_frames(recording, work, fps=fps, fonts=fonts, start_hold=start_hold)
+            if fmt.suffix == ".gif":
+                _animation.write_gif(frames, converted, end_hold=end_hold)
+            else:
+                _animation.write_webp(frames, converted, end_hold=end_hold, minimize_size=minimize_size)
+        except _animation.RenderError as error:
+            raise ExportError(str(error)) from error
         _replace(output, converted)
+    return frames.missing
 
 
 def _replace(output: Path, converted: Path) -> None:
