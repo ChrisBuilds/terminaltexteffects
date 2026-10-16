@@ -23,6 +23,13 @@ face into triangles, which are always convex.
 Curved shapes are meshes too. A sphere is a band of flat faces, and more `segments` and `rings` make its outline
 rounder at a higher cost per frame.
 
+## Shape ownership
+
+A body's `shape` is read-only: its mesh and texture layouts are built from that shape when
+`space.body(shape)` is called. Create another body to use a different shape. Anchors belong to
+the body that created them and keep their original local coordinates.
+
+
 ## In TTE
 
 The Gallery example shows every built-in shape. Save it as `gallery.py`:

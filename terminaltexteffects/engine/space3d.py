@@ -629,7 +629,7 @@ class Body:
 
         """
         self.space = space
-        self.shape = shape
+        self._shape = shape
         self._mesh = shape.build_mesh() if shape is not None else None
         self._home = g3.Vec3(*at)
         self._rotation = g3.Rotation()
@@ -644,6 +644,14 @@ class Body:
         self._cells: list[_Slot] = []
 
     # Reading the transform
+
+    @property
+    def shape(self) -> Shape | None:
+        """The read-only shape used to build this body's mesh and layouts.
+
+        Create a new body for a different shape. Existing anchors stay attached to their original body.
+        """
+        return self._shape
 
     @property
     def rotation(self) -> g3.Rotation:
