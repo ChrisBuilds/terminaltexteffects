@@ -34,6 +34,9 @@ GUIDE_EXAMPLES = PROJECT_ROOT / "docs" / "effectguide" / "examples"
 TUTORIAL_INPUT = GUIDE_EXAMPLES / "tutorial_input.txt"
 CONCEPT_INPUT = GUIDE_EXAMPLES / "concept_input.txt"
 COLOR_INPUT = GUIDE_EXAMPLES / "color_input.txt"
+EXAMPLES_3D = GUIDE_EXAMPLES / "3d"
+CANVAS_3D = ("--canvas-width", "80", "--canvas-height", "24", "--anchor-text", "c")
+"""The 3D Effects chapters run every example on an 80 by 24 canvas, so shapes have room around the text."""
 FORMATS = ("gif", "webp")
 DEFAULT_FPS = 60
 """The highest output frame rate. Demos record at 60 fps, so WebP output keeps every frame."""
@@ -172,6 +175,45 @@ GUIDE_DEMOS: dict[str, Demo] = {
         for algorithm in ("prims_simple", "recursive_backtracker", "aldous_broder")
     },
     "wave": Demo(effect="wave", input_file=CONCEPT_INPUT, effects_dir=GUIDE_EXAMPLES / "wave"),
+    **{
+        name: Demo(
+            effect=effect,
+            effect_args=effect_args,
+            tte_args=CANVAS_3D,
+            input_file=CONCEPT_INPUT,
+            effects_dir=EXAMPLES_3D / effect,
+        )
+        for name, effect, effect_args in (
+            ("cubes", "cubes", ()),
+            ("cubes_wireframe", "cubes", ("--wireframe",)),
+            ("axes", "axes", ()),
+            ("cells", "cells", ()),
+            ("orbit", "orbit", ()),
+            ("turns_axes", "turns", ()),
+            ("turns_tumble", "turns", ("--mode", "tumble")),
+            ("turns_rest", "turns", ("--mode", "rest")),
+            ("lens_0", "lens", ("--perspective", "0")),
+            ("lens_1", "lens", ()),
+            ("lens_2", "lens", ("--perspective", "2")),
+            ("depth", "depth", ()),
+            ("depth_see_through", "depth", ("--see-through",)),
+            ("card", "card", ()),
+            ("card_hide_back", "card", ("--hide-back",)),
+            ("gallery", "gallery", ()),
+            ("star", "star", ()),
+            ("star_wireframe", "star", ("--wireframe",)),
+            ("light", "light", ()),
+            ("light_torus", "light", ("--shape", "torus", "--symbols", "░▒▓█")),
+            ("texture_grid", "texture", ()),
+            ("texture_text", "texture", ("--text",)),
+            ("handoff", "handoff", ()),
+            ("logo", "logo", ()),
+            ("die", "die", ()),
+            ("globe", "globe", ()),
+            ("ticker", "ticker", ()),
+            ("wireframes", "wireframes", ()),
+        )
+    },
     "travel_canvas": Demo(
         effect="travel",
         tte_args=("--canvas-width", "60", "--canvas-height", "14", "--anchor-text", "c"),

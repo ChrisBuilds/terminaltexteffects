@@ -83,6 +83,21 @@ nav:
       - effectguide/engine/loading.md
       - effectguide/engine/performance.md
       - effectguide/engine/toolbox.md
+    - 3D Effects:
+      - effectguide/3d/index.md
+      - effectguide/3d/terminal.md
+      - effectguide/3d/coordinates.md
+      - effectguide/3d/tall-cells.md
+      - effectguide/3d/transforms.md
+      - effectguide/3d/rotation.md
+      - effectguide/3d/camera.md
+      - effectguide/3d/depth.md
+      - effectguide/3d/meshes.md
+      - effectguide/3d/light.md
+      - effectguide/3d/textures.md
+      - effectguide/3d/animating.md
+      - effectguide/3d/performance.md
+      - effectguide/3d/recipes.md
     - Writing Effects:
       - Tutorial:
         - effectguide/tutorial/01-scaffold.md

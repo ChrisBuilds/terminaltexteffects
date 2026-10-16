@@ -18,7 +18,7 @@ EXAMPLES = PROJECT_ROOT / "docs" / "effectguide" / "examples"
 ANSI_ESCAPE = re.compile(r"\x1b(\[[0-?]*[ -/]*[@-~]|[78])")
 EXAMPLE_DIRS = sorted(
     path
-    for path in EXAMPLES.iterdir()
+    for path in EXAMPLES.rglob("*")
     if path.is_dir() and any("def get_effect_resources" in module.read_text() for module in path.glob("*.py"))
 )
 
@@ -108,6 +108,18 @@ def test_guide_pages_show_rendered_guide_demos() -> None:
     assert shown == set(render_demos.GUIDE_DEMOS)
     for name in shown:
         assert (PROJECT_ROOT / "docs" / "img" / "effectguide" / f"{name}_demo.webp").is_file()
+
+
+def test_guide_pages_show_rendered_3d_diagrams() -> None:
+    """Pages show only known 3D diagrams, every diagram is shown, and each one has been rendered."""
+    pytest.importorskip("PIL")
+    from tools import render_3d_diagrams  # noqa: PLC0415 - Needs Pillow, which isn't installed on every Python.
+
+    pages = (PROJECT_ROOT / "docs" / "effectguide").rglob("*.md")
+    shown = {name for page in pages for name in re.findall(r"img/effectguide/3d/(\w+)\.webp", page.read_text())}
+    assert shown == set(render_3d_diagrams.DIAGRAMS)
+    for name in shown:
+        assert (render_3d_diagrams.OUT_DIR / f"{name}.webp").is_file()
 
 
 @pytest.mark.skipif(sys.version_info < (3, 13), reason="argparse wraps usage lines differently before 3.13")
