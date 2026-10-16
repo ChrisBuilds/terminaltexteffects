@@ -2,18 +2,9 @@
 
 This tutorial builds a 3D effect from scratch: Spin. The text starts far behind the canvas as a flat sheet, turned at
 a random angle. It comes forward while spinning, unwinds its tilt as it goes, and lands exactly on the input text.
-Each character brightens as it turns to face you. This is the finished effect:
+Each character brightens as it turns to face you. This is what you'll have at the end:
 
-```bash
-tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c spin
-```
-
-![The finished Spin effect: the text tumbles in from far away and settles into place](../../../img/effectguide/spin_goal_demo.webp)
-
-!!! info "Spin is in development"
-
-    Spin lives in the repository's `dev_effects/` directory until it is released. To run it from a checkout, add
-    `TTE_DEV_EFFECTS_DIR=dev_effects` before `tte`.
+![The finished effect: the text tumbles in from far away and settles into place](../../../img/effectguide/myspin_step6_demo.webp)
 
 Your copy is called **MySpin** and runs as `tte myspin`. It uses the same input and canvas as the
 [3D Effects](../index.md#running-the-examples) chapters. If you haven't written an effect before, the

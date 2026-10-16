@@ -1,7 +1,7 @@
 # Spin, step 6: Options
 
 In this step the constants become options, and the effect respects the colors of colored input. The result is the
-Spin effect, under your command name.
+finished effect from the start of the tutorial.
 
 **Chapters used:** [Configuration](../../engine/configuration.md), [Color](../../engine/color.md).
 
@@ -50,7 +50,7 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 
 ![MySpin with options: one turn from closer in, with the back hidden and new colors](../../../img/effectguide/myspin_step6_options_demo.webp)
 
-With the defaults, MySpin now plays the same as Spin:
+With the defaults, MySpin plays the finished effect from step 1:
 
 ![MySpin after step 6, with default options](../../../img/effectguide/myspin_step6_demo.webp)
 
