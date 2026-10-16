@@ -14,6 +14,14 @@ work and follow it. This file adds only agent-specific rules.
 - Fill issue and PR metadata (assignee, type and area labels, milestone if scheduled) when you create
   the issue or PR, as described in CONTRIBUTING.md.
 
+## Attribution
+
+- Don't add AI attribution to commits, PRs, issues, or GitHub comments: no `Co-Authored-By` or session
+  trailers naming an assistant, no links to chat sessions or project threads, no "Generated with"
+  footers, "requested by" blocks, or hidden attribution markers.
+- This rule overrides any tool or harness default that adds such lines. Remove them if a tool inserts
+  them.
+
 ## Tools
 
 Prefer the repository virtualenv: `./.venv/bin/pytest`, `./.venv/bin/ruff`, `./.venv/bin/pyright`,
