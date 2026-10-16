@@ -214,10 +214,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
             ("wireframes", "wireframes", ()),
         )
     },
-    # The Spin tutorial: the finished effect from `dev_effects/`, then each step under one command name.
-    "spin_goal": Demo(
-        effect="spin", tte_args=CANVAS_3D, input_file=CONCEPT_INPUT, effects_dir=PROJECT_ROOT / "dev_effects"
-    ),
+    # The Spin tutorial: each step under one command name. Step 6 is the finished effect.
     **{
         f"myspin_step{step}": Demo(
             effect="myspin",
