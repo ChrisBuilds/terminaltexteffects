@@ -731,13 +731,24 @@ def rasterize(
     rotation = rotation or Rotation()
     world = transform_points(mesh.vertices, rotation, scale=scale, position=position)
     projected = camera.project_points(world)
-    normals = transform_points(mesh.normals, rotation)
+    m00, m01, m02, m10, m11, m12, m20, m21, m22 = rotation.matrix()
+    mesh_normals = mesh.normals
+    orthographic, distance = camera.orthographic, camera.distance
     for face_index, face in enumerate(mesh.faces):
         corners = [corner for corner in (projected[i] for i in face.indices) if corner is not None]
         if len(corners) < len(face.indices):
             continue  # Partly behind the camera.
-        normal = normals[face_index]
-        facing = normal.dot(camera.view_direction(world[face.indices[0]])) > 0
+        rows = [corner.row for corner in corners]
+        columns = [corner.column for corner in corners]
+        if math.ceil(min(rows)) > math.floor(max(rows)) or math.ceil(min(columns)) > math.floor(max(columns)):
+            continue  # Covers no cell center.
+        local = mesh_normals[face_index]
+        nx, ny, nz = local.x, local.y, local.z
+        normal = Vec3(m00 * nx + m01 * ny + m02 * nz, m10 * nx + m11 * ny + m12 * nz, m20 * nx + m21 * ny + m22 * nz)
+        # The sign of the normal against the direction toward the camera: `view_direction` without normalizing.
+        first = world[face.indices[0]]
+        toward = normal.z if orthographic else normal.z * (distance - first.z) - normal.x * first.x - normal.y * first.y
+        facing = toward > 0
         if (cull == "back" and not facing) or (cull == "front" and facing):
             continue
         for k in range(1, len(corners) - 1):
@@ -762,28 +773,43 @@ def _fill_triangle(
     Under perspective, depth is not linear across the screen but its reciprocal is, so depth and texture
     coordinates are interpolated through `1 / depth` to stay correct on slanted faces.
     """
-    a, b, c = triangle
-    area = (b.column - a.column) * (c.row - a.row) - (c.column - a.column) * (b.row - a.row)
+    (a_column, a_row, a_depth), (b_column, b_row, b_depth), (c_column, c_row, c_depth) = triangle
+    first_row = math.ceil(min(a_row, b_row, c_row))
+    last_row = math.floor(max(a_row, b_row, c_row))
+    first_column = math.ceil(min(a_column, b_column, c_column))
+    last_column = math.floor(max(a_column, b_column, c_column))
+    if first_row > last_row or first_column > last_column:
+        return  # Covers no cell center.
+    area = (b_column - a_column) * (c_row - a_row) - (c_column - a_column) * (b_row - a_row)
     if abs(area) < _EPSILON:
         return
     normal, facing, face_index, tag = surface
-    for row in range(math.ceil(min(a.row, b.row, c.row)), math.floor(max(a.row, b.row, c.row)) + 1):
-        for column in range(
-            math.ceil(min(a.column, b.column, c.column)), math.floor(max(a.column, b.column, c.column)) + 1
-        ):
-            weight_a = ((b.column - column) * (c.row - row) - (c.column - column) * (b.row - row)) / area
-            weight_b = ((c.column - column) * (a.row - row) - (a.column - column) * (c.row - row)) / area
+    # Each barycentric weight is linear across a row: weight = slope * column + offset(row).
+    slope_a = (b_row - c_row) / area
+    slope_b = (c_row - a_row) / area
+    columns = range(first_column, last_column + 1)
+    cells = _CELLS
+    for row in range(first_row, last_row + 1):
+        offset_a = (b_column * (c_row - row) - c_column * (b_row - row)) / area
+        offset_b = (c_column * (a_row - row) - a_column * (c_row - row)) / area
+        for column in columns:
+            weight_a = slope_a * column + offset_a
+            weight_b = slope_b * column + offset_b
             weight_c = 1 - weight_a - weight_b
             if weight_a < -_EPSILON or weight_b < -_EPSILON or weight_c < -_EPSILON:
                 continue
             if orthographic:
-                depth = weight_a * a.depth + weight_b * b.depth + weight_c * c.depth
+                depth = weight_a * a_depth + weight_b * b_depth + weight_c * c_depth
             else:
-                weight_a, weight_b, weight_c = weight_a / a.depth, weight_b / b.depth, weight_c / c.depth
-                inverse = weight_a + weight_b + weight_c
-                depth = 1 / inverse
+                weight_a, weight_b, weight_c = weight_a / a_depth, weight_b / b_depth, weight_c / c_depth
+                depth = 1 / (weight_a + weight_b + weight_c)
                 weight_a, weight_b, weight_c = weight_a * depth, weight_b * depth, weight_c * depth
-            cell = Coord(column, row)
+            key = (column, row)
+            cell = cells.get(key)
+            if cell is None:
+                if len(cells) >= _CELL_CACHE_LIMIT:
+                    cells.clear()
+                cell = cells[key] = Coord(column, row)
             current = buffer.get(cell)
             if current is not None and current.depth <= depth:
                 continue
@@ -794,6 +820,11 @@ def _fill_triangle(
                     weight_a * uvs[0][1] + weight_b * uvs[1][1] + weight_c * uvs[2][1],
                 )
             buffer[cell] = Fragment(depth, normal, facing, face_index, tag, uv)
+
+
+_CELLS: dict[tuple[int, int], Coord] = {}
+"""Shared `Coord` objects by (column, row), since building a frozen dataclass per covered cell is costly."""
+_CELL_CACHE_LIMIT = 1 << 16
 
 
 class EdgeCell(NamedTuple):

@@ -55,6 +55,30 @@ Each mount reports `depth`, `nearness`, `facing`, `facing_amount` and `light` af
 these to set its own appearance. A scene created with `sync=Scene.SyncMetric.LIGHT` or `Scene.SyncMetric.DEPTH`
 picks its frame from the mount's light or nearness, so 3D shading can be authored as an ordinary gradient scene.
 
+## Drawing surfaces
+
+Mounted characters leave gaps on a solid. To fill every covered cell, draw the body with a look:
+
+- `Shaded(gradient, symbols)` fills faces with a symbol ramp and gradient, picked by each face's angle to the light.
+- `Solid(symbol, gradient)` uses one symbol, colored by the light.
+- `Textured(text=None, back="hide")` wraps the input text, or any string, over the faces. With `back="dim"` the far
+  side shows through the spaces in the text.
+- `Wireframe(color, hidden_color)` draws only the edges, with hidden edges dimmed or left out.
+
+Gradients default to the TTE brand colors. `body.draw(look)` starts drawing, `faces={tag: look}` gives faces
+their own looks (a die is one argument), and `body.erase()` stops. Each `step()` draws every drawn body into one
+depth buffer, so overlapping bodies hide each other correctly.
+
+The space draws surfaces with characters it creates, one per covered cell, and never uses the effect's own
+characters. `body.surface_characters` lists the ones showing a body after the last `step()`. An effect can restyle
+them, but each `step()` redraws them. Surface cells are layered by depth, one layer below a mounted character at
+the same depth, so text mounted on a drawn body from the default layer 0 or above reads on top of it.
+
+```python
+self.die = self.space.body(Cube(16)).draw(Shaded(), faces={0: Textured("1"), 2: Textured("6")})
+self.die.random_pose(frames=90, ease=easing.out_cubic)
+```
+
 The following snippet runs inside an effect iterator, where `self.terminal` and `self.active_characters` are
 available:
 
