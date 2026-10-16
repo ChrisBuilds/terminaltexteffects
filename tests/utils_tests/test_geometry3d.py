@@ -435,6 +435,35 @@ def test_texture_coordinates_span_the_face() -> None:
     assert buffer[Coord(0, 0)].uv == pytest.approx((0.5, 0.5))
 
 
+def test_depth_tested_wireframe_hides_occluded_torus_edges() -> None:
+    """Front-facing concave edges behind the filled surface are classified as hidden."""
+    mesh = g3.torus(20, 8, 36, 18)
+    camera = g3.Camera(0, 0, orthographic=True)
+    surface = g3.rasterize(mesh, camera, cull="none")
+    default = g3.wireframe(mesh, camera)
+    assert default == g3.wireframe(mesh, camera, depth_test=False)
+    tested = g3.wireframe(mesh, camera, depth_test=True)
+    occluded = {
+        cell
+        for cell, edge in default.items()
+        if edge.front and cell in surface and edge.depth > surface[cell].depth + 3
+    }
+    assert occluded
+    assert all(not tested[cell].front for cell in occluded)
+    assert any(edge.front for edge in tested.values())
+    assert tested.keys() == default.keys()
+
+
+def test_depth_tested_wireframe_respects_bounds() -> None:
+    """The depth-tested mode uses the same viewport for both fill and edge work."""
+    mesh = g3.torus(20, 8, 36, 18)
+    camera = g3.Camera(0, 0, orthographic=True)
+    bounds = g3.Bounds(-10, 10, -5, 5)
+    complete = g3.wireframe(mesh, camera, depth_test=True)
+    bounded = g3.wireframe(mesh, camera, depth_test=True, bounds=bounds)
+    assert bounded == {cell: edge for cell, edge in complete.items() if bounds.contains(cell)}
+
+
 def test_shared_buffer_keeps_the_nearer_surface() -> None:
     """Drawing two meshes into one buffer keeps whichever surface is nearer in each cell."""
     camera = g3.Camera(0, 0)

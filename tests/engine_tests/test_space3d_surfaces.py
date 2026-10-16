@@ -69,6 +69,16 @@ def test_draw_needs_a_shape_and_rejects_per_face_wireframes() -> None:
         space.body(space3d.Cube(10)).draw(space3d.Wireframe(), faces={0: space3d.Solid()})
 
 
+def test_wireframe_depth_test_omits_occluded_edges_when_hidden_color_is_none() -> None:
+    """The body look forwards its opt-in depth test and suppresses hidden cells."""
+    space = make_space(width=81, height=41, perspective=0)
+    body = space.body(space3d.Torus(20, 8, 36, 18)).draw(space3d.Wireframe(hidden_color=None, depth_test=True))
+    space.step()
+    assert body.mesh is not None
+    edges = g3.wireframe(body.mesh, space.camera, depth_test=True, bounds=g3.Bounds.for_canvas(space.terminal.canvas))
+    assert set(body.surface_characters) == {cell for cell, edge in edges.items() if edge.front}
+
+
 def test_looks_validate_their_settings() -> None:
     """Looks validate their settings."""
     with pytest.raises(ValueError, match="symbol"):
