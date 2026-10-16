@@ -49,8 +49,9 @@ CASES = [
     ("out_dir", "demos"), [(EFFECT_DEMOS, render_demos.demos()), (GUIDE_DEMOS, render_demos.GUIDE_DEMOS)]
 )
 def test_manifest_lists_exactly_the_demos(out_dir: Path, demos: dict[str, render_demos.Demo]) -> None:
-    """Every demo has a fingerprint, and no fingerprint is left from a removed demo."""
+    """Every demo has a fingerprint and a committed WebP, and no fingerprint is left from a removed demo."""
     assert set(render_demos.read_manifest(out_dir)) == set(demos)
+    assert [name for name in demos if not (out_dir / f"{name}_demo.webp").is_file()] == []
 
 
 @pytest.mark.parametrize(("name", "demo", "out_dir"), CASES, ids=[f"{out.name}/{name}" for name, _, out in CASES])
