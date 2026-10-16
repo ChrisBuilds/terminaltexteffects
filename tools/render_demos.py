@@ -45,7 +45,10 @@ DEMO_SEED = 1
 """Every demo records with this seed, so the same code always records the same frames."""
 MANIFEST = "demos.json"
 """Name of the file, beside the demos, that maps each demo to the fingerprint of what it was rendered from."""
-RENDERER_SOURCE = PROJECT_ROOT / "terminaltexteffects" / "utils" / "_animation.py"
+RENDERER_SOURCES = tuple(
+    PROJECT_ROOT / "terminaltexteffects" / "utils" / name for name in ("_animation.py", "export.py")
+)
+"""Code that turns a recording into a demo image, so a change to it marks every demo out of date."""
 DEFAULT_FPS = 60
 """The highest output frame rate. Demos record at 60 fps, so WebP output keeps every frame."""
 
@@ -352,7 +355,9 @@ def fingerprint(recording: Path, demo: Demo, fps: int) -> str:
             "fps": min(fps, demo.frame_rate),
             "start_hold": demo.start_hold,
             "end_hold": demo.end_hold,
-            "renderer": hashlib.sha256(RENDERER_SOURCE.read_bytes().replace(b"\r\n", b"\n")).hexdigest(),
+            "renderer": [
+                hashlib.sha256(source.read_bytes().replace(b"\r\n", b"\n")).hexdigest() for source in RENDERER_SOURCES
+            ],
         }
         digest.update(json.dumps(settings, sort_keys=True).encode())
         for frame in reader.frames():
