@@ -17,6 +17,8 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 import subprocess
 import sys
@@ -39,6 +41,11 @@ EXAMPLES_3D = GUIDE_EXAMPLES / "3d"
 CANVAS_3D = ("--canvas-width", "80", "--canvas-height", "24", "--anchor-text", "c")
 """The 3D Effects chapters run every example on an 80 by 24 canvas, so shapes have room around the text."""
 FORMATS = ("gif", "webp")
+DEMO_SEED = 1
+"""Every demo records with this seed, so the same code always records the same frames."""
+MANIFEST = "demos.json"
+"""Name of the file, beside the demos, that maps each demo to the fingerprint of what it was rendered from."""
+RENDERER_SOURCE = PROJECT_ROOT / "terminaltexteffects" / "utils" / "_animation.py"
 DEFAULT_FPS = 60
 """The highest output frame rate. Demos record at 60 fps, so WebP output keeps every frame."""
 
@@ -301,6 +308,8 @@ def record(demo: Demo, path: Path) -> None:
         str(demo.input_file),
         "--frame-rate",
         str(demo.frame_rate),
+        "--seed",
+        str(DEMO_SEED),
         "--export",
         str(path),
         *demo.tte_args,
@@ -328,6 +337,48 @@ def drop_final_text(recording: Path) -> None:
             writer.write_frame(frame)
 
 
+def fingerprint(recording: Path, demo: Demo, fps: int) -> str:
+    """Return a digest of the frames in `recording` and everything else that decides how the demo is drawn.
+
+    Two renders with the same fingerprint draw the same animation, so a demo whose fingerprint no longer matches the
+    one in its `MANIFEST` is out of date with the code it shows.
+    """
+    digest = hashlib.sha256()
+    with RecordingReader(recording) as reader:
+        settings = {
+            "width": reader.header.width,
+            "height": reader.header.height,
+            "frame_rate": reader.header.frame_rate,
+            "fps": min(fps, demo.frame_rate),
+            "start_hold": demo.start_hold,
+            "end_hold": demo.end_hold,
+            "renderer": hashlib.sha256(RENDERER_SOURCE.read_bytes().replace(b"\r\n", b"\n")).hexdigest(),
+        }
+        digest.update(json.dumps(settings, sort_keys=True).encode())
+        for frame in reader.frames():
+            digest.update(b"\0" + frame.encode())
+    return digest.hexdigest()
+
+
+def read_manifest(out_dir: Path) -> dict[str, str]:
+    """Return the demo fingerprints recorded in `out_dir`, or none if it has no manifest."""
+    path = out_dir / MANIFEST
+    return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+
+
+def write_manifest(out_dir: Path, fingerprints: dict[str, str]) -> None:
+    """Add or replace the fingerprints of the demos just rendered in `out_dir`'s manifest."""
+    manifest = read_manifest(out_dir) | fingerprints
+    (out_dir / MANIFEST).write_text(json.dumps(dict(sorted(manifest.items())), indent=2) + "\n", encoding="utf-8")
+
+
+def record_for_render(demo: Demo, path: Path) -> None:
+    """Record the demo as it is drawn: with the closing text dropped when the demo doesn't end on it."""
+    record(demo, path)
+    if not demo.end_on_text:
+        drop_final_text(path)
+
+
 @dataclass(frozen=True)
 class RenderOptions:
     """Command-line choices that apply to every demo."""
@@ -338,27 +389,31 @@ class RenderOptions:
     fallback_fonts: tuple[str, ...] = ()
 
 
-def try_render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> tuple[bool, str]:
+def try_render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> tuple[str, str | None]:
     """Render one demo, reporting a failure instead of raising.
 
     Returns:
-        tuple[bool, str]: Whether the demo rendered, and its file sizes or the error.
+        tuple[str, str | None]: The demo's file sizes or the error, and its fingerprint if it rendered.
 
     """
     try:
-        return True, render(name, demo, out_dir, options)
+        return render(name, demo, out_dir, options)
     except (CommandError, export.ExportError) as error:
-        return False, f"{name}: {error}"
+        return f"{name}: {error}", None
 
 
-def render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> str:
-    """Render one demo to each requested format, named `<name>_demo.<format>`, and return their sizes."""
+def render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> tuple[str, str]:
+    """Render one demo to each requested format, named `<name>_demo.<format>`.
+
+    Returns:
+        tuple[str, str]: The rendered files' sizes, and the demo's fingerprint.
+
+    """
     missing: set[str] = set()
     with tempfile.TemporaryDirectory(prefix="tte-demo-") as temp:
         recording = Path(temp) / "demo.tterec"
-        record(demo, recording)
-        if not demo.end_on_text:
-            drop_final_text(recording)
+        record_for_render(demo, recording)
+        demo_fingerprint = fingerprint(recording, demo, options.fps)
         for fmt in options.formats:
             missing |= export.export_recording(
                 recording,
@@ -372,7 +427,7 @@ def render(name: str, demo: Demo, out_dir: Path, options: RenderOptions) -> str:
             )
     sizes = ", ".join(f"{fmt} {(out_dir / f'{name}_demo.{fmt}').stat().st_size // 1024} KB" for fmt in options.formats)
     note = f" (no font has {' '.join(sorted(missing))}; pass --fallback-font FONT)" if missing else ""
-    return f"{name}: {sizes}{note}"
+    return f"{name}: {sizes}{note}", demo_fingerprint
 
 
 def parse_formats(value: str) -> list[str]:
@@ -450,13 +505,15 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     # Each demo records and encodes on one core, so demos render in parallel.
     with ProcessPoolExecutor(max_workers=args.jobs) as executor:
-        futures = [executor.submit(try_render, name, available[name], args.out, options) for name in selected]
-        results = []
+        futures = {executor.submit(try_render, name, available[name], args.out, options): name for name in selected}
+        fingerprints: dict[str, str] = {}
         for future in as_completed(futures):
-            rendered, message = future.result()
-            print(message, file=sys.stdout if rendered else sys.stderr, flush=True)
-            results.append(rendered)
-    return 0 if all(results) else 1
+            message, demo_fingerprint = future.result()
+            print(message, file=sys.stderr if demo_fingerprint is None else sys.stdout, flush=True)
+            if demo_fingerprint is not None:
+                fingerprints[futures[future]] = demo_fingerprint
+    write_manifest(args.out, fingerprints)
+    return 0 if len(fingerprints) == len(selected) else 1
 
 
 if __name__ == "__main__":
