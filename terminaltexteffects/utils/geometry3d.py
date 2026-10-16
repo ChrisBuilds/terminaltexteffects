@@ -33,6 +33,7 @@ from __future__ import annotations
 import math
 import sys
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import TYPE_CHECKING, Any, NamedTuple
 
 from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE, Coord, rasterize_line
@@ -479,13 +480,18 @@ class Mesh:
         """Each face's outward unit normal, in the same order as `faces`."""
         return self._normals
 
+    @cached_property
+    def _edge_faces(self) -> tuple[tuple[tuple[int, int], tuple[int, ...]], ...]:
+        """Edge adjacency, built only for meshes used in edge layouts or wireframes."""
+        adjacency: dict[tuple[int, int], list[int]] = {}
+        for face_index, face in enumerate(self.faces):
+            for start, end in zip(face.indices, face.indices[1:] + face.indices[:1]):
+                adjacency.setdefault((min(start, end), max(start, end)), []).append(face_index)
+        return tuple((edge, tuple(faces)) for edge, faces in adjacency.items())
+
     def edges(self) -> list[tuple[int, int]]:
         """Return each edge once, as a sorted pair of vertex indexes."""
-        seen: dict[tuple[int, int], None] = {}
-        for face in self.faces:
-            for start, end in zip(face.indices, face.indices[1:] + face.indices[:1]):
-                seen[(min(start, end), max(start, end))] = None
-        return list(seen)
+        return [edge for edge, _ in self._edge_faces]
 
     def scaled(self, x: float, y: float | None = None, z: float | None = None) -> Mesh:
         """Return a copy stretched by `x`, `y` and `z` along each axis. `y` and `z` default to `x`."""
@@ -801,11 +807,45 @@ def rasterize(
     if cull not in ("back", "front", "none"):
         msg = 'cull must be "back", "front" or "none".'
         raise ValueError(msg)
-    buffer = {} if buffer is None else buffer
     rotation = rotation or Rotation()
     world = transform_points(mesh.vertices, rotation, scale=scale, position=position)
+    return _rasterize_projected(
+        mesh, camera, world, camera.project_points(world), rotation.matrix(), cull, buffer, bounds
+    )
+
+
+def _rasterize_sides(
+    mesh: Mesh,
+    camera: Camera,
+    *,
+    rotation: Rotation,
+    scale: float,
+    position: Vec3,
+    bounds: Bounds,
+) -> tuple[dict[Coord, Fragment], dict[Coord, Fragment]]:
+    """Fill front and back surfaces using one frame's transformed and projected geometry."""
+    world = transform_points(mesh.vertices, rotation, scale=scale, position=position)
     projected = camera.project_points(world)
-    m00, m01, m02, m10, m11, m12, m20, m21, m22 = rotation.matrix()
+    matrix = rotation.matrix()
+    return (
+        _rasterize_projected(mesh, camera, world, projected, matrix, "back", None, bounds),
+        _rasterize_projected(mesh, camera, world, projected, matrix, "front", None, bounds),
+    )
+
+
+def _rasterize_projected(
+    mesh: Mesh,
+    camera: Camera,
+    world: list[Vec3],
+    projected: list[Projected | None],
+    matrix: tuple[float, ...],
+    cull: str,
+    buffer: dict[Coord, Fragment] | None,
+    bounds: Bounds | None,
+) -> dict[Coord, Fragment]:
+    """Fill prepared geometry; buffers remain independent for each culling pass."""
+    buffer = {} if buffer is None else buffer
+    m00, m01, m02, m10, m11, m12, m20, m21, m22 = matrix
     mesh_normals = mesh.normals
     orthographic, distance = camera.orthographic, camera.distance
     for face_index, face in enumerate(mesh.faces):
@@ -961,24 +1001,22 @@ def wireframe(
     world = transform_points(mesh.vertices, rotation, scale=scale, position=position)
     projected = camera.project_points(world)
     normals = transform_points(mesh.normals, rotation)
-    front_edges: dict[tuple[int, int], bool] = {}
+    front_faces: list[bool] = []
     orthographic, distance = camera.orthographic, camera.distance
     for face_index, face in enumerate(mesh.faces):
         # The sign of the normal against the direction toward the camera: `view_direction` without normalizing,
         # which is undefined for a vertex at the camera.
         normal, first = normals[face_index], world[face.indices[0]]
         toward = normal.z if orthographic else normal.z * (distance - first.z) - normal.x * first.x - normal.y * first.y
-        facing = toward > 0
-        for start, end in zip(face.indices, face.indices[1:] + face.indices[:1]):
-            edge = (min(start, end), max(start, end))
-            front_edges[edge] = front_edges.get(edge, False) or facing
+        front_faces.append(toward > 0)
     surface = (
         rasterize(mesh, camera, rotation=rotation, scale=scale, position=position, cull="none", bounds=bounds)
         if depth_test
         else {}
     )
     cells: dict[Coord, EdgeCell] = {}
-    for (start, end), front in front_edges.items():
+    for (start, end), faces in mesh._edge_faces:
+        front = any(front_faces[index] for index in faces)
         a, b = projected[start], projected[end]
         if a is None and b is None:
             continue

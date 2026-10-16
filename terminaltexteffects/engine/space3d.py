@@ -1273,9 +1273,16 @@ class Body:
                 elif hidden is not None:
                     _offer(cells, cell, edge.depth, edge.symbol, hidden, self)
             return
+        two_sided = any(
+            isinstance(each, Textured) and each.back == "dim" for each in (self._look, *self._face_looks.values())
+        )
+        if two_sided:
+            fronts, backs = g3._rasterize_sides(mesh, camera, **pose)
+        else:
+            fronts, backs = g3.rasterize(mesh, camera, cull="back", **pose), {}
         # Shading depends only on the face, so it is worked out once per face rather than per cell.
         styles: dict[int, tuple[Look | None, str, ColorPair, ColorPair]] = {}
-        for cell, fragment in g3.rasterize(mesh, camera, cull="back", **pose).items():
+        for cell, fragment in fronts.items():
             style = styles.get(fragment.face)
             if style is None:
                 style = styles[fragment.face] = self._face_style(fragment)
@@ -1291,12 +1298,11 @@ class Body:
                 else:
                     symbol = sampled
             _offer(cells, cell, fragment.depth, symbol, colors, self)
-        if any(isinstance(each, Textured) and each.back == "dim" for each in (self._look, *self._face_looks.values())):
-            for cell, fragment in g3.rasterize(mesh, camera, cull="front", **pose).items():
-                look = self._face_look(fragment.tag)
-                if isinstance(look, Textured) and look.back == "dim":
-                    symbol = self._sample(look, fragment) or " "
-                    _offer(cells, cell, fragment.depth, symbol, space._pair(look.back_color), self)
+        for cell, fragment in backs.items():
+            look = self._face_look(fragment.tag)
+            if isinstance(look, Textured) and look.back == "dim":
+                symbol = self._sample(look, fragment) or " "
+                _offer(cells, cell, fragment.depth, symbol, space._pair(look.back_color), self)
 
     def _face_style(self, fragment: g3.Fragment) -> tuple[Look | None, str, ColorPair, ColorPair]:
         """Return a face's look, symbol, lit colors and colors for untextured faces, from its angle to the light."""
