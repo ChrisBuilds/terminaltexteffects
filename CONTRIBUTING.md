@@ -123,6 +123,15 @@ from `${XDG_CONFIG_HOME:-$HOME/.config}/terminaltexteffects/effects` (see the
 and you can post them in
 [TTE Effect Show and Tell](https://github.com/ChrisBuilds/terminaltexteffects/discussions/categories/tte-effect-show-and-tell).
 
+### Demos
+
+Effect demos in `docs/img/effects_demos/` and Effect Guide demos in `docs/img/effectguide/` are rendered locally
+with `tools/render_demos.py` and committed; CI doesn't render them. Each folder's `demos.json` records a
+fingerprint of every demo's seeded frames and render settings. `tests/test_demo_freshness.py` records each demo
+again on Linux (Python 3.10+) and fails when a change to an effect, an example, an input file, the engine or the renderer would
+change what a demo shows. Its message names the command that re-renders the demo, for example
+`./.venv/bin/python tools/render_demos.py beams --out docs/img/effects_demos`; commit the new WebP and `demos.json`.
+
 ## CI
 
 `.github/workflows/ci.yml` runs on PR pushes (including drafts), pushes to `main`, and

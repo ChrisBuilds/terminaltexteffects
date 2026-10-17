@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import sys
+from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING
 
 import pytest
@@ -30,7 +32,7 @@ def test_render_writes_each_format_and_reports_sizes(tmp_path: Path, monkeypatch
         write_recording(path, ["ab\ncd", "ef\ngh"])
 
     monkeypatch.setattr(render_demos, "record", record)
-    message = render_demos.render(
+    message, fingerprint = render_demos.render(
         "beams",
         render_demos.Demo(effect="beams"),
         tmp_path,
@@ -40,6 +42,7 @@ def test_render_writes_each_format_and_reports_sizes(tmp_path: Path, monkeypatch
     assert (tmp_path / "beams_demo.webp").read_bytes()[8:12] == b"WEBP"
     assert message.startswith("beams: gif ")
     assert ", webp " in message
+    assert len(fingerprint) == 64
 
 
 def test_every_builtin_effect_has_a_demo() -> None:
@@ -63,3 +66,49 @@ def test_formats_reject_unknown(value: str) -> None:
     """Empty and unsupported formats are rejected."""
     with pytest.raises(argparse.ArgumentTypeError):
         render_demos.parse_formats(value)
+
+
+def test_fingerprint_follows_frames_and_render_settings(tmp_path: Path) -> None:
+    """A demo's fingerprint changes when its frames or how they're drawn change, and only then."""
+    demo = render_demos.Demo(effect="beams")
+    first, same, changed = tmp_path / "first.tterec", tmp_path / "same.tterec", tmp_path / "changed.tterec"
+    write_recording(first, ["ab\ncd", "ef\ngh"])
+    write_recording(same, ["ab\ncd", "ef\ngh"])
+    write_recording(changed, ["ab\ncd", "ef\ngx"])
+    fingerprint = render_demos.fingerprint(first, demo, 60)
+    assert render_demos.fingerprint(same, demo, 60) == fingerprint
+    assert render_demos.fingerprint(changed, demo, 60) != fingerprint
+    assert render_demos.fingerprint(first, render_demos.Demo(effect="beams", end_hold=1.0), 60) != fingerprint
+
+
+def test_manifest_keeps_other_demos(tmp_path: Path) -> None:
+    """Rendering some demos replaces their fingerprints and keeps the rest."""
+    render_demos.write_manifest(tmp_path, {"beams": "a", "burn": "b"})
+    render_demos.write_manifest(tmp_path, {"burn": "c"})
+    assert render_demos.read_manifest(tmp_path) == {"beams": "a", "burn": "c"}
+
+
+@pytest.mark.parametrize(
+    ("formats", "manifest"),
+    [("webp", {"beams": "fingerprint of beams"}), ("gif", {})],
+)
+def test_main_renders_each_demo_once_and_records_webp_fingerprints(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    formats: str,
+    manifest: dict[str, str],
+) -> None:
+    """A demo named twice renders once, and only WebP renders, which are committed, update the manifest."""
+    pytest.importorskip("PIL")
+    rendered: list[str] = []
+
+    def try_render(name: str, *_: object) -> tuple[str, str]:
+        rendered.append(name)
+        return name, f"fingerprint of {name}"
+
+    monkeypatch.setattr(render_demos, "try_render", try_render)
+    monkeypatch.setattr(render_demos, "ProcessPoolExecutor", ThreadPoolExecutor)
+    monkeypatch.setattr(sys, "argv", ["render_demos", "beams", "beams", "--formats", formats, "--out", str(tmp_path)])
+    assert render_demos.main() == 0
+    assert rendered == ["beams"]
+    assert render_demos.read_manifest(tmp_path) == manifest
