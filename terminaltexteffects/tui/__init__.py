@@ -13,6 +13,8 @@ import sys
 import typing
 
 if typing.TYPE_CHECKING:
+    from pathlib import Path
+
     from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
 
@@ -48,6 +50,7 @@ def run(
     text: str = "",
     input_file: str | None = None,
     effect: str | None = None,
+    development_dir: Path | None = None,
 ) -> None:
     """Run the interactive interface until the user quits.
 
@@ -57,9 +60,13 @@ def run(
         text (str): Initial text, which may contain ANSI colors.
         input_file (str | None): File the text was read from, used as the default save path.
         effect (str | None): Effect to select initially.
+        development_dir (Path | None): Directory of effects in development, listed and imported again when they
+            change. `effect_resource_map` leaves them out.
 
     """
     from terminaltexteffects.tui.app import TTEApp  # noqa: PLC0415
+    from terminaltexteffects.tui.develop import DevEffects  # noqa: PLC0415
 
+    development = None if development_dir is None else DevEffects(development_dir, effect_resource_map)
     attach_keyboard()
-    TTEApp(effect_resource_map, text, input_file, effect).run()
+    TTEApp(effect_resource_map, text, input_file, effect, development).run()

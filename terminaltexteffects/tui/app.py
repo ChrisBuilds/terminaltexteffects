@@ -63,6 +63,7 @@ if typing.TYPE_CHECKING:
 
     from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
+    from terminaltexteffects.tui.develop import DevEffects
 
     EffectResourceMap = dict[str, tuple[type[BaseEffect], type[BaseConfig]]]
 
@@ -84,6 +85,8 @@ _MAX_KEPT_FRAMES = 2000
 """Longest run, in frames, kept for Loop to replay without building the effect again."""
 _MAX_HISTORY_FRAMES = 2000
 """Most frames kept to step back through. Rows that did not change are shared between frames."""
+_DEVELOPMENT_POLL = 1.0
+"""Seconds between checks of the development effect files for changes."""
 
 
 class ColorTextArea(TextArea):
@@ -955,6 +958,19 @@ class TTEApp(App[None]):
         display: block;
         background: #000000;
     }
+    #import-error {
+        display: none;
+        height: 1fr;
+        padding: 0 1;
+        color: $error;
+        scrollbar-size-vertical: 1;
+    }
+    #stage.-import-error #editor {
+        display: none;
+    }
+    #stage.-import-error #import-error {
+        display: block;
+    }
     #options {
         height: 16;
         border: round $primary;
@@ -1031,6 +1047,7 @@ class TTEApp(App[None]):
         text: str = "",
         input_file: str | None = None,
         effect: str | None = None,
+        development: DevEffects | None = None,
     ) -> None:
         """Initialize the application.
 
@@ -1039,16 +1056,26 @@ class TTEApp(App[None]):
             text (str): Initial text, which may contain ANSI colors.
             input_file (str | None): File the text came from, used as the default save path.
             effect (str | None): Effect to select initially.
+            development (DevEffects | None): Effects in development, listed with the others and imported again when
+                their files change. Modules that cannot be played are listed in red.
 
         """
         super().__init__()
-        self.effect_resource_map = dict(sorted(effect_resource_map.items()))
+        self._fixed_effects = dict(effect_resource_map)
+        self._development = development
+        self.effect_resource_map: EffectResourceMap = {}
+        self._broken: dict[str, str] = {}
+        """File names of development effects that cannot be played, with the reason."""
+        if development is not None:
+            development.scan()
+        self._collect_effects()
         self.input_file = input_file
         self._file_text: str | None = None
         self._initial_text = text
-        self._initial_effect = effect if effect in self.effect_resource_map else None
-        self.effect_name = self._initial_effect or next(iter(self.effect_resource_map))
-        self._listed = list(self.effect_resource_map)
+        names = self._effect_names()
+        self._initial_effect = effect if effect in names else None
+        self.effect_name = self._initial_effect or next(iter(self.effect_resource_map), names[0])
+        self._listed = names
         self._fields: dict[str, list[options.OptionField]] = {}
         self._values: dict[str, dict[str, typing.Any]] = {}
         self._errors: dict[str, dict[str, str]] = {}
@@ -1086,7 +1113,7 @@ class TTEApp(App[None]):
             with Vertical(id="effects-panel") as effects_panel:
                 effects_panel.border_title = "Effects"
                 yield EffectFilter(placeholder="Filter effects", id="effect-filter", compact=True)
-                yield OptionList(*self.effect_resource_map, id="effects")
+                yield OptionList(*self._prompts(self._listed), id="effects")
             yield DrawerHandle("left", "Effect list", "Ctrl+B", id="effects-drawer")
             with Vertical(id="right"):
                 with Horizontal(id="transport"):
@@ -1113,6 +1140,8 @@ class TTEApp(App[None]):
                 with Vertical(id="stage"):
                     yield ColorTextArea(id="editor")
                     yield CanvasView(id="canvas")
+                    with VerticalScroll(id="import-error"):
+                        yield Static(id="import-error-text", markup=False)
         yield DrawerHandle("bottom", "Options", "Ctrl+O", id="options-drawer")
         with Vertical(id="options"), TabbedContent():
             with TabPane("Effect", id="effect-tab"), VerticalScroll():
@@ -1136,7 +1165,7 @@ class TTEApp(App[None]):
         self.query_one("#loop", Checkbox).tooltip = "Replay the effect when it finishes"
         self.query_one(
             "#auto-replay", Checkbox
-        ).tooltip = "Replay the effect when an option changes or another effect is highlighted"
+        ).tooltip = "Replay the effect when an option changes, another effect is highlighted, or its file changes"
         self._load_text(self._initial_text)
         if self.input_file:
             self._file_text = self.editor.text
@@ -1147,6 +1176,8 @@ class TTEApp(App[None]):
         await self._show_effect(self.effect_name)
         self._update_transport()
         self.query_one("#stage").set_interval(_STATUS_INTERVAL, self._update_status)
+        if self._development is not None:
+            self.query_one("#effects").set_interval(_DEVELOPMENT_POLL, self._check_development)
         self.query_one("#editor").focus()
 
     async def action_quit(self) -> None:
@@ -1156,28 +1187,59 @@ class TTEApp(App[None]):
 
     # Effects list ----------------------------------------------------------------------------------------------
 
+    def _collect_effects(self) -> None:
+        """Gather the playable effects, and the development effects that cannot be played."""
+        effects = dict(self._fixed_effects)
+        self._broken = {}
+        if self._development is not None:
+            effects.update(self._development.playable())
+            self._broken = self._development.broken()
+        self.effect_resource_map = dict(sorted(effects.items()))
+
+    def _effect_names(self) -> list[str]:
+        """Return the names of every listed effect, including development effects that cannot be played."""
+        return sorted([*self.effect_resource_map, *self._broken])
+
+    def _prompts(self, names: list[str]) -> list[str | Text]:
+        """Return the effect list entries for `names`, in red for effects that cannot be played."""
+        error_color = TTE_THEME.error or "red"
+        return [Text(name, style=error_color) if name in self._broken else name for name in names]
+
     def _description(self, effect_name: str) -> str:
-        """Return the description of `effect_name` from its parser spec."""
+        """Return the description of `effect_name` from its parser spec, or why it cannot be played."""
+        if effect_name in self._broken:
+            return "Cannot be played: " + self._broken[effect_name].splitlines()[-1]
         parser_spec = getattr(self.effect_resource_map[effect_name][1], "parser_spec", None)
         return getattr(parser_spec, "help", "") or ""
 
     @on(Input.Changed, "#effect-filter")
     def _filter_changed(self, event: Input.Changed) -> None:
         """List the effects whose name or description contains every word of the filter."""
-        words = event.value.lower().split()
-        listed = [
-            name
-            for name in self.effect_resource_map
-            if all(word in f"{name} {self._description(name)}".lower() for word in words)
-        ]
-        if listed == self._listed:
+        self._list_effects(event.value)
+
+    def _list_effects(self, effect_filter: str, *, force: bool = False) -> None:
+        """List the effects whose name or description contains every word of `effect_filter`.
+
+        The list is rebuilt only when the listed names change, unless `force` is set.
+        """
+        listed = self._filtered(effect_filter)
+        if listed == self._listed and not force:
             return
         self._listed = listed
         effect_list = self.query_one("#effects", OptionList)
         effect_list.clear_options()
-        effect_list.add_options(listed)
+        effect_list.add_options(self._prompts(listed))
         if listed:
             effect_list.highlighted = listed.index(self.effect_name) if self.effect_name in listed else 0
+
+    def _filtered(self, effect_filter: str) -> list[str]:
+        """Return the effects whose name or description contains every word of `effect_filter`."""
+        words = effect_filter.lower().split()
+        return [
+            name
+            for name in self._effect_names()
+            if all(word in f"{name} {self._description(name)}".lower() for word in words)
+        ]
 
     @on(Input.Submitted, "#effect-filter")
     def action_focus_effects(self) -> None:
@@ -1189,10 +1251,10 @@ class TTEApp(App[None]):
         effect_filter = self.query_one("#effect-filter", Input)
         if effect_filter.value:
             effect_filter.value = ""
-        self._listed = list(self.effect_resource_map)
+        self._listed = self._effect_names()
         effect_list = self.query_one("#effects", OptionList)
         effect_list.clear_options()
-        effect_list.add_options(self._listed)
+        effect_list.add_options(self._prompts(self._listed))
 
     def _highlight_effect(self, effect_name: str) -> None:
         """Highlight `effect_name` in the effect list, clearing a filter that hides it."""
@@ -1213,7 +1275,7 @@ class TTEApp(App[None]):
 
     async def action_random(self) -> None:
         """Select and play a random effect from the listed effects, or from all effects if fewer are listed."""
-        candidates = [name for name in self._listed if name != self.effect_name]
+        candidates = [name for name in self._listed if name != self.effect_name and name not in self._broken]
         if not candidates:
             candidates = [name for name in self.effect_resource_map if name != self.effect_name]
         if not candidates:
@@ -1222,6 +1284,85 @@ class TTEApp(App[None]):
         await self._show_effect(name)
         self._highlight_effect(name)
         self.start_playback()
+
+    # Development effects ---------------------------------------------------------------------------------------
+
+    async def _check_development(self) -> None:
+        """Import the development effects whose files changed, and list them again.
+
+        When the selected effect changed, the options it still has keep their values, and it replays while
+        Auto-replay is on.
+        """
+        development = self._development
+        # Widgets are rebuilt below, which waits until the main screen is shown again.
+        if development is None or self.screen.is_modal:
+            return
+        changed = development.scan()
+        if not changed:
+            return
+        selected: Path | None = None
+        for path, old_name in changed.items():
+            effect = development.effects.get(path)
+            new_name = None if effect is None else effect.name
+            for name in (old_name, new_name):
+                if name is not None:
+                    self._fields.pop(name, None)
+                    self._errors.pop(name, None)
+            if old_name is not None and new_name is not None and old_name != new_name and old_name in self._values:
+                self._values[new_name] = self._values.pop(old_name)
+            if old_name == self.effect_name:
+                selected = path
+        self._collect_effects()
+        for scope in [scope for scope in self._values if scope in self.effect_resource_map]:
+            kept = {option.name for option in self._scope_fields(scope)}
+            self._values[scope] = {name: value for name, value in self._values[scope].items() if name in kept}
+        self._recorded = None
+        names = self._effect_names()
+        if selected is not None or self.effect_name not in names:
+            effect = None if selected is None else development.effects.get(selected)
+            if effect is None:
+                self.action_stop()
+            name = effect.name if effect is not None else next(iter(self.effect_resource_map), names[0])
+            await self._show_effect(name)
+        effect_filter = self.query_one("#effect-filter", Input)
+        if self.effect_name not in self._filtered(effect_filter.value):
+            effect_filter.value = ""
+        self._list_effects(effect_filter.value, force=True)
+        if selected is None or selected not in development.effects:
+            return
+        if self.effect_name in self._broken:
+            self.notify(f"{self.effect_name} cannot be played.", severity="error")
+        else:
+            self.notify(f"Reloaded {self.effect_name}.")
+        if self.query_one("#auto-replay", Checkbox).value:
+            self._schedule_auto_replay()
+        elif self.query_one("#stage").has_class("-import-error"):
+            if self.effect_name in self._broken:
+                self._show_import_error()
+            else:
+                self.action_stop()
+
+    def _show_import_error(self) -> None:
+        """Show why the selected development effect cannot be played, in place of the text."""
+        self._cancel_playback()
+        self._recording = None
+        self._history.clear()
+        self._back = 0
+        stage = self.query_one("#stage")
+        stage.remove_class("-playing")
+        stage.add_class("-import-error")
+        stage.border_title = f"Cannot play: {self.effect_name} (Esc to edit)"
+        self.query_one("#import-error-text", Static).update(self._broken[self.effect_name])
+        if self.focused in (self.editor, self.query_one("#canvas")):
+            self.query_one("#effects").focus()
+        self.state = "finished"
+        self._frame_index = 0
+        self._update_transport()
+
+    def _failure_location(self, error: BaseException) -> str:
+        """Return where in a development effect's file `error` was raised, as ` at file:line`, or nothing."""
+        location = None if self._development is None else self._development.location(error)
+        return f" at {location}" if location else ""
 
     # Options ---------------------------------------------------------------------------------------------------
 
@@ -1234,6 +1375,8 @@ class TTEApp(App[None]):
                     options.TUI_TERMINAL_OPTIONS,
                     options.TUI_TERMINAL_DEFAULTS,
                 )
+            elif scope in self._broken:
+                return []
             else:
                 self._fields[scope] = options.option_fields(self.effect_resource_map[scope][1])
         return self._fields[scope]
@@ -1757,6 +1900,9 @@ class TTEApp(App[None]):
 
     def build_effect(self) -> BaseEffect | None:
         """Return the selected effect configured with the current options and text, or `None` if it cannot run."""
+        if self.effect_name in self._broken:
+            self.notify(f"{self.effect_name} cannot be played.", severity="error")
+            return None
         errors = self._current_errors()
         if errors:
             self.notify("Fix the invalid options first:\n" + "\n".join(errors), severity="error")
@@ -1772,7 +1918,10 @@ class TTEApp(App[None]):
             terminal_config = typing.cast("TerminalConfig", options.build_config(TerminalConfig, terminal_values))
             effect = effect_class(text, effect_config, terminal_config)
         except Exception as error:  # noqa: BLE001
-            self.notify(f"Cannot create {self.effect_name}: {error}", severity="error")
+            self.notify(
+                f"Cannot create {self.effect_name}{self._failure_location(error)}: {error}",
+                severity="error",
+            )
             return None
         effect._terminal_dimensions_override = self._canvas_size()
         return effect
@@ -1794,6 +1943,11 @@ class TTEApp(App[None]):
         `reuse`, the frames of the last complete run are replayed when the settings have not changed since, as a
         loop does. With `focus`, the canvas takes focus so Space and the arrow keys control playback.
         """
+        if self.effect_name in self._broken:
+            self._show_import_error()
+            return False
+        if self.query_one("#stage").has_class("-import-error"):
+            self.action_stop()
         self._cancel_playback()
         effect = self.build_effect()
         if effect is None:
@@ -1812,6 +1966,7 @@ class TTEApp(App[None]):
         canvas_view = self.query_one("#canvas", CanvasView)
         canvas_view.clear()
         stage = self.query_one("#stage")
+        stage.remove_class("-import-error")
         stage.add_class("-playing")
         stage.border_title = f"Preparing: {self.effect_name}"
         if focus or self.focused is self.editor:
@@ -1868,7 +2023,10 @@ class TTEApp(App[None]):
         elif stream.finished:
             if stream.error is not None:
                 self._finish("Failed")
-                self.notify(f"{self.effect_name} failed: {stream.error}", severity="error")
+                self.notify(
+                    f"{self.effect_name} failed{self._failure_location(stream.error)}: {stream.error}",
+                    severity="error",
+                )
             else:
                 self._finish("Finished")
 
@@ -1995,7 +2153,7 @@ class TTEApp(App[None]):
         self._back = 0
         self.state = "editing"
         stage = self.query_one("#stage")
-        stage.remove_class("-playing")
+        stage.remove_class("-playing", "-import-error")
         stage.border_title = "Text"
         canvas_view = self.query_one("#canvas", CanvasView)
         if self.focused is canvas_view:
