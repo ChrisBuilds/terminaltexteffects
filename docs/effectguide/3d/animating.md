@@ -28,11 +28,22 @@ takes.
 ## In TTE
 
 The Handoff example flings the text plane far away, brings it back with a spin that settles exactly at rest, and then
-releases every character to an ordinary 2D hop. Save it as `handoff.py`:
+releases every character to an ordinary 2D hop. The 3D part is four calls:
 
-```python title="handoff.py"
---8<-- "docs/effectguide/examples/3d/handoff/handoff.py"
+```python
+self.plane.set_rotation(rotation_about("x", 60) * rotation_about("y", 200)).set_position(0, 0, -300)
+self.plane.move_to(0, 0, 0, frames=150, ease=easing.out_cubic)
+self.plane.settle("y", turns=1, frames=150, ease=easing.out_cubic, together=True)
+self.plane.on_complete(self.hand_off)  # hand_off releases the characters and starts their hops.
 ```
+
+??? example "handoff.py"
+
+    Save it in your community effects directory as `handoff.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/handoff/handoff.py"
+    ```
 
 ```bash
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c handoff
@@ -42,16 +53,19 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 
 - `set_rotation(...)` and `set_position(...)` place the body at its starting pose at once. `move_to(..., frames=0)`
   would do the same as a tween.
-- `move_to` and `settle(..., together=True)` run together, so the text turns as it flies in, and lands at rest, where
-  every character meets its input cell.
+- `move_to` and `settle(..., together=True)` run together, so the text turns as it flies in. Both bring their part of
+  the pose home, position and rotation, so it lands where the text plane was built and every character meets its
+  input cell.
 - `on_complete(callback)` runs when the last queued tween finishes, after the final pose is applied. The example
   releases the characters there.
-- `release_all()` hands each character back on the cell its anchor reached, with nothing left of the mount, so a new path starts from
-  exactly that cell.
+- `release_all()` hands each character back on the cell its anchor projects to at that moment, with nothing left of the
+  mount, so a new path starts from exactly that cell. That holds even if the callback changes the pose before
+  releasing.
 
 Other tweens: `turn_to(rotation)`, `turn_to_rest()`, `scale_to(scale)`, `hold(frames)`, and `random_pose()` and
-`random_position()` for scattered starts. `body.animating` and `space.animating` tell you whether anything is still
-queued.
+`random_position()` for scattered starts. `body.animating` and `space.animating` tell you whether any tweens are still
+queued. They say nothing about mounted characters, blends or the 2D paths you start after a release, so end the
+effect on `active_characters` too (see [the frame loop](index.md#mounted-text)).
 
 ### Mounting mid-effect
 
@@ -63,6 +77,38 @@ Mounting and paths are both part of a character's `Motion`, so they hand off cle
 - The `MOUNT_COMPLETE` and `MOUNT_RELEASED` events, and the `MOUNT` and `UNMOUNT` actions, chain mounts with paths and
   scenes through the [event handler](../engine/events.md). `space.new_mount()` creates a mount for the `MOUNT` action
   without starting it.
+
+## Mount readings
+
+Every active mount measures its anchor in `space.step()`, so read these after `step()` and before `update()`:
+
+| Reading | What it is |
+| --- | --- |
+| `coord` | The cell the anchor projects to |
+| `depth` | Camera depth, in columns: smaller is nearer. Moving the whole body toward the camera lowers it |
+| `nearness` | 0 at the farthest point the body can reach at its size, 1 at the nearest, measured from the body's own center. Moving the whole body doesn't change it; turning the body does |
+| `facing`, `facing_amount` | Whether the anchor's surface faces the viewer, and how squarely, from -1 (away) to 1 |
+| `light` | How directly the surface faces the light, from 0 to 1 |
+| `projected` | Whether the anchor is in front of the near plane; the other readings keep their last values while it isn't |
+
+`facing`, `facing_amount` and `light` need an anchor with a [normal](coordinates.md#normals-for-anchors). Without
+one they stay at `True`, 1 and 1.
+
+Scenes can follow two readings without any code in `__next__`: `sync=Scene.SyncMetric.LIGHT` picks the frame from
+`light`, and `sync=Scene.SyncMetric.DEPTH` from `nearness`, so the near side of a turning body can show a brighter
+color than the far side. For anything else, read the mount yourself. This thins out characters as they turn
+edge-on:
+
+```python
+self.space.step()
+for character, mount in self.space.mounts.items():
+    symbol = "·" if mount.facing_amount < 0.3 else character.input_symbol
+    character.animation.set_appearance_if_changed(symbol)
+self.update()
+```
+
+A blend is different: it advances when the character ticks, not in `step()`. `mount.arrived` turns true and
+`MOUNT_COMPLETE` fires on the tick the character reaches its anchor.
 
 ## Lifecycle
 

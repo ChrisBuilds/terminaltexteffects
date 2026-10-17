@@ -37,8 +37,9 @@ self.sheet.spin("y", turns=2, frames=SPIN_FRAMES, ease=easing.out_cubic)
 self.sheet.move_to(0, 0, 0, frames=SPIN_FRAMES, ease=easing.out_cubic, together=True)
 ```
 
-`together=True` starts `move_to` alongside the spin instead of after it. Both use `out_cubic`, so the sheet arrives
-fast and slows as it lands. The same easing on both keeps the spin and the approach finishing together.
+`together=True` starts `move_to` alongside the spin instead of after it. Both take `SPIN_FRAMES`, which is what makes
+them finish on the same frame. Both also use `out_cubic`, so the sheet arrives fast and slows as it lands, and the
+spin and the approach stay in step all the way: halfway through the turn, it's also halfway home.
 
 ## Run it
 

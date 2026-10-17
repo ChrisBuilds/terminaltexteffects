@@ -14,10 +14,10 @@ counterclockwise when you look down the axis toward the origin:
 
 ![Three cubes turning about x, y and z, each with its axis drawn through it](../../img/effectguide/3d/rotation_axes.webp)
 
-Turns don't add up like numbers. Turning 90 degrees about x and then 90 about y leaves a cube facing a different way
-than doing them in the other order.
+Turns don't add up like numbers. Turning a cube -90 degrees about x, which carries its front face up onto the top,
+and then 90 degrees about y leaves it facing a different way than making the same two turns in the other order.
 
-![A cube turned about x then y ends with its amber front face on top; turned about y then x, the amber face ends on the right](../../img/effectguide/3d/rotation_order.webp)
+![A cube turned -90 degrees about x then 90 about y ends with its amber front face on top; turned 90 about y then -90 about x, the amber face ends on the right](../../img/effectguide/3d/rotation_order.webp)
 
 So TTE never stores an orientation as three angles, which would depend on the order you applied them in. It stores
 a **quaternion**: four numbers that describe the whole orientation as one turn about one axis. You never need to read them. What matters is what they make
@@ -25,11 +25,21 @@ easy: combining turns, turning by part of a turn, and finding the shortest way f
 
 ## In TTE
 
-The Turns example has three modes. Save it as `turns.py`:
+The Turns example has three modes. In the first, each cube spins about one axis:
 
-```python title="turns.py"
---8<-- "docs/effectguide/examples/3d/turns/turns.py"
+```python
+for axis, x in (("x", -26), ("y", 0), ("z", 26)):
+    cube = self.space.body(Cube(14), at=(x, 0, 0)).draw(Shaded())
+    cube.hold(30).spin(axis, turns=1, frames=240, ease=easing.in_out_sine).hold(30)
 ```
+
+??? example "turns.py"
+
+    Save it in your community effects directory as `turns.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/turns/turns.py"
+    ```
 
 ### One axis at a time
 
@@ -72,8 +82,13 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 
 ![Two cubes start in the same pose. The left one, labeled turn_to_rest, turns straight back to rest. The right one, labeled settle, spins as it settles](../../img/effectguide/turns_rest_demo.webp)
 
-**Rest** is the orientation a body was created in. It matters because a text plane's characters meet their input
-cells only at rest. There are two ways back:
+**Rest** is the orientation a body was created in, with no turn applied. It matters because `text_plane` places each
+character on its input cell at the pose the body has when you call it. The usual pattern, used by these examples and
+the Spin tutorial, is to build the text plane on an unmoved body and only then turn it away, so returning to rest
+brings the text home. Rest is only an orientation: if you also moved or scaled the body, bring its position and scale
+back too, with `move_to` and `scale_to` (see [Space and coordinates](coordinates.md#rest-and-pose)).
+
+There are two ways back to rest:
 
 - `turn_to_rest(frames, ease)` takes the shortest path. It looks like a body being straightened.
 - `settle(axis, turns, frames, ease)` spins about an axis while it unwinds any other tilt, landing exactly at rest.

@@ -17,8 +17,10 @@ Replace `myspin.py` with this version:
 
 ### A light in front
 
-`Space3D(..., light="front")` puts the light behind the viewer, shining at the canvas. A surface facing you faces the
-light too, so how lit it is and how squarely it faces you are the same thing here.
+`Space3D(..., light="front")` points the light along +z, from behind the viewer toward the canvas. It's a direction,
+not a lamp at a position, so a surface turned toward the viewer is turned toward the light too. How lit the sheet is
+and how squarely it faces you are nearly the same thing here. They match exactly in an orthographic view; with
+perspective, the parts of the sheet away from the center are seen at a slight angle.
 
 ### Scenes synced to the light
 

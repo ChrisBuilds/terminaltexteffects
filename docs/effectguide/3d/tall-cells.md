@@ -18,11 +18,21 @@ final step, from world space to canvas rows, divides heights by 2.
 ## In TTE
 
 The Cells example turns the same cube twice: on the left with the usual camera, and on the right in a second space
-whose camera treats rows as one unit tall. Save it as `cells.py`:
+whose camera treats rows as one unit tall. The only difference is the second camera's `row_scale`:
 
-```python title="cells.py"
---8<-- "docs/effectguide/examples/3d/cells/cells.py"
+```python
+corrected = Space3D(self.terminal)
+square = Space3D(self.terminal)
+square.camera = Camera.for_canvas(self.terminal.canvas, distance=square.camera.distance, row_scale=1.0)
 ```
+
+??? example "cells.py"
+
+    Save it in your community effects directory as `cells.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/cells/cells.py"
+    ```
 
 ```bash
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c cells

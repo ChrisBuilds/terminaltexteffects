@@ -30,7 +30,7 @@ a rough guide to which examples cost more, and measure your own effect on the ma
 | [Cubes](terminal.md) | Three shaded cubes | 3.3 ms |
 | [Spinning logo](recipes.md#spinning-logo) | Mounted text with lighting scenes | 3.4 ms |
 | [Depth](depth.md) | A cube and a sphere | 4.0 ms |
-| [Depth](depth.md) `--see-through` | The same, with the cube in wireframe | 4.1 ms |
+| [Depth](depth.md) `--see-through` | One textured cube, its far side shown with `back="dim"` | 4.1 ms |
 | [Light](light.md) | A shaded sphere | 6.0 ms |
 | [Light](light.md) `--shape torus` | A shaded torus | 8.4 ms |
 | [Gallery](meshes.md) | Ten shapes, two or three at a time | 4.6 ms |
@@ -97,7 +97,9 @@ it remains deferred rather than risking stale output.
   far side. Leave them off when the front hides it anyway.
 - **Erase what's off screen or finished.** `body.erase()` stops drawing a body, and `space.step()` hides its surface
   characters. The space only fills cells on the canvas, so a body out of view costs little, but it is still moved
-  and projected every step until you erase it.
+  and projected every step until you erase it. Erasing only stops the drawing: queued tweens keep playing and mounted
+  characters keep riding. Use `body.cancel()` to drop the tweens, `release_all()` to hand back the characters, or
+  `space.remove(body)` to do all of it and stop stepping the body.
 - **Mount only the characters you need.** Mount the visible text, not the spaces between it, as `text_plane` examples
   do by skipping blank input cells.
 - **Release finished characters.** `release_all()` hands characters back to 2D paths, which cost only their own

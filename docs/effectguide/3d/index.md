@@ -20,11 +20,34 @@ know where to look when the high-level calls don't do what you need.
 Most effects only need `Space3D`. Each chapter shows the `Space3D` calls first, then the primitives they use, for
 the times you want more control.
 
+## Two ways to show things
+
+A body reaches the screen in one of two ways, and most effects use one or both:
+
+| | Mounted characters | Drawn surfaces |
+| --- | --- | --- |
+| What you call | `body.add_chars(characters, anchors)` or `space.mount(character, anchor)` | `body.draw(Shaded())`, `Solid()`, `Textured()` or `Wireframe()` |
+| What moves | Your own characters, each riding one **anchor**: a point on the body | Nothing of yours. The space fills cells with characters it owns |
+| Each frame | The body's transform places each anchor in the world, the camera **projects** it to one cell, and the character moves there whole | The body's mesh is transformed and projected, each face is **rasterized** into the cells whose centers it covers, a **depth buffer** keeps the nearest face per cell, and **shading** or a texture picks each cell's symbol and color |
+| Hiding | Characters are ordered by layer, which `layer_by_depth` raises for nearer ones | The depth buffer, shared by every drawn body |
+| Afterward | Release the characters back to ordinary 2D paths and scenes | The cells disappear when the body is erased or removed |
+
+The chapters follow that order: [coordinates](coordinates.md), [transforms](transforms.md) and
+[rotation](rotation.md) place points; the [camera](camera.md) projects them; [depth](depth.md),
+[meshes](meshes.md), [light](light.md) and [textures](textures.md) turn faces into cells. Mount text that has to land
+somewhere or carry its own colors and scenes; draw a surface for solid shapes and decoration. [Texture
+mapping](textures.md#mounted-text-or-textured-surface) compares the two with the same words.
+
 ## The frame loop
 
-A 3D effect is an ordinary effect with one extra call per frame. `space.step()` plays the bodies' queued animations,
-redraws any drawn surfaces and works out where every mounted character lands. `update()` then moves the characters
-there, as usual:
+A 3D effect is an ordinary effect (see the Engine chapter on the [frame loop](../engine/frame-loop.md)) with one
+extra call per frame, before `update()`. `space.step()` plays the bodies' queued animations, redraws any drawn
+surfaces and works out where every mounted anchor lands. `update()` then ticks the active characters, and a mounted
+character's tick moves it to its anchor's cell.
+
+### A drawn surface
+
+A drawn body needs no characters of yours, so the space alone decides when the effect is done:
 
 ```python
 from terminaltexteffects.engine.space3d import Cube, Shaded, Space3D
@@ -44,8 +67,46 @@ def __next__(self) -> str:
     return self.frame
 ```
 
+### Mounted text
+
+Mounted characters are your own characters, so the usual lifecycle still applies, with three additions:
+
+```python
+from terminaltexteffects.engine.space3d import Space3D
+
+# In the iterator's __init__:
+self.space = Space3D(self.terminal)
+characters = [character for character in self.terminal.get_characters() if character.input_symbol != " "]
+for character in characters:
+    self.terminal.set_character_visibility(character, is_visible=True)  # Shown...
+    self.active_characters.add(character)  # ...and ticked by update().
+self.sheet = self.space.body()
+self.sheet.add_chars(characters, self.sheet.text_plane(characters))
+self.sheet.spin("y", turns=1, frames=240)
+self.sheet.on_complete(lambda sheet: sheet.release_all())  # Hand the text back when the spin ends.
+
+
+# In __next__:
+def __next__(self) -> str:
+    if not self.space.animating and not self.active_characters:
+        raise StopIteration
+    self.space.step()
+    self.update()
+    return self.frame
+```
+
+- **Mounting doesn't show or tick a character.** Visibility and membership in `active_characters` are separate, as
+  in any effect. A hidden mounted character still moves; one that isn't in `active_characters` never ticks, so it
+  stays where it was.
+- **An active mount keeps its character active.** Mounted characters never finish on their own, even after the
+  body's tweens end and any blend toward the anchor is over, so `update()` never drops them. Release them, as
+  `on_complete` does here, or the effect never ends.
+- **`space.animating` only tracks body tweens.** It turns false when the queues are empty, while mounted characters,
+  blends and any 2D paths you start after release may still be moving. End on `active_characters` too, as above.
+
 Bodies own no characters. A drawn body shows itself with characters the space creates, and characters you mount
 stay yours: their scenes, events and layers keep working, and you can release them back to ordinary paths at any time.
+[Animating in 3D](animating.md#mount-readings) covers what a mount reports each frame and how to hand text off to 2D.
 
 ## Running the examples
 
