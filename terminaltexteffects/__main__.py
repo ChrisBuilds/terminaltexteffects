@@ -54,6 +54,8 @@ if TYPE_CHECKING:
 _DEV_EFFECT_MODULE_PREFIX = "_tte_dev_"
 # User plugin modules registered by this process, which later user plugin discovery may replace.
 _USER_PLUGIN_MODULES: weakref.WeakSet[ModuleType] = weakref.WeakSet()
+# Commands the last `build_parser` call registered from the development effects directory.
+_DEVELOPMENT_COMMANDS: set[str] = set()
 
 
 def _user_effects_dir() -> Path:
@@ -381,6 +383,7 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
 def build_parser(
     *,
     include_user_effects: bool = True,
+    skip_broken_development_effects: bool = False,
 ) -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
     """Build the CLI parser and discover available effects.
 
@@ -391,10 +394,12 @@ def build_parser(
 
     A user effect module in the XDG config effects directory that fails to import or register is
     skipped with a warning on standard error. Failures in built-in and development effect modules
-    are raised.
+    are raised, unless `skip_broken_development_effects` is set.
 
     Args:
         include_user_effects: Whether to load external effects, including opted-in development effects.
+        skip_broken_development_effects: Whether to leave out development effect modules that fail to import or
+            register instead of raising. The interactive interface lists them and reports why.
 
     Returns:
         tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The CLI parser and a
@@ -460,8 +465,19 @@ def build_parser(
             if not development_dir or not directory.is_dir():
                 msg = f"TTE_DEV_EFFECTS_DIR must name an existing directory: {development_dir!r}"
                 raise ValueError(msg)
+            registered = set(effect_resource_map)
             for plugin_file, module_name in _external_effect_files(directory, _DEV_EFFECT_MODULE_PREFIX):
-                _register_effect_from_module(_load_external_module(plugin_file, module_name))
+                if not skip_broken_development_effects:
+                    _register_effect_from_module(_load_external_module(plugin_file, module_name))
+                    continue
+                before = set(effect_resource_map)
+                try:
+                    _register_effect_from_module(_load_external_module(plugin_file, module_name))
+                except Exception:  # noqa: BLE001 - The interface shows why the module is left out.
+                    for effect_cmd in set(effect_resource_map) - before:
+                        del effect_resource_map[effect_cmd]
+            _DEVELOPMENT_COMMANDS.clear()
+            _DEVELOPMENT_COMMANDS.update(set(effect_resource_map) - registered)
 
     return parser, effect_resource_map
 
@@ -472,7 +488,12 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
     preliminary.add_argument("effect_arguments", nargs=argparse.REMAINDER)
     global_args, _ = preliminary.parse_known_args()
     include_user_effects = global_args.print_completion is None
-    parser, effect_resource_map = build_parser(include_user_effects=include_user_effects)
+    # The interface lists broken development effects itself, so they must not stop it from opening.
+    tui_may_open = global_args.tui or not global_args.effect_arguments
+    parser, effect_resource_map = build_parser(
+        include_user_effects=include_user_effects,
+        skip_broken_development_effects=tui_may_open,
+    )
     return parser.parse_args(), effect_resource_map
 
 
@@ -1147,8 +1168,20 @@ def _run_tui(
         _exit_with_error(tui.INSTALL_HINT)
     if not _is_terminal(sys.stdout):
         _exit_with_error("--tui needs standard output to be a terminal.")
+    development_dir = os.environ.get("TTE_DEV_EFFECTS_DIR")
+    if development_dir:
+        # The interface imports development effects itself, and imports them again when they change.
+        effect_resource_map = {
+            name: resources for name, resources in effect_resource_map.items() if name not in _DEVELOPMENT_COMMANDS
+        }
     try:
-        tui.run(effect_resource_map, input_data, args.input_file, args.effect)
+        tui.run(
+            effect_resource_map,
+            input_data,
+            args.input_file,
+            args.effect,
+            Path(development_dir).expanduser().resolve() if development_dir else None,
+        )
     except OSError as e:
         _exit_with_error(f"Cannot open the terminal for keyboard input: {e}")
 

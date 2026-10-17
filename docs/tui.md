@@ -126,6 +126,20 @@ Effects build their animations and draw their frames on a background thread, a f
 the interface stays responsive while a large effect is prepared. The frame rate in the subtitle is the rate the
 interface manages to show, next to the **frame-rate** option.
 
+## Developing effects
+
+With `TTE_DEV_EFFECTS_DIR` set to a directory of effect modules, the effect list also shows each module in it. Keep
+the interface open in another window while you work on an effect: it checks the files every second and imports a
+saved file again, so the next play uses your edit. With **Auto** on, the selected effect replays as soon as you
+save it. Options you changed keep their values while the effect still has them.
+
+A module that can't be played is listed in red under its file name, for example because it raises an error while
+importing or uses a command another effect already has. Playing it shows the error in place of the text, and the
+entry turns back to normal once a saved fix imports. If the effect raises an error while it plays, the last frame
+stays on screen and a notification names the file and line.
+
+In a TTE checkout, `python -m tools.dev --tui` opens the interface with the `dev_effects/` directory.
+
 ## Export
 
 **Export** (++f8++) renders the effect with the current options, without showing it, and saves it in the format
