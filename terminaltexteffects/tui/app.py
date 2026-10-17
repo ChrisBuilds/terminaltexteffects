@@ -1857,6 +1857,7 @@ class TTEApp(App[None]):
         if self._back:
             self._back -= 1
             self._show_history()
+            self._shown_at.append(time.monotonic())
             return
         stream = self._stream
         if stream is None:

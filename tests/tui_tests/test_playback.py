@@ -93,7 +93,9 @@ def test_step_back_and_forward_through_shown_frames() -> None:
         assert canvas._strips is app._history[-2]
         assert app._frame_index == newest
         await pilot.press("space")
-        await _wait(pilot, lambda: app._back == 0 and app._frame_index > newest)
+        await _wait(pilot, lambda: app._back == 0)
+        assert app._shown_at
+        await _wait(pilot, lambda: app._frame_index > newest)
         await pilot.press("escape")
         assert not app._history
 
