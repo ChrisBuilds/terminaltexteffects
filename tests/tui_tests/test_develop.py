@@ -166,7 +166,11 @@ def test_app_lists_broken_effects_and_plays_them_once_fixed(tmp_path: Path) -> N
 
         _write(path, APP_PROTOTYPE)
         await app._check_development()
-        await pilot.pause(0.5)
+        # Auto-replay waits a moment before playing, which can take longer on a slow runner.
+        for _ in range(50):
+            await pilot.pause(0.1)
+            if not stage.has_class("-import-error"):
+                break
         assert app.effect_name == "prototype"
         assert not stage.has_class("-import-error")
         assert app.state in {"playing", "finished"}
