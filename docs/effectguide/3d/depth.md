@@ -136,9 +136,11 @@ Where several characters share a cell, the terminal draws the one that sorts las
 A mount with `layer_by_depth` splits the character's nearness to the camera, `camera.distance - depth`, into a whole
 number of columns and the rest. It adds the whole part to the layer the character had when it was mounted, uses the
 rest as its depth order, and restores both on release. So between two characters mounted from the **same base
-layer**, the nearer one draws on top, however small the difference. A different base layer is an intentional offset
-that depth doesn't cancel: a character on layer 10 at z = -2 sorts as `(8, 0)` and still draws over a nearer one on
-layer 0 at z = 1, which sorts as `(1, 0)`. Give characters the same base layer when depth should decide.
+layer**, the nearer one draws on top, however small the difference. A different base layer shifts that comparison by
+the difference in layers, in columns of depth: a character on layer 10 at z = -2 sorts as `(8, 0)` and still draws
+over a nearer one on layer 0 at z = 1, which sorts as `(1, 0)`, but it would lose to one more than 10 columns nearer.
+Give characters the same base layer when depth should decide. When a character must always draw on top, turn
+`layer_by_depth` off for it and give it a layer above every mounted character's range.
 
 Surface cells are ordered the same way from layer 0, a hair farther than their depth, so text mounted on a drawn
 body from base layer 0 or above reads on top of the face it sits on.
