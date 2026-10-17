@@ -426,7 +426,7 @@ _TEXT_NUDGE = 1e-6
 _SURFACE_DEPTH_BIAS = 1e-6
 """How much farther surface cells count than they are, so text mounted exactly on a surface draws on top."""
 _ON_SURFACE = 1e-6
-"""Relative depth difference within which a mounted character counts as lying on the surface shown in its cell."""
+"""Depth difference, in columns, within which a mounted character counts as lying on the surface shown in its cell."""
 
 
 @dataclass(frozen=True)
@@ -1835,7 +1835,7 @@ class Space3D:
                 continue
             depth = surface[0]
             on_plane = self._plane_depth(mount.coord, mount._world, surface[1])
-            if on_plane is not None and abs(on_plane - depth) <= _ON_SURFACE * max(1.0, depth):
+            if on_plane is not None and abs(on_plane - depth) <= _ON_SURFACE:
                 behind[mount.coord] = max(behind.get(mount.coord, depth), mount.depth)
         return behind
 

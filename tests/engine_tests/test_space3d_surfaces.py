@@ -450,7 +450,7 @@ def test_draw_mounted_text_reads_over_its_surface_in_the_frame() -> None:
     assert "#" in frame
 
 
-@pytest.mark.parametrize("perspective", [0, 1])
+@pytest.mark.parametrize("perspective", [0, 1, 0.0001])
 @pytest.mark.parametrize(
     ("axis", "angle", "offset"),
     [
@@ -477,7 +477,7 @@ def test_text_mounted_on_a_turned_face_reads_over_it(
     assert "Z" in space.terminal.get_formatted_output_string()
 
 
-@pytest.mark.parametrize("perspective", [0, 1])
+@pytest.mark.parametrize("perspective", [0, 1, 0.0001])
 def test_a_nearer_surface_covers_text_on_a_turned_face(perspective: float) -> None:
     """A surface a fraction of a column in front of a slanted face still covers the text mounted on that face."""
     space = make_space("Z", perspective=perspective)
