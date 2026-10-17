@@ -499,6 +499,42 @@ def test_a_nearer_surface_covers_text_on_a_turned_face(perspective: float) -> No
     assert painter_order(shield.surface_characters[cell]) > painter_order(character)
 
 
+@pytest.mark.parametrize("perspective", [0, 1])
+@pytest.mark.parametrize("shape", [space3d.Sphere(12, segments=24), space3d.Cylinder(12, 12, 24)])
+@pytest.mark.parametrize("layout", ["wrap", "surface"])
+def test_text_on_a_curved_body_reads_over_its_facets(perspective: float, shape: space3d.Shape, layout: str) -> None:
+    """Anchors on the true curved surface sit just outside the drawn facets, so text facing the viewer reads on top."""
+    space = make_space("\n".join(["ABCDEFGHIJKLMNOPQRSTUVWXYZ"] * 4), width=61, height=31, perspective=perspective)
+    characters = [character for character in space.terminal.get_characters() if character.input_symbol != " "]
+    body = space.body(shape).rotate("y", 30).draw(space3d.Solid("#"))
+    anchors = body.wrap(characters) if layout == "wrap" else body.surface(len(characters))
+    mounts = body.add_chars(characters, anchors)
+    space.step()
+    for character in characters:
+        character.tick()
+    checked = 0
+    for mount in mounts:
+        cell = body.surface_characters.get(mount.coord)
+        # Edge-on anchors at the rim can sit over a neighboring facet that really is nearer.
+        if cell is not None and mount.facing_amount > 0.2:
+            assert painter_order(cell) < painter_order(mount.character)
+            checked += 1
+    assert checked > 20
+
+
+@pytest.mark.parametrize("perspective", [0, 1])
+def test_text_inside_a_torus_stays_behind_its_near_side(perspective: float) -> None:
+    """Text on the inner wall of a torus's far side, facing the viewer, is still covered by the tube in front of it."""
+    space = make_space("Z", perspective=perspective)
+    character = space.terminal.get_characters()[0]
+    body = space.body(space3d.Torus(12, 4)).draw(space3d.Solid("#"))
+    space.mount(character, body.anchor(0, 0, -8, normal="z"))
+    space.step()
+    character.tick()
+    cell = body.surface_characters[character.motion.current_coord]
+    assert painter_order(cell) > painter_order(character)
+
+
 def test_text_on_a_far_face_stays_behind_the_near_face() -> None:
     """Text on a body's back face does not show through the front face covering it."""
     space = make_space("Z")

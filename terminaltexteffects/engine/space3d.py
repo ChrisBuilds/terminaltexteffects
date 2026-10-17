@@ -426,7 +426,9 @@ _TEXT_NUDGE = 1e-6
 _SURFACE_DEPTH_BIAS = 1e-6
 """How much farther surface cells count than they are, so text mounted exactly on a surface draws on top."""
 _ON_SURFACE = 1e-6
-"""Depth difference, in columns, within which a mounted character counts as lying on the surface shown in its cell."""
+"""Distance from a face's plane, in columns, within which a mounted character counts as lying on the face."""
+_NEAR_FACETS = 4
+"""How many of its body's facets, those it lies just outside, a mount checks to see whether it sits on the body."""
 
 
 @dataclass(frozen=True)
@@ -1465,6 +1467,7 @@ class Mount:
         self.active = False
         self.arrived = False
         self._world = g3.ORIGIN
+        self._facets: tuple[int, ...] | None = None
         self._frame = 0
         self._start = (0.0, 0.0)
         self._base_layer = 0
@@ -1820,10 +1823,10 @@ class Space3D:
         """Return the depths to order surface cells at where text mounted on them sits a little behind.
 
         A surface is measured at the cell center and a mounted character where its anchor projects, so on a slanted
-        face, text lying on the face can measure a few hundredths of a column farther than the face itself. Where
-        a mount at its anchor lies on the plane of the surface shown in its cell, that cell is ordered at the mount's
-        depth instead, so the text reads on top. Surfaces the text doesn't lie on keep their own depth, so they
-        still cover it however close they are.
+        or curved face, text lying on the face can measure a few hundredths of a column farther than the face itself.
+        Where a mount at its anchor lies on the face shown in its cell, or on the viewer's side of that face's plane,
+        that cell is ordered at the mount's depth instead, so the text reads on top. A surface the text is behind
+        keeps its own depth, so it still covers the text however close it is.
         """
         behind: dict[Coord, float] = {}
         for mount in self.mounts.values():
@@ -1834,10 +1837,42 @@ class Space3D:
             if surface is None or surface[1] is None or mount.depth <= surface[0]:
                 continue
             depth = surface[0]
-            on_plane = self._plane_depth(mount.coord, mount._world, surface[1])
-            if on_plane is not None and abs(on_plane - depth) <= _ON_SURFACE:
+            if self._on_viewer_side(mount.coord, depth, surface[1], mount._world) or (
+                surface[4] is mount.anchor.body and self._on_own_facet(mount, depth)
+            ):
                 behind[mount.coord] = max(behind.get(mount.coord, depth), mount.depth)
         return behind
+
+    def _on_own_facet(self, mount: Mount, depth: float) -> bool:
+        """Return whether the mount sits on a facet of its own body that faces the viewer, in front of `depth`.
+
+        A curved shape is drawn as flat facets just inside its true surface, so an anchor on the true surface can
+        project into a cell where a neighboring facet shows, on the inner side of that facet's plane. It still sits
+        outside the plane of the facet beneath it. When that facet faces the viewer and its plane, at the cell
+        center, is no farther than the surface shown there, nothing of the body stands in front of the text.
+        """
+        body = mount.anchor.body
+        mesh = body._mesh
+        if mesh is None:
+            return False
+        if mount._facets is None:
+            point = mount.anchor.point
+            near = []
+            for index, (face, normal) in enumerate(zip(mesh.faces, mesh.normals)):
+                outside = normal.dot(point - mesh.vertices[face.indices[0]])
+                if outside >= -_ON_SURFACE:
+                    near.append((outside, index))
+            mount._facets = tuple(index for _, index in sorted(near)[:_NEAR_FACETS])
+        toward_viewer = self.camera.view_direction(mount._world)
+        for index in mount._facets:
+            normal = body._rotation.apply(mesh.normals[index])
+            if normal.dot(toward_viewer) <= 0:
+                continue
+            corner = body.world_point(mesh.vertices[mesh.faces[index].indices[0]])
+            plane = self._plane_depth(mount.coord, corner, normal)
+            if plane is not None and plane <= depth + _ON_SURFACE:
+                return True
+        return False
 
     def _plane_depth(self, cell: Coord, point: g3.Vec3, normal: g3.Vec3) -> float | None:
         """Return the camera depth where the view through `cell`'s center meets the plane through `point`.
@@ -1859,6 +1894,24 @@ class Space3D:
         # The view leaves the eye along `view`, whose z falls by `distance` per unit, so depth is `t * distance`.
         t = normal.dot(point - eye) / across
         return t * camera.distance if t > 0 else None
+
+    def _on_viewer_side(self, cell: Coord, depth: float, normal: g3.Vec3, point: g3.Vec3) -> bool:
+        """Return whether `point` lies on a face's plane or on the viewer's side of it.
+
+        The face is the one the view through `cell`'s center meets at `depth`, facing along `normal`. Curved shapes
+        are drawn as flat facets just inside the true surface, so anchors placed on the true surface pass too.
+        """
+        camera = self.camera
+        target = camera.cell_to_world(cell)
+        if camera.orthographic:
+            on_face = g3.Vec3(target.x, target.y, camera.distance - depth)
+            toward_viewer = normal.z
+        else:
+            # The view through the cell leaves the eye toward `target`, at depth `distance` per unit of travel.
+            eye = g3.Vec3(0.0, 0.0, camera.distance)
+            on_face = eye + (target - eye) * (depth / camera.distance)
+            toward_viewer = normal.dot(eye - on_face)
+        return normal.dot(point - on_face) * math.copysign(1.0, toward_viewer) >= -_ON_SURFACE
 
     def _refresh_mounts(self) -> None:
         """Recompute every mount's readings for the current poses."""
