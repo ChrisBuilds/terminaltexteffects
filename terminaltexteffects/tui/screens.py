@@ -114,7 +114,7 @@ KEYS: tuple[tuple[str, str], ...] = (
     ("F1", "Show this help"),
     ("F5", "Play or pause; play again once finished"),
     ("Ctrl+R", "Replay from the start"),
-    ("Space / →", "Pause or resume / step one frame, while an effect is shown"),
+    ("Space / ← →", "Pause or resume / step one frame back or forward, while an effect is shown"),
     ("Esc / click", "Stop the effect and return to the text"),
     ("F9", "Play a random effect"),
     ("F2 / F3", "Open / save the text"),
