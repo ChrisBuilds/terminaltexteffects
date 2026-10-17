@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from rich.text import Text
-from textual.widgets import Checkbox, OptionList, Static
+from textual.widgets import Button, Checkbox, OptionList, Static
 
 from terminaltexteffects.__main__ import build_parser
 from terminaltexteffects.effects.effect_wipe import Wipe
@@ -159,6 +159,7 @@ def test_app_lists_broken_effects_and_plays_them_once_fixed(tmp_path: Path) -> N
         await pilot.press("f5")
         stage = app.query_one("#stage")
         assert stage.has_class("-import-error")
+        assert app.query_one("#step_back", Button).disabled
         assert "RuntimeError: unfinished" in str(app.query_one("#import-error-text", Static).render())
         app.query_one("#auto-replay", Checkbox).value = True
         await pilot.pause()

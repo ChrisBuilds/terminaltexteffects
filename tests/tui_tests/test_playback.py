@@ -73,6 +73,75 @@ def test_play_pause_step_and_resume() -> None:
     _run(TTEApp(_EFFECTS, "Hello\nworld", effect="decrypt"), script)
 
 
+def test_step_back_and_forward_through_shown_frames() -> None:
+    """Left should step back through the frames shown, Right forward again, and resuming should continue from there."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        await pilot.press("f5")
+        await _wait(pilot, lambda: app._frame_index >= 5)
+        await pilot.press("left")
+        assert app.state == "paused"
+        newest = app._frame_index
+        canvas = app.query_one(CanvasView)
+        assert canvas._strips is app._history[-2]
+        await pilot.press("left")
+        assert app._back == 2
+        assert canvas._strips is app._history[-3]
+        assert f"frame {newest - 2} of {newest}" in str(app.query_one("#stage").border_subtitle)
+        await pilot.press("right")
+        assert app._back == 1
+        assert canvas._strips is app._history[-2]
+        assert app._frame_index == newest
+        await pilot.press("space")
+        await _wait(pilot, lambda: app._back == 0)
+        assert app._shown_at
+        await _wait(pilot, lambda: app._frame_index > newest)
+        await pilot.press("escape")
+        assert not app._history
+
+    _run(TTEApp(_EFFECTS, "Hello\nworld", effect="decrypt"), script)
+
+
+def test_step_back_after_the_effect_finishes() -> None:
+    """A finished effect can be stepped back and forward to its last frame, without Loop replaying it."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        _editor(app, "terminal", "frame_rate").query_one(Input).value = "0"
+        app.query_one("#loop", Checkbox).value = True
+        await pilot.pause()
+        await pilot.press("f5")
+        await _wait(pilot, lambda: app.state == "finished")
+        last = app._history[-1]
+        assert app.query_one("#step", Button).disabled
+        await pilot.press("left")
+        assert app.state == "finished"
+        assert app._loop_timer is None
+        assert not app.query_one("#step", Button).disabled
+        await pilot.press("right")
+        assert app.query_one(CanvasView)._strips is last
+        await pilot.press("right")
+        assert app._back == 0
+        await pilot.pause(1.2)
+        assert app.state == "finished"
+
+    _run(TTEApp(_EFFECTS, "Hi", effect="wipe"), script)
+
+
+def test_step_back_stops_at_the_first_kept_frame() -> None:
+    """Stepping back past the oldest kept frame does nothing."""
+
+    async def script(app: TTEApp, pilot: Pilot[None]) -> None:
+        await pilot.press("f5")
+        await _wait(pilot, lambda: app._frame_index >= 2)
+        await pilot.press("space")
+        for _ in range(len(app._history) + 2):
+            await pilot.press("left")
+        assert app._back == len(app._history) - 1
+        assert app.query_one("#step_back", Button).disabled
+
+    _run(TTEApp(_EFFECTS, "Hello", effect="decrypt"), script)
+
+
 def test_loop_replays_the_kept_frames() -> None:
     """With Loop on, a finished effect should replay from the frames kept from the first run."""
 

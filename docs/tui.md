@@ -114,7 +114,12 @@ canvas. Right-clicking keeps the selection, so the menu can cut or copy it.
 
 ++f5++ or **Play** plays the selected effect. While it plays, ++f5++ or ++space++ pauses and resumes it, and
 ++right++ pauses it and shows one frame at a time. Once the effect has finished or been stopped, **Play** plays it
-again from the start, as does ++ctrl+r++ at any time. ++f9++ plays a random effect from the listed effects. The
+again from the start, as does ++ctrl+r++ at any time.
+
+++left++ or the **←** button pauses the effect and steps back one frame, through the last 2,000 frames shown; ++right++
+then steps forward through them again, and resuming plays them before the effect continues. Stepping back works
+after the effect has finished too. While you are looking at an earlier frame, the subtitle shows its number and
+the number of the newest frame shown. ++f9++ plays a random effect from the listed effects. The
 effect plays on a black background. ++escape++, or a click on the effect, returns to the text, and a click puts the
 cursor where you clicked.
 
@@ -162,7 +167,7 @@ that rate. The command line makes the same files with [`--export`](appguide.md#g
 | --- | --- |
 | ++f1++ | Show the keys and a few tips. |
 | ++f5++ | Play or pause the selected effect. Once it has finished, play it again from the start. |
-| ++space++ / ++right++ | While an effect is shown: pause or resume it / show the next frame. |
+| ++space++ / ++left++ ++right++ | While an effect is shown: pause or resume it / show the frame before or after. |
 | ++ctrl+r++ | Replay the effect from the start. |
 | ++f9++ | Play a random effect. |
 | ++escape++ | Stop the effect, or clear the finished effect, and return to the text. |

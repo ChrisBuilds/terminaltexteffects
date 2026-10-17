@@ -83,6 +83,8 @@ _PREPARE_POLL = 0.05
 _MIN_TICK = 1 / 240
 _MAX_KEPT_FRAMES = 2000
 """Longest run, in frames, kept for Loop to replay without building the effect again."""
+_MAX_HISTORY_FRAMES = 2000
+"""Most frames kept to step back through. Rows that did not change are shared between frames."""
 _DEVELOPMENT_POLL = 1.0
 """Seconds between checks of the development effect files for changes."""
 
@@ -471,6 +473,7 @@ class CanvasView(Widget, can_focus=True):
 
     BINDINGS: typing.ClassVar = [
         Binding("space", "app.play", "Pause/Resume"),
+        Binding("left", "app.step_back", "Back"),
         Binding("right", "app.step", "Step"),
     ]
 
@@ -1086,6 +1089,10 @@ class TTEApp(App[None]):
         self._frame_index = 0
         self._shown_at: deque[float] = deque(maxlen=_MAX_UNLIMITED_FPS * 2)
         self._recording: list[frames.Frame] | None = None
+        self._history: deque[frames.Frame] = deque(maxlen=_MAX_HISTORY_FRAMES)
+        """The frames shown in this run, newest last, to step back through."""
+        self._back = 0
+        """How many frames before the newest one in `_history` is on screen."""
         self._playback_key: tuple[typing.Any, ...] | None = None
         self._recorded: tuple[tuple[typing.Any, ...], list[frames.Frame]] | None = None
         self._color_hint_shown = False
@@ -1113,7 +1120,8 @@ class TTEApp(App[None]):
                     yield from self._transport_buttons(
                         ("▶ Play", "play", "Play or pause, or play again from the start (F5)"),
                         ("■ Stop", "stop", "Stop and return to the text (Esc)"),
-                        ("→ Step", "step", "Show the next frame while paused (→)"),
+                        ("←", "step_back", "Step back: pause, then show the frame before (←)"),
+                        ("→", "step", "Step: pause, then show the next frame (→)"),
                         ("Random", "random", "Play a random effect (F9)"),
                     )
                     yield Checkbox("Loop", id="loop", compact=True)
@@ -1338,6 +1346,8 @@ class TTEApp(App[None]):
         """Show why the selected development effect cannot be played, in place of the text."""
         self._cancel_playback()
         self._recording = None
+        self._history.clear()
+        self._back = 0
         stage = self.query_one("#stage")
         stage.remove_class("-playing")
         stage.add_class("-import-error")
@@ -1963,6 +1973,8 @@ class TTEApp(App[None]):
             canvas_view.focus()
         self.state = "playing"
         self._frame_index = 0
+        self._history.clear()
+        self._back = 0
         self._shown_at.clear()
         self._frame_rate = effect.terminal_config.frame_rate or _MAX_UNLIMITED_FPS
         self._run_frames()
@@ -1993,7 +2005,15 @@ class TTEApp(App[None]):
         self._next_frame()
 
     def _next_frame(self) -> None:
-        """Show the next frame when it is ready, or finish when the effect is complete."""
+        """Show the next frame when it is ready, or finish when the effect is complete.
+
+        After stepping back, the frames already shown are shown again before the effect continues.
+        """
+        if self._back:
+            self._back -= 1
+            self._show_history()
+            self._shown_at.append(time.monotonic())
+            return
         stream = self._stream
         if stream is None:
             return
@@ -2018,6 +2038,7 @@ class TTEApp(App[None]):
             else:
                 self._recording = None
         self.query_one("#canvas", CanvasView).show_strips(frame)
+        self._history.append(frame)
         self._frame_index += 1
         self._shown_at.append(time.monotonic())
         if self._frame_index == 1:
@@ -2083,7 +2104,7 @@ class TTEApp(App[None]):
             self._timer.stop()
             self._timer = None
         self.state = "paused"
-        self.query_one("#stage").border_title = f"Paused: {self.effect_name} (Space to resume, → to step)"
+        self.query_one("#stage").border_title = f"Paused: {self.effect_name} (Space to resume, ← → to step)"
         self._update_transport()
 
     def _resume(self) -> None:
@@ -2094,13 +2115,33 @@ class TTEApp(App[None]):
         self._update_transport()
 
     def action_step(self) -> None:
-        """Pause, then show one more frame."""
+        """Pause, then show one more frame. Once the effect has finished, step forward to its last frame."""
         if self.state == "playing":
             self._pause()
-        if self.state != "paused":
+        if self.state == "finished" and self._back:
+            self._back -= 1
+            self._show_history()
+        elif self.state == "paused":
+            self._next_frame()
+        self._update_transport()
+
+    def action_step_back(self) -> None:
+        """Pause, then show the frame before the one on screen, while earlier frames are kept."""
+        if self.state == "playing":
+            self._pause()
+        if self.state not in ("paused", "finished") or self._back + 1 >= len(self._history):
             return
-        self._next_frame()
-        self._update_status()
+        if self._loop_timer is not None:
+            # Loop would replay from the start while the frames are being looked through.
+            self._loop_timer.stop()
+            self._loop_timer = None
+        self._back += 1
+        self._show_history()
+        self._update_transport()
+
+    def _show_history(self) -> None:
+        """Display the kept frame `_back` frames before the newest one."""
+        self.query_one("#canvas", CanvasView).show_strips(self._history[-1 - self._back])
 
     def action_stop(self) -> None:
         """Stop the effect and return to the text."""
@@ -2108,6 +2149,8 @@ class TTEApp(App[None]):
             return
         self._cancel_playback()
         self._recording = None
+        self._history.clear()
+        self._back = 0
         self.state = "editing"
         stage = self.query_one("#stage")
         stage.remove_class("-playing", "-import-error")
@@ -2154,14 +2197,15 @@ class TTEApp(App[None]):
             self.action_fit_canvas()
         elif action == "max":
             self.action_maximize_canvas()
-        elif action in ("play", "step", "open", "save", "export"):
+        elif action in ("play", "step", "step_back", "open", "save", "export"):
             getattr(self, f"action_{action}")()
 
     def _update_transport(self) -> None:
         """Label the play button for the playback state, and enable the buttons that apply."""
         self.query_one("#play", Button).label = "❚❚ Pause" if self.state == "playing" else "▶ Play"
         self.query_one("#stop", Button).disabled = self.state == "editing"
-        self.query_one("#step", Button).disabled = self.state not in ("playing", "paused")
+        self.query_one("#step", Button).disabled = not self._can_step()
+        self.query_one("#step_back", Button).disabled = not self._can_step_back()
         self.refresh_bindings()
         self._update_status()
 
@@ -2180,7 +2224,9 @@ class TTEApp(App[None]):
         if self.state == "editing":
             text = f"{self._canvas_note} · drag the outline to resize"
         else:
-            text = f"frame {self._frame_index}"
+            text = f"frame {self._frame_index - self._back}"
+            if self._back:
+                text += f" of {self._frame_index}"
             if self.state == "playing":
                 target = self._value_of("frame_rate")
                 text += f" · {self.measured_fps():.0f} fps"
@@ -2192,14 +2238,24 @@ class TTEApp(App[None]):
             stage.border_subtitle = text
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:  # noqa: ARG002
-        """Offer Stop and Step only while an effect is shown, and only Quit while a dialog is open."""
+        """Offer Stop and the step actions only while they apply, and only Quit while a dialog is open."""
         if self.screen.is_modal:
             return action == "quit"
         if action == "stop":
             return self.state != "editing"
         if action == "step":
-            return self.state in ("playing", "paused")
+            return self._can_step()
+        if action == "step_back":
+            return self._can_step_back()
         return True
+
+    def _can_step(self) -> bool:
+        """Return whether a later frame can be shown: while playing or paused, or after stepping back."""
+        return self.state in ("playing", "paused") or (self.state == "finished" and self._back > 0)
+
+    def _can_step_back(self) -> bool:
+        """Return whether an earlier frame can be shown: while playing, or when one is kept."""
+        return self.state == "playing" or (self.state != "editing" and self._back + 1 < len(self._history))
 
     # Export ----------------------------------------------------------------------------------------------------
 
