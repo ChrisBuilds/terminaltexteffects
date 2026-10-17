@@ -40,13 +40,14 @@ The interface needs a terminal for output. When standard output is redirected, `
 
 ## Layout
 
-- **Effects** on the left lists every available effect, including [community effects](appguide.md#community-effects).
-  Type in the filter above the list to show only effects whose name or description contains every word you type,
-  and press ++down++ or ++enter++ to move into the list. Highlighting an effect shows its options. Pressing ++enter++
-  on it plays it.
-- **The playback bar** above the text has two groups. On the left, buttons play or pause, stop, and step through the
-  effect and play a random effect, with the **Loop** and **Auto** (auto-replay) toggles. On the right, **Open** and
-  **Save** load and save the text, **Export** saves the effect as a file, and **Fit** and **Max** size the canvas.
+- **Effects** on the left lists every available effect, including [community effects](appguide.md#community-effects)
+  and any [effects you are developing](#developing-effects). Type in the filter above the list to show only effects
+  whose name or description contains every word you type, and press ++down++ or ++enter++ to move into the list.
+  Highlighting an effect shows its options. Pressing ++enter++ on it plays it.
+- **The playback bar** above the text has two groups. On the left, **Play** plays or pauses the effect, **Stop**
+  returns to the text, **←** and **→** step back and forward one frame, and **Random** plays a random effect,
+  followed by the **Loop** and **Auto** (auto-replay) toggles. On the right, **Open** and **Save** load and save the
+  text, **Export** saves the effect as a file, and **Fit** and **Max** size the canvas.
 - **The text toolbar** under the playback bar colors text and inserts symbols. See [Text toolbar](#text-toolbar).
 - **Text** fills the rest of the top of the screen. Type, paste, and arrange text here. The subtitle shows the canvas
   size, and while an effect is shown, the frame number and the frame rate.
@@ -112,20 +113,21 @@ canvas. Right-clicking keeps the selection, so the menu can cut or copy it.
 
 ## Playback
 
-++f5++ or **Play** plays the selected effect. While it plays, ++f5++ or ++space++ pauses and resumes it, and
-++right++ pauses it and shows one frame at a time. Once the effect has finished or been stopped, **Play** plays it
-again from the start, as does ++ctrl+r++ at any time.
+++f5++ or **Play** plays the selected effect on a black background. While it plays, ++f5++ or ++space++ pauses and
+resumes it. Once the effect has finished or been stopped, **Play** plays it again from the start, as does ++ctrl+r++
+at any time. ++f9++ or **Random** plays a random effect from the listed effects. ++escape++, or a click on the effect,
+returns to the text, and a click puts the cursor where you clicked.
 
-++left++ or the **←** button pauses the effect and steps back one frame, through the last 2,000 frames shown; ++right++
-then steps forward through them again, and resuming plays them before the effect continues. Stepping back works
-after the effect has finished too. While you are looking at an earlier frame, the subtitle shows its number and
-the number of the newest frame shown. ++f9++ plays a random effect from the listed effects. The
-effect plays on a black background. ++escape++, or a click on the effect, returns to the text, and a click puts the
-cursor where you clicked.
+++right++ or the **→** button pauses the effect and shows the next frame, and ++left++ or the **←** button pauses it
+and steps back one frame, through the last 2,000 frames shown. After stepping back, ++right++ steps forward through
+those frames again, and resuming plays them before the effect continues. Stepping back works after the effect has
+finished too. While you are looking at an earlier frame, the subtitle shows its number and the number of the newest
+frame shown.
 
 Turn on **Loop** to replay the effect a second after it finishes. Loops replay the frames of the first run, so they
 start at once, and stop reusing them when you change an option or the text. Turn on **Auto** to replay the effect
-shortly after you change an option or highlight another effect, without leaving the field you are editing.
+shortly after you change an option or highlight another effect, without leaving the field you are editing, or after
+you save a [development effect](#developing-effects) you are working on.
 
 Effects build their animations and draw their frames on a background thread, a few frames ahead of the screen, so
 the interface stays responsive while a large effect is prepared. The frame rate in the subtitle is the rate the
