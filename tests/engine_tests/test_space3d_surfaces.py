@@ -450,6 +450,103 @@ def test_draw_mounted_text_reads_over_its_surface_in_the_frame() -> None:
     assert "#" in frame
 
 
+@pytest.mark.parametrize("perspective", [0, 1, 0.0001])
+@pytest.mark.parametrize(
+    ("axis", "angle", "offset"),
+    [
+        ("y", 15, (0, 0, 0)),
+        ("y", -40, (3, 0, 0)),
+        ("x", 25, (0, 2, 0)),
+        ("diagonal", 30, (-4, 1, 5)),
+        ("y", 70, (0, 0, -8)),
+    ],
+)
+def test_text_mounted_on_a_turned_face_reads_over_it(
+    perspective: float, axis: str, angle: float, offset: tuple[float, float, float]
+) -> None:
+    """Text on a slanted front face shows over that face, though the face is measured at the cell center."""
+    space = make_space("Z", perspective=perspective)
+    character = space.terminal.get_characters()[0]
+    space.terminal.set_character_visibility(character, is_visible=True)
+    body = space.body(space3d.Cube(12), at=offset).rotate(axis, angle).draw(space3d.Solid("#"))
+    space.mount(character, body.anchor(2, 0, 6))
+    space.step()
+    character.tick()
+    cell = body.surface_characters[character.motion.current_coord]
+    assert painter_order(cell) < painter_order(character)
+    assert "Z" in space.terminal.get_formatted_output_string()
+
+
+@pytest.mark.parametrize("perspective", [0, 1, 0.0001])
+def test_a_nearer_surface_covers_text_on_a_turned_face(perspective: float) -> None:
+    """A surface a fraction of a column in front of a slanted face still covers the text mounted on that face."""
+    space = make_space("Z", perspective=perspective)
+    character = space.terminal.get_characters()[0]
+    body = space.body(space3d.Cube(12)).rotate("y", 15)
+    anchor = body.anchor(2, 0, 6, normal="z")
+    space.mount(character, anchor)
+    space.step()
+    character.tick()
+    cell = character.motion.current_coord
+    shield = space.body(space3d.Box(4, 4, 2)).draw(space3d.Solid("#"))
+    # Turned like the face and moved so its front sits 0.2 columns in front of the anchor, along the face normal.
+    shield.rotate("y", 15)
+    normal = body.rotation.apply(g3.Z_AXIS)
+    center = anchor.world_point() + normal * (0.2 - 1.0)
+    shield.set_position(center.x, center.y, center.z)
+    space.step()
+    character.tick()
+    assert painter_order(shield.surface_characters[cell]) > painter_order(character)
+
+
+@pytest.mark.parametrize("perspective", [0, 1])
+@pytest.mark.parametrize("shape", [space3d.Sphere(12, segments=24), space3d.Cylinder(12, 12, 24)])
+@pytest.mark.parametrize("layout", ["wrap", "surface"])
+def test_text_on_a_curved_body_reads_over_its_facets(perspective: float, shape: space3d.Shape, layout: str) -> None:
+    """Anchors on the true curved surface sit just outside the drawn facets, so text facing the viewer reads on top."""
+    space = make_space("\n".join(["ABCDEFGHIJKLMNOPQRSTUVWXYZ"] * 4), width=61, height=31, perspective=perspective)
+    characters = [character for character in space.terminal.get_characters() if character.input_symbol != " "]
+    body = space.body(shape).rotate("y", 30).draw(space3d.Solid("#"))
+    anchors = body.wrap(characters) if layout == "wrap" else body.surface(len(characters))
+    mounts = body.add_chars(characters, anchors)
+    space.step()
+    for character in characters:
+        character.tick()
+    checked = 0
+    for mount in mounts:
+        cell = body.surface_characters.get(mount.coord)
+        # Edge-on anchors at the rim can sit over a neighboring facet that really is nearer.
+        if cell is not None and mount.facing_amount > 0.2:
+            assert painter_order(cell) < painter_order(mount.character)
+            checked += 1
+    assert checked > 20
+
+
+@pytest.mark.parametrize("perspective", [0, 1])
+def test_text_inside_a_torus_stays_behind_its_near_side(perspective: float) -> None:
+    """Text on the inner wall of a torus's far side, facing the viewer, is still covered by the tube in front of it."""
+    space = make_space("Z", perspective=perspective)
+    character = space.terminal.get_characters()[0]
+    body = space.body(space3d.Torus(12, 4)).draw(space3d.Solid("#"))
+    space.mount(character, body.anchor(0, 0, -8, normal="z"))
+    space.step()
+    character.tick()
+    cell = body.surface_characters[character.motion.current_coord]
+    assert painter_order(cell) > painter_order(character)
+
+
+def test_text_on_a_far_face_stays_behind_the_near_face() -> None:
+    """Text on a body's back face does not show through the front face covering it."""
+    space = make_space("Z")
+    character = space.terminal.get_characters()[0]
+    body = space.body(space3d.Cube(12)).rotate("y", 15).draw(space3d.Solid("#"))
+    space.mount(character, body.anchor(1, 0, -6))
+    space.step()
+    character.tick()
+    cell = body.surface_characters[character.motion.current_coord]
+    assert painter_order(cell) > painter_order(character)
+
+
 def test_unchanged_cells_keep_their_visual() -> None:
     """Cells whose symbol and color don't change keep the same visual between steps."""
     space = make_space()

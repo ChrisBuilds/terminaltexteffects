@@ -863,6 +863,86 @@ def test_activating_a_path_releases_the_mount() -> None:
     assert character.motion.current_coord == Coord(1, 1)
 
 
+def anchor_cell(space: space3d.Space3D, anchor: space3d.Anchor) -> Coord:
+    """Return the cell an anchor projects to now."""
+    projected = space.camera.project(anchor.world_point())
+    assert projected is not None
+    return projected.coord
+
+
+def test_a_pose_changed_in_a_completion_callback_is_where_release_hands_back() -> None:
+    """A callback that moves the body and then releases leaves the character at the new pose."""
+    terminal, space = make_space(perspective=0)
+    character = terminal.get_characters()[0]
+    body = space.body()
+    anchor = body.anchor(0, 0, 0)
+    space.mount(character, anchor)
+
+    def finish(finished: space3d.Body) -> None:
+        finished.set_position(10, 0, 0)
+        finished.release_all()
+
+    body.hold(1).on_complete(finish)
+    space.step()
+    assert character.motion.current_coord == anchor_cell(space, anchor) == Coord(31, 11)
+
+
+def test_a_zero_frame_tween_then_release_hands_back_at_the_endpoint() -> None:
+    """A zero-frame tween applies at once, so a release in its callback uses the new pose."""
+    terminal, space = make_space(perspective=0)
+    character = terminal.get_characters()[0]
+    body = space.body()
+    anchor = body.anchor(0, 0, 0)
+    space.mount(character, anchor)
+    tick(space, [character])
+    body.move_to(10, frames=0).on_complete(lambda finished: finished.release_all())
+    assert character.motion.mount is None
+    assert character.motion.current_coord == anchor_cell(space, anchor) == Coord(31, 11)
+
+
+def test_a_path_activated_on_release_starts_from_the_corrected_cell() -> None:
+    """A path that `MOUNT_RELEASED` activates starts where the character was handed back."""
+    terminal, space = make_space(perspective=0)
+    character = terminal.get_characters()[0]
+    body = space.body()
+    mount = space.mount(character, body.anchor(0, 0, 0))
+    path = character.motion.new_path(speed=100)
+    path.new_waypoint(Coord(1, 1))
+    character.event_handler.register_event(
+        EventHandler.Event.MOUNT_RELEASED, mount, EventHandler.Action.ACTIVATE_PATH, path
+    )
+    tick(space, [character])
+    body.move_to(10, frames=0).on_complete(lambda finished: finished.release_all())
+    assert character.motion.active_path is path
+    assert path.segments[0].start.coord == Coord(31, 11)
+
+
+def test_release_mid_blend_keeps_the_character_where_it_is() -> None:
+    """A character still blending toward its anchor is released where it is, whatever the pose."""
+    terminal, space = make_space(perspective=0)
+    character = terminal.get_characters()[0]
+    start = character.motion.current_coord
+    body = space.body()
+    space.mount(character, body.anchor(0, 0, 0), blend_frames=10)
+    body.set_position(15, 0, 0)
+    space.release(character)
+    assert character.motion.current_coord == start
+
+
+def test_release_of_a_clipped_anchor_keeps_the_last_projected_cell() -> None:
+    """An anchor behind the near plane at release leaves the character on the last cell it projected to."""
+    terminal, space = make_space()
+    character = terminal.get_characters()[0]
+    body = space.body()
+    mount = space.mount(character, body.anchor(0, 0, 0))
+    body.set_position(x=10)
+    tick(space, [character])
+    where = mount.coord
+    body.set_position(x=-10, z=space.camera.distance)
+    space.release(character)
+    assert character.motion.current_coord == where
+
+
 def test_a_mount_from_a_release_callback_does_not_block_the_path_or_mount() -> None:
     """A mount activated by a release callback gives way to the path or mount that released it."""
     terminal, space = make_space()

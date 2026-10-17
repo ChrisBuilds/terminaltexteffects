@@ -425,6 +425,10 @@ _AMBIENT = 0.15
 _TEXT_NUDGE = 1e-6
 _SURFACE_DEPTH_BIAS = 1e-6
 """How much farther surface cells count than they are, so text mounted exactly on a surface draws on top."""
+_ON_SURFACE = 1e-6
+"""Distance from a face's plane, in columns, within which a mounted character counts as lying on the face."""
+_NEAR_FACETS = 4
+"""How many of its body's facets, those it lies just outside, a mount checks to see whether it sits on the body."""
 
 
 @dataclass(frozen=True)
@@ -1255,7 +1259,7 @@ class Body:
         """Return the look for faces with `tag`."""
         return self._face_looks.get(tag, self._look)
 
-    def _contribute(self, cells: dict[Coord, tuple[float, str, ColorPair, Body]], bounds: g3.Bounds) -> None:
+    def _contribute(self, cells: dict[Coord, _SurfaceCell], bounds: g3.Bounds) -> None:
         """Add this body's nearest surface in each cell inside `bounds` to `cells`, where it beats what is there."""
         mesh = self._mesh
         if mesh is None:
@@ -1269,9 +1273,9 @@ class Body:
             hidden = space._pair(look.hidden_color) if look.hidden_color is not None else None
             for cell, edge in g3.wireframe(mesh, camera, depth_test=look.depth_test, **pose).items():
                 if edge.front:
-                    _offer(cells, cell, edge.depth, edge.symbol, front, self)
+                    _offer(cells, cell, edge.depth, None, edge.symbol, front, self)
                 elif hidden is not None:
-                    _offer(cells, cell, edge.depth, edge.symbol, hidden, self)
+                    _offer(cells, cell, edge.depth, None, edge.symbol, hidden, self)
             return
         two_sided = any(
             isinstance(each, Textured) and each.back == "dim" for each in (self._look, *self._face_looks.values())
@@ -1297,12 +1301,12 @@ class Body:
                     continue  # Let the far side show through.
                 else:
                     symbol = sampled
-            _offer(cells, cell, fragment.depth, symbol, colors, self)
+            _offer(cells, cell, fragment.depth, fragment.normal, symbol, colors, self)
         for cell, fragment in backs.items():
             look = self._face_look(fragment.tag)
             if isinstance(look, Textured) and look.back == "dim":
                 symbol = self._sample(look, fragment) or " "
-                _offer(cells, cell, fragment.depth, symbol, space._pair(look.back_color), self)
+                _offer(cells, cell, fragment.depth, fragment.normal, symbol, space._pair(look.back_color), self)
 
     def _face_style(self, fragment: g3.Fragment) -> tuple[Look | None, str, ColorPair, ColorPair]:
         """Return a face's look, symbol, lit colors and colors for untextured faces, from its angle to the light."""
@@ -1343,6 +1347,10 @@ class Body:
         return line[column] if column < len(line) else " "
 
 
+_SurfaceCell = tuple[float, "g3.Vec3 | None", str, ColorPair, "Body"]
+"""A drawn cell: its camera depth, the face's world normal (`None` for wireframe edges), symbol, colors and body."""
+
+
 class _Slot:
     """One pooled surface character and the appearance the space last gave it."""
 
@@ -1359,9 +1367,10 @@ class _Slot:
 
 
 def _offer(
-    cells: dict[Coord, tuple[float, str, ColorPair, Body]],
+    cells: dict[Coord, _SurfaceCell],
     cell: Coord,
     depth: float,
+    normal: g3.Vec3 | None,
     symbol: str,
     colors: ColorPair,
     body: Body,
@@ -1369,7 +1378,7 @@ def _offer(
     """Put a drawn cell into `cells` if it is nearer than what is there."""
     current = cells.get(cell)
     if current is None or depth < current[0]:
-        cells[cell] = (depth, symbol, colors, body)
+        cells[cell] = (depth, normal, symbol, colors, body)
 
 
 @dataclass(frozen=True, eq=False)
@@ -1457,6 +1466,8 @@ class Mount:
         self.light = 1.0
         self.active = False
         self.arrived = False
+        self._world = g3.ORIGIN
+        self._facets: tuple[int, ...] | None = None
         self._frame = 0
         self._start = (0.0, 0.0)
         self._base_layer = 0
@@ -1484,13 +1495,16 @@ class Mount:
     def _end(self) -> None:
         """Stop riding and undo what the mount itself changed. Called by `Motion.deactivate_mount`.
 
-        Once any blend is over, the character is left on the cell its anchor last projected to, which is where it
-        shows after this frame's `Space3D.step` even if it hasn't ticked since.
+        Once any blend is over, the character is left on the cell its anchor projects to now, so a pose changed just
+        before release, such as in a tween's completion callback or by a zero-frame tween, is where it is handed
+        back. An anchor behind the near plane leaves it on the last cell it projected to.
         """
         self.active = False
         if self.space.mounts.get(self.character) is self:
             del self.space.mounts[self.character]
         if self._frame >= self.blend_frames:
+            self._stamp = -1
+            self._refresh()
             self.character.motion.current_coord = self.coord
         if self.layer_by_depth:
             self.character.layer = self._base_layer
@@ -1512,6 +1526,7 @@ class Mount:
         self.projected = projected is not None
         if projected is None:
             return
+        self._world = world
         self.coord = projected.coord
         self.depth = projected.depth
         reach = body._extent * body.scale
@@ -1768,7 +1783,7 @@ class Space3D:
         return new
 
     def release(self, character: EffectCharacter) -> None:
-        """Give the character back, if it is mounted in this space, on the cell its anchor last projected to.
+        """Give the character back, if it is mounted in this space, on the cell its anchor projects to now.
 
         A character still blending toward its anchor stays where it is. Release undoes only what the mount did: it
         restores the layer if `layer_by_depth` was on and shows the character if the mount hid it. A
@@ -1804,6 +1819,102 @@ class Space3D:
             self._refresh_mounts()
         self._draw_surfaces()
 
+    def _behind_mounted_text(self, cells: dict[Coord, _SurfaceCell]) -> dict[Coord, float]:
+        """Return the depths to order surface cells at where text mounted on them sits a little behind.
+
+        A surface is measured at the cell center and a mounted character where its anchor projects, so on a slanted
+        or curved face, text lying on the face can measure a few hundredths of a column farther than the face itself.
+        Where a mount at its anchor lies on the face shown in its cell, or on the viewer's side of that face's plane,
+        that cell is ordered at the mount's depth instead, so the text reads on top. A surface the text is behind
+        keeps its own depth, so it still covers the text however close it is.
+        """
+        behind: dict[Coord, float] = {}
+        for mount in self.mounts.values():
+            # A mount on the last frame of its blend reaches its anchor at its next tick, before this frame shows.
+            if not (mount.layer_by_depth and mount.projected and mount._frame + 1 >= mount.blend_frames):
+                continue
+            surface = cells.get(mount.coord)
+            if surface is None or surface[1] is None or mount.depth <= surface[0]:
+                continue
+            depth = surface[0]
+            if self._on_viewer_side(mount.coord, depth, surface[1], mount._world) or (
+                surface[4] is mount.anchor.body and self._on_own_facet(mount, depth)
+            ):
+                behind[mount.coord] = max(behind.get(mount.coord, depth), mount.depth)
+        return behind
+
+    def _on_own_facet(self, mount: Mount, depth: float) -> bool:
+        """Return whether the mount sits on a facet of its own body that faces the viewer, in front of `depth`.
+
+        A curved shape is drawn as flat facets just inside its true surface, so an anchor on the true surface can
+        project into a cell where a neighboring facet shows, on the inner side of that facet's plane. It still sits
+        outside the plane of the facet beneath it. When that facet faces the viewer and its plane, at the cell
+        center, is no farther than the surface shown there, nothing of the body stands in front of the text.
+        """
+        body = mount.anchor.body
+        mesh = body._mesh
+        if mesh is None:
+            return False
+        if mount._facets is None:
+            point = mount.anchor.point
+            near = []
+            for index, (face, normal) in enumerate(zip(mesh.faces, mesh.normals)):
+                if normal == g3.ORIGIN:
+                    continue  # A degenerate face has no plane to sit on.
+                outside = normal.dot(point - mesh.vertices[face.indices[0]])
+                if outside >= -_ON_SURFACE:
+                    near.append((outside, index))
+            mount._facets = tuple(index for _, index in sorted(near)[:_NEAR_FACETS])
+        toward_viewer = self.camera.view_direction(mount._world)
+        for index in mount._facets:
+            normal = body._rotation.apply(mesh.normals[index])
+            if normal.dot(toward_viewer) <= 0:
+                continue
+            corner = body.world_point(mesh.vertices[mesh.faces[index].indices[0]])
+            plane = self._plane_depth(mount.coord, corner, normal)
+            if plane is not None and plane <= depth + _ON_SURFACE:
+                return True
+        return False
+
+    def _plane_depth(self, cell: Coord, point: g3.Vec3, normal: g3.Vec3) -> float | None:
+        """Return the camera depth where the view through `cell`'s center meets the plane through `point`.
+
+        Returns `None` when the view runs along the plane or meets it behind the camera.
+        """
+        camera = self.camera
+        target = camera.cell_to_world(cell)
+        if camera.orthographic:
+            if abs(normal.z) <= _EPSILON:
+                return None
+            z = point.z - (normal.x * (target.x - point.x) + normal.y * (target.y - point.y)) / normal.z
+            return camera.distance - z
+        eye = g3.Vec3(0.0, 0.0, camera.distance)
+        view = target - eye
+        across = normal.dot(view)
+        if abs(across) <= _EPSILON * view.length():
+            return None
+        # The view leaves the eye along `view`, whose z falls by `distance` per unit, so depth is `t * distance`.
+        t = normal.dot(point - eye) / across
+        return t * camera.distance if t > 0 else None
+
+    def _on_viewer_side(self, cell: Coord, depth: float, normal: g3.Vec3, point: g3.Vec3) -> bool:
+        """Return whether `point` lies on a face's plane or on the viewer's side of it.
+
+        The face is the one the view through `cell`'s center meets at `depth`, facing along `normal`. Curved shapes
+        are drawn as flat facets just inside the true surface, so anchors placed on the true surface pass too.
+        """
+        camera = self.camera
+        target = camera.cell_to_world(cell)
+        if camera.orthographic:
+            on_face = g3.Vec3(target.x, target.y, camera.distance - depth)
+            toward_viewer = normal.z
+        else:
+            # The view through the cell leaves the eye toward `target`, at depth `distance` per unit of travel.
+            eye = g3.Vec3(0.0, 0.0, camera.distance)
+            on_face = eye + (target - eye) * (depth / camera.distance)
+            toward_viewer = normal.dot(eye - on_face)
+        return normal.dot(point - on_face) * math.copysign(1.0, toward_viewer) >= -_ON_SURFACE
+
     def _refresh_mounts(self) -> None:
         """Recompute every mount's readings for the current poses."""
         self._stamp += 1
@@ -1812,7 +1923,7 @@ class Space3D:
 
     def _draw_surfaces(self) -> None:
         """Draw every drawn body into one depth buffer and show it with the pooled characters."""
-        cells: dict[Coord, tuple[float, str, ColorPair, Body]] = {}
+        cells: dict[Coord, _SurfaceCell] = {}
         bounds = g3.Bounds.for_canvas(self.terminal.canvas)
         for body in self.bodies:
             body._cells = []
@@ -1821,7 +1932,8 @@ class Space3D:
         distance = self.camera.distance
         stamp = self._stamp
         shown: list[_Slot] = []
-        for cell, (depth, symbol, colors, body) in cells.items():
+        behind = self._behind_mounted_text(cells)
+        for cell, (depth, _normal, symbol, colors, body) in cells.items():
             slot = self._slots.get(cell)
             if slot is None:
                 slot = self._slots[cell] = _Slot(self.terminal.add_character(" ", cell))
@@ -1835,7 +1947,7 @@ class Space3D:
                 animation.set_appearance(symbol, colors)
                 slot.symbol, slot.colors, slot.visual = symbol, colors, animation.current_character_visual
             # Ordered by depth like mounted characters, a hair farther, so text mounted on a surface reads on top.
-            nearness = distance - depth - _SURFACE_DEPTH_BIAS
+            nearness = distance - behind.get(cell, depth) - _SURFACE_DEPTH_BIAS
             if slot.nearness != nearness or character.layer != slot.layer:
                 layer = round(nearness)
                 character.layer = layer
