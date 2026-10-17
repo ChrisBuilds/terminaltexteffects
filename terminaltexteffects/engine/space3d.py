@@ -1859,6 +1859,8 @@ class Space3D:
             point = mount.anchor.point
             near = []
             for index, (face, normal) in enumerate(zip(mesh.faces, mesh.normals)):
+                if normal == g3.ORIGIN:
+                    continue  # A degenerate face has no plane to sit on.
                 outside = normal.dot(point - mesh.vertices[face.indices[0]])
                 if outside >= -_ON_SURFACE:
                     near.append((outside, index))
