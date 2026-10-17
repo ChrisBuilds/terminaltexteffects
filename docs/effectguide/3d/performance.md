@@ -38,22 +38,37 @@ a rough guide to which examples cost more, and measure your own effect on the ma
 | [Globe](recipes.md#globe) | A textured sphere, 48 by 24, back faces shown | 25.5 ms |
 
 The globe is the only one over budget, so it plays at about 39 frames per second instead of 60. Here's the same
-sphere drawn different ways, measuring `step()` alone:
+sphere drawn different ways, measuring `step()` alone, at revision 4ceaf0c on the same machine:
 
 | Sphere, radius 20 | Time per step |
 | --- | --- |
-| 24 by 12, `Shaded()` | 4.8 ms |
-| 48 by 24, `Shaded()` | 13.0 ms |
-| 24 by 12, `Textured(back="dim")` | 11.5 ms |
-| 48 by 24, `Textured()` | 13.0 ms |
-| 48 by 24, `Textured(back="dim")` | 23.7 ms |
+| 8 by 4, `Shaded()` | 2.4 ms |
+| 16 by 8, `Shaded()` | 3.4 ms |
+| 24 by 12, `Shaded()` | 5.1 ms |
+| 32 by 16, `Shaded()` | 6.8 ms |
+| 48 by 24, `Shaded()` | 9.9 ms |
+| 24 by 12, `Textured(back="dim")` | 11.0 ms |
+| 48 by 24, `Textured()` | 12.4 ms |
+| 48 by 24, `Textured(back="dim")` | 20.9 ms |
+
+The Detail example draws three of those spheres side by side, smaller, so you can see what the extra faces buy:
+
+```bash
+tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c detail
+```
+
+![Three turning spheres labeled 8 by 4, 16 by 8 and 32 by 16: the first is visibly faceted, the other two look about as round](../../img/effectguide/detail_demo.webp)
+
+With `--wireframe`, the 32 by 16 sphere's edges crowd into a tangle of cells, so more detail reads worse:
+
+![The same three spheres as wireframes: the 8 by 4 one reads clearly and the 32 by 16 one is a dense tangle](../../img/effectguide/detail_wireframe_demo.webp)
 
 The script that produced these tables is `tools/perf/guide_3d_costs.py` in a TTE checkout. Run it with
 `python -m tools.perf.guide_3d_costs` from the repository root to measure your own machine.
 
 Two things stand out:
 
-- **Doubling the segments and rings more than doubles the cost**, even though the sphere covers the same cells.
+- **Doubling the segments and rings about doubles the cost**, even though the sphere covers the same cells.
   Four times the triangles, but each one covers fewer cells.
 - **Showing back faces nearly doubles it again.** `back="dim"` fills the far side too, so the space rasterizes the shape
   twice.

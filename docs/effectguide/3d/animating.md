@@ -85,7 +85,16 @@ difference, not an absolute pose. `settle` and `turn_to` use `Rotation.slerp` to
 ## At cell resolution
 
 - Easing matters more in cells than in pixels. A linear spin starts and stops with a visible jolt, and an eased one
-  doesn't.
+  doesn't. The Eases example gives three cubes the same quarter turns with different easing functions:
+
+    ```bash
+    tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c eases
+    ```
+
+    ![Three cubes make the same quarter turns: linear starts and stops abruptly, in_out_sine speeds up and slows down, and out_back overshoots and springs back](../../img/effectguide/eases_demo.webp)
+
+    `turn_to`, `turn_to_rest`, `settle`, `move_to` and `scale_to` take the same `ease` argument. The example's source
+    is `docs/effectguide/examples/3d/eases/eases.py` in a TTE checkout.
 - Hold a moment at rest before releasing text, so the reader sees it land.
 - After the hand-off, characters are ordinary characters. Their scenes, colors and layers are what you left them as,
   so reset anything the 3D part changed.

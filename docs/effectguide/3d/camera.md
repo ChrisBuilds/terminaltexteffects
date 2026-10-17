@@ -76,10 +76,17 @@ if projected is not None:
   controls the scaling.
 - `near` clips points closer than that to the camera. Crossing faces and edges keep their visible portions;
   texture coordinates are interpolated at the clipped corners.
+
+  ![Side view: a box slides toward the camera; the part nearer than the near plane is clipped away and the rest is drawn](../../img/effectguide/3d/near_plane.webp)
 - `orthographic=True` turns the scaling off.
 - `view_direction(point)` is the direction from a point toward the camera, which decides which faces turn toward it.
 
 ## At cell resolution
+
+Each projected point is drawn in the cell it falls in, so a point that moves smoothly in 3D moves on screen in
+whole-cell steps:
+
+![A point follows a smooth curve across a grid of cells, and the cell it is drawn in jumps from cell to cell, leaving a staircase](../../img/effectguide/3d/cell_snapping.webp)
 
 - Strong perspective makes near faces large and far faces tiny. Tiny faces become a few cells of noise, so keep
   perspective at 1 or below for small shapes.

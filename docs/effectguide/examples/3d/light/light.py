@@ -8,9 +8,10 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+from terminaltexteffects import Color, ColorPair
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Shaded, Space3D, Sphere, Torus
+from terminaltexteffects.engine.space3d import Shaded, Space3D, Sphere, Torus, rotation_about
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.geometry3d import Vec3
 
@@ -56,6 +57,18 @@ class LightIterator(BaseEffectIterator[LightConfig]):
         shape = Sphere(radius=16, segments=32, rings=16) if self.config.shape == "sphere" else Torus(18, 7)
         self.body = self.space.body(shape).draw(Shaded(symbols=self.config.symbols))
         self.body.rotate("x", 30)
+        # A sun and a dotted ray mark where the light is. They are mounted on a body of their own that turns with the
+        # light, so the space places them in 3D and the shape hides them while the light is behind.
+        self.marker = self.space.body()
+        start = Vec3(0, 0.5, 1).normalized()  # The light's direction at the start of its circle.
+        self.markers = []
+        for distance, symbol in ((32, "☼"), (29, "•"), (26, "•"), (23, "•"), (20, "•")):
+            character = self.terminal.add_character(symbol, self.terminal.canvas.center)
+            character.animation.set_appearance(symbol, ColorPair(fg=Color("#ffd75f")))
+            self.marker.add_char(character, self.marker.anchor(0, start.y * distance, start.z * distance))
+            self.terminal.set_character_visibility(character, is_visible=True)
+            self.active_characters.add(character)
+            self.markers.append(character)
         self.frames = 360
         self.frame_number = 0
         self.text_shown = False
@@ -67,11 +80,16 @@ class LightIterator(BaseEffectIterator[LightConfig]):
             # the start. Space3D.light is the direction toward the light, so it must be a unit vector.
             angle = 2 * math.pi * self.frame_number / self.frames
             self.space.light = Vec3(math.sin(angle), 0.5, math.cos(angle)).normalized()
+            # Turning the marker about y by the same angle carries it along the light's circle.
+            self.marker.set_rotation(rotation_about("y", math.degrees(angle)))
             self.body.rotate("y", 0.5)
             self.space.step()
             self.frame_number += 1
         elif not self.text_shown:
             self.body.erase()
+            self.marker.release_all()
+            for character in self.markers:
+                self.terminal.set_character_visibility(character, is_visible=False)
             self.space.step()  # Hides the surface characters once nothing is drawn.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)

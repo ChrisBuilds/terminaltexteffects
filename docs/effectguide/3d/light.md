@@ -20,7 +20,8 @@ still get the first symbol and color, so the shape's dark side stays visible.
 
 ## In TTE
 
-The Light example moves the light in a circle around a slowly turning shape. Save it as `light.py`:
+The Light example moves the light in a circle around a slowly turning shape. A yellow `☼` and a dotted ray mark
+where the light is, and the shape hides them while the light is behind. Save it as `light.py`:
 
 ```python title="light.py"
 --8<-- "docs/effectguide/examples/3d/light/light.py"
@@ -32,7 +33,7 @@ The Light example moves the light in a circle around a slowly turning shape. Sav
     tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c light
     ```
 
-    ![A shaded sphere whose bright side follows the light around it](../../img/effectguide/light_demo.webp)
+    ![A shaded sphere whose bright side follows a sun and its dotted ray circling it](../../img/effectguide/light_demo.webp)
 
 === "Torus with blocks"
 
@@ -40,7 +41,7 @@ The Light example moves the light in a circle around a slowly turning shape. Sav
     tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c light --shape torus --symbols "░▒▓█"
     ```
 
-    ![A torus shaded with block symbols](../../img/effectguide/light_torus_demo.webp)
+    ![A torus shaded with block symbols, its bright side following the sun and its ray](../../img/effectguide/light_torus_demo.webp)
 
 - `Space3D(terminal, light="upper left")` sets the light at creation: `"upper left"`, `"upper right"`, `"front"`,
   `"above"`, `"left"`, `"right"`, or any `(x, y, z)` direction. The default, upper left, gives most shapes a lit

@@ -419,7 +419,7 @@ def _mesh_surface_points(mesh: g3.Mesh, count: int) -> list[tuple[g3.Vec3, g3.Ve
 # Looks
 
 _BRAND_STOPS = ("#8A008A", "#00D1FF", "#ffffff")
-_DIM = Color("#4a1050")
+_DIM = Color("#7a3a86")
 _SHADE_SYMBOLS = ".,-~:;=!*#$@"
 _AMBIENT = 0.15
 _TEXT_NUDGE = 1e-6
