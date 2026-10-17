@@ -20,16 +20,28 @@ hidden behind the near side, so it can be skipped without testing a single cell.
 ![Seen from above, a turning prism: faces whose normals point toward the camera are drawn, the others are skipped](../../img/effectguide/3d/back_faces.webp)
 
 Mounted characters aren't drawn into the buffer. Each one is a single character on one cell, so the space orders them
-with **layers** instead: with `layer_by_depth` on, a nearer character gets a higher layer and draws on top.
+with **layers** instead: with `layer_by_depth` on, a mount adds a depth-derived offset to the character's own layer,
+so among characters that started on the same layer, the nearer one draws on top. The full ordering is under
+[Under the hood](#under-the-hood).
 
 ## In TTE
 
-The Depth example passes a sphere through a cube, or shows a cube's far side through its text. Save it as
-`depth.py`:
+The Depth example passes a sphere through a cube, or shows a cube's far side through its text. Two drawn bodies are
+all it takes; the space sorts out which hides which:
 
-```python title="depth.py"
---8<-- "docs/effectguide/examples/3d/depth/depth.py"
+```python
+cube = self.space.body(Cube(20)).draw(Shaded())
+sphere = self.space.body(Sphere(9), at=(-34, 0, 6)).draw(Shaded())
+sphere.move_to(34, 0, -6, frames=300, ease=easing.in_out_sine)  # Through the cube and out the far side.
 ```
+
+??? example "depth.py"
+
+    Save it in your community effects directory as `depth.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/depth/depth.py"
+    ```
 
 === "Overlap"
 
@@ -52,11 +64,19 @@ The Depth example passes a sphere through a cube, or shows a cube's far side thr
   spaces in the text. It's the one place the space draws back faces on purpose.
 
 The Card example mounts the input text on a plane and turns it once, which shows what happens to characters as they
-turn edge-on. Save it as `card.py`:
+turn edge-on. Its one 3D option is how the characters are mounted:
 
-```python title="card.py"
---8<-- "docs/effectguide/examples/3d/card/card.py"
+```python
+self.card.add_chars(characters, self.card.text_plane(characters), hide_when_facing_away=self.config.hide_back)
 ```
+
+??? example "card.py"
+
+    Save it in your community effects directory as `card.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/card/card.py"
+    ```
 
 === "Both sides"
 
@@ -76,7 +96,8 @@ turn edge-on. Save it as `card.py`:
 
 As the card turns edge-on, its columns crowd into fewer cells and only one character can show in each. Past edge-on
 you see the back of the card, so the text reads mirrored. `hide_when_facing_away=True` hides each character while its
-side faces away, as a solid card would.
+side faces away, as a solid card would. "Its side" is its anchor's [normal](coordinates.md#normals-for-anchors),
+which `text_plane` provides; an anchor without a normal always counts as facing you, so it's never hidden.
 
 ## Hidden wireframe lines
 
@@ -106,18 +127,31 @@ for cell, fragment in buffer.items():
 - `cull="back"`, the default, skips faces turned away. `"front"` keeps only those, and `"none"` keeps both.
 - Each `Fragment` holds the nearest surface's depth, normal, face tag and texture coordinates.
 
-Characters are ordered by layer, then by creation order. A mount with `layer_by_depth` sets the character's layer to
-its layer when mounted plus how much nearer than the origin it is, in whole columns, and restores it on release. The
-rest of a column orders characters within the layer, so the nearer of two characters always draws on top, however
-small the difference. Surface cells are ordered the same way and count a hair farther than they are, so text mounted
-on a drawn body from layer 0 or above reads on top.
+Where several characters share a cell, the terminal draws the one that sorts last by three keys, in order:
+
+1. **Layer**, the character's `layer`. Higher draws on top.
+2. **Depth order**, a fraction from -0.5 to 0.5 that only 3D sets. Characters that never set it stay at 0.
+3. **Character ID**, which follows creation order. The most recently created character draws on top.
+
+A mount with `layer_by_depth` splits the character's nearness to the camera, `camera.distance - depth`, into a whole
+number of columns and the rest. It adds the whole part to the layer the character had when it was mounted, uses the
+rest as its depth order, and restores both on release. So between two characters mounted from the **same base
+layer**, the nearer one draws on top, however small the difference. A different base layer shifts that comparison by
+the difference in layers, in columns of depth: a character on layer 10 at z = -2 sorts as `(8, 0)` and still draws
+over a nearer one on layer 0 at z = 1, which sorts as `(1, 0)`, but it would lose to one more than 10 columns nearer.
+Give characters the same base layer when depth should decide. When a character must always draw on top, turn
+`layer_by_depth` off for it and give it a layer above every mounted character's range.
+
+Surface cells are ordered the same way from layer 0, a hair farther than their depth, so text mounted on a drawn
+body from base layer 0 or above reads on top of the face it sits on.
 
 ## At cell resolution
 
 - Text edge-on loses characters: a plane turned 60 degrees shows only half of its columns. Keep text near facing the
   viewer when it must be read, and move through edge-on quickly.
-- Where two characters land in the same cell, the higher layer wins. With `layer_by_depth` off, the last-created
-  character wins instead, which looks random on a turning body.
+- Where two characters land in the same cell, the higher layer wins. With `layer_by_depth` off, layers stay put and
+  depth order stays 0, so among characters on the same layer the last-created one wins, which looks random on a
+  turning body.
 - Only cell centers are tested, so a part of a shape thinner than a cell, such as a narrow rim seen edge-on, can
   fall between centers and vanish for a frame.
 

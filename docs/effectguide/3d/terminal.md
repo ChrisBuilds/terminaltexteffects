@@ -22,11 +22,22 @@ cells while a line that's thinner than a cell leaves a trail of single cells tha
 
 ## In TTE
 
-The Cubes example turns three cubes of different sizes side by side. Save it as `cubes.py`:
+The Cubes example turns three cubes of different sizes side by side:
 
-```python title="cubes.py"
---8<-- "docs/effectguide/examples/3d/cubes/cubes.py"
+```python
+for size, x in ((6, -28), (12, -10), (24, 18)):
+    cube = self.space.body(Cube(size), at=(x, 0, 0)).draw(look)  # look is Shaded() or Wireframe().
+    cube.rotate("x", 20)
+    cube.spin("y", turns=1, frames=240, ease=easing.in_out_sine)
 ```
+
+??? example "cubes.py"
+
+    Save it in your community effects directory as `cubes.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/cubes/cubes.py"
+    ```
 
 === "Filled"
 

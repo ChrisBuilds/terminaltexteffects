@@ -24,11 +24,21 @@ look large. A distant camera barely changes sizes at all.
 ## In TTE
 
 The Lens example places three cubes, each 26 columns to the right of and 60 columns farther away than the one
-before. Save it as `lens.py`:
+before:
 
-```python title="lens.py"
---8<-- "docs/effectguide/examples/3d/lens/lens.py"
+```python
+self.space = Space3D(self.terminal, perspective=self.config.perspective)
+for x, z in ((-26, 0), (0, -60), (26, -120)):
+    cube = self.space.body(Cube(14), at=(x, 0, z)).draw(Shaded())
 ```
+
+??? example "lens.py"
+
+    Save it in your community effects directory as `lens.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/lens/lens.py"
+    ```
 
 === "perspective 0"
 
@@ -66,7 +76,7 @@ before. Save it as `lens.py`:
 canvas, and you can read it as `space.camera`:
 
 ```python
-projected = self.space.camera.project(point)  # None if the point is behind the camera.
+projected = self.space.camera.project(point)  # None if the point is nearer than camera.near.
 if projected is not None:
     cell = projected.coord
     depth = projected.depth  # Distance from the camera. Smaller is nearer.
@@ -74,8 +84,10 @@ if projected is not None:
 
 - `distance` is how far the camera is from the origin, and `focal` (the same as `distance` unless you set it)
   controls the scaling.
-- `near` clips points closer than that to the camera. Crossing faces and edges keep their visible portions;
-  texture coordinates are interpolated at the clipped corners.
+- `near` clips points closer than that to the camera: `project` returns `None` when a point's depth is below `near`,
+  which covers points behind the camera and points just in front of it. Clipping is per point and per face, not per
+  body. Crossing faces and edges keep their visible portions; texture coordinates are interpolated at the clipped
+  corners.
 
   ![Side view: a box slides toward the camera; the part nearer than the near plane is clipped away and the rest is drawn](../../img/effectguide/3d/near_plane.webp)
 - `orthographic=True` turns the scaling off.
@@ -92,10 +104,12 @@ whole-cell steps:
   perspective at 1 or below for small shapes.
 - Perspective magnifies whatever comes toward you, including text on a surface. Letters on the near side of a large
   shape can double up (see [Texture mapping](textures.md)). Gentler perspective, such as 0.5, reduces it.
-- Orthographic views are good for text: a text plane turning in an orthographic view never grows past the size of the
-  input.
+- Orthographic views are good for text: with no depth magnification, a text plane never swells as it turns toward
+  you. A turn can still make it wider or taller on screen, as a long line of text turned about z stands on end.
 - Nothing may come nearer than the camera's `near` distance. With `perspective=2` the camera is only 60 columns away,
-  so a body moved to z = 60 disappears.
+  so a body moved to z = 60 has its origin right at the camera. What's clipped is each anchor and face that crosses
+  `near`, not the body as a whole: an anchor on that body at local z = -5 is 5 columns in front of the camera and
+  still projects.
 
 ## Coordinates and mutable settings
 

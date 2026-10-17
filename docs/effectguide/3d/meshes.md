@@ -34,11 +34,21 @@ the body that created them and keep their original local coordinates.
 
 ## In TTE
 
-The Gallery example shows every built-in shape, a few at a time so each is large enough to read. Save it as `gallery.py`:
+The Gallery example shows every built-in shape, a few at a time so each is large enough to read. Each shape is one body:
 
-```python title="gallery.py"
---8<-- "docs/effectguide/examples/3d/gallery/gallery.py"
+```python
+body = self.space.body(shape, at=(x, 0, 0)).draw(self.look)  # shape is Cube(...), Torus(...) and so on.
+body.rotate("x", 25)
+body.spin("y", turns=1, frames=180, ease=easing.in_out_sine)
 ```
+
+??? example "gallery.py"
+
+    Save it in your community effects directory as `gallery.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/gallery/gallery.py"
+    ```
 
 ```bash
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c gallery
@@ -60,11 +70,20 @@ Tags let you treat faces differently: `body.draw(Shaded(), faces={0: Textured("1
 own look (see the [die recipe](recipes.md#die)).
 
 The Star example builds its own shape. A custom shape subclasses `Shape`, like the built-in ones a frozen dataclass, and returns
-a mesh from `build_mesh`. Save it as `star.py`:
+a mesh from `build_mesh`. Once defined, it's used like any other shape:
 
-```python title="star.py"
---8<-- "docs/effectguide/examples/3d/star/star.py"
+```python
+star = self.space.body(StarPrism()).draw(Shaded())
+star.rotate("x", -70)  # Stand the star up, with a cap facing the viewer.
 ```
+
+??? example "star.py"
+
+    Save it in your community effects directory as `star.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/star/star.py"
+    ```
 
 === "Shaded"
 
@@ -95,6 +114,11 @@ each face's normal from its corner order when it's created, and `edges()` lists 
 The builders, such as `g3.box`, `g3.prism` and `g3.uv_sphere`, return meshes, and `mesh.scaled(x, y, z)` stretches
 one. A `Shape` adds what a body needs on top of its mesh: `surface_points` for spreading anchors over it and
 `texture_cell` for `Textured` looks.
+
+A mesh is also something to mount characters on. `body.surface(count)`, `vertices()` and `edges(count)` read the
+body's mesh to place anchors over its faces, on its corners or along its edges, with normals pointing outward, and they
+work whether or not the body is drawn. [Anchor layouts](coordinates.md#anchor-layouts) compares them with
+`text_plane`, `ring` and `wrap`.
 
 ## At cell resolution
 

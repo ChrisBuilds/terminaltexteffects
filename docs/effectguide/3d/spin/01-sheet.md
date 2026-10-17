@@ -36,22 +36,33 @@ and draws nothing; it only carries the characters you mount on it.
 ### Mounting the text
 
 `text_plane(characters)` returns one **anchor** per character: a point on the body, placed so that it lands on the
-character's input cell while the body is at rest. `add_chars` mounts each character on its anchor. From then on,
-`space.step()` works out where each anchor is on screen, and `update()` moves the character there.
+character's input cell at the body's pose right now. The sheet hasn't moved yet, so that's its rest pose. `add_chars`
+mounts each character on its anchor. From then on, `space.step()` works out where each anchor is on screen, and each
+character's tick in `update()` moves it there.
+
+Mounting doesn't show or tick anything by itself, so `build` also makes each character visible and adds it to
+`active_characters`. A mounted character is never finished while its mount is active, so `update()` keeps ticking it
+until it's released.
 
 Spaces are left out. They're invisible, so mounting them would only cost time.
 
 ### Turning away and back
 
-`set_rotation(rotation_about("y", 70))` turns the sheet 70 degrees about the vertical axis, right away. Because the
-anchors were placed first, they turn with the sheet. `turn_to_rest(frames=120, ease=easing.out_cubic)` queues a
-**tween** that turns it back to rest along the shortest path, slowing as it arrives.
+`set_rotation(rotation_about("y", 70))` turns the sheet 70 degrees about the vertical axis, right away. The order
+matters: the anchors were placed first, at rest, so they turn with the sheet, and the text is home again whenever the
+sheet is back at rest. Built after the turn, the anchors would put the text on its input cells at 70 degrees instead.
+`turn_to_rest(frames=120, ease=easing.out_cubic)` queues a **tween** that turns it back to rest along the shortest
+path, slowing as it arrives.
 
 ### Handing the text back
 
 `on_complete(self.finish)` calls `finish` when the sheet's last tween ends. `release_all()` gives the characters back,
 on their input cells, as ordinary 2D characters. Once they have nothing left to do, `update()` drops them from
 `active_characters` and the effect ends.
+
+`__next__` keeps going while `self.space.animating` or `self.active_characters` is true. `animating` only tracks the
+sheet's tween queue, so it can't tell whether the characters are done; `active_characters` can. Without the release,
+the mounted characters would stay active and the effect would never end.
 
 ## Run it
 

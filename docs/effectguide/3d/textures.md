@@ -23,11 +23,21 @@ upright character.
 
 ## In TTE
 
-The Texture example wraps a grid pattern, or the input text, over a cube and a sphere. Save it as `texture.py`:
+The Texture example wraps a grid pattern, or the input text, over a cube and a sphere:
 
-```python title="texture.py"
---8<-- "docs/effectguide/examples/3d/texture/texture.py"
+```python
+look = Textured() if self.config.text else Textured(GRID)  # Textured() wraps the input text.
+cube = self.space.body(Cube(22), at=(-20, 0, 0)).draw(look)
+sphere = self.space.body(Sphere(13, segments=32, rings=16), at=(20, 0, 0)).draw(look)
 ```
+
+??? example "texture.py"
+
+    Save it in your community effects directory as `texture.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/texture/texture.py"
+    ```
 
 === "Grid"
 
@@ -75,6 +85,10 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
   the letters still read upright, in reverse order.
 - A textured surface is lit and hides what's behind it, but it can't hand its letters back: they belong to the space.
 - Mount text that has to land somewhere. Texture text that decorates a shape.
+- `body.wrap(characters)` and `Textured(text)` both put text around a cylinder or sphere, but differently. `wrap` gives
+  each of your characters its own anchor, one character per anchor whatever the shape's size, and the characters
+  ride the surface as wholes. `Textured` resamples the text into the surface's cells, so the letters stretch, repeat
+  and shade with the surface. See [Anchor layouts](coordinates.md#anchor-layouts).
 
 ## Under the hood
 

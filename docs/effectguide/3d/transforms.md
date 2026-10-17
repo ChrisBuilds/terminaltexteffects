@@ -23,12 +23,23 @@ That's an **orbit**. A spinning planet and a moon going around it are the same t
 ## In TTE
 
 The Orbit example turns a planet and a moon by the same angle each frame. The planet stays at the origin and only
-its orientation changes. The moon's starting position is turned too, so it travels around the planet. Save it as
-`orbit.py`:
+its orientation changes. The moon's starting position is turned too, so it travels around the planet. Each frame:
 
-```python title="orbit.py"
---8<-- "docs/effectguide/examples/3d/orbit/orbit.py"
+```python
+turn = rotation_about("y", 360 * self.frame_number / self.config.frames)
+self.planet.set_rotation(self.tilt * turn)  # Spin in place.
+self.moon.set_rotation(self.tilt * turn)
+point = (self.tilt * turn).apply(self.moon_start)  # Orbit: turn the moon's offset yourself...
+self.moon.set_position(point.x, point.y, point.z)  # ...then move the moon there.
 ```
+
+??? example "orbit.py"
+
+    Save it in your community effects directory as `orbit.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/orbit/orbit.py"
+    ```
 
 ```bash
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c orbit
@@ -48,8 +59,10 @@ outright:
 `reset()` puts all three back to how the body was created and clears its queued tweens. `rotation`, `position` and `scale` read the current
 values. Each method returns the body, so calls chain: `cube.set_position(10, 0, 0).rotate("y", 45)`.
 
-To orbit with these methods, compute the moon's position yourself by turning its starting offset, as the example
-does, then `set_position` there.
+The order you call these methods in doesn't change that pipeline. A body always scales, then turns about its own
+origin, then moves, so `move_by(30, 0, 0)` followed by `rotate("y", 45)` still spins the body in place at x = 30;
+it doesn't swing it around the world's origin. To orbit with these methods, compute the moon's position yourself by
+turning its starting offset, as the example does, then `set_position` there.
 
 ## Under the hood
 

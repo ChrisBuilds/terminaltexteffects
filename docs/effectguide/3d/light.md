@@ -5,8 +5,9 @@ gets a symbol and color from how directly it faces the light, and the shape's fo
 
 ## The idea
 
-The space has one light, a direction pointing toward it. For each face, it compares two arrows: the face's normal
-and the direction to the light.
+The space has one **directional** light: a single direction pointing toward it, the same everywhere in the scene,
+like sunlight. It has no position, so nothing is nearer to it or farther from it. For each face, the space compares
+two arrows: the face's normal and that direction.
 
 - Facing the light squarely, the face is fully lit.
 - Turned edge-on to the light, it's unlit.
@@ -16,16 +17,29 @@ and the direction to the light.
 That number picks a symbol from a ramp and a color from a gradient, both ordered from unlit to fully lit. Unlit faces
 still get the first symbol and color, so the shape's dark side stays visible.
 
+Because only the angle counts, there's no falloff with distance and no cast shadows: a face turned toward the light
+is lit even if another shape stands between them. Each face is shaded on its own.
+
 ![A face turns under a fixed light; as the angle between its normal and the light grows, the brightness bar falls and a dimmer symbol is chosen](../../img/effectguide/3d/lambert.webp)
 
 ## In TTE
 
 The Light example moves the light in a circle around a slowly turning shape. A yellow `☼` and a dotted ray mark
-where the light is, and the shape hides them while the light is behind. Save it as `light.py`:
+the light's direction, and the shape hides them while the light is behind. The light is just a direction, changed
+each frame:
 
-```python title="light.py"
---8<-- "docs/effectguide/examples/3d/light/light.py"
+```python
+angle = 2 * math.pi * self.frame_number / self.frames
+self.space.light = Vec3(math.sin(angle), 0.5, math.cos(angle)).normalized()
 ```
+
+??? example "light.py"
+
+    Save it in your community effects directory as `light.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/light/light.py"
+    ```
 
 === "Sphere"
 
@@ -46,16 +60,20 @@ where the light is, and the shape hides them while the light is behind. Save it 
 - `Space3D(terminal, light="upper left")` sets the light at creation: `"upper left"`, `"upper right"`, `"front"`,
   `"above"`, `"left"`, `"right"`, or any `(x, y, z)` direction. The default, upper left, gives most shapes a lit
   side, a shadowed side and a top.
-- `space.light` is a unit vector you can change each frame, as the example does.
+- `space.light` is a unit vector you can change each frame, as the example does. The example's sun is only a marker
+  placed along that direction so you can see it. Moving the marker wouldn't move the light, and the light doesn't
+  shine from the marker's position.
 - `Shaded(gradient, symbols)` fills faces from the ramp. The default symbols `.,-~:;=!*#$@` get denser as they get
   brighter. Block symbols such as `░▒▓█` read as solid and suit large shapes.
 - `Solid(symbol, gradient)` uses one symbol and lets color alone show the light. It and `Textured` add a little
   **ambient** light, coloring by `0.15 + 0.85 x lambert`, so their unlit faces aren't the darkest color.
 - Gradients default to the TTE brand colors, purple to cyan to white.
 
-Mounted characters can follow the light too. Each mount reports `light`, the Lambert value for its point, and a scene
-created with `sync=Scene.SyncMetric.LIGHT` picks its frame from it. The [logo recipe](recipes.md#spinning-logo) uses
-that to brighten text as it turns toward the light.
+Mounted characters can follow the light too. Each mount reports `light`, the Lambert value for its anchor's normal,
+and a scene created with `sync=Scene.SyncMetric.LIGHT` picks its frame from it. The [logo recipe](recipes.md#spinning-logo)
+uses that to brighten text as it turns toward the light. Only anchors with a
+[normal](coordinates.md#normals-for-anchors) have a direction to compare: `text_plane` and the shape layouts give
+their anchors one, and an anchor made without one always reports `light=1`.
 
 ## Under the hood
 
@@ -79,5 +97,7 @@ smooth fade, and why more segments make the shading smoother.
   bolder.
 - Color carries most of the shading in a dark terminal. A gradient from a dark color to a bright one works with
   almost any symbols.
-- A light straight from the front (`"front"`) makes every face that faces you bright and flattens the shape. A light
-  from one side shows form best.
+- A light straight from the front (`"front"`) points along +z, so faces turned toward the viewer come out bright and
+  the shape looks flat. In an orthographic view, facing the light and facing you are the same thing. With
+  perspective, you see points away from the canvas center at a slight angle, so the two differ a little there. A
+  light from one side shows form best.
