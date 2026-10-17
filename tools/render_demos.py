@@ -227,6 +227,10 @@ GUIDE_DEMOS: dict[str, Demo] = {
             ("globe", "globe", ()),
             ("ticker", "ticker", ("--message", " HELLO ·")),
             ("wireframes", "wireframes", ()),
+            ("surfaces", "surfaces", ()),
+            ("eases", "eases", ()),
+            ("detail", "detail", ()),
+            ("detail_wireframe", "detail", ("--wireframe",)),
         )
     },
     # The Spin tutorial: each step under one command name. Step 6 is the finished effect.

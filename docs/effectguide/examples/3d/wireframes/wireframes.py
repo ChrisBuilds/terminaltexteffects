@@ -41,7 +41,7 @@ class WireframesIterator(BaseEffectIterator[WireframesConfig]):
         solids = (Tetrahedron(11), Cube(14), Octahedron(10), Icosahedron(10))
         colors = ("#ff5fd7", "#00D1FF", "#5fff87", "#ffd75f")
         for index, (shape, color) in enumerate(zip(solids, colors)):
-            look = Wireframe(color=Color(color), hidden_color=Color("#303040"))
+            look = Wireframe(color=Color(color), hidden_color=Color("#55556a"))
             body = self.space.body(shape, at=(-30 + 20 * index, 0, 0)).draw(look)
             body.spin("y", turns=1 + index % 2, frames=420, ease=easing.in_out_sine)
             body.spin("x", turns=1 - index % 2 * 0.5, frames=420, ease=easing.in_out_sine, together=True)

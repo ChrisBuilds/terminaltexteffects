@@ -864,6 +864,217 @@ def tween_timeline() -> list[Image.Image]:
     return [canvas.finish()]
 
 
+def near_plane() -> list[Image.Image]:
+    """Side view: a box slides toward the camera, and the part nearer than the near plane is clipped away."""
+    frames = []
+    count = 120
+    eye = (790, 180)
+    near_x = 730
+    half = 50
+    for index in range(count):
+        t = ease(abs(1 - 2 * index / count))
+        canvas = Canvas(860, 360)
+        canvas.text((430, 26), "Anything nearer than camera.near is clipped away", TEXT, 14)
+        for spread in (-150, 150):
+            canvas.line(eye, (60, eye[1] + spread), FAINT, 1, dash=4)
+        canvas.line((near_x, 70), (near_x, 290), MUTED, 2, dash=5)
+        canvas.text((near_x, 58), "near plane", MUTED, 12)
+        # The box, from far away to just past the camera.
+        center_x = 760 - 620 * t
+        left, right = center_x - half, center_x + half
+        top, bottom = eye[1] - half, eye[1] + half
+        if right > near_x:
+            cut = max(left, near_x)
+            for a, b in (((cut, top), (right, top)), ((right, top), (right, bottom)), ((right, bottom), (cut, bottom))):
+                canvas.line(a, b, MUTED, 1.5, dash=4)
+            if right - cut > 24:
+                canvas.text(((cut + right) / 2, top - 14), "clipped", MUTED, 12)
+        if left < near_x:
+            canvas.rect(left, top, min(right, near_x), bottom, mix(CYAN, BACKGROUND, 0.55))
+            canvas.polygon(
+                [(left, top), (min(right, near_x), top), (min(right, near_x), bottom), (left, bottom)], None, CYAN, 2
+            )
+            if min(right, near_x) - left > 40:
+                canvas.text(((left + min(right, near_x)) / 2, bottom + 16), "drawn", CYAN, 12)
+        canvas.circle(eye, 7, AMBER)
+        canvas.text((eye[0], 262), "camera", AMBER, 12)
+        canvas.line((near_x, 300), (eye[0], 300), WHITE, 1.5)
+        for x in (near_x, eye[0]):
+            canvas.line((x, 294), (x, 306), WHITE, 1.5)
+        canvas.text(((near_x + eye[0]) / 2, 318), "camera.near", WHITE, 12, mono=True)
+        canvas.text(
+            (400, 318), "Points closer than near aren't projected; faces are cut where they cross it.", MUTED, 12
+        )
+        frames.append(canvas.finish())
+    return frames
+
+
+def cell_snapping() -> list[Image.Image]:
+    """Show a point moving smoothly across tall cells while the character drawn for it jumps from cell to cell."""
+    frames = []
+    count = 150
+    cell_w, cell_h = 22, 44
+    columns, rows = 30, 5
+    origin = (60, 60)
+
+    def path(t: float) -> tuple[float, float]:
+        return (0.6 + 28.8 * t, 2.5 - 1.7 * math.sin(2 * math.pi * t))
+
+    def to_px(x: float, y: float) -> Point:
+        return (origin[0] + x * cell_w, origin[1] + y * cell_h)
+
+    curve = [to_px(*path(k / 120)) for k in range(121)]
+    for index in range(count):
+        t = index / count
+        canvas = Canvas(780, 360)
+        canvas.text(
+            (390, 26),
+            "A projected point is drawn in the cell it falls in, so motion moves in whole-cell steps",
+            TEXT,
+            14,
+        )
+        # Cells the point has already passed through.
+        visited = {tuple(int(v) for v in path(k / 300)) for k in range(int(t * 300) + 1)}
+        for column, row in visited:
+            x0, y0 = to_px(column, row)
+            canvas.rect(x0, y0, x0 + cell_w, y0 + cell_h, mix(PURPLE, BACKGROUND, 0.55))
+        x, y = path(t)
+        column, row = int(x), int(y)
+        x0, y0 = to_px(column, row)
+        canvas.rect(x0, y0, x0 + cell_w, y0 + cell_h, CYAN)
+        for k in range(columns + 1):
+            canvas.line(to_px(k, 0), to_px(k, rows), FAINT, 1)
+        for k in range(rows + 1):
+            canvas.line(to_px(0, k), to_px(columns, k), FAINT, 1)
+        center = to_px(column + 0.5, row + 0.5)
+        canvas.text(center, "@", BACKGROUND, 22, mono=True)
+        for a, b in zip(curve, curve[1:]):
+            canvas.line(a, b, mix(AMBER, BACKGROUND, 0.6), 1.2)
+        dot = to_px(x, y)
+        canvas.line(dot, center, WHITE, 1.2)
+        canvas.circle(dot, 5, AMBER)
+        # Legend.
+        canvas.circle((150, 310), 5, AMBER)
+        canvas.text((164, 310), "the exact projected point: moves smoothly", MUTED, 12, "lm")
+        canvas.rect(450, 300, 460, 320, CYAN)
+        canvas.text((470, 310), "the cell it's drawn in: jumps", MUTED, 12, "lm")
+        canvas.text((390, 336), "Earlier cells (purple) form a staircase, not the smooth curve.", MUTED, 12)
+        frames.append(canvas.finish())
+    return frames
+
+
+def winding() -> list[Image.Image]:
+    """Show the same triangle with its corners listed counterclockwise, facing the camera, and clockwise, culled."""
+    canvas = Canvas(820, 360)
+    canvas.text((410, 26), "Corner order decides which way a face points", TEXT, 14)
+    canvas.text((410, 44), "Both triangles as seen from the camera", MUTED, 12)
+    radius = 100
+    panels = (
+        (210, (-90, 150, 30), True),
+        (610, (-90, 30, 150), False),
+    )
+    for cx, angles, facing in panels:
+        cy = 190
+        corners = [(cx + radius * math.cos(math.radians(a)), cy + radius * math.sin(math.radians(a))) for a in angles]
+        color = CYAN if facing else MUTED
+        if facing:
+            canvas.polygon(corners, mix(CYAN, BACKGROUND, 0.6), CYAN, 2.5)
+        else:
+            for a, b in zip(corners, corners[1:] + corners[:1]):
+                canvas.line(a, b, MUTED, 2, dash=5)
+        # The order the corners are listed in, as a turning arrow.
+        sweep = -1 if facing else 1
+        angles_on_ring = [math.radians(-90 + sweep * k * 12) for k in range(-12, 13)]
+        ring = [(cx + 34 * math.cos(a), cy + 34 * math.sin(a)) for a in angles_on_ring]
+        for a, b in zip(ring, ring[1:-1]):
+            canvas.line(a, b, WHITE if facing else MUTED, 2)
+        canvas.arrow(ring[-2], ring[-1], WHITE if facing else MUTED, 2, 9)
+        # The normal: a dot means toward the viewer, a cross means away.
+        normal = (cx, cy)
+        canvas.circle(normal, 10, BACKGROUND, AMBER if facing else MUTED, 2)
+        if facing:
+            canvas.circle(normal, 3.5, AMBER)
+        else:
+            for dx in (-1, 1):
+                canvas.line((normal[0] - 5, normal[1] - 5 * dx), (normal[0] + 5, normal[1] + 5 * dx), MUTED, 2)
+        for order, corner in enumerate(corners):
+            canvas.circle(corner, 11, BACKGROUND, color, 2)
+            canvas.text(corner, str(order), color, 12)
+        if facing:
+            canvas.text((cx, 318), "counterclockwise: faces the camera, drawn", CYAN, 12)
+            canvas.text((cx, 336), "normal points out of the screen, toward you", MUTED, 12)
+        else:
+            canvas.text((cx, 318), "clockwise: faces away, culled", MUTED, 12)
+            canvas.text((cx, 336), "normal points into the screen, away from you", MUTED, 12)
+    return [canvas.finish()]
+
+
+def texture_seam() -> list[Image.Image]:
+    """Show text unrolled as a strip and wrapped once around a turning cylinder, where its two ends meet at the seam."""
+    frames = []
+    count = 120
+    message = "TERMINAL TEXT EFFECTS "
+    columns = len(message)
+    cell_w, cell_h = 15, 26
+    strip_left, strip_top = 50, 130
+    cx, cy, radius, tall, tilt = 640, 190, 95, 150, 0.24
+    rows = (-44.0, 0.0, 44.0)
+
+    def around(theta: float, y: float) -> Point:
+        return (cx + radius * math.sin(theta), cy - y + radius * tilt * math.cos(theta))
+
+    for index in range(count):
+        turn = -2 * math.pi * index / count
+        canvas = Canvas(860, 360)
+        canvas.text((430, 26), "Text wraps all the way around, meeting itself at the seam", TEXT, 14)
+        # The strip, u from 0 to 1. Columns facing the viewer on the cylinder are brighter.
+        canvas.text((strip_left + columns * cell_w / 2, 92), "The text unrolled: u runs 0 to 1", MUTED, 12)
+        for column, char in enumerate(message):
+            facing = math.cos(2 * math.pi * (column + 0.5) / columns + turn)
+            x0 = strip_left + column * cell_w
+            canvas.rect(x0, strip_top, x0 + cell_w, strip_top + 3 * cell_h, (30, 32, 38) if facing > 0 else None, FAINT)
+            for row in range(3):
+                color = mix(FAINT, CYAN, 0.3 + 0.7 * facing) if facing > 0 else FAINT
+                canvas.text((x0 + cell_w / 2, strip_top + (row + 0.5) * cell_h), char, color, 16, mono=True)
+        strip_right = strip_left + columns * cell_w
+        for x, label in ((strip_left, "u = 0"), (strip_right, "u = 1")):
+            canvas.line((x, strip_top - 10), (x, strip_top + 3 * cell_h + 10), AMBER, 3)
+            canvas.text((x, strip_top + 3 * cell_h + 26), label, AMBER, 12)
+        canvas.text((strip_left + columns * cell_w / 2, 292), "Brighter columns face you on the cylinder.", MUTED, 12)
+        # The cylinder body and outline.
+        body = [around(math.pi / 2 + math.pi * k / 32, tall / 2) for k in range(33)]
+        body += [around(-math.pi / 2 + math.pi * k / 32, -tall / 2) for k in range(33)]
+        canvas.polygon(body, (30, 32, 38))
+        top_ring = [around(2 * math.pi * k / 64, tall / 2) for k in range(65)]
+        bottom_front = [around(-math.pi / 2 + math.pi * k / 32, -tall / 2) for k in range(33)]
+        for ring in (top_ring, bottom_front):
+            for a, b in zip(ring, ring[1:]):
+                canvas.line(a, b, MUTED, 1.5)
+        canvas.line(around(math.pi / 2, tall / 2), around(math.pi / 2, -tall / 2), MUTED, 1.5)
+        canvas.line(around(-math.pi / 2, tall / 2), around(-math.pi / 2, -tall / 2), MUTED, 1.5)
+        # The text on the front half.
+        for column, char in enumerate(message):
+            theta = 2 * math.pi * (column + 0.5) / columns + turn
+            facing = math.cos(theta)
+            if facing < 0.3:
+                continue
+            for y in rows:
+                canvas.text(around(theta, y), char, mix(FAINT, CYAN, facing), 18, mono=True)
+        # The seam, where u = 1 meets u = 0.
+        seam = turn
+        if math.cos(seam) > 0:
+            canvas.line(around(seam, tall / 2), around(seam, -tall / 2), AMBER, 3)
+            if math.cos(seam) > 0.3:
+                top = around(seam, tall / 2)
+                canvas.text((top[0], cy - tall / 2 - radius * tilt - 18), "seam: u = 1 meets u = 0", AMBER, 12)
+        else:
+            # Behind the cylinder: only its end on the far rim of the top shows.
+            canvas.circle(around(seam, tall / 2), 3.5, mix(AMBER, BACKGROUND, 0.3))
+        canvas.text((cx, 336), "The last column sits right beside the first.", MUTED, 12)
+        frames.append(canvas.finish())
+    return frames
+
+
 CLIPPED: set[str] = set()
 """Labels and markers drawn reaching past a frame's edges since this was last cleared, so tests can catch them."""
 
@@ -892,6 +1103,10 @@ DIAGRAMS: dict[str, Callable[[], list[Image.Image]]] = {
     "lambert": lambert,
     "uv_mapping": uv_mapping,
     "tween_timeline": tween_timeline,
+    "near_plane": near_plane,
+    "cell_snapping": cell_snapping,
+    "winding": winding,
+    "texture_seam": texture_seam,
 }
 
 

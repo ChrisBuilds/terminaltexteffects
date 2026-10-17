@@ -7,11 +7,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import easing
+from terminaltexteffects import Color, ColorPair, EffectCharacter, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.space3d import Cube, Shaded, Space3D, rotation_about
 from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.geometry import Coord
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -46,10 +47,12 @@ class TurnsIterator(BaseEffectIterator[TurnsConfig]):
         """Queue the turns for the chosen mode."""
         super().__init__(effect)
         self.space = Space3D(self.terminal)
+        self.labels: list[EffectCharacter] = []
         if self.config.mode == "axes":
             for axis, x in (("x", -26), ("y", 0), ("z", 26)):
                 cube = self.space.body(Cube(14), at=(x, 0, 0)).draw(Shaded())
                 cube.hold(30).spin(axis, turns=1, frames=240, ease=easing.in_out_sine).hold(30)
+                self.label(f"about {axis}", x)
         elif self.config.mode == "tumble":
             cube = self.space.body(Cube(20)).draw(Shaded())
             # Spins queued with together=True run at the same time, and their turns add up into a tumble.
@@ -64,7 +67,18 @@ class TurnsIterator(BaseEffectIterator[TurnsConfig]):
             left, right = self.space.bodies
             left.turn_to_rest(frames=150, ease=easing.in_out_cubic).hold(45)
             right.settle("y", turns=1, frames=150, ease=easing.in_out_cubic).hold(45)
+            self.label("turn_to_rest", -20)
+            self.label("settle", 20)
         self.text_shown = False
+
+    def label(self, text: str, x: int) -> None:
+        """Write `text` on the bottom row, under the body at `x`. Labels are plain characters, not part of the space."""
+        start = self.terminal.canvas.center.column + x - len(text) // 2
+        for offset, symbol in enumerate(text):
+            character = self.terminal.add_character(symbol, Coord(start + offset, self.terminal.canvas.bottom))
+            character.animation.set_appearance(symbol, ColorPair(fg=Color("#a0a0a0")))
+            self.terminal.set_character_visibility(character, is_visible=True)
+            self.labels.append(character)
 
     def __next__(self) -> str:
         """Play the turns, then swap the cubes for the text."""
@@ -73,6 +87,8 @@ class TurnsIterator(BaseEffectIterator[TurnsConfig]):
         elif not self.text_shown:
             for body in self.space.bodies:
                 body.erase()
+            for character in self.labels:
+                self.terminal.set_character_visibility(character, is_visible=False)
             self.space.step()  # Hides the surface characters once nothing is drawn.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)

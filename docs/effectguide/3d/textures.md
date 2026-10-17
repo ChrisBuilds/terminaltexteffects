@@ -13,6 +13,8 @@ The shape turns (u, v) into a position in the text: a column and a row. TTE keep
 one character per column across and one per row down, and repeats it when the face is bigger than the text. Wrapped
 shapes, such as cylinders and spheres, run u all the way around, so the text continues across the seam.
 
+![The text unrolled as a strip from u = 0 to u = 1, and the same text wrapped around a turning cylinder, where the last column sits beside the first at the seam](../../img/effectguide/3d/texture_seam.webp)
+
 ![A face with u across and v up, covered by rows of text, and a cylinder seen from above with text wrapped around its side](../../img/effectguide/3d/uv_mapping.webp)
 
 When a cell is filled, the space finds the (u, v) at the cell's center, looks up the character there, and draws it in
@@ -50,6 +52,29 @@ The Texture example wraps a grid pattern, or the input text, over a cube and a s
 - Faces without texture coordinates, such as prism and cylinder caps, are drawn in `back_color`.
 - `back="dim"` shows the far side through the spaces in the text (see [Depth](depth.md)).
 - Each cell shows one character, so wide characters such as CJK can't be split across cells and are left blank.
+
+### Mounted text or textured surface
+
+Text can be part of a 3D scene in two ways. Mounting puts each character on an anchor, as in
+[Animating in 3D](animating.md): the character keeps its own symbol and moves as a whole. A `Textured` look draws the
+surface out of text: each cell samples the text where it lands. The Surfaces example shows the same words both ways.
+
+??? example "surfaces.py"
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/surfaces/surfaces.py"
+    ```
+
+```bash
+tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c surfaces
+```
+
+![The same three words turn side by side: mounted on the left, where each letter stays upright and the order reverses on the back, and textured on the right, where the letters are resampled and shaded by the light](../../img/effectguide/surfaces_demo.webp)
+
+- Mounted characters keep their colors, scenes and symbols, and can be released to 2D paths afterward. Turned away,
+  the letters still read upright, in reverse order.
+- A textured surface is lit and hides what's behind it, but it can't hand its letters back: they belong to the space.
+- Mount text that has to land somewhere. Texture text that decorates a shape.
 
 ## Under the hood
 

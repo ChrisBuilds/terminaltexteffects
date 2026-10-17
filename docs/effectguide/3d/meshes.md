@@ -15,6 +15,8 @@ The order a face lists its corners in sets which way its normal points. Listed *
 outside**, the normal points out of the shape. List them the other way and the face is inside out: it's culled when
 it should show, and shows when it should be hidden.
 
+![Two triangles as seen from the camera: corners listed counterclockwise face the camera and are drawn, corners listed clockwise face away and are culled](../../img/effectguide/3d/winding.webp)
+
 Faces must be **convex**: no corner may point inward. A shape with inward corners, such as a star, splits each such
 face into triangles, which are always convex.
 
@@ -42,7 +44,7 @@ The Gallery example shows every built-in shape, a few at a time so each is large
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c gallery
 ```
 
-![The ten shapes turning two or three at a time: cube, box and prism; pyramid, tetrahedron and octahedron; icosahedron and cylinder; sphere and torus](../../img/effectguide/gallery_demo.webp)
+![The ten shapes turning two or three at a time, each named underneath: cube, box and prism; pyramid, tetrahedron and octahedron; icosahedron and cylinder; sphere and torus](../../img/effectguide/gallery_demo.webp)
 
 | Shape | Sizes | Faces tagged |
 | --- | --- | --- |

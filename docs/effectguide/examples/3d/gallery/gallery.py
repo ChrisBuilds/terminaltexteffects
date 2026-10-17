@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import easing
+from terminaltexteffects import Color, ColorPair, EffectCharacter, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.space3d import (
@@ -27,6 +27,7 @@ from terminaltexteffects.engine.space3d import (
     Wireframe,
 )
 from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.geometry import Coord
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -54,12 +55,16 @@ class GalleryConfig(BaseConfig):
 
 
 PAGES = (
-    (Cube(18), Box(24, 12, 12), Prism(sides=6, radius=11, height=16)),
-    (Pyramid(sides=4, radius=12, height=18), Tetrahedron(13), Octahedron(13)),
-    (Icosahedron(13), Cylinder(radius=11, height=16)),
-    (Sphere(13), Torus(major_radius=10, minor_radius=4)),
+    (("Cube", Cube(18)), ("Box", Box(24, 12, 12)), ("Prism", Prism(sides=6, radius=11, height=16))),
+    (
+        ("Pyramid", Pyramid(sides=4, radius=12, height=18)),
+        ("Tetrahedron", Tetrahedron(13)),
+        ("Octahedron", Octahedron(13)),
+    ),
+    (("Icosahedron", Icosahedron(13)), ("Cylinder", Cylinder(radius=11, height=16))),
+    (("Sphere", Sphere(13)), ("Torus", Torus(major_radius=10, minor_radius=4))),
 )
-"""The shapes, a few at a time, so each is large enough to read as a shape on an 80 by 24 canvas."""
+"""The shapes and their names, a few at a time, so each is large enough to read as a shape on an 80 by 24 canvas."""
 
 
 class GalleryIterator(BaseEffectIterator[GalleryConfig]):
@@ -70,20 +75,38 @@ class GalleryIterator(BaseEffectIterator[GalleryConfig]):
         super().__init__(effect)
         self.space = Space3D(self.terminal, perspective=0.5)
         self.look = Wireframe() if self.config.wireframe else Shaded()
+        self.labels: list[EffectCharacter] = []
         self.pages = iter(PAGES)
         self.show_page(next(self.pages))
         self.text_shown = False
 
-    def show_page(self, shapes: tuple[Shape, ...]) -> None:
-        """Erase the shapes on screen and spin the next few, side by side."""
+    def show_page(self, shapes: tuple[tuple[str, Shape], ...]) -> None:
+        """Erase the shapes on screen and spin the next few, side by side, each named underneath."""
         for body in self.space.bodies:
             body.erase()
+        self.clear_labels()
         spacing = 27 if len(shapes) == 3 else 34
-        for index, shape in enumerate(shapes):
+        for index, (name, shape) in enumerate(shapes):
             x = (index - (len(shapes) - 1) / 2) * spacing
             body = self.space.body(shape, at=(x, 0, 0)).draw(self.look)
             body.rotate("x", 25)
             body.spin("y", turns=1, frames=180, ease=easing.in_out_sine)
+            self.label(name, self.terminal.canvas.center.column + round(x))
+
+    def label(self, text: str, column: int) -> None:
+        """Write `text` on the bottom row, centered on `column`. Labels are plain characters, not part of the space."""
+        start = column - len(text) // 2
+        for offset, symbol in enumerate(text):
+            character = self.terminal.add_character(symbol, Coord(start + offset, self.terminal.canvas.bottom))
+            character.animation.set_appearance(symbol, ColorPair(fg=Color("#a0a0a0")))
+            self.terminal.set_character_visibility(character, is_visible=True)
+            self.labels.append(character)
+
+    def clear_labels(self) -> None:
+        """Hide the labels of the last page."""
+        for character in self.labels:
+            self.terminal.set_character_visibility(character, is_visible=False)
+        self.labels.clear()
 
     def __next__(self) -> str:
         """Spin each page of shapes in turn, then swap them for the text."""
@@ -95,6 +118,7 @@ class GalleryIterator(BaseEffectIterator[GalleryConfig]):
         elif not self.text_shown:
             for body in self.space.bodies:
                 body.erase()
+            self.clear_labels()
             self.space.step()  # Hides the surface characters once nothing is drawn.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)

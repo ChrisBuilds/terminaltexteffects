@@ -37,7 +37,7 @@ The Turns example has three modes. Save it as `turns.py`:
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c turns
 ```
 
-![Three cubes turn about x, y and z, left to right](../../img/effectguide/turns_axes_demo.webp)
+![Three cubes, labeled about x, about y and about z, each turn about that axis](../../img/effectguide/turns_axes_demo.webp)
 
 `spin(axis, turns, frames, ease)` queues whole or partial turns about an axis. It's a **tween**: the space plays it
 one frame at a time in `step()`. `rotate(axis, degrees)` turns the body by that much right away instead, which is
@@ -70,7 +70,7 @@ combine every frame into a tumble.
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c turns --mode rest
 ```
 
-![Two cubes start in the same pose. The left one turns straight back to rest, the right one spins as it settles](../../img/effectguide/turns_rest_demo.webp)
+![Two cubes start in the same pose. The left one, labeled turn_to_rest, turns straight back to rest. The right one, labeled settle, spins as it settles](../../img/effectguide/turns_rest_demo.webp)
 
 **Rest** is the orientation a body was created in. It matters because a text plane's characters meet their input
 cells only at rest. There are two ways back:

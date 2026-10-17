@@ -51,7 +51,10 @@ EXAMPLE_ROWS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
 """Example directory, command and arguments for each row of the example table."""
 
 SPHERE_ROWS: tuple[tuple[int, int, Callable[[], Look]], ...] = (
+    (8, 4, Shaded),
+    (16, 8, Shaded),
     (24, 12, Shaded),
+    (32, 16, Shaded),
     (48, 24, Shaded),
     (24, 12, lambda: Textured(back="dim")),
     (48, 24, Textured),
