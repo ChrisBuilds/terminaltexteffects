@@ -10,7 +10,9 @@ From the repository root, run the development CLI:
 printf 'Hello' | ./.venv/bin/python -m tools.dev dev
 ```
 
-Use your effect's command name in place of `dev`. Modules use the normal
+Use your effect's command name in place of `dev`. To watch an effect while you edit it, open the
+interactive interface with `./.venv/bin/python -m tools.dev --tui`: it imports each module again
+when you save it, and lists modules that can't be imported in red. Modules use the normal
 `get_effect_resources()` interface and absolute imports from `terminaltexteffects`.
 This loader supports flat modules; avoid relative sibling imports.
 

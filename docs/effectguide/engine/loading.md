@@ -73,7 +73,8 @@ TTE_DEV_EFFECTS_DIR="$PWD/my_effects" tte --input-file concept_input.txt glow
 
 Development modules follow the same rules, with two differences meant to surface problems early:
 
-- A failure stops `tte` with the error, instead of a warning.
+- A failure stops `tte` with the error, instead of a warning. The [interactive interface](../../tui.md#developing-effects)
+  lists the module in red instead, and imports it again when you save it.
 - Each module is imported under a private prefixed name, so development modules can't import each other by file name.
 
 The variable must name an existing directory. In a TTE repository checkout, maintainers put unfinished built-in effects

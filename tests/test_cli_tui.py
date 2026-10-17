@@ -24,8 +24,17 @@ def tui_calls(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
         text: str = "",
         input_file: str | None = None,
         effect: str | None = None,
+        development_dir: Path | None = None,
     ) -> None:
-        calls.append({"effects": effect_resource_map, "text": text, "input_file": input_file, "effect": effect})
+        calls.append(
+            {
+                "effects": effect_resource_map,
+                "text": text,
+                "input_file": input_file,
+                "effect": effect,
+                "development_dir": development_dir,
+            },
+        )
 
     monkeypatch.setattr(tui, "run", fake_run)
     monkeypatch.setattr(tui, "is_available", lambda: True)
@@ -135,7 +144,13 @@ def test_tui_flag_loads_input_file_and_selects_effect(
     _set_terminals(monkeypatch, stdin=True, stdout=True)
     _run_main(monkeypatch, ["tte", "--tui", "-i", str(source), "wipe"])
     assert tui_calls == [
-        {"effects": tui_calls[0]["effects"], "text": "from file", "input_file": str(source), "effect": "wipe"},
+        {
+            "effects": tui_calls[0]["effects"],
+            "text": "from file",
+            "input_file": str(source),
+            "effect": "wipe",
+            "development_dir": None,
+        },
     ]
 
 
@@ -176,3 +191,73 @@ def test_effect_runs_are_unchanged(
     _run_main(monkeypatch, ["tte", "wipe"], piped="hello")
     assert not tui_calls
     assert played == ["played"]
+
+
+def test_broken_development_effects_do_not_stop_the_tui(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tui_calls: list[dict[str, Any]],
+) -> None:
+    """The interface opens with the development directory, and lists its effects itself."""
+    (tmp_path / "effect_broken.py").write_text('raise RuntimeError("unfinished")\n')
+    (tmp_path / "effect_prototype.py").write_text(
+        """from dataclasses import dataclass
+from terminaltexteffects.effects.effect_wipe import Wipe, WipeConfig
+from terminaltexteffects.utils import argutils
+
+@dataclass
+class PrototypeConfig(WipeConfig):
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(
+        name="prototype", help="Prototype", description="Prototype", epilog=""
+    )
+
+def get_effect_resources():
+    return "prototype", Wipe, PrototypeConfig
+""",
+    )
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty-config"))
+    _set_terminals(monkeypatch, stdin=True, stdout=True)
+    _run_main(monkeypatch, ["tte", "--tui", "prototype"])
+    assert tui_calls[0]["development_dir"] == tmp_path.resolve()
+    assert tui_calls[0]["effect"] == "prototype"
+    assert "prototype" not in tui_calls[0]["effects"]
+    assert "wipe" in tui_calls[0]["effects"]
+
+
+def test_broken_development_effects_still_stop_an_effect_run(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Running an effect from the command line still reports a development effect that cannot be imported."""
+    (tmp_path / "effect_broken.py").write_text('raise RuntimeError("unfinished")\n')
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path))
+    monkeypatch.setattr(__main__.sys, "argv", ["tte", "wipe"])
+    with pytest.raises(RuntimeError, match="unfinished"):
+        __main__.build_parsers_and_parse_args()
+
+
+@pytest.mark.parametrize("argv", [["tte", "--random-effect"], ["tte", "--export", "out.tterec"]])
+def test_broken_development_effects_stop_runs_without_an_effect_name(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    argv: list[str],
+) -> None:
+    """Global-only runs that play an effect still report a development effect that cannot be imported."""
+    (tmp_path / "effect_broken.py").write_text('raise RuntimeError("unfinished")\n')
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path))
+    monkeypatch.setattr(__main__.sys, "argv", argv)
+    with pytest.raises(RuntimeError, match="unfinished"):
+        __main__.build_parsers_and_parse_args()
+
+
+def test_development_module_that_exits_does_not_stop_the_tui(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A development module that calls sys.exit while importing is left out when the TUI may open."""
+    (tmp_path / "effect_exits.py").write_text("import sys\nsys.exit(2)\n")
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path))
+    monkeypatch.setattr(__main__.sys, "argv", ["tte", "--tui"])
+    _, effects = __main__.build_parsers_and_parse_args()
+    assert "wipe" in effects
