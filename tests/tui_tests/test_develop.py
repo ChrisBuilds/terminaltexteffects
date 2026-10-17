@@ -185,3 +185,26 @@ def test_app_lists_broken_effects_and_plays_them_once_fixed(tmp_path: Path) -> N
         assert app.state == "editing"
 
     _run(TTEApp(effects, "Hello", effect="effect_prototype.py", development=development), script)
+
+
+@pytest.mark.parametrize(
+    ("body", "reason"),
+    [
+        ("import sys\nsys.exit(2)\n", "SystemExit"),
+        (
+            (
+                "from terminaltexteffects.effects.effect_wipe import Wipe\n"
+                "class Config: pass\n"
+                "def get_effect_resources():\n    return 'odd', Wipe, Config\n"
+            ),
+            "TypeError",
+        ),
+    ],
+)
+def test_modules_that_exit_or_return_bad_classes_are_broken(tmp_path: Path, body: str, reason: str) -> None:
+    """A module that exits while importing, or whose config class is not usable, is listed as broken."""
+    _write(tmp_path / "effect_odd.py", body)
+    development = DevEffects(tmp_path)
+    development.scan()
+    assert development.playable() == {}
+    assert reason in development.broken()["effect_odd.py"]

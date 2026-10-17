@@ -14,6 +14,8 @@ import traceback
 import typing
 from pathlib import Path
 
+from terminaltexteffects.tui import options
+
 if typing.TYPE_CHECKING:
     from collections.abc import Collection
 
@@ -162,6 +164,11 @@ def _load(path: Path, signature: tuple[int, int]) -> DevEffect:
             effect.error = "The module has no get_effect_resources() function."
             return effect
         command, effect_class, config_class = get_resources()
+        # Reading the options checks the config class as the interface will use it, so a mistake shows here.
+        options.option_fields(config_class)
+        if not isinstance(effect_class, type):
+            msg = f"get_effect_resources() returned {effect_class!r} as the effect class."
+            raise TypeError(msg)  # noqa: TRY301
         effect.command = str(command)
         effect.resources = (effect_class, config_class)
     except (Exception, SystemExit) as error:  # noqa: BLE001

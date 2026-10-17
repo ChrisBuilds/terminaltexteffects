@@ -235,3 +235,29 @@ def test_broken_development_effects_still_stop_an_effect_run(
     monkeypatch.setattr(__main__.sys, "argv", ["tte", "wipe"])
     with pytest.raises(RuntimeError, match="unfinished"):
         __main__.build_parsers_and_parse_args()
+
+
+@pytest.mark.parametrize("argv", [["tte", "--random-effect"], ["tte", "--export", "out.tterec"]])
+def test_broken_development_effects_stop_runs_without_an_effect_name(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    argv: list[str],
+) -> None:
+    """Global-only runs that play an effect still report a development effect that cannot be imported."""
+    (tmp_path / "effect_broken.py").write_text('raise RuntimeError("unfinished")\n')
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path))
+    monkeypatch.setattr(__main__.sys, "argv", argv)
+    with pytest.raises(RuntimeError, match="unfinished"):
+        __main__.build_parsers_and_parse_args()
+
+
+def test_development_module_that_exits_does_not_stop_the_tui(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A development module that calls sys.exit while importing is left out when the TUI may open."""
+    (tmp_path / "effect_exits.py").write_text("import sys\nsys.exit(2)\n")
+    monkeypatch.setenv("TTE_DEV_EFFECTS_DIR", str(tmp_path))
+    monkeypatch.setattr(__main__.sys, "argv", ["tte", "--tui"])
+    _, effects = __main__.build_parsers_and_parse_args()
+    assert "wipe" in effects

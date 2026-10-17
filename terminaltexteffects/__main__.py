@@ -473,7 +473,7 @@ def build_parser(
                 before = set(effect_resource_map)
                 try:
                     _register_effect_from_module(_load_external_module(plugin_file, module_name))
-                except Exception:  # noqa: BLE001 - The interface shows why the module is left out.
+                except (Exception, SystemExit):  # noqa: BLE001 - The interface shows why the module is left out.
                     for effect_cmd in set(effect_resource_map) - before:
                         del effect_resource_map[effect_cmd]
             _DEVELOPMENT_COMMANDS.clear()
@@ -489,7 +489,12 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
     global_args, _ = preliminary.parse_known_args()
     include_user_effects = global_args.print_completion is None
     # The interface lists broken development effects itself, so they must not stop it from opening.
-    tui_may_open = global_args.tui or not global_args.effect_arguments
+    tui_may_open = global_args.tui or (
+        not global_args.effect_arguments
+        and not global_args.random_effect
+        and global_args.export is None
+        and global_args.play is None
+    )
     parser, effect_resource_map = build_parser(
         include_user_effects=include_user_effects,
         skip_broken_development_effects=tui_may_open,
