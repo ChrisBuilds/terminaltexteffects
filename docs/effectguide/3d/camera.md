@@ -101,7 +101,7 @@ it does not change sizes in orthographic mode. Moving the camera never changes f
 
 ### Queues and targets
 
-Queued moves accept `ease` and `together=True`. `hold`, `on_complete`, `on_group_complete`, `cancel` and `reset`
+Queued moves accept `ease` and `together=True`. All tweens starting together capture the same initial camera pose. `hold`, `on_complete`, `on_group_complete`, `cancel` and `reset`
 work like their body counterparts. Callbacks receive the camera. `space.animating` includes camera tweens, and
 `space.step()` advances them before body tweens, refreshes mount readings, runs camera callbacks followed by body
 callbacks, refreshes again, then draws surfaces. Callbacks can read final mount positions and release text there.

@@ -507,3 +507,31 @@ def test_light_space_rejects_unknown_modes() -> None:
     """A mistyped light coordinate space is not silently treated as world lighting."""
     with pytest.raises(ValueError, match="light_space"):
         make_space(light_space="view")
+
+
+@pytest.mark.parametrize("frames", [0, 1, 2, 7])
+def test_grouped_travel_captures_pose_before_parallel_pan(frames: int) -> None:
+    """Simultaneous pan and dolly travel along the group's initial forward axis at any duration."""
+    space = make_space()
+    camera = space.camera.set_position(0, 0, 30)
+    camera.hold(1).pan(90, frames=frames).dolly_by(10, frames=frames, together=True)
+    space.step()
+    for _ in range(max(1, frames)):
+        space.step()
+    assert_vec(camera.position, g3.Vec3(0, 0, 20))
+
+
+@pytest.mark.parametrize("frames", [1, 5])
+@pytest.mark.parametrize("orbit_first", [False, True])
+def test_grouped_orbit_initialization_does_not_change_travel_axis(*, frames: int, orbit_first: bool) -> None:
+    """Orbit's initial aim cannot alter the starting axis sampled by simultaneous travel."""
+    space = make_space()
+    camera = space.camera.set_position(0, 0, 30).pan(45)
+    if orbit_first:
+        camera.orbit("y", degrees=90, frames=frames).dolly_by(10, frames=frames, together=True)
+    else:
+        camera.dolly_by(10, frames=frames).orbit("y", degrees=90, frames=frames, together=True)
+    for _ in range(frames):
+        space.step()
+    offset = g3.Vec3(-math.sqrt(50), 0, -math.sqrt(50))
+    assert_vec(camera.position, g3.Vec3(30, 0, 0) + offset)

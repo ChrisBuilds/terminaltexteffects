@@ -1218,8 +1218,10 @@ class Camera(g3.Camera):
             center = points["center"] = self._point(around)
             points["offset"] = self.position - center
             points["last"] = self.position
-            rotations["last"] = self._aim(center, vertical)
-            self.set_rotation(rotations["last"])
+            if points["offset"].length() < _EPSILON:
+                msg = "An orbit needs a nonzero radius."
+                raise ValueError(msg)
+            rotations["last"] = self.rotation
 
         def apply(_previous: float, current: float) -> None:
             point = points["center"] + g3.Rotation.about_axis(unit, angle * current).apply(points["offset"])
@@ -1473,9 +1475,14 @@ class Camera(g3.Camera):
             return []
         group = self._queue[0]
         finished: list[Callable[[Camera], None]] = []
-        for tween in group.tweens:
-            if tween.done:
-                continue
+        pending = [tween for tween in group.tweens if not tween.done]
+        # Capture one shared starting pose before any parallel tween changes the camera.
+        for tween in pending:
+            if not tween.started:
+                tween.started = True
+                if tween.begin is not None:
+                    tween.begin()
+        for tween in pending:
             tween.advance()
             if tween.done:
                 finished.extend(tween.callbacks)
