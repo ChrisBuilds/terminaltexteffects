@@ -903,6 +903,8 @@ class Body:
     ) -> None:
         """Initialize a body. Use `Space3D.body` rather than calling this directly.
 
+        Exceptions from a custom shape's `build_mesh` propagate unchanged.
+
         Args:
             space (Space3D): The space the body belongs to.
             shape (Shape | None): The body's shape, if any.
@@ -912,7 +914,8 @@ class Body:
             None: No return value.
 
         Raises:
-            ValueError: If building the shape mesh fails; see `Shape.build_mesh` and its overrides.
+            ValueError: If a built-in shape has invalid mesh segment, ring or side counts.
+            NotImplementedError: If the shape does not implement `Shape.build_mesh`.
 
         """
         self.space = space
@@ -2319,6 +2322,8 @@ class Space3D:
     def body(self, shape: Shape | None = None, *, at: tuple[float, float, float] = (0, 0, 0)) -> Body:
         """Create a body, with a shape or as a plain frame of reference for anchors.
 
+        Exceptions from a custom shape's `build_mesh` propagate unchanged.
+
         Args:
             shape (Shape | None): `Cube(...)`, `Prism(...)`, `Sphere(...)` or another `Shape`.
             at (tuple[float, float, float]): Starting position in columns from the canvas center.
@@ -2327,7 +2332,8 @@ class Space3D:
             Body: The new body.
 
         Raises:
-            ValueError: If building the shape mesh fails; see `Shape.build_mesh` and its overrides.
+            ValueError: If a built-in shape has invalid mesh segment, ring or side counts.
+            NotImplementedError: If the shape does not implement `Shape.build_mesh`.
 
         """
         new_body = Body(self, shape, at=at)
