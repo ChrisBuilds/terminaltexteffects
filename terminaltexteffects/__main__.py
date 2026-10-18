@@ -402,7 +402,8 @@ def build_parser(
     Args:
         include_user_effects: Whether to load external effects, including opted-in development effects.
         skip_broken_effects: Whether to leave out built-in and development effect modules that fail to import or
-            register instead of raising. The interactive interface lists them and reports why.
+            register instead of raising. The interactive interface lists them and reports why. Built-in modules that
+            `terminaltexteffects.effects` imports itself still raise when the package is imported.
 
     Returns:
         tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The CLI parser and a
