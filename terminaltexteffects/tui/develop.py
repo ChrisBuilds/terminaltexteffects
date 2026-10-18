@@ -207,7 +207,15 @@ def _load(
         if not isinstance(effect_class, type):
             msg = f"get_effect_resources() returned {effect_class!r} as the effect class."
             raise TypeError(msg)  # noqa: TRY301
-        effect.command = str(command)
+        parser_command = getattr(getattr(config_class, "parser_spec", None), "name", None)
+        if not isinstance(command, str) or not command or command != parser_command:
+            # The command line refuses such a module, so the interface does too.
+            msg = (
+                f"get_effect_resources() returned the command {command!r}, "
+                f"but the parser command is {parser_command!r}."
+            )
+            raise ValueError(msg)  # noqa: TRY301
+        effect.command = command
         effect.resources = (effect_class, config_class)
     except (Exception, SystemExit) as error:  # noqa: BLE001
         if previous is None:

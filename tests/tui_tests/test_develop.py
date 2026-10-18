@@ -22,12 +22,19 @@ if TYPE_CHECKING:
 
     from textual.pilot import Pilot
 
-PROTOTYPE = """from terminaltexteffects.effects.effect_wipe import Wipe, WipeConfig
+PROTOTYPE = """from dataclasses import dataclass
+
+from terminaltexteffects.effects.effect_wipe import Wipe, WipeConfig
+from terminaltexteffects.utils import argutils
 
 SPEED = {speed}
 
+@dataclass
+class PrototypeConfig(WipeConfig):
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(name="{command}", help="", description="", epilog="")
+
 def get_effect_resources():
-    return "{command}", Wipe, WipeConfig
+    return "{command}", Wipe, PrototypeConfig
 """
 
 
@@ -110,7 +117,7 @@ def test_location_names_the_development_file(tmp_path: Path) -> None:
     development.scan()
     with pytest.raises(ValueError, match="bad") as raised:
         sys.modules["_tte_dev_effect_prototype"].fail()
-    assert development.location(raised.value) == "effect_prototype.py:9"
+    assert development.location(raised.value) == "effect_prototype.py:16"
 
 
 APP_PROTOTYPE = """from dataclasses import dataclass
@@ -259,3 +266,13 @@ def test_user_modules_reload_under_their_own_names(tmp_path: Path) -> None:
         assert sys.modules["tte_test_user_effect"].SPEED == 2
     finally:
         sys.modules.pop("tte_test_user_effect", None)
+
+
+def test_a_command_that_does_not_match_the_parser_is_broken(tmp_path: Path) -> None:
+    """A module whose command differs from its parser's, which the command line refuses, cannot be played."""
+    source = PROTOTYPE.format(speed=1, command="renamed").replace('name="renamed"', 'name="original"')
+    _write(tmp_path / "effect_renamed.py", source)
+    watched = DevEffects([(tmp_path, "_tte_test_renamed_")])
+    watched.scan()
+    assert not watched.playable()
+    assert "'renamed', but the parser command is 'original'" in watched.broken()["effect_renamed.py"]
