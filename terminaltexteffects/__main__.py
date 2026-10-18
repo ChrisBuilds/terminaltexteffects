@@ -54,8 +54,8 @@ if TYPE_CHECKING:
 _DEV_EFFECT_MODULE_PREFIX = "_tte_dev_"
 # User plugin modules registered by this process, which later user plugin discovery may replace.
 _USER_PLUGIN_MODULES: weakref.WeakSet[ModuleType] = weakref.WeakSet()
-# Commands the last `build_parser` call registered from the development effects directory.
-_DEVELOPMENT_COMMANDS: set[str] = set()
+# The module file of each effect command the last `build_parser` call registered.
+_EFFECT_FILES: dict[str, Path] = {}
 
 
 def _user_effects_dir() -> Path:
@@ -383,7 +383,7 @@ def _build_global_parser(*, add_help: bool = True) -> argparse.ArgumentParser:
 def build_parser(
     *,
     include_user_effects: bool = True,
-    skip_broken_development_effects: bool = False,
+    skip_broken_effects: bool = False,
 ) -> tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]:
     """Build the CLI parser and discover available effects.
 
@@ -394,12 +394,13 @@ def build_parser(
 
     A user effect module in the XDG config effects directory that fails to import or register is
     skipped with a warning on standard error. Failures in built-in and development effect modules
-    are raised, unless `skip_broken_development_effects` is set.
+    are raised, unless `skip_broken_effects` is set.
 
     Args:
         include_user_effects: Whether to load external effects, including opted-in development effects.
-        skip_broken_development_effects: Whether to leave out development effect modules that fail to import or
-            register instead of raising. The interactive interface lists them and reports why.
+        skip_broken_effects: Whether to leave out built-in and development effect modules that fail to import or
+            register instead of raising. The interactive interface lists them and reports why. Built-in modules that
+            `terminaltexteffects.effects` imports itself still raise when the package is imported.
 
     Returns:
         tuple[argparse.ArgumentParser, dict[str, tuple[type[BaseEffect], type[BaseConfig]]]]: The CLI parser and a
@@ -447,37 +448,63 @@ def build_parser(
             effect_resource_map[effect_cmd] = (effect_class, config_class)
             config_class._populate_parser(subparsers)
 
+    _EFFECT_FILES.clear()
+
+    def _register_file(plugin_file: Path, register: Callable[[], object], *, skip_broken: bool) -> None:
+        """Run `register` for the module in `plugin_file`, and note the file of each command it registers.
+
+        With `skip_broken`, a module that fails to import or register is left out instead of raising.
+        """
+        before = set(effect_resource_map)
+        try:
+            register()
+        except (Exception, SystemExit):
+            if not skip_broken:
+                raise
+            # The interface lists the module and shows why it is left out.
+            for effect_cmd in set(effect_resource_map) - before:
+                del effect_resource_map[effect_cmd]
+            return
+        for effect_cmd in set(effect_resource_map) - before:
+            _EFFECT_FILES[effect_cmd] = plugin_file.resolve()
+
     for module_info in pkgutil.iter_modules(
         terminaltexteffects.effects.__path__,
         terminaltexteffects.effects.__name__ + ".",
     ):
         if not include_user_effects and module_info.name == "terminaltexteffects.effects.effect_dev":
             continue
-        module = importlib.import_module(module_info.name)
-        _register_effect_from_module(module)
+        spec = importlib.util.find_spec(module_info.name)
+        origin = Path(spec.origin) if spec is not None and spec.origin else Path(module_info.name)
+        _register_file(
+            origin,
+            lambda name=module_info.name: _register_effect_from_module(importlib.import_module(name)),
+            skip_broken=skip_broken_effects,
+        )
 
     if include_user_effects:
         for plugin_file, module_name in _external_effect_files(_user_effects_dir()):
-            _register_user_effect(plugin_file, module_name, subparsers, effect_resource_map)
+            _register_file(
+                plugin_file,
+                lambda plugin_file=plugin_file, module_name=module_name: _register_user_effect(
+                    plugin_file, module_name, subparsers, effect_resource_map
+                ),
+                skip_broken=False,
+            )
         development_dir = os.environ.get("TTE_DEV_EFFECTS_DIR")
         if development_dir is not None:
             directory = Path(development_dir).expanduser().resolve()
             if not development_dir or not directory.is_dir():
                 msg = f"TTE_DEV_EFFECTS_DIR must name an existing directory: {development_dir!r}"
                 raise ValueError(msg)
-            registered = set(effect_resource_map)
             for plugin_file, module_name in _external_effect_files(directory, _DEV_EFFECT_MODULE_PREFIX):
-                if not skip_broken_development_effects:
-                    _register_effect_from_module(_load_external_module(plugin_file, module_name))
-                    continue
-                before = set(effect_resource_map)
-                try:
-                    _register_effect_from_module(_load_external_module(plugin_file, module_name))
-                except (Exception, SystemExit):  # noqa: BLE001 - The interface shows why the module is left out.
-                    for effect_cmd in set(effect_resource_map) - before:
-                        del effect_resource_map[effect_cmd]
-            _DEVELOPMENT_COMMANDS.clear()
-            _DEVELOPMENT_COMMANDS.update(set(effect_resource_map) - registered)
+                _register_file(
+                    plugin_file,
+                    lambda plugin_file=plugin_file, module_name=module_name: _register_effect_from_module(
+                        _load_external_module(plugin_file, module_name)
+                    ),
+                    skip_broken=skip_broken_effects,
+                )
 
     return parser, effect_resource_map
 
@@ -488,7 +515,7 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
     preliminary.add_argument("effect_arguments", nargs=argparse.REMAINDER)
     global_args, _ = preliminary.parse_known_args()
     include_user_effects = global_args.print_completion is None
-    # The interface lists broken development effects itself, so they must not stop it from opening.
+    # The interface lists broken effects itself, so they must not stop it from opening.
     tui_may_open = global_args.tui or (
         not global_args.effect_arguments
         and not global_args.random_effect
@@ -497,7 +524,7 @@ def build_parsers_and_parse_args() -> tuple[argparse.Namespace, dict[str, tuple[
     )
     parser, effect_resource_map = build_parser(
         include_user_effects=include_user_effects,
-        skip_broken_development_effects=tui_may_open,
+        skip_broken_effects=tui_may_open,
     )
     return parser.parse_args(), effect_resource_map
 
@@ -1173,19 +1200,25 @@ def _run_tui(
         _exit_with_error(tui.INSTALL_HINT)
     if not _is_terminal(sys.stdout):
         _exit_with_error("--tui needs standard output to be a terminal.")
+    # The interface watches every effect directory, and imports a module again when its file changes.
+    effect_dirs = [
+        (Path(path).resolve(), terminaltexteffects.effects.__name__ + ".")
+        for path in terminaltexteffects.effects.__path__
+    ]
+    # User effects keep their bare module names, so `import name` in a module finds the reloaded module.
+    effect_dirs.append((_user_effects_dir(), ""))
     development_dir = os.environ.get("TTE_DEV_EFFECTS_DIR")
     if development_dir:
-        # The interface imports development effects itself, and imports them again when they change.
-        effect_resource_map = {
-            name: resources for name, resources in effect_resource_map.items() if name not in _DEVELOPMENT_COMMANDS
-        }
+        effect_dirs.append((Path(development_dir).expanduser().resolve(), _DEV_EFFECT_MODULE_PREFIX))
     try:
         tui.run(
             effect_resource_map,
             input_data,
             args.input_file,
             args.effect,
-            Path(development_dir).expanduser().resolve() if development_dir else None,
+            effect_dirs,
+            dict(_EFFECT_FILES),
+            _check_user_module_name,
         )
     except OSError as e:
         _exit_with_error(f"Cannot open the terminal for keyboard input: {e}")

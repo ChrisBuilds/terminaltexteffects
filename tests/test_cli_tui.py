@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
 
+import terminaltexteffects.effects
 from terminaltexteffects import __main__, tui
+from terminaltexteffects.__main__ import _check_user_module_name, build_parser
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    from collections.abc import Mapping, Sequence
 
 pytestmark = [pytest.mark.smoke]
 
@@ -24,7 +27,9 @@ def tui_calls(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
         text: str = "",
         input_file: str | None = None,
         effect: str | None = None,
-        development_dir: Path | None = None,
+        effect_dirs: Sequence[tuple[Path, str]] = (),
+        effect_files: Mapping[str, Path] | None = None,
+        check_name: object = None,
     ) -> None:
         calls.append(
             {
@@ -32,7 +37,9 @@ def tui_calls(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
                 "text": text,
                 "input_file": input_file,
                 "effect": effect,
-                "development_dir": development_dir,
+                "effect_dirs": list(effect_dirs),
+                "effect_files": dict(effect_files or {}),
+                "check_name": check_name,
             },
         )
 
@@ -149,7 +156,9 @@ def test_tui_flag_loads_input_file_and_selects_effect(
             "text": "from file",
             "input_file": str(source),
             "effect": "wipe",
-            "development_dir": None,
+            "effect_dirs": tui_calls[0]["effect_dirs"],
+            "effect_files": tui_calls[0]["effect_files"],
+            "check_name": tui_calls[0]["check_name"],
         },
     ]
 
@@ -219,10 +228,49 @@ def get_effect_resources():
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty-config"))
     _set_terminals(monkeypatch, stdin=True, stdout=True)
     _run_main(monkeypatch, ["tte", "--tui", "prototype"])
-    assert tui_calls[0]["development_dir"] == tmp_path.resolve()
-    assert tui_calls[0]["effect"] == "prototype"
-    assert "prototype" not in tui_calls[0]["effects"]
+    call = tui_calls[0]
+    assert (tmp_path.resolve(), "_tte_dev_") in call["effect_dirs"]
+    assert call["effect"] == "prototype"
+    assert "prototype" in call["effects"]
+    assert call["effect_files"]["prototype"] == (tmp_path / "effect_prototype.py").resolve()
+    assert "wipe" in call["effects"]
+
+
+def test_the_tui_watches_every_effect_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tui_calls: list[dict[str, Any]],
+) -> None:
+    """The interface watches the built-in and user effect directories, with the file of each built-in effect."""
+    monkeypatch.delenv("TTE_DEV_EFFECTS_DIR", raising=False)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    _set_terminals(monkeypatch, stdin=True, stdout=True)
+    _run_main(monkeypatch, ["tte", "--tui"])
+    call = tui_calls[0]
+    builtin_dir = Path(terminaltexteffects.effects.__path__[0]).resolve()
+    assert call["effect_dirs"] == [
+        (builtin_dir, "terminaltexteffects.effects."),
+        (tmp_path / "terminaltexteffects" / "effects", ""),
+    ]
+    assert call["effect_files"]["wipe"] == builtin_dir / "effect_wipe.py"
+    assert call["check_name"] is _check_user_module_name
+
+
+def test_broken_builtin_effects_do_not_stop_the_tui(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tui_calls: list[dict[str, Any]],
+) -> None:
+    """A built-in effect module that fails to import is left out, so the interface can list it in red."""
+    (tmp_path / "effect_scratch.py").write_text('raise RuntimeError("unfinished")\n')
+    monkeypatch.setattr(terminaltexteffects.effects, "__path__", [*terminaltexteffects.effects.__path__, str(tmp_path)])
+    monkeypatch.delenv("TTE_DEV_EFFECTS_DIR", raising=False)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty-config"))
+    _set_terminals(monkeypatch, stdin=True, stdout=True)
+    _run_main(monkeypatch, ["tte", "--tui"])
     assert "wipe" in tui_calls[0]["effects"]
+    with pytest.raises(RuntimeError, match="unfinished"):
+        build_parser()
 
 
 def test_broken_development_effects_still_stop_an_effect_run(

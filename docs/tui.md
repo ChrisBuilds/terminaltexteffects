@@ -135,17 +135,18 @@ interface manages to show, next to the **frame-rate** option.
 
 ## Developing effects
 
-With `TTE_DEV_EFFECTS_DIR` set to a directory of effect modules, the effect list also shows each module in it. Keep
-the interface open in another window while you work on an effect: it checks the files every second and imports a
-saved file again, so the next play uses your edit. With **Auto** on, the selected effect replays as soon as you
-save it. Options you changed keep their values while the effect still has them.
+Keep the interface open in another window while you work on an effect: it checks every effect file each second
+and imports a saved file again, so the next play uses your edit. With **Auto** on, the selected effect replays as
+soon as you save it. Options you changed keep their values while the effect still has them. This covers the built-in
+effects, the [community effects](appguide.md#community-effects) folder, and the directory named by
+`TTE_DEV_EFFECTS_DIR`. In a TTE checkout, keep unfinished effects in `dev_effects/` and open the interface with
+`python -m tools.dev --tui`, which sets that directory. Changes to other modules, such as the engine or the utilities
+an effect uses, need a restart.
 
 A module that can't be played is listed in red under its file name, for example because it raises an error while
 importing or uses a command another effect already has. Playing it shows the error in place of the text, and the
 entry turns back to normal once a saved fix imports. If the effect raises an error while it plays, the last frame
 stays on screen and a notification names the file and line.
-
-In a TTE checkout, `python -m tools.dev --tui` opens the interface with the `dev_effects/` directory.
 
 ## Export
 

@@ -1056,7 +1056,7 @@ class TTEApp(App[None]):
             text (str): Initial text, which may contain ANSI colors.
             input_file (str | None): File the text came from, used as the default save path.
             effect (str | None): Effect to select initially.
-            development (DevEffects | None): Effects in development, listed with the others and imported again when
+            development (DevEffects | None): Watched effect modules, listed with the others and imported again when
                 their files change. Modules that cannot be played are listed in red.
 
         """
@@ -1095,6 +1095,8 @@ class TTEApp(App[None]):
         """How many frames before the newest one in `_history` is on screen."""
         self._playback_key: tuple[typing.Any, ...] | None = None
         self._recorded: tuple[tuple[typing.Any, ...], list[frames.Frame]] | None = None
+        self._reloads = 0
+        """How many times effect modules were imported again, so frames recorded before a reload are not reused."""
         self._color_hint_shown = False
         self._gradient = TextGradient()
         """Gradient the toolbar's gradient chip applies to the selection."""
@@ -1317,6 +1319,7 @@ class TTEApp(App[None]):
             kept = {option.name for option in self._scope_fields(scope)}
             self._values[scope] = {name: value for name, value in self._values[scope].items() if name in kept}
         self._recorded = None
+        self._reloads += 1
         names = self._effect_names()
         if selected is not None or self.effect_name not in names:
             effect = None if selected is None else development.effects.get(selected)
@@ -1930,6 +1933,7 @@ class TTEApp(App[None]):
         """Return a value that changes whenever the effect would play differently, apart from its randomness."""
         return (
             self.effect_name,
+            self._reloads,
             repr(sorted(self._values.get(self.effect_name, {}).items())),
             repr(sorted(self._values.get(_TERMINAL_SCOPE, {}).items())),
             self.editor.colored_text(),

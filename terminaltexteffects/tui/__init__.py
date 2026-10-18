@@ -13,6 +13,7 @@ import sys
 import typing
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Callable, Mapping, Sequence
     from pathlib import Path
 
     from terminaltexteffects.engine.base_config import BaseConfig
@@ -50,7 +51,9 @@ def run(
     text: str = "",
     input_file: str | None = None,
     effect: str | None = None,
-    development_dir: Path | None = None,
+    effect_dirs: Sequence[tuple[Path, str]] = (),
+    effect_files: Mapping[str, Path] | None = None,
+    check_name: Callable[[Path, str], None] | None = None,
 ) -> None:
     """Run the interactive interface until the user quits.
 
@@ -60,13 +63,28 @@ def run(
         text (str): Initial text, which may contain ANSI colors.
         input_file (str | None): File the text was read from, used as the default save path.
         effect (str | None): Effect to select initially.
-        development_dir (Path | None): Directory of effects in development, listed and imported again when they
-            change. `effect_resource_map` leaves them out.
+        effect_dirs (Sequence[tuple[Path, str]]): Effect directories to watch, in priority order, each with the
+            prefix of the module names its changed files are imported under. Every module in them is listed, and
+            imported again when its file changes.
+        effect_files (Mapping[str, Path] | None): The module file of each effect in `effect_resource_map`, so
+            modules already imported are not imported again at startup.
+        check_name (Callable[[Path, str], None] | None): Called before a module from a directory with no prefix is
+            imported, raising if its name belongs to another module.
 
     """
     from terminaltexteffects.tui.app import TTEApp  # noqa: PLC0415
     from terminaltexteffects.tui.develop import DevEffects  # noqa: PLC0415
 
-    development = None if development_dir is None else DevEffects(development_dir, effect_resource_map)
+    development = None
+    if effect_dirs:
+        directories = {directory.resolve() for directory, _ in effect_dirs}
+        imported = {
+            path.resolve(): (name, effect_resource_map[name])
+            for name, path in (effect_files or {}).items()
+            if name in effect_resource_map and path.resolve().parent in directories
+        }
+        watched = {name for name, _ in imported.values()}
+        effect_resource_map = {name: res for name, res in effect_resource_map.items() if name not in watched}
+        development = DevEffects(effect_dirs, effect_resource_map, imported, check_name)
     attach_keyboard()
     TTEApp(effect_resource_map, text, input_file, effect, development).run()

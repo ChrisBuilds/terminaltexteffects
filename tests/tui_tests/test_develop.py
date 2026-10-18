@@ -5,13 +5,14 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
+import types
 from typing import TYPE_CHECKING
 
 import pytest
 from rich.text import Text
 from textual.widgets import Button, Checkbox, OptionList, Static
 
-from terminaltexteffects.__main__ import build_parser
+from terminaltexteffects.__main__ import _check_user_module_name, build_parser
 from terminaltexteffects.effects.effect_wipe import Wipe
 from terminaltexteffects.tui.app import TTEApp
 from terminaltexteffects.tui.develop import DevEffects
@@ -22,12 +23,19 @@ if TYPE_CHECKING:
 
     from textual.pilot import Pilot
 
-PROTOTYPE = """from terminaltexteffects.effects.effect_wipe import Wipe, WipeConfig
+PROTOTYPE = """from dataclasses import dataclass
+
+from terminaltexteffects.effects.effect_wipe import Wipe, WipeConfig
+from terminaltexteffects.utils import argutils
 
 SPEED = {speed}
 
+@dataclass
+class PrototypeConfig(WipeConfig):
+    parser_spec: argutils.ParserSpec = argutils.ParserSpec(name="{command}", help="", description="", epilog="")
+
 def get_effect_resources():
-    return "{command}", Wipe, WipeConfig
+    return "{command}", Wipe, PrototypeConfig
 """
 
 
@@ -110,7 +118,7 @@ def test_location_names_the_development_file(tmp_path: Path) -> None:
     development.scan()
     with pytest.raises(ValueError, match="bad") as raised:
         sys.modules["_tte_dev_effect_prototype"].fail()
-    assert development.location(raised.value) == "effect_prototype.py:9"
+    assert development.location(raised.value) == "effect_prototype.py:16"
 
 
 APP_PROTOTYPE = """from dataclasses import dataclass
@@ -176,12 +184,14 @@ def test_app_lists_broken_effects_and_plays_them_once_fixed(tmp_path: Path) -> N
         assert app.state in {"playing", "finished"}
         assert str(effect_list.get_option_at_index(app._listed.index("prototype")).prompt) == "prototype"
 
-        # Edited options are kept across edits of the file.
+        # Edited options are kept across edits of the file, and frames recorded before the edit are not reused.
         app._values["prototype"] = {"wipe_delay": 3, "removed_option": 1}
+        key = app._settings_key()
         _write(path, APP_PROTOTYPE + "\n")
         await app._check_development()
         await pilot.pause()
         assert app._values["prototype"] == {"wipe_delay": 3}
+        assert app._settings_key() != key
 
         path.unlink()
         await app._check_development()
@@ -213,3 +223,76 @@ def test_modules_that_exit_or_return_bad_classes_are_broken(tmp_path: Path, body
     development.scan()
     assert development.playable() == {}
     assert reason in development.broken()["effect_odd.py"]
+
+
+def test_directories_are_watched_in_order_and_imported_modules_are_kept(tmp_path: Path) -> None:
+    """Modules the command line imported are listed without importing them, and earlier directories win."""
+    builtin = tmp_path / "builtin"
+    development = tmp_path / "development"
+    builtin.mkdir()
+    development.mkdir()
+    kept = builtin / "effect_kept.py"
+    _write(kept, "raise RuntimeError('imported again')\n")
+    _write(builtin / "effect_first.py", PROTOTYPE.format(speed=1, command="same"))
+    _write(development / "effect_second.py", PROTOTYPE.format(speed=2, command="same"))
+    resources = (Wipe, build_parser(include_user_effects=False)[1]["wipe"][1])
+    watched = DevEffects(
+        [(builtin, "_tte_test_builtin_"), (development, "_tte_test_dev_")],
+        imported={kept: ("kept", resources)},
+    )
+    watched.scan()
+    assert watched.playable() == {"kept": resources, "same": watched.playable()["same"]}
+    assert list(watched.broken()) == ["effect_second.py"]
+    assert sys.modules["_tte_test_builtin_effect_first"].SPEED == 1
+
+    # Saving a module that was imported by the command line imports it again from its source.
+    _write(kept, PROTOTYPE.format(speed=3, command="kept"))
+    assert watched.scan() == {kept: "kept"}
+    assert sys.modules["_tte_test_builtin_effect_kept"].SPEED == 3
+
+
+def test_user_modules_reload_under_their_own_names(tmp_path: Path) -> None:
+    """A user module is imported again under its bare name, and a name another module owns is refused."""
+    _write(tmp_path / "tte_test_user_effect.py", PROTOTYPE.format(speed=1, command="user"))
+    _write(tmp_path / "random.py", PROTOTYPE.format(speed=1, command="shadow"))
+    watched = DevEffects([(tmp_path, "")], check_name=_check_user_module_name)
+    try:
+        watched.scan()
+        assert list(watched.playable()) == ["user"]
+        assert "already used" in watched.broken()["random.py"]
+        assert hasattr(sys.modules["random"], "randint")
+
+        _write(tmp_path / "tte_test_user_effect.py", PROTOTYPE.format(speed=2, command="user"))
+        watched.scan()
+        assert sys.modules["tte_test_user_effect"].SPEED == 2
+    finally:
+        sys.modules.pop("tte_test_user_effect", None)
+
+
+def test_a_command_that_does_not_match_the_parser_is_broken(tmp_path: Path) -> None:
+    """A module whose command differs from its parser's, which the command line refuses, cannot be played."""
+    source = PROTOTYPE.format(speed=1, command="renamed").replace('name="renamed"', 'name="original"')
+    _write(tmp_path / "effect_renamed.py", source)
+    watched = DevEffects([(tmp_path, "_tte_test_renamed_")])
+    watched.scan()
+    assert not watched.playable()
+    assert "'renamed', but the parser command is 'original'" in watched.broken()["effect_renamed.py"]
+
+
+def test_reloaded_package_modules_replace_the_package_attribute(tmp_path: Path) -> None:
+    """A module in a package is bound to the package again, so `import package.module as module` gets the new one."""
+    package = types.ModuleType("_tte_test_package")
+    package.__path__ = [str(tmp_path)]
+    sys.modules["_tte_test_package"] = package
+    try:
+        path = tmp_path / "effect_bound.py"
+        _write(path, PROTOTYPE.format(speed=1, command="bound"))
+        watched = DevEffects([(tmp_path, "_tte_test_package.")])
+        watched.scan()
+        _write(path, PROTOTYPE.format(speed=2, command="bound"))
+        watched.scan()
+        assert package.effect_bound is sys.modules["_tte_test_package.effect_bound"]
+        assert package.effect_bound.SPEED == 2
+    finally:
+        sys.modules.pop("_tte_test_package", None)
+        sys.modules.pop("_tte_test_package.effect_bound", None)
