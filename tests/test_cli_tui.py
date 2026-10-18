@@ -9,7 +9,7 @@ import pytest
 
 import terminaltexteffects.effects
 from terminaltexteffects import __main__, tui
-from terminaltexteffects.__main__ import build_parser
+from terminaltexteffects.__main__ import _check_user_module_name, build_parser
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -29,6 +29,7 @@ def tui_calls(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
         effect: str | None = None,
         effect_dirs: Sequence[tuple[Path, str]] = (),
         effect_files: Mapping[str, Path] | None = None,
+        check_name: object = None,
     ) -> None:
         calls.append(
             {
@@ -38,6 +39,7 @@ def tui_calls(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
                 "effect": effect,
                 "effect_dirs": list(effect_dirs),
                 "effect_files": dict(effect_files or {}),
+                "check_name": check_name,
             },
         )
 
@@ -156,6 +158,7 @@ def test_tui_flag_loads_input_file_and_selects_effect(
             "effect": "wipe",
             "effect_dirs": tui_calls[0]["effect_dirs"],
             "effect_files": tui_calls[0]["effect_files"],
+            "check_name": tui_calls[0]["check_name"],
         },
     ]
 
@@ -247,9 +250,10 @@ def test_the_tui_watches_every_effect_directory(
     builtin_dir = Path(terminaltexteffects.effects.__path__[0]).resolve()
     assert call["effect_dirs"] == [
         (builtin_dir, "terminaltexteffects.effects."),
-        (tmp_path / "terminaltexteffects" / "effects", "_tte_user_"),
+        (tmp_path / "terminaltexteffects" / "effects", ""),
     ]
     assert call["effect_files"]["wipe"] == builtin_dir / "effect_wipe.py"
+    assert call["check_name"] is _check_user_module_name
 
 
 def test_broken_builtin_effects_do_not_stop_the_tui(

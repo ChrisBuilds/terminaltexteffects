@@ -13,7 +13,7 @@ import sys
 import typing
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable, Mapping, Sequence
     from pathlib import Path
 
     from terminaltexteffects.engine.base_config import BaseConfig
@@ -53,6 +53,7 @@ def run(
     effect: str | None = None,
     effect_dirs: Sequence[tuple[Path, str]] = (),
     effect_files: Mapping[str, Path] | None = None,
+    check_name: Callable[[Path, str], None] | None = None,
 ) -> None:
     """Run the interactive interface until the user quits.
 
@@ -67,6 +68,8 @@ def run(
             imported again when its file changes.
         effect_files (Mapping[str, Path] | None): The module file of each effect in `effect_resource_map`, so
             modules already imported are not imported again at startup.
+        check_name (Callable[[Path, str], None] | None): Called before a module from a directory with no prefix is
+            imported, raising if its name belongs to another module.
 
     """
     from terminaltexteffects.tui.app import TTEApp  # noqa: PLC0415
@@ -82,6 +85,6 @@ def run(
         }
         watched = {name for name, _ in imported.values()}
         effect_resource_map = {name: res for name, res in effect_resource_map.items() if name not in watched}
-        development = DevEffects(effect_dirs, effect_resource_map, imported)
+        development = DevEffects(effect_dirs, effect_resource_map, imported, check_name)
     attach_keyboard()
     TTEApp(effect_resource_map, text, input_file, effect, development).run()

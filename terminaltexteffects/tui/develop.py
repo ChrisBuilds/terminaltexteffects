@@ -18,7 +18,7 @@ from pathlib import Path
 from terminaltexteffects.tui import options
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Collection, Mapping, Sequence
+    from collections.abc import Callable, Collection, Mapping, Sequence
 
     from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
@@ -64,6 +64,7 @@ class DevEffects:
         directories: Path | Sequence[tuple[Path, str]],
         reserved: Collection[str] = (),
         imported: Mapping[Path, tuple[str, EffectResources]] | None = None,
+        check_name: Callable[[Path, str], None] | None = None,
     ) -> None:
         """Initialize an empty set of the modules in `directories`.
 
@@ -73,11 +74,15 @@ class DevEffects:
             reserved (Collection[str]): Commands that belong to effects outside the directories.
             imported (Mapping[Path, tuple[str, EffectResources]] | None): Modules the command line already imported,
                 by file, with their command and classes. The first scan lists them without importing them again.
+            check_name (Callable[[Path, str], None] | None): Called with the file and module name before a module from
+                a directory with no prefix is imported. It raises if the name belongs to another module, which is
+                then listed as broken rather than replaced.
 
         """
         self.directories = [(directories, MODULE_PREFIX)] if isinstance(directories, Path) else list(directories)
         self._reserved = set(reserved)
         self._imported = dict(imported or {})
+        self._check_name = check_name
         self.effects: dict[Path, DevEffect] = {}
         """Each module, by file path, in directory order and then file name order."""
 
@@ -91,7 +96,7 @@ class DevEffects:
 
         """
         before = {path: (effect.name, effect.state) for path, effect in self.effects.items()}
-        found: dict[Path, tuple[tuple[int, int], str]] = {}
+        found: dict[Path, tuple[tuple[int, int], str, bool]] = {}
         for directory, prefix in self.directories:
             try:
                 paths = sorted(directory.glob("*.py"))
@@ -104,16 +109,16 @@ class DevEffects:
                     stat = path.stat()
                 except OSError:
                     continue
-                found[path] = ((stat.st_mtime_ns, stat.st_size), prefix + path.stem)
+                found[path] = ((stat.st_mtime_ns, stat.st_size), prefix + path.stem, not prefix)
         effects: dict[Path, DevEffect] = {}
         imported: set[Path] = set()
-        for path, (signature, module_name) in found.items():
+        for path, (signature, module_name, bare) in found.items():
             effect = self.effects.get(path)
             if effect is None and path in self._imported:
                 command, resources = self._imported.pop(path)
                 effect = DevEffect(path, signature, module_name, command, resources)
             elif effect is None or effect.signature != signature:
-                effect = _load(path, signature, module_name)
+                effect = _load(path, signature, module_name, self._check_name if bare else None)
                 imported.add(path)
             effects[path] = effect
         self.effects = effects
@@ -166,11 +171,21 @@ class DevEffects:
         return location
 
 
-def _load(path: Path, signature: tuple[int, int], module_name: str) -> DevEffect:
-    """Import the module at `path` from its source as `module_name` and return its listing."""
+def _load(
+    path: Path,
+    signature: tuple[int, int],
+    module_name: str,
+    check_name: Callable[[Path, str], None] | None = None,
+) -> DevEffect:
+    """Import the module at `path` from its source as `module_name` and return its listing.
+
+    `check_name`, if given, is called first and may raise to refuse the name.
+    """
     effect = DevEffect(path, signature, module_name)
     previous = sys.modules.get(module_name)
     try:
+        if check_name is not None:
+            check_name(path, module_name)
         source = path.read_bytes()
         spec = importlib.util.spec_from_file_location(module_name, path)
         if spec is None:

@@ -52,9 +52,6 @@ if TYPE_CHECKING:
 
 
 _DEV_EFFECT_MODULE_PREFIX = "_tte_dev_"
-# Prefix of the module names the interactive interface imports changed user effects under, so a user module never
-# replaces an installed module of the same name.
-_USER_EFFECT_MODULE_PREFIX = "_tte_user_"
 # User plugin modules registered by this process, which later user plugin discovery may replace.
 _USER_PLUGIN_MODULES: weakref.WeakSet[ModuleType] = weakref.WeakSet()
 # The module file of each effect command the last `build_parser` call registered.
@@ -1208,7 +1205,8 @@ def _run_tui(
         (Path(path).resolve(), terminaltexteffects.effects.__name__ + ".")
         for path in terminaltexteffects.effects.__path__
     ]
-    effect_dirs.append((_user_effects_dir(), _USER_EFFECT_MODULE_PREFIX))
+    # User effects keep their bare module names, so `import name` in a module finds the reloaded module.
+    effect_dirs.append((_user_effects_dir(), ""))
     development_dir = os.environ.get("TTE_DEV_EFFECTS_DIR")
     if development_dir:
         effect_dirs.append((Path(development_dir).expanduser().resolve(), _DEV_EFFECT_MODULE_PREFIX))
@@ -1220,6 +1218,7 @@ def _run_tui(
             args.effect,
             effect_dirs,
             dict(_EFFECT_FILES),
+            _check_user_module_name,
         )
     except OSError as e:
         _exit_with_error(f"Cannot open the terminal for keyboard input: {e}")

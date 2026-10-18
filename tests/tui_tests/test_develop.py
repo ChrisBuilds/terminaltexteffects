@@ -11,7 +11,7 @@ import pytest
 from rich.text import Text
 from textual.widgets import Button, Checkbox, OptionList, Static
 
-from terminaltexteffects.__main__ import build_parser
+from terminaltexteffects.__main__ import _check_user_module_name, build_parser
 from terminaltexteffects.effects.effect_wipe import Wipe
 from terminaltexteffects.tui.app import TTEApp
 from terminaltexteffects.tui.develop import DevEffects
@@ -241,3 +241,21 @@ def test_directories_are_watched_in_order_and_imported_modules_are_kept(tmp_path
     _write(kept, PROTOTYPE.format(speed=3, command="kept"))
     assert watched.scan() == {kept: "kept"}
     assert sys.modules["_tte_test_builtin_effect_kept"].SPEED == 3
+
+
+def test_user_modules_reload_under_their_own_names(tmp_path: Path) -> None:
+    """A user module is imported again under its bare name, and a name another module owns is refused."""
+    _write(tmp_path / "tte_test_user_effect.py", PROTOTYPE.format(speed=1, command="user"))
+    _write(tmp_path / "random.py", PROTOTYPE.format(speed=1, command="shadow"))
+    watched = DevEffects([(tmp_path, "")], check_name=_check_user_module_name)
+    try:
+        watched.scan()
+        assert list(watched.playable()) == ["user"]
+        assert "already used" in watched.broken()["random.py"]
+        assert hasattr(sys.modules["random"], "randint")
+
+        _write(tmp_path / "tte_test_user_effect.py", PROTOTYPE.format(speed=2, command="user"))
+        watched.scan()
+        assert sys.modules["tte_test_user_effect"].SPEED == 2
+    finally:
+        sys.modules.pop("tte_test_user_effect", None)
