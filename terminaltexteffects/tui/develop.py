@@ -1,8 +1,9 @@
-"""Find the effects in a development directory, and import them again when their files change.
+"""Find the effect modules in the effect directories, and import them again when their files change.
 
-The interface lists every module in the directory. A module that cannot be imported, or whose command is already
-taken, is listed by its file name with the reason. `DevEffects.scan` compares each file's modification time and size
-with the last scan and imports changed modules from their source, so an edit shows up without restarting.
+The interface lists every module in the built-in, user, and development effect directories. A module that cannot be
+imported, or whose command is already taken, is listed by its file name with the reason. `DevEffects.scan` compares
+each file's modification time and size with the last scan and imports changed modules from their source, so an edit
+shows up without restarting.
 """
 
 from __future__ import annotations
@@ -17,13 +18,15 @@ from pathlib import Path
 from terminaltexteffects.tui import options
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Collection
+    from collections.abc import Collection, Mapping, Sequence
 
     from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
 
 MODULE_PREFIX = "_tte_dev_"
 """Prefix of the module names development effects are imported under, as the command line imports them."""
+
+EffectResources = tuple[type["BaseEffect"], type["BaseConfig"]]
 
 
 @dataclasses.dataclass
@@ -33,9 +36,11 @@ class DevEffect:
     path: Path
     signature: tuple[int, int]
     """Modification time and size of the file when it was imported."""
+    module_name: str
+    """Name the module is imported under."""
     command: str | None = None
     """Command the module registers, or `None` if it could not be imported."""
-    resources: tuple[type[BaseEffect], type[BaseConfig]] | None = None
+    resources: EffectResources | None = None
     """Effect and config classes, or `None` if the module cannot be played."""
     error: str | None = None
     """Why the module cannot be played, formatted for display, or `None`."""
@@ -52,14 +57,29 @@ class DevEffect:
 
 
 class DevEffects:
-    """The effect modules in a development directory, imported again when they change."""
+    """The effect modules in one or more directories, imported again when they change."""
 
-    def __init__(self, directory: Path, reserved: Collection[str] = ()) -> None:
-        """Initialize an empty set of the modules in `directory`. Commands in `reserved` belong to other effects."""
-        self.directory = directory
+    def __init__(
+        self,
+        directories: Path | Sequence[tuple[Path, str]],
+        reserved: Collection[str] = (),
+        imported: Mapping[Path, tuple[str, EffectResources]] | None = None,
+    ) -> None:
+        """Initialize an empty set of the modules in `directories`.
+
+        Args:
+            directories (Path | Sequence[tuple[Path, str]]): Directories to watch, in priority order, each with the
+                prefix of the module names its files are imported under. A single path is a development directory.
+            reserved (Collection[str]): Commands that belong to effects outside the directories.
+            imported (Mapping[Path, tuple[str, EffectResources]] | None): Modules the command line already imported,
+                by file, with their command and classes. The first scan lists them without importing them again.
+
+        """
+        self.directories = [(directories, MODULE_PREFIX)] if isinstance(directories, Path) else list(directories)
         self._reserved = set(reserved)
+        self._imported = dict(imported or {})
         self.effects: dict[Path, DevEffect] = {}
-        """Each module, by file path, in file name order."""
+        """Each module, by file path, in directory order and then file name order."""
 
     def scan(self) -> dict[Path, str | None]:
         """Import new and changed modules, and forget deleted ones.
@@ -71,25 +91,29 @@ class DevEffects:
 
         """
         before = {path: (effect.name, effect.state) for path, effect in self.effects.items()}
-        found: dict[Path, tuple[int, int]] = {}
-        try:
-            paths = sorted(self.directory.glob("*.py"))
-        except OSError:
-            paths = []
-        for path in paths:
-            if path.name == "__init__.py":
-                continue
+        found: dict[Path, tuple[tuple[int, int], str]] = {}
+        for directory, prefix in self.directories:
             try:
-                stat = path.stat()
+                paths = sorted(directory.glob("*.py"))
             except OSError:
-                continue
-            found[path] = (stat.st_mtime_ns, stat.st_size)
+                paths = []
+            for path in paths:
+                if path.name == "__init__.py" or path in found:
+                    continue
+                try:
+                    stat = path.stat()
+                except OSError:
+                    continue
+                found[path] = ((stat.st_mtime_ns, stat.st_size), prefix + path.stem)
         effects: dict[Path, DevEffect] = {}
         imported: set[Path] = set()
-        for path, signature in found.items():
+        for path, (signature, module_name) in found.items():
             effect = self.effects.get(path)
-            if effect is None or effect.signature != signature:
-                effect = _load(path, signature)
+            if effect is None and path in self._imported:
+                command, resources = self._imported.pop(path)
+                effect = DevEffect(path, signature, module_name, command, resources)
+            elif effect is None or effect.signature != signature:
+                effect = _load(path, signature, module_name)
                 imported.add(path)
             effects[path] = effect
         self.effects = effects
@@ -115,7 +139,7 @@ class DevEffects:
                 effect.error = None
                 taken.add(effect.command)
 
-    def playable(self) -> dict[str, tuple[type[BaseEffect], type[BaseConfig]]]:
+    def playable(self) -> dict[str, EffectResources]:
         """Return the commands of the modules that can be played, with their effect and config classes."""
         return {
             effect.name: effect.resources
@@ -132,20 +156,19 @@ class DevEffects:
         return next((path for path, effect in self.effects.items() if effect.name == name), None)
 
     def location(self, error: BaseException) -> str | None:
-        """Return `file:line` of the innermost frame of `error`'s traceback in the development directory."""
-        directory = self.directory.resolve()
+        """Return `file:line` of the innermost frame of `error`'s traceback in a watched effect module."""
+        paths = {path.resolve() for path in self.effects}
         location = None
         for frame in traceback.extract_tb(error.__traceback__):
             path = Path(frame.filename)
-            if path.parent.resolve() == directory:
+            if path.resolve() in paths:
                 location = f"{path.name}:{frame.lineno}"
         return location
 
 
-def _load(path: Path, signature: tuple[int, int]) -> DevEffect:
-    """Import the module at `path` from its source and return its listing."""
-    effect = DevEffect(path, signature)
-    module_name = MODULE_PREFIX + path.stem
+def _load(path: Path, signature: tuple[int, int], module_name: str) -> DevEffect:
+    """Import the module at `path` from its source as `module_name` and return its listing."""
+    effect = DevEffect(path, signature, module_name)
     previous = sys.modules.get(module_name)
     try:
         source = path.read_bytes()

@@ -139,7 +139,7 @@ TIPS = (
     "Type in the filter above the effect list to find an effect by name or description.",
     "Use the bar above the text to color the selection or new text, and Symbols to insert blocks, lines, and arrows.",
     "Select text and click Gradient to spread a gradient across it. Click its arrow to change the gradient.",
-    "Run python -m tools.dev --tui to list the effects in dev_effects. Saving one reloads it; red ones cannot play.",
+    "Saving an effect's file reloads it, and red effects cannot play. python -m tools.dev --tui adds dev_effects.",
 )
 
 

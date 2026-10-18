@@ -213,3 +213,29 @@ def test_modules_that_exit_or_return_bad_classes_are_broken(tmp_path: Path, body
     development.scan()
     assert development.playable() == {}
     assert reason in development.broken()["effect_odd.py"]
+
+
+def test_directories_are_watched_in_order_and_imported_modules_are_kept(tmp_path: Path) -> None:
+    """Modules the command line imported are listed without importing them, and earlier directories win."""
+    builtin = tmp_path / "builtin"
+    development = tmp_path / "development"
+    builtin.mkdir()
+    development.mkdir()
+    kept = builtin / "effect_kept.py"
+    _write(kept, "raise RuntimeError('imported again')\n")
+    _write(builtin / "effect_first.py", PROTOTYPE.format(speed=1, command="same"))
+    _write(development / "effect_second.py", PROTOTYPE.format(speed=2, command="same"))
+    resources = (Wipe, build_parser(include_user_effects=False)[1]["wipe"][1])
+    watched = DevEffects(
+        [(builtin, "_tte_test_builtin_"), (development, "_tte_test_dev_")],
+        imported={kept: ("kept", resources)},
+    )
+    watched.scan()
+    assert watched.playable() == {"kept": resources, "same": watched.playable()["same"]}
+    assert list(watched.broken()) == ["effect_second.py"]
+    assert sys.modules["_tte_test_builtin_effect_first"].SPEED == 1
+
+    # Saving a module that was imported by the command line imports it again from its source.
+    _write(kept, PROTOTYPE.format(speed=3, command="kept"))
+    assert watched.scan() == {kept: "kept"}
+    assert sys.modules["_tte_test_builtin_effect_kept"].SPEED == 3

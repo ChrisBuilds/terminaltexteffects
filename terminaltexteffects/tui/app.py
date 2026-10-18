@@ -1056,7 +1056,7 @@ class TTEApp(App[None]):
             text (str): Initial text, which may contain ANSI colors.
             input_file (str | None): File the text came from, used as the default save path.
             effect (str | None): Effect to select initially.
-            development (DevEffects | None): Effects in development, listed with the others and imported again when
+            development (DevEffects | None): Watched effect modules, listed with the others and imported again when
                 their files change. Modules that cannot be played are listed in red.
 
         """
