@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
+import types
 from typing import TYPE_CHECKING
 
 import pytest
@@ -276,3 +277,22 @@ def test_a_command_that_does_not_match_the_parser_is_broken(tmp_path: Path) -> N
     watched.scan()
     assert not watched.playable()
     assert "'renamed', but the parser command is 'original'" in watched.broken()["effect_renamed.py"]
+
+
+def test_reloaded_package_modules_replace_the_package_attribute(tmp_path: Path) -> None:
+    """A module in a package is bound to the package again, so `import package.module as module` gets the new one."""
+    package = types.ModuleType("_tte_test_package")
+    package.__path__ = [str(tmp_path)]
+    sys.modules["_tte_test_package"] = package
+    try:
+        path = tmp_path / "effect_bound.py"
+        _write(path, PROTOTYPE.format(speed=1, command="bound"))
+        watched = DevEffects([(tmp_path, "_tte_test_package.")])
+        watched.scan()
+        _write(path, PROTOTYPE.format(speed=2, command="bound"))
+        watched.scan()
+        assert package.effect_bound is sys.modules["_tte_test_package.effect_bound"]
+        assert package.effect_bound.SPEED == 2
+    finally:
+        sys.modules.pop("_tte_test_package", None)
+        sys.modules.pop("_tte_test_package.effect_bound", None)

@@ -19,6 +19,7 @@ from terminaltexteffects.tui import options
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable, Collection, Mapping, Sequence
+    from types import ModuleType
 
     from terminaltexteffects.engine.base_config import BaseConfig
     from terminaltexteffects.engine.base_effect import BaseEffect
@@ -196,6 +197,7 @@ def _load(
         # the file's size and whole-second modification time.
         code = compile(source, str(path), "exec", dont_inherit=True)
         sys.modules[module_name] = module
+        _bind_to_parent(module_name, module)
         exec(code, module.__dict__)  # noqa: S102
         get_resources = getattr(module, "get_effect_resources", None)
         if get_resources is None:
@@ -222,8 +224,24 @@ def _load(
             sys.modules.pop(module_name, None)
         else:
             sys.modules[module_name] = previous
+        _bind_to_parent(module_name, previous)
         effect.error = format_error(error, path)
     return effect
+
+
+def _bind_to_parent(module_name: str, module: ModuleType | None) -> None:
+    """Set `module` as the attribute of its parent package, as an import does, or remove it for `None`.
+
+    `import package.name as name` reads the parent package's attribute, so a module imported again must replace it.
+    """
+    parent_name, _, child = module_name.rpartition(".")
+    parent = sys.modules.get(parent_name) if parent_name else None
+    if parent is None:
+        return
+    if module is not None:
+        setattr(parent, child, module)
+    elif hasattr(parent, child):
+        delattr(parent, child)
 
 
 def format_error(error: BaseException, path: Path) -> str:
