@@ -28,6 +28,10 @@ for cell, fragment in g3.rasterize(cube, camera, rotation=turn).items():
     brightness = g3.lambert(fragment.normal, light)  # 0 in shadow, 1 facing the light
 ```
 
+Camera position and orientation can change with `set_position` and `set_rotation`. `depth(point)` reports
+view-axis depth. `ray(coord)` supplies a world ray, and `cell_to_world(coord, z=...)` intersects it with a world-z
+plane, raising `ValueError` for parallel rays. For movement helpers and tweens, use `Space3D.camera`.
+
 Angles are in radians. Rotations compose with `*`: `second * first` applies `first`, then `second`.
 
 `rasterize` and `wireframe` take `bounds=g3.Bounds.for_canvas(canvas)` to fill only cells on the canvas. Without

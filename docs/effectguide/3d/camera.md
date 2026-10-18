@@ -5,7 +5,7 @@ how much nearer things grow and farther things shrink.
 
 ## The idea
 
-The camera sits on the +z axis, looking back at the origin. To draw a point, it **projects** it: it finds where the
+By default, the camera sits on the +z axis, looking back at the origin. To draw a point, it **projects** it: it finds where the
 line from the point to the camera crosses the screen.
 
 - With **perspective**, things farther away look smaller, and parallel lines running away from you converge. A point
@@ -70,6 +70,106 @@ for x, z in ((-26, 0), (0, -60), (26, -120)):
 - Larger values move the camera closer. `2` puts it 60 columns away, which exaggerates depth.
 - `0` is orthographic.
 
+## Moving the camera
+
+Bodies can stay still while the camera moves around them. `space.camera` has immediate controls and a tween queue,
+like a body. Its local axes are right (+x), up (+y) and backward (+z); it looks along local -z. World axes stay fixed
+when the camera turns.
+
+![Top view: the camera orbits a stationary cube, with arrows showing forward dolly and sideways truck movement](../../img/effectguide/3d/camera_movement.webp)
+
+| Operation | Immediate call | Queued call |
+| --- | --- | --- |
+| World position | `set_position(x, y, z)`, `move_by(x, y, z)` | `move_to(x, y, z, frames=60)` |
+| Forward / backward | `dolly(amount)` | `dolly_by(amount, frames=60)` |
+| Right / left | `truck(amount)` | `truck(amount, frames=60)` |
+| Up / down | `pedestal(amount)` | `pedestal(amount, frames=60)` |
+| Yaw, pitch, roll | `pan(degrees)`, `tilt(degrees)`, `roll(degrees)` | The same calls with `frames=60` |
+| World orientation | `set_rotation(rotation)` | `turn_to(rotation, frames=60)` |
+| Aim at a point or body | `look_at(x, y, z)`, `look_at(body)` | The same calls with `frames=60` |
+| Orbit a point or body | `orbit("y", degrees=30, around=body)` | `orbit("y", turns=1, around=body, frames=240)` |
+| Focal length | `zoom(factor)` multiplies it | `zoom_to(focal, frames=60)` targets an absolute length |
+
+Positive travel goes forward, right or up; use negative amounts for the reverse. Positive pan turns the view left,
+positive tilt looks up, and positive roll rotates the camera counterclockwise about its backward axis. `up="y"`
+is the default world-up direction for aiming and orbiting; an `(x, y, z)` direction also works. When looking along
+that direction, the previous right axis supplies a stable roll. A target at the eye has no aiming direction and
+raises `ValueError`.
+
+A dolly changes position and perspective relationships. Zoom changes focal length without moving the eye;
+it does not change sizes in orthographic mode. Moving the camera never changes focal length automatically.
+
+### Queues and targets
+
+Queued moves accept `ease` and `together=True`. All tweens starting together capture the same initial camera pose. `hold`, `on_complete`, `on_group_complete`, `cancel` and `reset`
+work like their body counterparts. Callbacks receive the camera. `space.animating` includes camera tweens, and
+`space.step()` advances them before body tweens, refreshes mount readings, runs camera callbacks followed by body
+callbacks, refreshes again, then draws surfaces. Callbacks can read final mount positions and release text there.
+
+```python
+camera = self.space.camera
+camera.dolly_by(25, frames=60, ease=easing.in_out_sine)
+camera.look_at(cube, frames=60, together=True)
+camera.orbit("y", turns=1, around=cube, frames=240)
+camera.hold(30).zoom_to(160, frames=60)
+```
+
+`look_at` and `orbit` are immediate when `frames` is omitted. Supplying `frames=0` follows queue ordering: it
+applies immediately only when no earlier work is queued. Negative frame counts raise `ValueError`.
+
+Travel tweens capture their local direction when they start, so a simultaneous pan does not curve a dolly path.
+Body targets are sampled when the action starts, after any preceding camera actions. They are not continuously
+tracked. To follow a moving body, call `camera.look_at(body)` each frame after moving it. Orbit aims at its target when it starts and uses a world axis
+through that sampled target. A nonzero orbit radius is required.
+
+Tweens apply deltas: immediate nudges and turns survive later tween frames. Without concurrent edits, a move or
+turn reaches its target and an orbit keeps its radius and ends aimed at its target. With concurrent edits, the
+final pose includes those edits. Zoom deltas multiply, so an immediate `zoom(2)` doubles the rest of a zoom tween.
+
+`cancel()` drops queued work and pending completion callbacks while keeping the current view. `reset()` also
+restores all camera settings from space creation, including position, orientation and focal length.
+
+### A stationary cube, seen from a moving camera
+
+The CameraOrbit example mounts text on the front of a cube. The cube stays still while the camera makes one
+complete orbit. Its mounted letters disappear behind the cube and return as the camera comes around.
+
+```python
+self.space = Space3D(self.terminal)
+self.cube = self.space.body(Cube(48)).draw(Shaded())
+anchors = [self.cube.anchor(a.point.x, a.point.y, 24, normal="z")
+           for a in self.cube.text_plane(characters)]
+self.cube.add_chars(characters, anchors, blend_frames=0,
+                    hide_when_facing_away=True)
+self.space.camera.set_position(0, 20, 170).look_at(self.cube).zoom(1.4)
+self.space.camera.orbit("y", turns=1, around=self.cube, frames=360)
+```
+
+??? example "cameraorbit.py"
+
+    Save it in your community effects directory as `cameraorbit.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/cameraorbit/cameraorbit.py"
+    ```
+
+```bash
+tte --input-file concept_input.txt --canvas-width 80 --canvas-height 32 --anchor-text c cameraorbit
+```
+
+![A camera circles a stationary shaded cube with mounted text](../../img/effectguide/cameraorbit_demo.webp)
+
+### Light and text layouts
+
+`Space3D(..., light_space="world")` keeps the light fixed in the world, which is the default. With
+`light_space="camera"`, the configured light direction rotates with the camera. Use `light="front"` for a headlight;
+translation does not change a directional light. Mount light readings and shaded surfaces use the same mode.
+
+`text_plane` and other at-rest layouts keep using the camera configuration from space creation, so camera
+movement and zoom do not rearrange their anchors. `camera.cell_to_world(coord, z=...)` uses the active view and
+intersects its ray with the requested **world-z** plane. It raises `ValueError` if the ray runs along that plane,
+where there is no unique intersection. `camera.ray(coord)` returns the active world-space ray directly.
+
 ## Under the hood
 
 [`geometry3d.Camera`](../../engine/utils/geometry3d.md) does the projection. `Space3D` makes one centered on the
@@ -82,8 +182,8 @@ if projected is not None:
     depth = projected.depth  # Distance from the camera. Smaller is nearer.
 ```
 
-- `distance` is how far the camera is from the origin, and `focal` (the same as `distance` unless you set it)
-  controls the scaling.
+- `distance` sets the initial eye z and the focal length when `focal=None`. Assigning it moves the eye until
+  explicit positioning, then only the fallback focal length changes. `focal` controls scaling independently.
 - `near` clips points closer than that to the camera: `project` returns `None` when a point's depth is below `near`,
   which covers points behind the camera and points just in front of it. Clipping is per point and per face, not per
   body. Crossing faces and edges keep their visible portions; texture coordinates are interpolated at the clipped
@@ -113,8 +213,8 @@ whole-cell steps:
 
 ## Coordinates and mutable settings
 
-World **z** increases toward the viewer. Camera **depth** is `camera.distance - world_z`,
-so smaller depth is nearer. `cell_to_world(coord, z=...)` accepts world z; `Projected.depth`
+World **z** increases toward the default viewer. Camera **depth** is distance along the active view axis,
+so smaller positive depth is nearer. In the default view it equals `camera.distance - world_z`. `cell_to_world(coord, z=...)` accepts world z; `Projected.depth`
 and `Mount.depth` report camera depth. Both are measured in columns.
 
 Camera settings are mutable. Construction checks positive `distance`, `focal` (when set), `near`

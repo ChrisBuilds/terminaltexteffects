@@ -31,6 +31,7 @@ viewer. Angles are degrees, and axes are `"x"`, `"y"`, `"z"`, `"diagonal"` or an
 
 Classes:
     Space3D: Camera, light, bodies and mounts for one effect.
+    Camera: Camera controls and queued movements.
     Body: Geometry that moves in 3D, with step-by-step transforms, tweens and anchor layouts.
     Anchor: A point on a body that a character can be mounted on.
     Mount: A character's link to an anchor, with the 3D readings an effect can use.
@@ -66,6 +67,7 @@ __all__ = [
     "Anchor",
     "Body",
     "Box",
+    "Camera",
     "Cube",
     "Cylinder",
     "Icosahedron",
@@ -829,15 +831,18 @@ def _text_grid(text: str) -> tuple[list[str], int]:
 # Tweens
 
 
+_TweenOwner = typing.TypeVar("_TweenOwner")
+
+
 @dataclass
-class _Tween:
-    """One queued animation of a body. `apply` receives the previous and current eased progress."""
+class _Tween(typing.Generic[_TweenOwner]):
+    """One queued animation of a body or camera. `apply` receives the previous and current eased progress."""
 
     frames: int
     apply: Callable[[float, float], None]
     ease: EasingFunction | None = None
     begin: Callable[[], None] | None = None
-    callbacks: list[Callable[[Body], None]] = field(default_factory=list)
+    callbacks: list[Callable[[_TweenOwner], None]] = field(default_factory=list)
     frame: int = 0
     progress: float = 0.0
     started: bool = False
@@ -863,11 +868,628 @@ class _Tween:
 
 
 @dataclass
-class _TweenGroup:
+class _TweenGroup(typing.Generic[_TweenOwner]):
     """Tweens played together and callbacks owned by their shared lifetime."""
 
-    tweens: list[_Tween]
-    callbacks: list[Callable[[Body], None]] = field(default_factory=list)
+    tweens: list[_Tween[_TweenOwner]]
+    callbacks: list[Callable[[_TweenOwner], None]] = field(default_factory=list)
+
+
+class Camera(g3.Camera):
+    """A space's camera, with immediate controls and a queue played by `Space3D.step`.
+
+    Identity orientation looks along local -z; +x is right and +y is up. Pan, tilt and roll
+    use degrees about the camera's local +y, +x and +z axes. Positive dolly moves forward,
+    truck right and pedestal up. Methods return this camera for chaining.
+
+    `look_at` and `orbit` apply immediately unless `frames` is supplied. Zero frames follows
+    the same queue rules as `Body`. Target bodies are sampled when a tween begins; call
+    `look_at(body)` each frame for continuous tracking. Queued transforms apply deltas,
+    so immediate changes compose with them. `zoom_to` takes an absolute focal length.
+
+    `Space3D` creates one centered on the canvas. Its constructor accepts the same settings
+    as `geometry3d.Camera`; standalone instances can also project and queue movement.
+    """
+
+    def __post_init__(self) -> None:
+        """Validate settings and remember the initial view for `reset`."""
+        super().__post_init__()
+        self._home = (
+            self.center_column,
+            self.center_row,
+            self.distance,
+            self.focal,
+            self.orthographic,
+            self.near,
+            self.row_scale,
+        )
+        self._queue: list[_TweenGroup[Camera]] = []
+        self._callback_generation = 0
+
+    @property
+    def animating(self) -> bool:
+        """Whether camera tweens are queued or playing."""
+        return bool(self._queue)
+
+    def set_position(self, x: float = 0, y: float = 0, z: float = 0) -> Camera:
+        """Set the eye's world position, now, without changing distance or focal length.
+
+        Args:
+            x (float): World x coordinate or displacement, in columns.
+            y (float): World y coordinate or displacement, in columns.
+            z (float): World z coordinate or displacement, in columns.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        super().set_position(x, y, z)
+        return self
+
+    def set_rotation(self, rotation: g3.Rotation | None = None) -> Camera:
+        """Set the world orientation, now; `None` restores the -z view direction.
+
+        Args:
+            rotation (g3.Rotation | None): Target world orientation; `None`, when accepted, restores the
+                default orientation.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        super().set_rotation(rotation)
+        return self
+
+    def move_by(self, x: float = 0, y: float = 0, z: float = 0) -> Camera:
+        """Move by world displacement `(x, y, z)`, now.
+
+        Args:
+            x (float): World x coordinate or displacement, in columns.
+            y (float): World y coordinate or displacement, in columns.
+            z (float): World z coordinate or displacement, in columns.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        point = self.position + g3.Vec3(x, y, z)
+        return self.set_position(point.x, point.y, point.z)
+
+    def _travel(self, axis: g3.Vec3, amount: float) -> Camera:
+        point = self.rotation.apply(axis) * amount
+        return self.move_by(point.x, point.y, point.z)
+
+    def dolly(self, amount: float) -> Camera:
+        """Move forward `amount` columns, now; negative amounts move backward.
+
+        Args:
+            amount (float): Signed travel in columns along the named camera-local direction.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        return self._travel(-g3.Z_AXIS, amount)
+
+    def truck(
+        self, amount: float, *, frames: int | None = None, ease: EasingFunction | None = None, together: bool = False
+    ) -> Camera:
+        """Move right `amount` columns, now or over `frames`, along the starting local axis.
+
+        Args:
+            amount (float): Signed travel in columns along the named camera-local direction.
+            frames (int | None): `None` applies now; otherwise queue this many frames. Zero preserves queue ordering.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued group instead of after it.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        return (
+            self._travel(g3.X_AXIS, amount)
+            if frames is None
+            else self._travel_by(g3.X_AXIS, amount, frames, ease, together=together)
+        )
+
+    def pedestal(
+        self, amount: float, *, frames: int | None = None, ease: EasingFunction | None = None, together: bool = False
+    ) -> Camera:
+        """Move up `amount` columns, now or over `frames`, along the starting local axis.
+
+        Args:
+            amount (float): Signed travel in columns along the named camera-local direction.
+            frames (int | None): `None` applies now; otherwise queue this many frames. Zero preserves queue ordering.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued group instead of after it.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        return (
+            self._travel(g3.Y_AXIS, amount)
+            if frames is None
+            else self._travel_by(g3.Y_AXIS, amount, frames, ease, together=together)
+        )
+
+    def _turn(
+        self, axis: Axis, degrees: float, frames: int | None, ease: EasingFunction | None, *, together: bool
+    ) -> Camera:
+        unit = _direction(axis, _AXES, "axis")
+        angle = math.radians(degrees)
+        if frames is None:
+            return self.set_rotation(self.rotation * g3.Rotation.about_axis(unit, angle))
+
+        def apply(previous: float, current: float) -> None:
+            self.set_rotation(self.rotation * g3.Rotation.about_axis(unit, angle * (current - previous)))
+
+        return self._queue_tween(_Tween(frames, apply, ease), together=together)
+
+    def pan(
+        self, degrees: float, *, frames: int | None = None, ease: EasingFunction | None = None, together: bool = False
+    ) -> Camera:
+        """Yaw about local +y, now or over `frames`; positive angles turn the view left.
+
+        Args:
+            degrees (float): Signed angle in degrees.
+            frames (int | None): `None` applies now; otherwise queue this many frames. Zero preserves queue ordering.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued group instead of after it.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        return self._turn("y", degrees, frames, ease, together=together)
+
+    def tilt(
+        self, degrees: float, *, frames: int | None = None, ease: EasingFunction | None = None, together: bool = False
+    ) -> Camera:
+        """Pitch about local +x, now or over `frames`; positive angles look upward.
+
+        Args:
+            degrees (float): Signed angle in degrees.
+            frames (int | None): `None` applies now; otherwise queue this many frames. Zero preserves queue ordering.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued group instead of after it.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        return self._turn("x", degrees, frames, ease, together=together)
+
+    def roll(
+        self, degrees: float, *, frames: int | None = None, ease: EasingFunction | None = None, together: bool = False
+    ) -> Camera:
+        """Turn about local +z, now or over `frames`; positive angles rotate the camera counterclockwise.
+
+        Args:
+            degrees (float): Signed angle in degrees.
+            frames (int | None): `None` applies now; otherwise queue this many frames. Zero preserves queue ordering.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued group instead of after it.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        return self._turn("z", degrees, frames, ease, together=together)
+
+    def zoom(self, factor: float) -> Camera:
+        """Multiply focal length by positive `factor`, now; orthographic size is unaffected.
+
+        Args:
+            factor (float): Positive multiplier of the current focal length.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        if factor <= 0:
+            msg = "A zoom factor must be positive."
+            raise ValueError(msg)
+        self.focal = (self.focal or self.distance) * factor
+        return self
+
+    @staticmethod
+    def _point(target: Body | g3.Vec3 | tuple[float, float, float]) -> g3.Vec3:
+        if isinstance(target, Body):
+            return target.position
+        return target if isinstance(target, g3.Vec3) else g3.Vec3(*target)
+
+    def _aim(self, point: g3.Vec3, up: g3.Vec3, *, eye: g3.Vec3 | None = None) -> g3.Rotation:
+        """Build an orthonormal camera basis, with a stable fallback when up follows the view."""
+        back = ((self.position if eye is None else eye) - point).normalized()
+        right = up.cross(back)
+        if right.length() < _EPSILON:
+            previous = self.rotation.apply(g3.X_AXIS)
+            right = previous - back * previous.dot(back)
+            if right.length() < _EPSILON:
+                fallback = g3.Y_AXIS if abs(back.y) < 0.9 else g3.Z_AXIS
+                right = fallback.cross(back)
+        right = right.normalized()
+        vertical = back.cross(right)
+        # Convert the basis columns to a quaternion, choosing the largest stable component.
+        m = (right.x, vertical.x, back.x, right.y, vertical.y, back.y, right.z, vertical.z, back.z)
+        trace = m[0] + m[4] + m[8]
+        if trace > 0:
+            size = math.sqrt(trace + 1) * 2
+            return g3.Rotation(size / 4, (m[7] - m[5]) / size, (m[2] - m[6]) / size, (m[3] - m[1]) / size)
+        index = max(range(3), key=lambda i: m[4 * i])
+        i, j, k = index, (index + 1) % 3, (index + 2) % 3
+        size = math.sqrt(1 + m[3 * i + i] - m[3 * j + j] - m[3 * k + k]) * 2
+        parts = [0.0, 0.0, 0.0]
+        parts[i] = size / 4
+        parts[j] = (m[3 * j + i] + m[3 * i + j]) / size
+        parts[k] = (m[3 * k + i] + m[3 * i + k]) / size
+        return g3.Rotation((m[3 * k + j] - m[3 * j + k]) / size, *parts)
+
+    def look_at(
+        self,
+        x: float | Body | g3.Vec3 | tuple[float, float, float],
+        y: float = 0,
+        z: float = 0,
+        *,
+        up: Axis = "y",
+        frames: int | None = None,
+        ease: EasingFunction | None = None,
+        together: bool = False,
+    ) -> Camera:
+        """Aim at world `(x, y, z)` or a body, now or over `frames` along the shortest turn.
+
+        `up` is a nonzero world direction. At a pole, the previous right axis supplies the roll.
+        Raises `ValueError` if the target is at the eye, up is zero, or frames is negative.
+
+        Args:
+            x (float | Body | g3.Vec3 | tuple[float, float, float]): Target world x, a `Vec3`, an `(x,
+                y, z)` tuple or a body to aim at.
+            y (float): World y coordinate or displacement, in columns.
+            z (float): World z coordinate or displacement, in columns.
+            up (Axis): Nonzero world-up direction; defaults to +y.
+            frames (int | None): `None` applies now; otherwise queue this many frames. Zero preserves queue ordering.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued group instead of after it.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        target = g3.Vec3(x, y, z) if isinstance(x, (float, int)) else x
+        vertical = _direction(up, _AXES, "up")
+        if frames is None:
+            return self.set_rotation(self._aim(self._point(target), vertical))
+        return self._turn_to(lambda: self._aim(self._point(target), vertical), frames, ease, together=together)
+
+    def orbit(
+        self,
+        axis: Axis = "y",
+        degrees: float | None = None,
+        *,
+        around: Body | g3.Vec3 | tuple[float, float, float] = g3.ORIGIN,
+        turns: float | None = None,
+        up: Axis = "y",
+        frames: int | None = None,
+        ease: EasingFunction | None = None,
+        together: bool = False,
+    ) -> Camera:
+        """Turn the eye around a world axis through `around`, keeping it aimed there.
+
+        Supply `degrees` or `turns` (default one turn), and `frames` to queue it. The target
+        is sampled at the start. Without concurrent edits, the radius stays constant.
+        `up` sets the aiming roll; at poles the previous right axis supplies it.
+        Raises `ValueError` for both angle forms, invalid directions, negative frames or zero radius.
+
+        Args:
+            axis (Axis): World axis name or nonzero direction for the orbit.
+            degrees (float | None): Signed angle in degrees.
+            around (Body | g3.Vec3 | tuple[float, float, float]): World point or body whose position is
+                sampled when the orbit starts.
+            turns (float | None): Signed full turns, as an alternative to degrees. Defaults to one turn
+                if neither is supplied.
+            up (Axis): Nonzero world-up direction; defaults to +y.
+            frames (int | None): `None` applies now; otherwise queue this many frames. Zero preserves queue ordering.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued group instead of after it.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        if degrees is not None and turns is not None:
+            msg = "Supply degrees or turns, not both."
+            raise ValueError(msg)
+        angle = math.radians(degrees if degrees is not None else 360 * (turns if turns is not None else 1))
+        unit = _direction(axis, _AXES, "axis")
+        vertical = _direction(up, _AXES, "up")
+        if frames is None:
+            center = self._point(around)
+            point = center + g3.Rotation.about_axis(unit, angle).apply(self.position - center)
+            if (point - center).length() < _EPSILON:
+                msg = "An orbit needs a nonzero radius."
+                raise ValueError(msg)
+            self.set_position(point.x, point.y, point.z)
+            return self.set_rotation(self._aim(center, vertical))
+        points: dict[str, g3.Vec3] = {}
+        rotations: dict[str, g3.Rotation] = {}
+
+        def begin() -> None:
+            center = points["center"] = self._point(around)
+            points["offset"] = self.position - center
+            points["last"] = self.position
+            if points["offset"].length() < _EPSILON:
+                msg = "An orbit needs a nonzero radius."
+                raise ValueError(msg)
+            rotations["last"] = self.rotation
+
+        def apply(_previous: float, current: float) -> None:
+            point = points["center"] + g3.Rotation.about_axis(unit, angle * current).apply(points["offset"])
+            delta = point - points["last"]
+            self.move_by(delta.x, delta.y, delta.z)
+            aimed = self._aim(points["center"], vertical, eye=point)
+            pose = aimed
+            self.set_rotation(pose * rotations["last"].inverse() * self.rotation)
+            points["last"], rotations["last"] = point, pose
+
+        return self._queue_tween(_Tween(frames, apply, ease, begin), together=together)
+
+    def move_to(
+        self,
+        x: float = 0,
+        y: float = 0,
+        z: float = 0,
+        frames: int = 60,
+        ease: EasingFunction | None = None,
+        *,
+        together: bool = False,
+    ) -> Camera:
+        """Queue an absolute world position, applying deltas that preserve concurrent nudges.
+
+        Args:
+            x (float): World x coordinate or displacement, in columns.
+            y (float): World y coordinate or displacement, in columns.
+            z (float): World z coordinate or displacement, in columns.
+            frames (int): Duration in frames. Zero applies immediately only when no earlier tween is queued.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued group instead of after it.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        target = g3.Vec3(x, y, z)
+        state: dict[str, g3.Vec3] = {}
+
+        def begin() -> None:
+            state["start"] = state["last"] = self.position
+
+        def apply(_previous: float, current: float) -> None:
+            point = state["start"].lerp(target, current)
+            delta = point - state["last"]
+            self.move_by(delta.x, delta.y, delta.z)
+            state["last"] = point
+
+        return self._queue_tween(_Tween(frames, apply, ease, begin), together=together)
+
+    def _travel_by(
+        self, axis: g3.Vec3, amount: float, frames: int, ease: EasingFunction | None, *, together: bool
+    ) -> Camera:
+        state: dict[str, g3.Vec3] = {}
+
+        def begin() -> None:
+            state["delta"] = self.rotation.apply(axis) * amount
+
+        def apply(previous: float, current: float) -> None:
+            delta = state["delta"] * (current - previous)
+            self.move_by(delta.x, delta.y, delta.z)
+
+        return self._queue_tween(_Tween(frames, apply, ease, begin), together=together)
+
+    def dolly_by(
+        self, amount: float, frames: int = 60, ease: EasingFunction | None = None, *, together: bool = False
+    ) -> Camera:
+        """Queue relative forward travel; capture the forward axis when the tween begins.
+
+        Args:
+            amount (float): Signed travel in columns along the named camera-local direction.
+            frames (int): Duration in frames. Zero applies immediately only when no earlier tween is queued.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued group instead of after it.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        return self._travel_by(-g3.Z_AXIS, amount, frames, ease, together=together)
+
+    def _turn_to(
+        self, target: Callable[[], g3.Rotation], frames: int, ease: EasingFunction | None, *, together: bool
+    ) -> Camera:
+        state: dict[str, g3.Rotation] = {}
+
+        def begin() -> None:
+            state["start"] = state["last"] = self.rotation
+            state["target"] = target()
+
+        def apply(_previous: float, current: float) -> None:
+            pose = state["start"].slerp(state["target"], current)
+            self.set_rotation(pose * state["last"].inverse() * self.rotation)
+            state["last"] = pose
+
+        return self._queue_tween(_Tween(frames, apply, ease, begin), together=together)
+
+    def turn_to(
+        self, rotation: g3.Rotation, frames: int = 60, ease: EasingFunction | None = None, *, together: bool = False
+    ) -> Camera:
+        """Queue the shortest turn to a world orientation, preserving concurrent rotation deltas.
+
+        Args:
+            rotation (g3.Rotation): Target world orientation; `None`, when accepted, restores the default orientation.
+            frames (int): Duration in frames. Zero applies immediately only when no earlier tween is queued.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued group instead of after it.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        return self._turn_to(rotation.normalized, frames, ease, together=together)
+
+    def zoom_to(
+        self, focal: float, frames: int = 60, ease: EasingFunction | None = None, *, together: bool = False
+    ) -> Camera:
+        """Queue a positive absolute focal length, composing multiplicatively with immediate zooms.
+
+        Args:
+            focal (float): Positive target focal length in columns.
+            frames (int): Duration in frames. Zero applies immediately only when no earlier tween is queued.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued group instead of after it.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        if focal <= 0:
+            msg = "Camera focal length must be positive."
+            raise ValueError(msg)
+        state: dict[str, float] = {}
+
+        def begin() -> None:
+            state["start"] = state["last"] = self.focal or self.distance
+
+        def apply(_previous: float, current: float) -> None:
+            value = max(state["start"] + (focal - state["start"]) * current, _EPSILON)
+            self.zoom(value / state["last"])
+            state["last"] = value
+
+        return self._queue_tween(_Tween(frames, apply, ease, begin), together=together)
+
+    def cancel(self) -> Camera:
+        """Discard queued tweens and pending callbacks, keeping the current view.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        self._queue.clear()
+        self._callback_generation += 1
+        return self
+
+    def reset(self) -> Camera:
+        """Cancel animations and restore the complete camera configuration created with the space.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        self.cancel()
+        (
+            self.center_column,
+            self.center_row,
+            self.distance,
+            self.focal,
+            self.orthographic,
+            self.near,
+            self.row_scale,
+        ) = self._home
+        self._position = None
+        return self.set_rotation()
+
+    def hold(self, frames: int) -> Camera:
+        """Queue a pause of `frames` frames.
+
+        Args:
+            frames (int): Number of frames to pause; must not be negative.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
+
+        """
+        return self._queue_tween(_Tween(frames, lambda _previous, _current: None), together=False)
+
+    def on_complete(self, callback: Callable[[Camera], None]) -> Camera:
+        """Call `callback(camera)` when the most recently queued tween finishes, or now if nothing is queued.
+
+        During `Space3D.step`, the callback runs after every camera has moved and every mount's readings are
+        refreshed, so releasing characters there leaves them at the final pose.
+
+        Args:
+            callback (Callable[[Camera], None]): Function called with this camera when the tween or group finishes.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        if not self._queue:
+            callback(self)
+        else:
+            self._queue[-1].tweens[-1].callbacks.append(callback)
+        return self
+
+    def on_group_complete(self, callback: Callable[[Camera], None]) -> Camera:
+        """Call `callback(camera)` when the last queued parallel group finishes, or now if none is queued.
+
+        Later groups added after this call do not delay the hook. Like `on_complete`, callbacks run after
+        mount readings refresh, so they can safely release characters at the endpoint pose.
+
+        Args:
+            callback (Callable[[Camera], None]): Function called with this camera when the tween or group finishes.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        if not self._queue:
+            callback(self)
+        else:
+            self._queue[-1].callbacks.append(callback)
+        return self
+
+    def _queue_tween(self, tween: _Tween[Camera], *, together: bool) -> Camera:
+        if tween.frames < 0:
+            msg = "A tween's frames must not be negative."
+            raise ValueError(msg)
+        if tween.frames == 0 and not self._queue:
+            tween.advance()
+            for callback in tween.callbacks:
+                callback(self)
+            return self
+        if together and self._queue:
+            self._queue[-1].tweens.append(tween)
+        else:
+            self._queue.append(_TweenGroup([tween]))
+        return self
+
+    def _advance(self) -> list[Callable[[Camera], None]]:
+        """Play one frame of the tweens at the front of the queue and return the callbacks of those that finished.
+
+        `Space3D.step` calls them after the camera and bodies move and mounts refresh,
+        so callbacks release characters at the final pose.
+        """
+        if not self._queue:
+            return []
+        group = self._queue[0]
+        finished: list[Callable[[Camera], None]] = []
+        pending = [tween for tween in group.tweens if not tween.done]
+        # Capture one shared starting pose before any parallel tween changes the camera.
+        for tween in pending:
+            if not tween.started:
+                tween.started = True
+                if tween.begin is not None:
+                    tween.begin()
+        for tween in pending:
+            tween.advance()
+            if tween.done:
+                finished.extend(tween.callbacks)
+        if all(tween.done for tween in group.tweens):
+            self._queue.pop(0)
+            finished.extend(group.callbacks)
+        return finished
 
 
 # Bodies
@@ -927,7 +1549,7 @@ class Body:
         self._rotation = g3.Rotation()
         self._position = self._home
         self._scale = 1.0
-        self._queue: list[_TweenGroup] = []
+        self._queue: list[_TweenGroup[Body]] = []
         self._transform: tuple[float, ...] | None = None
         self._extent = max((vertex.length() for vertex in self._mesh.vertices), default=0.0) if self._mesh else 0.0
         self._look: Look | None = None
@@ -1491,7 +2113,7 @@ class Body:
 
         return apply
 
-    def _queue_tween(self, tween: _Tween, *, together: bool) -> Body:
+    def _queue_tween(self, tween: _Tween[Body], *, together: bool) -> Body:
         if tween.frames < 0:
             msg = "A tween's frames must not be negative."
             raise ValueError(msg)
@@ -1554,8 +2176,9 @@ class Body:
     def text_plane(self, characters: Sequence[EffectCharacter]) -> list[Anchor]:
         """Return an anchor for each character at its input cell, on a plane facing the viewer.
 
-        The anchors are placed so that, at the body's current pose, each projects onto its character's input
-        cell. Turning the body tilts and flips the text like a card.
+        At the body's current pose, each anchor meets its input cell in the default camera configuration
+        created with the space. Camera movement and zoom do not rearrange this layout. Turning the body
+        tilts and flips the text like a card.
 
         Args:
             characters (Sequence[EffectCharacter]): Characters in the order used for the returned anchors or mounts.
@@ -1564,7 +2187,7 @@ class Body:
             list[Anchor]: One anchor per character, in input sequence order.
 
         """
-        camera = self.space.camera
+        camera = self.space._layout_camera()
         inverse = self._rotation.inverse()
         facing = inverse.apply(g3.Z_AXIS)
         anchors = []
@@ -1907,7 +2530,7 @@ class Body:
         """Return a face's look, symbol, lit colors and colors for untextured faces, from its angle to the light."""
         look = self._face_look(fragment.tag)
         space = self.space
-        shade = g3.lambert(fragment.normal, space.light)
+        shade = g3.lambert(fragment.normal, space._world_light)
         lit = _AMBIENT + (1 - _AMBIENT) * shade
         ramp = _SHADE_SYMBOLS[min(len(_SHADE_SYMBOLS) - 1, int(shade * len(_SHADE_SYMBOLS)))]
         if isinstance(look, Shaded):
@@ -2017,7 +2640,7 @@ class Mount:
         layer_by_depth (bool): Raise nearer characters' layers so they draw over farther ones.
         hide_when_facing_away (bool): Hide the character while its anchor faces away from the viewer.
         coord (Coord): The cell the anchor projects onto.
-        depth (float): Camera depth `space.camera.distance - world_z`, in columns. Smaller is nearer.
+        depth (float): Distance along the camera view axis, in columns. Smaller is nearer.
         nearness (float): 1 at the nearest point the body can reach at its size, 0 at the farthest.
         facing (bool): Whether the anchor's surface faces the viewer. True without a normal.
         facing_amount (float): -1 facing directly away, 0 edge-on, 1 facing the viewer. 1 without a normal.
@@ -2155,7 +2778,7 @@ class Mount:
         self.depth = projected.depth
         reach = body._extent * body.scale
         if reach > _EPSILON:
-            center_depth = camera.distance - body.position.z
+            center_depth = camera.depth(body.position)
             self.nearness = min(max((center_depth + reach - projected.depth) / (2 * reach), 0.0), 1.0)
         else:
             self.nearness = 1.0
@@ -2164,7 +2787,7 @@ class Mount:
             turned = body.rotation.apply(normal)
             self.facing_amount = turned.dot(camera.view_direction(world))
             self.facing = self.facing_amount > 0
-            self.light = g3.lambert(turned, self.space.light)
+            self.light = g3.lambert(turned, self.space._world_light)
 
     def _step(self) -> tuple[Coord, bool]:
         """Return the character's cell for this tick and whether the blend just finished. Called by `Motion`."""
@@ -2210,6 +2833,7 @@ class Space3D:
         terminal (Terminal): The effect's terminal.
         perspective (float): 1 is a natural perspective, larger values exaggerate depth, and 0 is a flat
             orthographic view.
+        light_space (Literal["world", "camera"]): Keep the light in world space (default) or rotate it with the camera.
         light (Direction): Direction toward the light: `"upper left"`, `"upper right"`, `"front"`, `"above"`,
             `"left"`, `"right"` or an `(x, y, z)` direction.
         rng (random.Random | None): Random source for `random_pose` and `random_position`. `None` uses the
@@ -2217,18 +2841,19 @@ class Space3D:
 
     Attributes:
         terminal (Terminal): The effect's terminal.
-        camera (g3.Camera): Projects world space onto the canvas, centered on it.
+        camera (Camera): Camera controls, tween queue and projection onto the canvas.
         light (g3.Vec3): Unit vector toward the light.
         bodies (list[Body]): Bodies in creation order.
         mounts (dict[EffectCharacter, Mount]): Active mounts by character.
         rng (random.Random): Random source for the random tweens.
         input_text (str): Input text, top line first, used by default for textures.
         surface_characters (dict[Coord, EffectCharacter]): All pooled surface characters by cell, shown or hidden.
-        animating (bool): Whether any body has tweens queued or playing.
+        animating (bool): Whether the camera or any body has tweens queued or playing.
         blending (bool): Whether any active mount is still traveling toward its anchor.
 
     Raises:
-        ValueError: If `perspective` is negative or at least 120, or `light` is unknown or zero.
+        ValueError: If `perspective` is negative or at least 120, `light` is unknown or zero,
+            or `light_space` is neither `"world"` nor `"camera"`.
 
     """
 
@@ -2238,6 +2863,7 @@ class Space3D:
         *,
         perspective: float = 1.0,
         light: Direction = "upper left",
+        light_space: typing.Literal["world", "camera"] = "world",
         rng: random.Random | None = None,
     ) -> None:
         """Initialize the space. See the class docstring for the arguments.
@@ -2246,24 +2872,29 @@ class Space3D:
             terminal (Terminal): The effect's terminal.
             perspective (float): Perspective strength; 0 selects an orthographic view and 1 the natural perspective.
             light (Direction): Named light direction or nonzero direction pointing toward the light.
+            light_space (Literal["world", "camera"]): Coordinate space of the configured light direction.
             rng (random.Random | None): Random source, or `None` to use the `random` module.
 
         Returns:
             None: No return value.
 
         Raises:
-            ValueError: If `perspective` is negative or at least 120, or `light` is unknown or zero.
+            ValueError: If perspective or light is invalid, or `light_space` is unknown.
 
         """
         if perspective < 0:
             msg = "perspective must not be negative."
             raise ValueError(msg)
         self.terminal = terminal
-        self.camera = g3.Camera.for_canvas(
+        self.camera = Camera.for_canvas(
             terminal.canvas,
             distance=_CAMERA_DISTANCE / perspective if perspective else _CAMERA_DISTANCE,
             orthographic=perspective == 0,
         )
+        if light_space not in ("world", "camera"):
+            msg = 'light_space must be "world" or "camera".'
+            raise ValueError(msg)
+        self.light_space = light_space
         self.light = _direction(light, _LIGHTS, "light")
         self.bodies: list[Body] = []
         self.mounts: dict[EffectCharacter, Mount] = {}
@@ -2318,6 +2949,31 @@ class Space3D:
 
         """
         return {cell: slot.character for cell, slot in self._slots.items()}
+
+    @property
+    def camera(self) -> Camera:
+        """The active camera and its movement queue."""
+        return self._camera
+
+    @camera.setter
+    def camera(self, camera: g3.Camera) -> None:
+        """Accept replacement geometry cameras, preserving their view and adding movement controls."""
+        if isinstance(camera, Camera):
+            self._camera = camera
+            return
+        control = Camera(
+            camera.center_column,
+            camera.center_row,
+            camera.distance,
+            camera.focal,
+            camera.orthographic,
+            camera.near,
+            camera.row_scale,
+        )
+        if camera._position is not None:
+            control.set_position(camera.position.x, camera.position.y, camera.position.z)
+        control.set_rotation(camera.rotation)
+        self._camera = control
 
     def body(self, shape: Shape | None = None, *, at: tuple[float, float, float] = (0, 0, 0)) -> Body:
         """Create a body, with a shape or as a plain frame of reference for anchors.
@@ -2484,13 +3140,13 @@ class Space3D:
 
     @property
     def animating(self) -> bool:
-        """Whether any body has tweens queued or playing.
+        """Whether the camera or any body has tweens queued or playing.
 
         Returns:
             bool: Whether any tweens are queued or playing.
 
         """
-        return any(body.animating for body in self.bodies)
+        return self.camera.animating or any(body.animating for body in self.bodies)
 
     @property
     def blending(self) -> bool:
@@ -2503,7 +3159,7 @@ class Space3D:
         return any(mount.blend_progress < 1.0 for mount in self.mounts.values())
 
     def step(self) -> None:
-        """Play one frame of every body's tweens, refresh every mount's readings and draw the surfaces.
+        """Play one frame of camera and body tweens, refresh mounts and draw the surfaces.
 
         Callbacks of tweens that finished this frame run after the readings are refreshed, so characters released
         from them are placed at the final pose. Readings are refreshed again after any callbacks, so changes they
@@ -2513,9 +3169,15 @@ class Space3D:
             None: No return value.
 
         """
+        camera = self.camera
+        camera_generation = camera._callback_generation
+        camera_finished = camera._advance()
         finished = [(body, body._callback_generation, callback) for body in self.bodies for callback in body._advance()]
         self._refresh_mounts()
-        if finished:
+        if finished or camera_finished:
+            for callback in camera_finished:
+                if self.camera is camera and camera._callback_generation == camera_generation:
+                    callback(camera)
             for body, generation, callback in finished:
                 if not body._removed and body._callback_generation == generation:
                     callback(body)
@@ -2584,39 +3246,29 @@ class Space3D:
 
         Returns `None` when the view runs along the plane or meets it behind the camera.
         """
-        camera = self.camera
-        target = camera.cell_to_world(cell)
-        if camera.orthographic:
-            if abs(normal.z) <= _EPSILON:
-                return None
-            z = point.z - (normal.x * (target.x - point.x) + normal.y * (target.y - point.y)) / normal.z
-            return camera.distance - z
-        eye = g3.Vec3(0.0, 0.0, camera.distance)
-        view = target - eye
-        across = normal.dot(view)
-        if abs(across) <= _EPSILON * view.length():
+        origin, direction = self.camera.ray(cell)
+        across = normal.dot(direction)
+        if abs(across) <= _EPSILON * direction.length():
             return None
-        # The view leaves the eye along `view`, whose z falls by `distance` per unit, so depth is `t * distance`.
-        t = normal.dot(point - eye) / across
-        return t * camera.distance if t > 0 else None
+        depth = normal.dot(point - origin) / across
+        return depth if depth > 0 else None
 
     def _on_viewer_side(self, cell: Coord, depth: float, normal: g3.Vec3, point: g3.Vec3) -> bool:
-        """Return whether `point` lies on a face's plane or on the viewer's side of it.
-
-        The face is the one the view through `cell`'s center meets at `depth`, facing along `normal`. Curved shapes
-        are drawn as flat facets just inside the true surface, so anchors placed on the true surface pass too.
-        """
-        camera = self.camera
-        target = camera.cell_to_world(cell)
-        if camera.orthographic:
-            on_face = g3.Vec3(target.x, target.y, camera.distance - depth)
-            toward_viewer = normal.z
-        else:
-            # The view through the cell leaves the eye toward `target`, at depth `distance` per unit of travel.
-            eye = g3.Vec3(0.0, 0.0, camera.distance)
-            on_face = eye + (target - eye) * (depth / camera.distance)
-            toward_viewer = normal.dot(eye - on_face)
+        """Return whether `point` lies on the plane at `depth` or on its viewer's side."""
+        origin, direction = self.camera.ray(cell)
+        on_face = origin + direction * depth
+        toward_viewer = -normal.dot(direction)
         return normal.dot(point - on_face) * math.copysign(1.0, toward_viewer) >= -_ON_SURFACE
+
+    @property
+    def _world_light(self) -> g3.Vec3:
+        """Configured light in world space, rotating only in camera-relative mode."""
+        return self.camera.rotation.apply(self.light) if self.light_space == "camera" else self.light
+
+    def _layout_camera(self) -> g3.Camera:
+        """Return a default-pose camera for layouts, independent of active movement and zoom."""
+        column, row, distance, focal, orthographic, near, row_scale = self.camera._home
+        return g3.Camera(column, row, distance, focal, orthographic, near, row_scale)
 
     def _refresh_mounts(self) -> None:
         """Recompute every mount's readings for the current poses."""

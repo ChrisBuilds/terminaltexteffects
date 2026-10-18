@@ -327,29 +327,33 @@ class Bounds(NamedTuple):
 
 @dataclass
 class Camera:
-    """Projects world-space points onto canvas cells.
+    """Project world points from a positioned and oriented camera onto canvas cells.
 
-    The camera sits on the +z axis, `distance` columns from the origin, looking toward it. Perspective projection
-    scales points by `focal / depth`; with the default `focal` equal to `distance`, points on the z=0 plane keep
-    their size, so a character lifted onto that plane with `cell_to_world` projects back onto its own cell.
-    Orthographic projection ignores depth for size, which flattens the view. World z increases toward the
-    viewer; camera depth is `distance - z` and decreases toward the viewer in both projections.
+    Initially the eye is `(0, 0, distance)`, looking along -z with +y up. `set_position`
+    decouples the eye from legacy `distance`; `set_rotation` turns its local axes in world
+    space. Camera depth is distance along the viewing axis, not Euclidean range.
+    `focal=None` follows `distance`, including after camera movement. Orthographic views
+    ignore focal length. The default view preserves the z=0 plane's size.
 
-    Settings are mutable and validated only on construction. When changing fields, keep the same positive-value
-    constraints and `near < distance`; assignments do not revalidate. `focal=None` follows the current distance.
+    Settings are mutable and validated only at construction. Preserve their positive-value
+    constraints when assigning them. `near < distance` is a construction constraint for the
+    initial view; a moved camera can aim anywhere and clips using view-axis depth.
 
     Args:
-        center_column (float): Canvas column under the world origin.
-        center_row (float): Canvas row under the world origin.
-        distance (float): Distance from the camera to the origin, in columns. Smaller values exaggerate perspective.
-        focal (float | None): Focal length; `None` uses `distance`.
-        orthographic (bool): Project without perspective.
-        near (float): Minimum camera depth, in columns. Points with `distance - z < near` are not projected.
+        center_column (float): Canvas column at the center of the view.
+        center_row (float): Canvas row at the center of the view.
+        distance (float): Initial eye z and fallback focal length, in columns.
+        focal (float | None): Positive focal length; `None` follows `distance`.
+        orthographic (bool): Project without perspective scaling.
+        near (float): Positive minimum view-axis depth.
         row_scale (float): World units per row, correcting for tall cells.
 
+    Attributes:
+        position (Vec3): Eye in world space, following `distance` until explicitly positioned.
+        rotation (Rotation): Orientation in world space; identity looks along -z.
+
     Raises:
-        ValueError: If `distance`, `focal`, `near` or `row_scale` is not positive, or `near` is not less than
-            `distance`.
+        ValueError: If distance, focal, near or row_scale is not positive, or near >= distance.
 
     """
 
@@ -360,6 +364,10 @@ class Camera:
     orthographic: bool = False
     near: float = 1.0
     row_scale: float = TERMINAL_ROW_SCALE
+    _position: Vec3 | None = field(default=None, init=False, repr=False)
+    _rotation: Rotation = field(default_factory=Rotation, init=False, repr=False)
+    _view_matrix: Matrix3 = field(default_factory=lambda: Rotation().matrix(), init=False, repr=False)
+    _moved: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self) -> None:
         """Validate the camera settings."""
@@ -375,8 +383,85 @@ class Camera:
         """Return a camera centered on `canvas`. `settings` are passed to `Camera`."""
         return cls((canvas.left + canvas.right) / 2, (canvas.bottom + canvas.top) / 2, **settings)
 
+    @property
+    def position(self) -> Vec3:
+        """World position of the eye; follows `distance` until explicitly positioned."""
+        return self._position if self._position is not None else Vec3(0.0, 0.0, self.distance)
+
+    @property
+    def rotation(self) -> Rotation:
+        """World orientation; identity looks along -z, with +x right and +y up."""
+        return self._rotation
+
+    def set_position(self, x: float = 0.0, y: float = 0.0, z: float = 0.0) -> Camera:
+        """Set the eye's world coordinates, independently of `distance`, now.
+
+        Args:
+            x (float): World x coordinate or displacement, in columns.
+            y (float): World y coordinate or displacement, in columns.
+            z (float): World z coordinate or displacement, in columns.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        self._position = Vec3(x, y, z)
+        self._moved = True
+        return self
+
+    def set_rotation(self, rotation: Rotation | None = None) -> Camera:
+        """Set the world orientation, now. `None` looks along -z.
+
+        Args:
+            rotation (Rotation | None): Target world orientation; `None`, when accepted, restores the
+                default orientation.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        """
+        self._rotation = (rotation or Rotation()).normalized()
+        self._view_matrix = self._rotation.inverse().matrix()
+        self._moved = self._position is not None or self._rotation != Rotation()
+        return self
+
+    def _view_point(self, point: Vec3) -> Vec3:
+        """Transform once into axes parallel to the default camera, at its reference distance."""
+        eye = self.position
+        x, y, z = point.x - eye.x, point.y - eye.y, point.z - eye.z
+        a, b, c, d, e, f, g, h, i = self._view_matrix
+        return Vec3(a * x + b * y + c * z, d * x + e * y + f * z, self.distance + g * x + h * y + i * z)
+
+    def depth(self, point: Vec3) -> float:
+        """Signed distance along the view axis; smaller positive values are nearer.
+
+        Args:
+            point (Vec3): World point to project or measure.
+
+        Returns:
+            float: Signed distance along the viewing axis.
+
+        """
+        if not self._moved:
+            return self.distance - point.z
+        eye = self.position
+        g, h, i = self._view_matrix[6:]
+        return -(g * (point.x - eye.x) + h * (point.y - eye.y) + i * (point.z - eye.z))
+
     def project(self, point: Vec3) -> Projected | None:
-        """Project a world point, or return `None` when its camera depth `distance - point.z` is below `near`."""
+        """Project a world point, or return `None` when it is before the near plane.
+
+        Args:
+            point (Vec3): World point to project or measure.
+
+        Returns:
+            Projected | None: Projected position and depth, or `None` before the near plane.
+
+        """
+        return self._project_view(self._view_point(point) if self._moved else point)
+
+    def _project_view(self, point: Vec3) -> Projected | None:
+        """Project a point already in the default camera's reference frame."""
         depth = self.distance - point.z
         if depth < self.near:
             return None
@@ -386,27 +471,95 @@ class Camera:
         )
 
     def project_points(self, points: Iterable[Vec3]) -> list[Projected | None]:
-        """Return `project` applied to each point."""
-        return [self.project(point) for point in points]
+        """Return `project` applied to each point.
 
-    def cell_to_world(self, coord: Coord, z: float = 0.0) -> Vec3:
-        """Return the world point at world z `z` that a camera at rest shows in `coord`.
+        Args:
+            points (Iterable[Vec3]): World points to project.
 
-        This is the exact inverse of `project` for both projections and any focal length, which is how characters
-        are lifted from their canvas cells into 3D. `z` is a world coordinate, not the camera depth `distance - z`.
+        Returns:
+            list[Projected | None]: One projected result per input point.
+
+        """
+        if not self._moved:
+            return [self._project_view(point) for point in points]
+        return [self._project_view(self._view_point(point)) for point in points]
+
+    def _prepare(self, world: list[Vec3]) -> tuple[list[Vec3], list[Projected | None]]:
+        """Share view coordinates for projection, clipping and additional surface passes."""
+        view = [self._view_point(point) for point in world] if self._moved else world
+        return view, [self._project_view(point) for point in view]
+
+    def ray(self, coord: Coord) -> tuple[Vec3, Vec3]:
+        """Return a world origin and direction through a cell, advancing one unit of camera depth.
+
+        Perspective rays begin at the eye. Orthographic rays begin on the eye plane.
+        The direction is deliberately not normalized: a distance `d` along it has camera depth `d`.
+
+        Args:
+            coord (Coord): Canvas cell through which the viewing ray passes.
+
+        Returns:
+            tuple[Vec3, Vec3]: World ray origin and direction, scaled to one unit of camera depth.
+
         """
         x = coord.column - self.center_column
         y = (coord.row - self.center_row) * self.row_scale
-        if not self.orthographic:
-            unscale = (self.distance - z) / (self.focal or self.distance)
-            x, y = x * unscale, y * unscale
-        return Vec3(x, y, z)
+        if self.orthographic:
+            return self.position + self.rotation.apply(Vec3(x, y, 0)), self.rotation.apply(-Z_AXIS)
+        focal = self.focal or self.distance
+        return self.position, self.rotation.apply(Vec3(x / focal, y / focal, -1))
+
+    def cell_to_world(self, coord: Coord, z: float = 0.0) -> Vec3:
+        """Intersect a cell's viewing ray with world-z plane `z`.
+
+        Args:
+            coord (Coord): Canvas cell through which the viewing ray passes.
+            z (float): World-z plane to intersect, in columns.
+
+        Returns:
+            Vec3: World-space point or direction.
+
+        Raises:
+            ValueError: If the ray is parallel to the plane, so there is no unique intersection.
+
+        """
+        if not self._moved:
+            x = coord.column - self.center_column
+            y = (coord.row - self.center_row) * self.row_scale
+            if not self.orthographic:
+                unscale = (self.distance - z) / (self.focal or self.distance)
+                x, y = x * unscale, y * unscale
+            return Vec3(x, y, z)
+        origin, direction = self.ray(coord)
+        if abs(direction.z) < _EPSILON:
+            msg = "The viewing ray has no unique intersection with the world-z plane."
+            raise ValueError(msg)
+        point = origin + direction * ((z - origin.z) / direction.z)
+        return Vec3(point.x, point.y, z)
 
     def view_direction(self, point: Vec3) -> Vec3:
-        """Return the unit vector from `point` toward the camera."""
+        """Return the unit vector from `point` toward the eye, or opposite the orthographic view.
+
+        Args:
+            point (Vec3): World point to project or measure.
+
+        Returns:
+            Vec3: World-space point or direction.
+
+        """
         if self.orthographic:
-            return Z_AXIS
-        return Vec3(-point.x, -point.y, self.distance - point.z).normalized()
+            return self.rotation.apply(Z_AXIS) if self._moved else Z_AXIS
+        return (self.position - point).normalized()
+
+    def _facing(self, normal: Vec3, point: Vec3) -> float:
+        """Unnormalized facing, defined even at the eye."""
+        if not self._moved:
+            return (
+                normal.z
+                if self.orthographic
+                else normal.z * (self.distance - point.z) - normal.x * point.x - normal.y * point.y
+            )
+        return normal.dot(self.rotation.apply(Z_AXIS) if self.orthographic else self.position - point)
 
 
 @dataclass(frozen=True)
@@ -809,9 +962,8 @@ def rasterize(
         raise ValueError(msg)
     rotation = rotation or Rotation()
     world = transform_points(mesh.vertices, rotation, scale=scale, position=position)
-    return _rasterize_projected(
-        mesh, camera, world, camera.project_points(world), rotation.matrix(), cull, buffer, bounds
-    )
+    view, projected = camera._prepare(world)
+    return _rasterize_projected(mesh, camera, world, projected, rotation.matrix(), cull, buffer, bounds, view)
 
 
 def _rasterize_sides(
@@ -825,11 +977,11 @@ def _rasterize_sides(
 ) -> tuple[dict[Coord, Fragment], dict[Coord, Fragment]]:
     """Fill front and back surfaces using one frame's transformed and projected geometry."""
     world = transform_points(mesh.vertices, rotation, scale=scale, position=position)
-    projected = camera.project_points(world)
+    view, projected = camera._prepare(world)
     matrix = rotation.matrix()
     return (
-        _rasterize_projected(mesh, camera, world, projected, matrix, "back", None, bounds),
-        _rasterize_projected(mesh, camera, world, projected, matrix, "front", None, bounds),
+        _rasterize_projected(mesh, camera, world, projected, matrix, "back", None, bounds, view),
+        _rasterize_projected(mesh, camera, world, projected, matrix, "front", None, bounds, view),
     )
 
 
@@ -842,17 +994,17 @@ def _rasterize_projected(
     cull: str,
     buffer: dict[Coord, Fragment] | None,
     bounds: Bounds | None,
+    view: list[Vec3] | None = None,
 ) -> dict[Coord, Fragment]:
     """Fill prepared geometry; buffers remain independent for each culling pass."""
     buffer = {} if buffer is None else buffer
     m00, m01, m02, m10, m11, m12, m20, m21, m22 = matrix
     mesh_normals = mesh.normals
-    orthographic, distance = camera.orthographic, camera.distance
     for face_index, face in enumerate(mesh.faces):
         corners = [corner for corner in (projected[i] for i in face.indices) if corner is not None]
         face_uvs = face.uvs
         if len(corners) < len(face.indices):
-            corners, clipped_uvs = _clip_face(face, world, projected, camera)
+            corners, clipped_uvs = _clip_face(face, view if view is not None else world, projected, camera)
             face_uvs = tuple(clipped_uvs) if clipped_uvs is not None else None
         if len(corners) < 3:
             continue
@@ -870,7 +1022,7 @@ def _rasterize_projected(
         normal = Vec3(m00 * nx + m01 * ny + m02 * nz, m10 * nx + m11 * ny + m12 * nz, m20 * nx + m21 * ny + m22 * nz)
         # The sign of the normal against the direction toward the camera: `view_direction` without normalizing.
         first = world[face.indices[0]]
-        toward = normal.z if orthographic else normal.z * (distance - first.z) - normal.x * first.x - normal.y * first.y
+        toward = camera._facing(normal, first)
         facing = toward > 0
         if (cull == "back" and not facing) or (cull == "front" and facing):
             continue
@@ -999,18 +1151,17 @@ def wireframe(
     """
     rotation = rotation or Rotation()
     world = transform_points(mesh.vertices, rotation, scale=scale, position=position)
-    projected = camera.project_points(world)
+    view, projected = camera._prepare(world)
     normals = transform_points(mesh.normals, rotation)
     front_faces: list[bool] = []
-    orthographic, distance = camera.orthographic, camera.distance
     for face_index, face in enumerate(mesh.faces):
         # The sign of the normal against the direction toward the camera: `view_direction` without normalizing,
         # which is undefined for a vertex at the camera.
         normal, first = normals[face_index], world[face.indices[0]]
-        toward = normal.z if orthographic else normal.z * (distance - first.z) - normal.x * first.x - normal.y * first.y
+        toward = camera._facing(normal, first)
         front_faces.append(toward > 0)
     surface = (
-        rasterize(mesh, camera, rotation=rotation, scale=scale, position=position, cull="none", bounds=bounds)
+        _rasterize_projected(mesh, camera, world, projected, rotation.matrix(), "none", None, bounds, view)
         if depth_test
         else {}
     )
@@ -1021,9 +1172,9 @@ def wireframe(
         if a is None and b is None:
             continue
         if a is None:
-            _, a = _near_cut(world[start], world[end], camera)
+            _, a = _near_cut(view[start], view[end], camera)
         if b is None:
-            _, b = _near_cut(world[start], world[end], camera)
+            _, b = _near_cut(view[start], view[end], camera)
         symbol = line_symbol(b.column - a.column, b.row - a.row, camera.row_scale)
         first, last = a.coord, b.coord
         steps = max(abs(last.column - first.column), abs(last.row - first.row), 1)
