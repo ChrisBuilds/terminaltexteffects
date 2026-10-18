@@ -176,12 +176,14 @@ def test_app_lists_broken_effects_and_plays_them_once_fixed(tmp_path: Path) -> N
         assert app.state in {"playing", "finished"}
         assert str(effect_list.get_option_at_index(app._listed.index("prototype")).prompt) == "prototype"
 
-        # Edited options are kept across edits of the file.
+        # Edited options are kept across edits of the file, and frames recorded before the edit are not reused.
         app._values["prototype"] = {"wipe_delay": 3, "removed_option": 1}
+        key = app._settings_key()
         _write(path, APP_PROTOTYPE + "\n")
         await app._check_development()
         await pilot.pause()
         assert app._values["prototype"] == {"wipe_delay": 3}
+        assert app._settings_key() != key
 
         path.unlink()
         await app._check_development()
