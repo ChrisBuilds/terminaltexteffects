@@ -27,6 +27,14 @@ finishes. Callbacks run once every body has moved and every mount has been refre
 are handed over at the final pose. Tweens add their change to the body instead of overwriting it, so a spin keeps turning a body that the
 effect is also nudging.
 
+## Moving the camera
+
+`space.camera` is a [`Camera`](#terminaltexteffects.engine.space3d.Camera), extending `geometry3d.Camera` with
+immediate movement and a tween queue. It supports dolly, truck, pedestal, pan, tilt, roll, look-at, orbit and zoom.
+Camera tweens count toward `space.animating` and advance in `space.step()` before body tweens. Completion callbacks
+run after mount readings refresh. See [Moving the camera](../effectguide/3d/camera.md#moving-the-camera) for the
+controls, target sampling, lighting and layout conventions.
+
 ## Mounting characters
 
 Anchors move with their body. `body.anchor(x, y, z)` makes one, and layouts make many:

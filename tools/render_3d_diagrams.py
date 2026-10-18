@@ -1075,6 +1075,34 @@ def texture_seam() -> list[Image.Image]:
     return frames
 
 
+def camera_movement() -> list[Image.Image]:
+    """Show camera-local travel and an orbit around a stationary cube from above."""
+    frames = []
+    for frame in range(90):
+        canvas = Canvas(660, 380)
+        canvas.text((330, 25), "Move the viewpoint, keep the scene still", TEXT, 18)
+        center = (330.0, 195.0)
+        radius = 115
+        angle = 2 * math.pi * frame / 90
+        eye = (center[0] + radius * math.sin(angle), center[1] + radius * math.cos(angle))
+        canvas.circle(center, radius, None, FAINT, 1)
+        canvas.rect(306, 171, 354, 219, PURPLE, CYAN)
+        canvas.text(center, "cube", WHITE, 12)
+        canvas.line(eye, center, MUTED, 1, dash=5)
+        forward = (-math.sin(angle), -math.cos(angle))
+        right = (math.cos(angle), -math.sin(angle))
+        canvas.arrow(eye, (eye[0] + forward[0] * 50, eye[1] + forward[1] * 50), GREEN)
+        canvas.arrow(eye, (eye[0] + right[0] * 45, eye[1] + right[1] * 45), AMBER)
+        canvas.circle(eye, 7, CYAN)
+        canvas.text((75, 125), "camera", CYAN, 14, anchor="lm")
+        canvas.text((75, 155), "orbit", MUTED, 14, anchor="lm")
+        canvas.text((505, 165), "dolly: forward", GREEN, 14, anchor="lm")
+        canvas.text((505, 195), "truck: right", AMBER, 14, anchor="lm")
+        canvas.text((330, 350), "Top view: the camera keeps looking at the cube.", MUTED, 14)
+        frames.append(canvas.finish())
+    return frames
+
+
 CLIPPED: set[str] = set()
 """Labels and markers drawn reaching past a frame's edges since this was last cleared, so tests can catch them."""
 
@@ -1096,6 +1124,7 @@ DIAGRAMS: dict[str, Callable[[], list[Image.Image]]] = {
     "rotation_local": rotation_local,
     "rotation_order": rotation_order,
     "projection": projection,
+    "camera_movement": camera_movement,
     "perspective_strength": perspective_strength,
     "depth_buffer": depth_buffer,
     "back_faces": back_faces,

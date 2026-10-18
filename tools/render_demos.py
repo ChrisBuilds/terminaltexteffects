@@ -233,6 +233,13 @@ GUIDE_DEMOS: dict[str, Demo] = {
             ("detail_wireframe", "detail", ("--wireframe",)),
         )
     },
+    "cameraorbit": Demo(
+        effect="cameraorbit",
+        tte_args=("--canvas-width", "80", "--canvas-height", "32", "--anchor-text", "c"),
+        input_file=CONCEPT_INPUT,
+        effects_dir=EXAMPLES_3D / "cameraorbit",
+        end_on_text=False,
+    ),
     # The Spin tutorial: each step under one command name. Step 6 is the finished effect.
     **{
         f"myspin_step{step}": Demo(
