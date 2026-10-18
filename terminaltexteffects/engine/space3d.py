@@ -147,10 +147,19 @@ class Shape:
     `build_mesh`. Built-in shapes expect positive dimensions, which are intentionally not validated. Zero or
     negative sizes can collapse faces or reverse winding; shading and texture layouts are not guaranteed for
     those sizes. Body scale, in contrast, is validated and must remain positive.
+
     """
 
     def build_mesh(self) -> g3.Mesh:
-        """Return the shape's mesh, centered on the body's origin."""
+        """Return the shape's mesh, centered on the body's origin.
+
+        Returns:
+            g3.Mesh: The shape's mesh in local coordinates, centered on the origin.
+
+        Raises:
+            NotImplementedError: This base method must be implemented by a shape subclass.
+
+        """
         raise NotImplementedError
 
     def surface_points(self, count: int) -> list[tuple[g3.Vec3, g3.Vec3]]:
@@ -158,6 +167,16 @@ class Shape:
 
         The default spreads points over the mesh's faces in proportion to their area. Curved shapes override it
         with an even parametric layout.
+
+        Args:
+            count (int): Requested number of points or anchors.
+
+        Returns:
+            list[tuple[g3.Vec3, g3.Vec3]]: Surface points paired with their outward unit normals.
+
+        Raises:
+            NotImplementedError: If the shape does not implement `build_mesh`.
+
         """
         return _mesh_surface_points(self.build_mesh(), count)
 
@@ -167,6 +186,13 @@ class Shape:
         Row 0 is the top line of the text, and one unit is about one cell at the body's own size. Returns `None`
         for faces without texture coordinates, which a `Textured` look shades instead. Shapes without a texture
         layout return `None` everywhere.
+
+        Args:
+            fragment (g3.Fragment): Rasterized surface fragment whose texture coordinates are sampled.
+
+        Returns:
+            tuple[float, float] | None: Fractional text (column, row), or `None` without a texture layout.
+
         """
         return None
 
@@ -190,18 +216,38 @@ def _face_cell(
 
 @dataclass(frozen=True)
 class Box(Shape):
-    """A box. Faces are tagged 0 front, 1 right, 2 back, 3 left, 4 top, 5 bottom."""
+    """A box. Faces are tagged 0 front, 1 right, 2 back, 3 left, 4 top, 5 bottom.
+
+    Attributes:
+        width (float): Width along x, in columns. Defaults to 16.
+        height (float): Height along y, in columns. Defaults to 16.
+        depth (float): Depth along z, in columns. Defaults to 16.
+
+    """
 
     width: float = 16.0
     height: float = 16.0
     depth: float = 16.0
 
     def build_mesh(self) -> g3.Mesh:
-        """Return the box mesh."""
+        """Return the box mesh.
+
+        Returns:
+            g3.Mesh: The shape's mesh in local coordinates, centered on the origin.
+
+        """
         return g3.box(self.width, self.height, self.depth)
 
     def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
-        """Return the text cell for a fragment. Each face shows the text from its own top left corner."""
+        """Return the text cell for a fragment. Each face shows the text from its own top left corner.
+
+        Args:
+            fragment (g3.Fragment): Rasterized surface fragment whose texture coordinates are sampled.
+
+        Returns:
+            tuple[float, float] | None: Fractional text (column, row), or `None` without a texture layout.
+
+        """
         width = self.depth if fragment.tag in (1, 3) else self.width
         height = self.depth if fragment.tag in (4, 5) else self.height
         return _face_cell(fragment, width, height)
@@ -209,51 +255,115 @@ class Box(Shape):
 
 @dataclass(frozen=True)
 class Cube(Shape):
-    """A cube `size` columns wide."""
+    """A cube `size` columns wide.
+
+    Attributes:
+        size (float): Edge length in columns. Defaults to 16.
+
+    """
 
     size: float = 16.0
 
     def build_mesh(self) -> g3.Mesh:
-        """Return the cube mesh."""
+        """Return the cube mesh.
+
+        Returns:
+            g3.Mesh: The shape's mesh in local coordinates, centered on the origin.
+
+        """
         return g3.box(self.size, self.size, self.size)
 
     def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
-        """Return the text cell for a fragment. Each face shows the text from its own top left corner."""
+        """Return the text cell for a fragment. Each face shows the text from its own top left corner.
+
+        Args:
+            fragment (g3.Fragment): Rasterized surface fragment whose texture coordinates are sampled.
+
+        Returns:
+            tuple[float, float] | None: Fractional text (column, row), or `None` without a texture layout.
+
+        """
         return _face_cell(fragment, self.size, self.size)
 
 
 @dataclass(frozen=True)
 class Prism(Shape):
-    """An upright prism with `sides` rectangular sides around the y axis."""
+    """An upright prism with `sides` rectangular sides around the y axis.
+
+    Attributes:
+        sides (int): Number of rectangular sides, at least 3. Defaults to 6.
+        radius (float): Distance from the y axis to each corner, in columns. Defaults to 10.
+        height (float): Height along y, in columns. Defaults to 12.
+
+    """
 
     sides: int = 6
     radius: float = 10.0
     height: float = 12.0
 
     def build_mesh(self) -> g3.Mesh:
-        """Return the prism mesh."""
+        """Return the prism mesh.
+
+        Returns:
+            g3.Mesh: The shape's mesh in local coordinates, centered on the origin.
+
+        Raises:
+            ValueError: If `sides` is less than 3.
+
+        """
         return g3.prism(self.sides, self.radius, self.height)
 
     def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
-        """Return the text cell for a fragment, starting at the left edge of the front. Caps have none."""
+        """Return the text cell for a fragment, starting at the left edge of the front. Caps have none.
+
+        Args:
+            fragment (g3.Fragment): Rasterized surface fragment whose texture coordinates are sampled.
+
+        Returns:
+            tuple[float, float] | None: Fractional text (column, row), or `None` without a texture layout.
+
+        """
         side = 2 * self.radius * math.sin(math.pi / self.sides)
         return _face_cell(fragment, side, self.height, (fragment.tag + self.sides / 4) * side, self.sides * side)
 
 
 @dataclass(frozen=True)
 class Pyramid(Shape):
-    """A pyramid with a `sides`-sided base and its apex up the y axis."""
+    """A pyramid with a `sides`-sided base and its apex up the y axis.
+
+    Attributes:
+        sides (int): Number of base edges, at least 3. Defaults to 4.
+        radius (float): Distance from the y axis to each base corner, in columns. Defaults to 10.
+        height (float): Distance from base to apex, in columns. Defaults to 14.
+
+    """
 
     sides: int = 4
     radius: float = 10.0
     height: float = 14.0
 
     def build_mesh(self) -> g3.Mesh:
-        """Return the pyramid mesh."""
+        """Return the pyramid mesh.
+
+        Returns:
+            g3.Mesh: The shape's mesh in local coordinates, centered on the origin.
+
+        Raises:
+            ValueError: If `sides` is less than 3.
+
+        """
         return g3.pyramid(self.sides, self.radius, self.height)
 
     def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
-        """Return the text cell for a fragment, starting at the left edge of the front. The base has none."""
+        """Return the text cell for a fragment, starting at the left edge of the front. The base has none.
+
+        Args:
+            fragment (g3.Fragment): Rasterized surface fragment whose texture coordinates are sampled.
+
+        Returns:
+            tuple[float, float] | None: Fractional text (column, row), or `None` without a texture layout.
+
+        """
         side = 2 * self.radius * math.sin(math.pi / self.sides)
         slant = math.hypot(self.height, self.radius * math.cos(math.pi / self.sides))
         return _face_cell(fragment, side, slant, (fragment.tag + self.sides / 4) * side, self.sides * side)
@@ -261,56 +371,121 @@ class Pyramid(Shape):
 
 @dataclass(frozen=True)
 class Tetrahedron(Shape):
-    """A regular tetrahedron with its vertices `radius` from the center."""
+    """A regular tetrahedron with its vertices `radius` from the center.
+
+    Attributes:
+        radius (float): Distance from the center to each vertex, in columns. Defaults to 10.
+
+    """
 
     radius: float = 10.0
 
     def build_mesh(self) -> g3.Mesh:
-        """Return the tetrahedron mesh."""
+        """Return the tetrahedron mesh.
+
+        Returns:
+            g3.Mesh: The shape's mesh in local coordinates, centered on the origin.
+
+        """
         return g3.tetrahedron(self.radius)
 
 
 @dataclass(frozen=True)
 class Octahedron(Shape):
-    """A regular octahedron with its vertices `radius` from the center."""
+    """A regular octahedron with its vertices `radius` from the center.
+
+    Attributes:
+        radius (float): Distance from the center to each vertex, in columns. Defaults to 10.
+
+    """
 
     radius: float = 10.0
 
     def build_mesh(self) -> g3.Mesh:
-        """Return the octahedron mesh."""
+        """Return the octahedron mesh.
+
+        Returns:
+            g3.Mesh: The shape's mesh in local coordinates, centered on the origin.
+
+        """
         return g3.octahedron(self.radius)
 
 
 @dataclass(frozen=True)
 class Icosahedron(Shape):
-    """A regular icosahedron with its vertices `radius` from the center."""
+    """A regular icosahedron with its vertices `radius` from the center.
+
+    Attributes:
+        radius (float): Distance from the center to each vertex, in columns. Defaults to 10.
+
+    """
 
     radius: float = 10.0
 
     def build_mesh(self) -> g3.Mesh:
-        """Return the icosahedron mesh."""
+        """Return the icosahedron mesh.
+
+        Returns:
+            g3.Mesh: The shape's mesh in local coordinates, centered on the origin.
+
+        """
         return g3.icosahedron(self.radius)
 
 
 @dataclass(frozen=True)
 class Cylinder(Shape):
-    """An upright cylinder around the y axis. `wrap` lays text around its side."""
+    """An upright cylinder around the y axis. `wrap` lays text around its side.
+
+    Attributes:
+        radius (float): Radius of the side, in columns. Defaults to 10.
+        height (float): Height along y, in columns. Defaults to 12.
+        segments (int): Number of mesh sides, at least 3. Defaults to 32.
+
+    """
 
     radius: float = 10.0
     height: float = 12.0
     segments: int = 32
 
     def build_mesh(self) -> g3.Mesh:
-        """Return the cylinder mesh."""
+        """Return the cylinder mesh.
+
+        Returns:
+            g3.Mesh: The shape's mesh in local coordinates, centered on the origin.
+
+        Raises:
+            ValueError: If `segments` is less than 3.
+
+        """
         return g3.cylinder(self.radius, self.height, self.segments)
 
     def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
-        """Return the text cell for a fragment, starting at the left edge of the front. Caps have none."""
+        """Return the text cell for a fragment, starting at the left edge of the front. Caps have none.
+
+        Args:
+            fragment (g3.Fragment): Rasterized surface fragment whose texture coordinates are sampled.
+
+        Returns:
+            tuple[float, float] | None: Fractional text (column, row), or `None` without a texture layout.
+
+        """
         around = 2 * math.pi * self.radius
         return _face_cell(fragment, around, self.height, around / 4, around)
 
     def surface_points(self, count: int) -> list[tuple[g3.Vec3, g3.Vec3]]:
-        """Return about `count` points in even rings around the side."""
+        """Return about `count` points in even rings around the side.
+
+        Args:
+            count (int): Requested number of points or anchors.
+
+        Returns:
+            list[tuple[g3.Vec3, g3.Vec3]]: Surface points paired with their outward unit normals.
+
+        Raises:
+            ZeroDivisionError: If `radius` is zero.
+            ValueError: If the ring-count calculation takes the square root of a negative value.
+
+        """
         circumference = 2 * math.pi * self.radius
         rings = max(1, round(math.sqrt(count * self.height / circumference)))
         per_ring = max(1, math.ceil(count / rings))
@@ -324,7 +499,16 @@ class Cylinder(Shape):
         return points[:count]
 
     def wrap_point(self, around: float, up: float) -> tuple[g3.Vec3, g3.Vec3]:
-        """Return the side point `around` turns from the front and `up` of the way from bottom to top."""
+        """Return the side point `around` turns from the front and `up` of the way from bottom to top.
+
+        Args:
+            around (float): Fraction of a turn from the front, increasing around the y axis.
+            up (float): Fraction of the vertical wrapping range, from bottom to top.
+
+        Returns:
+            tuple[g3.Vec3, g3.Vec3]: Local surface point and its outward unit normal.
+
+        """
         angle = 2 * math.pi * around
         normal = g3.Vec3(math.sin(angle), 0.0, math.cos(angle))
         return g3.Vec3(normal.x * self.radius, self.height * (up - 0.5), normal.z * self.radius), normal
@@ -332,23 +516,54 @@ class Cylinder(Shape):
 
 @dataclass(frozen=True)
 class Sphere(Shape):
-    """A sphere. `wrap` lays text over it between 60 degrees north and south."""
+    """A sphere. `wrap` lays text over it between 60 degrees north and south.
+
+    Attributes:
+        radius (float): Radius in columns. Defaults to 10.
+        segments (int): Number of mesh slices around y, at least 3. Defaults to 24.
+        rings (int): Number of mesh bands from pole to pole, at least 2. Defaults to 12.
+
+    """
 
     radius: float = 10.0
     segments: int = 24
     rings: int = 12
 
     def build_mesh(self) -> g3.Mesh:
-        """Return the sphere mesh."""
+        """Return the sphere mesh.
+
+        Returns:
+            g3.Mesh: The shape's mesh in local coordinates, centered on the origin.
+
+        Raises:
+            ValueError: If `segments` is less than 3 or `rings` is less than 2.
+
+        """
         return g3.uv_sphere(self.radius, self.segments, self.rings)
 
     def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
-        """Return the text cell for a fragment, starting at the left edge of the front, from pole to pole."""
+        """Return the text cell for a fragment, starting at the left edge of the front, from pole to pole.
+
+        Args:
+            fragment (g3.Fragment): Rasterized surface fragment whose texture coordinates are sampled.
+
+        Returns:
+            tuple[float, float] | None: Fractional text (column, row), or `None` without a texture layout.
+
+        """
         around = 2 * math.pi * self.radius
         return _face_cell(fragment, around, math.pi * self.radius, around / 4, around)
 
     def surface_points(self, count: int) -> list[tuple[g3.Vec3, g3.Vec3]]:
-        """Return `count` points spread evenly over the sphere (a Fibonacci lattice)."""
+        """Return `count` points spread evenly over the sphere (a Fibonacci lattice).
+
+        Args:
+            count (int): Requested number of points or anchors.
+
+        Returns:
+            list[tuple[g3.Vec3, g3.Vec3]]: Surface points paired with their outward unit normals.
+
+        """
         golden_angle = math.pi * (3 - math.sqrt(5))
         points = []
         for index in range(count):
@@ -360,7 +575,16 @@ class Sphere(Shape):
         return points
 
     def wrap_point(self, around: float, up: float) -> tuple[g3.Vec3, g3.Vec3]:
-        """Return the point `around` turns from the front, `up` of the way from 60 degrees south to 60 north."""
+        """Return the point `around` turns from the front, `up` of the way from 60 degrees south to 60 north.
+
+        Args:
+            around (float): Fraction of a turn from the front, increasing around the y axis.
+            up (float): Fraction from 60 degrees south (0) to 60 degrees north (1).
+
+        Returns:
+            tuple[g3.Vec3, g3.Vec3]: Local surface point and its outward unit normal.
+
+        """
         latitude = math.radians(-60 + 120 * up)
         longitude = 2 * math.pi * around
         normal = g3.Vec3(
@@ -373,7 +597,15 @@ class Sphere(Shape):
 
 @dataclass(frozen=True)
 class Torus(Shape):
-    """A torus lying around the y axis: a tube `minor_radius` thick, `major_radius` from the center."""
+    """A torus lying around the y axis: a tube `minor_radius` thick, `major_radius` from the center.
+
+    Attributes:
+        major_radius (float): Distance from the hole center to the tube center, in columns. Defaults to 10.
+        minor_radius (float): Tube radius in columns. Defaults to 4.
+        segments (int): Number of sections around the hole, at least 3. Defaults to 36.
+        sides (int): Number of faces around each tube section, at least 3. Defaults to 18.
+
+    """
 
     major_radius: float = 10.0
     minor_radius: float = 4.0
@@ -381,7 +613,15 @@ class Torus(Shape):
     sides: int = 18
 
     def build_mesh(self) -> g3.Mesh:
-        """Return the torus mesh."""
+        """Return the torus mesh.
+
+        Returns:
+            g3.Mesh: The shape's mesh in local coordinates, centered on the origin.
+
+        Raises:
+            ValueError: If `segments` or `sides` is less than 3.
+
+        """
         return g3.torus(self.major_radius, self.minor_radius, self.segments, self.sides)
 
 
@@ -439,6 +679,9 @@ class Shaded:
         gradient (Gradient | None): Colors from unlit to fully lit. `None` uses the TTE brand colors.
         symbols (str): Symbols from unlit to fully lit.
 
+    Raises:
+        ValueError: If `symbols` is empty or contains a symbol that is not one printable cell wide.
+
     """
 
     gradient: Gradient | None = None
@@ -491,6 +734,10 @@ class Textured:
         offset (tuple[float, float]): Text column and row added before sampling. Positive values scroll left/up.
         repeat (bool): Repeat the text, or clamp sampling to its edge cells when false.
         scale (float): Positive text size multiplier in both dimensions; 2 doubles each character's footprint.
+
+    Raises:
+        ValueError: If `back` is not `"hide"` or `"dim"`, `scale` is not finite and positive,
+            or `offset` does not contain two finite coordinates.
 
     """
 
@@ -641,6 +888,13 @@ class Body:
     Attributes:
         space (Space3D): The space the body belongs to.
         shape (Shape | None): The body's shape, or `None` for a plain frame of reference for anchors.
+        rotation (g3.Rotation): Current orientation.
+        position (g3.Vec3): World position of the body origin, in columns.
+        scale (float): Current positive size multiplier.
+        mesh (g3.Mesh | None): Shape mesh in local coordinates, or `None` without a shape.
+        animating (bool): Whether tweens are queued or playing.
+        drawn (bool): Whether a surface look is enabled.
+        surface_characters (dict[Coord, EffectCharacter]): Surface characters by cell after the last step.
 
     """
 
@@ -649,10 +903,19 @@ class Body:
     ) -> None:
         """Initialize a body. Use `Space3D.body` rather than calling this directly.
 
+        Exceptions from a custom shape's `build_mesh` propagate unchanged.
+
         Args:
             space (Space3D): The space the body belongs to.
             shape (Shape | None): The body's shape, if any.
             at (tuple[float, float, float]): Starting position in columns from the canvas center.
+
+        Returns:
+            None: No return value.
+
+        Raises:
+            ValueError: If a built-in shape has invalid mesh segment, ring or side counts.
+            NotImplementedError: If the shape does not implement `Shape.build_mesh`.
 
         """
         self.space = space
@@ -679,36 +942,73 @@ class Body:
         """The read-only shape used to build this body's mesh and layouts.
 
         Create a new body for a different shape. Existing anchors stay attached to their original body.
+
+        Returns:
+            Shape | None: Read-only shape, or `None` for a frame of reference.
+
         """
         return self._shape
 
     @property
     def rotation(self) -> g3.Rotation:
-        """The body's orientation."""
+        """The body's orientation.
+
+        Returns:
+            g3.Rotation: Current orientation.
+
+        """
         return self._rotation
 
     @property
     def position(self) -> g3.Vec3:
-        """Where the body's origin sits, in columns from the canvas center."""
+        """Where the body's origin sits, in columns from the canvas center.
+
+        Returns:
+            g3.Vec3: Current world position of the body origin.
+
+        """
         return self._position
 
     @property
     def scale(self) -> float:
-        """The body's size multiplier."""
+        """The body's size multiplier.
+
+        Returns:
+            float: Current size multiplier.
+
+        """
         return self._scale
 
     @property
     def mesh(self) -> g3.Mesh | None:
-        """The shape's mesh in the body's own coordinates, or `None` without a shape."""
+        """The shape's mesh in the body's own coordinates, or `None` without a shape.
+
+        Returns:
+            g3.Mesh | None: Local mesh, or `None` without a shape.
+
+        """
         return self._mesh
 
     @property
     def animating(self) -> bool:
-        """Whether tweens are queued or playing."""
+        """Whether tweens are queued or playing.
+
+        Returns:
+            bool: Whether any tweens are queued or playing.
+
+        """
         return bool(self._queue)
 
     def world_point(self, local: g3.Vec3) -> g3.Vec3:
-        """Return where a point in the body's own coordinates is in world space right now."""
+        """Return where a point in the body's own coordinates is in world space right now.
+
+        Args:
+            local (g3.Vec3): Point in the body's own coordinates.
+
+        Returns:
+            g3.Vec3: Current world position in columns from the canvas center.
+
+        """
         a, b, c, d, e, f, g, h, i, px, py, pz = self._world_transform()
         x, y, z = local.x, local.y, local.z
         return g3.Vec3(a * x + b * y + c * z + px, d * x + e * y + f * z + py, g * x + h * y + i * z + pz)
@@ -746,38 +1046,111 @@ class Body:
     # Step-by-step transforms
 
     def rotate(self, axis: Axis, degrees: float, *, local: bool = False) -> Body:
-        """Turn about a world `axis` through the origin, or a body axis with `local=True`, now."""
+        """Turn about a world `axis` through the origin, or a body axis with `local=True`, now.
+
+        Args:
+            axis (Axis): Axis name or nonzero direction to turn about.
+            degrees (float): Angle to turn, in degrees.
+            local (bool): Turn about a body axis when true; otherwise use a world axis.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If the axis name is unknown or its direction is zero.
+
+        """
         turn = rotation_about(axis, degrees)
         return self._set(rotation=self._rotation * turn if local else turn * self._rotation)
 
     def move_by(self, x: float = 0.0, y: float = 0.0, z: float = 0.0) -> Body:
-        """Move the body by `(x, y, z)` columns, now."""
+        """Move the body by `(x, y, z)` columns, now.
+
+        Args:
+            x (float): Displacement along world x, in columns.
+            y (float): Displacement along world y, in columns.
+            z (float): Displacement along world z, in columns.
+
+        Returns:
+            Body: This body, for chaining.
+
+        """
         return self._set(position=self._position + g3.Vec3(x, y, z))
 
     def scale_by(self, factor: float) -> Body:
-        """Multiply the body's size by `factor`, now. Raises `ValueError` unless `factor` is positive."""
+        """Multiply the body's size by `factor`, now. Raises `ValueError` unless `factor` is positive.
+
+        Args:
+            factor (float): Positive multiplier applied to the current scale.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `factor` is not positive.
+
+        """
         return self._set(scale=self._scale * factor if factor > 0 else factor)
 
     def set_rotation(self, rotation: g3.Rotation | None = None) -> Body:
-        """Set the body's orientation, now. `None` is the rest orientation. See `rotation_about`."""
+        """Set the body's orientation, now. `None` is the rest orientation. See `rotation_about`.
+
+        Args:
+            rotation (g3.Rotation | None): Target orientation, or `None` for the rest orientation.
+
+        Returns:
+            Body: This body, for chaining.
+
+        """
         return self._set(rotation=rotation or g3.Rotation())
 
     def set_position(self, x: float = 0.0, y: float = 0.0, z: float = 0.0) -> Body:
-        """Move the body's origin to `(x, y, z)`, now."""
+        """Move the body's origin to `(x, y, z)`, now.
+
+        Args:
+            x (float): World x coordinate in columns, increasing rightward.
+            y (float): World y coordinate in columns, increasing upward.
+            z (float): World z coordinate in columns, increasing toward the viewer.
+
+        Returns:
+            Body: This body, for chaining.
+
+        """
         return self._set(position=g3.Vec3(x, y, z))
 
     def set_scale(self, scale: float) -> Body:
-        """Set the body's size multiplier, now. Raises `ValueError` unless `scale` is positive."""
+        """Set the body's size multiplier, now. Raises `ValueError` unless `scale` is positive.
+
+        Args:
+            scale (float): Positive size multiplier.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `scale` is not positive.
+
+        """
         return self._set(scale=scale)
 
     def cancel(self) -> Body:
-        """Discard queued tweens and their callbacks, keeping the current pose."""
+        """Discard queued tweens and their callbacks, keeping the current pose.
+
+        Returns:
+            Body: This body, for chaining.
+
+        """
         self._queue.clear()
         self._callback_generation += 1
         return self
 
     def reset(self) -> Body:
-        """Return the body to the pose it was created in and clear its queued tweens, now."""
+        """Return the body to the pose it was created in and clear its queued tweens, now.
+
+        Returns:
+            Body: This body, for chaining.
+
+        """
         self.cancel()
         return self._set(rotation=g3.Rotation(), position=self._home, scale=1.0)
 
@@ -796,6 +1169,21 @@ class Body:
         """Queue full turns about a world `axis`, or a body axis with `local=True`.
 
         The local axis follows the current orientation, including other concurrent turns.
+
+        Args:
+            axis (Axis): Axis name or nonzero direction to turn about.
+            turns (float): Number of full turns; negative values reverse the direction.
+            frames (int): Duration in frames. Zero applies immediately when no tween is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Run alongside the previously queued tween instead of after it.
+            local (bool): Turn about a body axis when true; otherwise use a world axis.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative, the axis name is unknown or its direction is zero.
+
         """
         unit = _direction(axis, _AXES, "axis")
         total = 2 * math.pi * turns
@@ -815,7 +1203,22 @@ class Body:
         *,
         together: bool = False,
     ) -> Body:
-        """Queue `turns` turns about `axis` while easing out any other tilt, ending at the rest orientation."""
+        """Queue `turns` turns about `axis` while easing out any other tilt, ending at the rest orientation.
+
+        Args:
+            axis (Axis): Axis name or nonzero direction to turn about.
+            turns (float): Number of full turns; negative values reverse the direction.
+            frames (int): Duration in frames. Zero applies immediately when no tween is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Run alongside the previously queued tween instead of after it.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative, the axis name is unknown or its direction is zero.
+
+        """
         unit = _direction(axis, _AXES, "axis")
         total = 2 * math.pi * turns
         state: dict[str, g3.Rotation] = {}
@@ -838,7 +1241,21 @@ class Body:
         *,
         together: bool = False,
     ) -> Body:
-        """Queue a turn to `rotation` along the shortest path. See `rotation_about`."""
+        """Queue a turn to `rotation` along the shortest path. See `rotation_about`.
+
+        Args:
+            rotation (g3.Rotation): Target orientation.
+            frames (int): Duration in frames. Zero applies immediately when no tween is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Run alongside the previously queued tween instead of after it.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
+
+        """
         state: dict[str, g3.Rotation] = {}
 
         def begin() -> None:
@@ -850,7 +1267,20 @@ class Body:
         return self._queue_tween(_Tween(frames, self._turn_through(pose, state), ease, begin), together=together)
 
     def turn_to_rest(self, frames: int = 60, ease: EasingFunction | None = None, *, together: bool = False) -> Body:
-        """Queue a shortest-path turn back to the rest orientation, where text plane anchors meet their cells."""
+        """Queue a shortest-path turn back to the rest orientation, where text plane anchors meet their cells.
+
+        Args:
+            frames (int): Duration in frames. Zero applies immediately when no tween is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Run alongside the previously queued tween instead of after it.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
+
+        """
         return self.turn_to(g3.Rotation(), frames, ease, together=together)
 
     def move_to(
@@ -863,7 +1293,23 @@ class Body:
         *,
         together: bool = False,
     ) -> Body:
-        """Queue a move of the body's origin to `(x, y, z)`."""
+        """Queue a move of the body's origin to `(x, y, z)`.
+
+        Args:
+            x (float): World x coordinate in columns, increasing rightward.
+            y (float): World y coordinate in columns, increasing upward.
+            z (float): World z coordinate in columns, increasing toward the viewer.
+            frames (int): Duration in frames. Zero applies immediately when no tween is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Run alongside the previously queued tween instead of after it.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
+
+        """
         target = g3.Vec3(x, y, z)
         state: dict[str, g3.Vec3] = {}
 
@@ -885,7 +1331,21 @@ class Body:
         *,
         together: bool = False,
     ) -> Body:
-        """Queue a change of the body's size multiplier to `scale`. Raises `ValueError` unless it is positive."""
+        """Queue a change of the body's size multiplier to `scale`. Raises `ValueError` unless it is positive.
+
+        Args:
+            scale (float): Positive size multiplier.
+            frames (int): Duration in frames. Zero applies immediately when no tween is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Run alongside the previously queued tween instead of after it.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative or `scale` is not positive.
+
+        """
         if scale <= 0:
             msg = "A body's scale must be positive."
             raise ValueError(msg)
@@ -902,7 +1362,20 @@ class Body:
         return self._queue_tween(_Tween(frames, apply, ease, begin), together=together)
 
     def random_pose(self, frames: int = 0, ease: EasingFunction | None = None, *, together: bool = False) -> Body:
-        """Queue a turn to a random orientation, drawn evenly from all orientations with the space's RNG."""
+        """Queue a turn to a random orientation, drawn evenly from all orientations with the space's RNG.
+
+        Args:
+            frames (int): Duration in frames. Zero applies immediately when no tween is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Run alongside the previously queued tween instead of after it.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
+
+        """
         rng = self.space.rng
         # Shoemake's method: uniform unit quaternions from three uniform numbers.
         u1, u2, u3 = rng.random(), rng.random(), rng.random()
@@ -938,6 +1411,9 @@ class Body:
         Returns:
             Body: This body.
 
+        Raises:
+            ValueError: If `frames` is negative.
+
         """
         rng = self.space.rng
         canvas = self.space.terminal.canvas
@@ -949,7 +1425,18 @@ class Body:
         return self.move_to(*point, frames=frames, ease=ease, together=together)
 
     def hold(self, frames: int) -> Body:
-        """Queue a pause of `frames` frames."""
+        """Queue a pause of `frames` frames.
+
+        Args:
+            frames (int): Number of frames to pause; must not be negative.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
+
+        """
         return self._queue_tween(_Tween(frames, lambda _previous, _current: None), together=False)
 
     def on_complete(self, callback: Callable[[Body], None]) -> Body:
@@ -957,6 +1444,13 @@ class Body:
 
         During `Space3D.step`, the callback runs after every body has moved and every mount's readings are
         refreshed, so releasing characters there leaves them at the final pose.
+
+        Args:
+            callback (Callable[[Body], None]): Function called with this body when the tween or group finishes.
+
+        Returns:
+            Body: This body, for chaining.
+
         """
         if not self._queue:
             callback(self)
@@ -969,6 +1463,13 @@ class Body:
 
         Later groups added after this call do not delay the hook. Like `on_complete`, callbacks run after
         mount readings refresh, so they can safely release characters at the endpoint pose.
+
+        Args:
+            callback (Callable[[Body], None]): Function called with this body when the tween or group finishes.
+
+        Returns:
+            Body: This body, for chaining.
+
         """
         if not self._queue:
             callback(self)
@@ -1041,6 +1542,9 @@ class Body:
         Returns:
             Anchor: The new anchor.
 
+        Raises:
+            ValueError: If `normal` is an unknown axis name or a zero direction.
+
         """
         point = g3.Vec3(x, y, z)
         self._extent = max(self._extent, point.length())
@@ -1052,6 +1556,13 @@ class Body:
 
         The anchors are placed so that, at the body's current pose, each projects onto its character's input
         cell. Turning the body tilts and flips the text like a card.
+
+        Args:
+            characters (Sequence[EffectCharacter]): Characters in the order used for the returned anchors or mounts.
+
+        Returns:
+            list[Anchor]: One anchor per character, in input sequence order.
+
         """
         camera = self.space.camera
         inverse = self._rotation.inverse()
@@ -1066,6 +1577,12 @@ class Body:
     def surface(self, count: int) -> list[Anchor]:
         """Return about `count` anchors spread evenly over the body's shape, facing outward.
 
+        Args:
+            count (int): Requested number of points or anchors.
+
+        Returns:
+            list[Anchor]: Anchors on the shape surface with outward normals.
+
         Raises:
             ValueError: If the body has no shape.
 
@@ -1075,6 +1592,9 @@ class Body:
 
     def vertices(self) -> list[Anchor]:
         """Return an anchor on each vertex of the body's shape, facing away from the center.
+
+        Returns:
+            list[Anchor]: One anchor per mesh vertex.
 
         Raises:
             ValueError: If the body has no shape.
@@ -1086,6 +1606,12 @@ class Body:
 
     def edges(self, count: int) -> list[Anchor]:
         """Return about `count` anchors spread evenly along the edges of the body's shape.
+
+        Args:
+            count (int): Requested number of points or anchors.
+
+        Returns:
+            list[Anchor]: Anchors distributed along mesh edges.
 
         Raises:
             ValueError: If the body has no shape.
@@ -1111,7 +1637,20 @@ class Body:
         return anchors
 
     def ring(self, count: int, radius: float, *, axis: Axis = "y") -> list[Anchor]:
-        """Return `count` anchors evenly around a circle of `radius` about `axis`, facing outward."""
+        """Return `count` anchors evenly around a circle of `radius` about `axis`, facing outward.
+
+        Args:
+            count (int): Requested number of points or anchors.
+            radius (float): Circle radius in columns.
+            axis (Axis): Axis name or nonzero direction to turn about.
+
+        Returns:
+            list[Anchor]: Anchors around the circle with outward normals.
+
+        Raises:
+            ValueError: If the axis name is unknown or its direction is zero.
+
+        """
         unit = _direction(axis, _AXES, "axis")
         helper = g3.X_AXIS if abs(unit.x) < 0.9 else g3.Y_AXIS
         first = unit.cross(helper).normalized()
@@ -1128,6 +1667,12 @@ class Body:
         """Return an anchor for each character with its text wrapped once around a cylinder or sphere.
 
         Text columns run around the shape, starting at the front, and text rows run from top to bottom.
+
+        Args:
+            characters (Sequence[EffectCharacter]): Characters in the order used for the returned anchors or mounts.
+
+        Returns:
+            list[Anchor]: One anchor per character, in input sequence order.
 
         Raises:
             ValueError: If the body's shape is not a `Cylinder` or `Sphere`.
@@ -1159,7 +1704,21 @@ class Body:
     # Mounting shortcuts
 
     def add_char(self, character: EffectCharacter, anchor: Anchor, **options: typing.Any) -> Mount:
-        """Mount `character` on `anchor`, which must belong to this body. See `Space3D.mount` for `options`."""
+        """Mount `character` on `anchor`, which must belong to this body. See `Space3D.mount` for `options`.
+
+        Args:
+            character (EffectCharacter): Character to mount or release.
+            anchor (Anchor): Anchor on which the character will ride.
+            options (Any): Mount options passed to `Space3D.mount`.
+
+        Returns:
+            Mount: The active mount.
+
+        Raises:
+            ValueError: If the anchor belongs to another body, its body has been removed,
+                or `blend_frames` is negative.
+
+        """
         if anchor.body is not self:
             msg = "The anchor belongs to a different body."
             raise ValueError(msg)
@@ -1173,8 +1732,17 @@ class Body:
     ) -> list[Mount]:
         """Mount each character on the matching anchor. See `Space3D.mount` for `options`.
 
+        Args:
+            characters (Sequence[EffectCharacter]): Characters in the order used for the returned anchors or mounts.
+            anchors (Sequence[Anchor]): One anchor per character, in matching order.
+            options (Any): Mount options passed to `Space3D.mount`.
+
+        Returns:
+            list[Mount]: The active mounts, in character sequence order.
+
         Raises:
-            ValueError: If the lengths differ or an anchor belongs to another body.
+            ValueError: If the lengths differ, an anchor belongs to another body, its body has been removed,
+                or `blend_frames` is negative.
 
         """
         if len(characters) != len(anchors):
@@ -1183,13 +1751,26 @@ class Body:
         return [self.add_char(character, anchor, **options) for character, anchor in zip(characters, anchors)]
 
     def release_char(self, character: EffectCharacter) -> None:
-        """Release `character` if it is mounted on this body."""
+        """Release `character` if it is mounted on this body.
+
+        Args:
+            character (EffectCharacter): Character to mount or release.
+
+        Returns:
+            None: No return value.
+
+        """
         mount = self.space.mounts.get(character)
         if mount is not None and mount.anchor.body is self:
             self.space.release(character)
 
     def release_all(self) -> None:
-        """Release every character mounted on this body."""
+        """Release every character mounted on this body.
+
+        Returns:
+            None: No return value.
+
+        """
         for character, mount in list(self.space.mounts.items()):
             if mount.anchor.body is self:
                 self.space.release(character)
@@ -1236,7 +1817,12 @@ class Body:
         return self
 
     def erase(self) -> Body:
-        """Stop drawing the body. Its cells are hidden at the next `Space3D.step`."""
+        """Stop drawing the body. Its cells are hidden at the next `Space3D.step`.
+
+        Returns:
+            Body: This body, for chaining.
+
+        """
         self._look = None
         self._face_looks = {}
         self._texts = {}
@@ -1244,7 +1830,12 @@ class Body:
 
     @property
     def drawn(self) -> bool:
-        """Whether the body is drawn as a surface."""
+        """Whether the body is drawn as a surface.
+
+        Returns:
+            bool: Whether a surface look is enabled.
+
+        """
         return self._look is not None or bool(self._face_looks)
 
     @property
@@ -1252,6 +1843,10 @@ class Body:
         """The characters showing this body after the last `Space3D.step`, by cell.
 
         They belong to the space and are redrawn every step, so changes an effect makes to them last until then.
+
+        Returns:
+            dict[Coord, EffectCharacter]: Surface characters by canvas cell after the last step.
+
         """
         return {slot.character.input_coord: slot.character for slot in self._cells}
 
@@ -1397,7 +1992,12 @@ class Anchor:
     normal: g3.Vec3 | None = None
 
     def world_point(self) -> g3.Vec3:
-        """Return where the anchor is in world space right now."""
+        """Return where the anchor is in world space right now.
+
+        Returns:
+            g3.Vec3: Current world position in columns from the canvas center.
+
+        """
         return self.body.world_point(self.point)
 
 
@@ -1424,6 +2024,7 @@ class Mount:
         light (float): How directly the surface faces the light, 0 to 1. 1 without a normal.
         active (bool): Whether the character is currently mounted with it.
         arrived (bool): Whether the blend has finished, so the character sits on the anchor.
+        blend_progress (float): Uneased blend progress from 0 to 1.
         projected (bool): Whether the anchor is on or beyond the near plane and can be projected. Characters
             are hidden while this is false; the other readings retain their last valid values.
 
@@ -1440,7 +2041,25 @@ class Mount:
         layer_by_depth: bool = True,
         hide_when_facing_away: bool = False,
     ) -> None:
-        """Initialize a mount. Use `Space3D.mount` or `Space3D.new_mount` rather than calling this directly."""
+        """Initialize a mount. Use `Space3D.mount` or `Space3D.new_mount` rather than calling this directly.
+
+        Args:
+            space (Space3D): Space the object belongs to.
+            character (EffectCharacter): Character to mount or release.
+            anchor (Anchor): Anchor on which the character will ride.
+            blend_frames (int): Frames to travel to the anchor. Zero jumps immediately.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            layer_by_depth (bool): Raise nearer characters above their layer at mounting; release restores the layer.
+            hide_when_facing_away (bool): Hide the character after arrival while its anchor faces away from the viewer.
+
+        Returns:
+            None: No return value.
+
+        Raises:
+            ValueError: If `blend_frames` is negative, the anchor belongs to another space,
+                or its body has been removed.
+
+        """
         if blend_frames < 0:
             msg = "blend_frames must not be negative."
             raise ValueError(msg)
@@ -1476,7 +2095,12 @@ class Mount:
 
     @property
     def blend_progress(self) -> float:
-        """Fraction of blend frames elapsed, from 0 to 1, before easing; 1 for a zero-frame blend."""
+        """Fraction of blend frames elapsed, from 0 to 1, before easing; 1 for a zero-frame blend.
+
+        Returns:
+            float: Uneased blend progress from 0 to 1; 1 for a zero-frame blend.
+
+        """
         return min(self._frame / self.blend_frames, 1.0) if self.blend_frames else 1.0
 
     def _begin(self) -> None:
@@ -1598,9 +2222,13 @@ class Space3D:
         bodies (list[Body]): Bodies in creation order.
         mounts (dict[EffectCharacter, Mount]): Active mounts by character.
         rng (random.Random): Random source for the random tweens.
+        input_text (str): Input text, top line first, used by default for textures.
+        surface_characters (dict[Coord, EffectCharacter]): All pooled surface characters by cell, shown or hidden.
+        animating (bool): Whether any body has tweens queued or playing.
+        blending (bool): Whether any active mount is still traveling toward its anchor.
 
     Raises:
-        ValueError: If `perspective` is negative or `light` is unknown or zero.
+        ValueError: If `perspective` is negative or at least 120, or `light` is unknown or zero.
 
     """
 
@@ -1612,7 +2240,21 @@ class Space3D:
         light: Direction = "upper left",
         rng: random.Random | None = None,
     ) -> None:
-        """Initialize the space. See the class docstring for the arguments."""
+        """Initialize the space. See the class docstring for the arguments.
+
+        Args:
+            terminal (Terminal): The effect's terminal.
+            perspective (float): Perspective strength; 0 selects an orthographic view and 1 the natural perspective.
+            light (Direction): Named light direction or nonzero direction pointing toward the light.
+            rng (random.Random | None): Random source, or `None` to use the `random` module.
+
+        Returns:
+            None: No return value.
+
+        Raises:
+            ValueError: If `perspective` is negative or at least 120, or `light` is unknown or zero.
+
+        """
         if perspective < 0:
             msg = "perspective must not be negative."
             raise ValueError(msg)
@@ -1634,7 +2276,12 @@ class Space3D:
 
     @property
     def input_text(self) -> str:
-        """The effect's input text, top line first, as `Textured` looks wrap it by default."""
+        """The effect's input text, top line first, as `Textured` looks wrap it by default.
+
+        Returns:
+            str: Input text with lines ordered from top to bottom.
+
+        """
         if self._input_text is None:
             characters = self.terminal.get_characters()
             rows: dict[int, dict[int, str]] = {}
@@ -1664,11 +2311,18 @@ class Space3D:
 
     @property
     def surface_characters(self) -> dict[Coord, EffectCharacter]:
-        """Every character the space has created to draw surfaces, shown or not, by cell."""
+        """Every character the space has created to draw surfaces, shown or not, by cell.
+
+        Returns:
+            dict[Coord, EffectCharacter]: All pooled surface characters by canvas cell, including hidden characters.
+
+        """
         return {cell: slot.character for cell, slot in self._slots.items()}
 
     def body(self, shape: Shape | None = None, *, at: tuple[float, float, float] = (0, 0, 0)) -> Body:
         """Create a body, with a shape or as a plain frame of reference for anchors.
+
+        Exceptions from a custom shape's `build_mesh` propagate unchanged.
 
         Args:
             shape (Shape | None): `Cube(...)`, `Prism(...)`, `Sphere(...)` or another `Shape`.
@@ -1676,6 +2330,10 @@ class Space3D:
 
         Returns:
             Body: The new body.
+
+        Raises:
+            ValueError: If a built-in shape has invalid mesh segment, ring or side counts.
+            NotImplementedError: If the shape does not implement `Shape.build_mesh`.
 
         """
         new_body = Body(self, shape, at=at)
@@ -1687,6 +2345,12 @@ class Space3D:
 
         Repeated removal is harmless. Removed bodies are no longer drawn or stepped, and their anchors cannot
         be mounted again. Create a new body to add geometry back. Surface characters stay pooled for reuse.
+
+        Args:
+            body (Body): Body owned by this space to remove.
+
+        Returns:
+            None: No return value.
 
         Raises:
             ValueError: If the body belongs to another space.
@@ -1709,7 +2373,12 @@ class Space3D:
         body._cells.clear()
 
     def clear(self) -> None:
-        """Remove all current bodies, releasing their mounts and hiding their surface cells immediately."""
+        """Remove all current bodies, releasing their mounts and hiding their surface cells immediately.
+
+        Returns:
+            None: No return value.
+
+        """
         for body in tuple(self.bodies):
             self.remove(body)
 
@@ -1739,7 +2408,8 @@ class Space3D:
             Mount: The inactive mount.
 
         Raises:
-            ValueError: If `blend_frames` is negative or the anchor belongs to another space.
+            ValueError: If `blend_frames` is negative, the anchor belongs to another space,
+                or its body has been removed.
 
         """
         return Mount(
@@ -1767,8 +2437,20 @@ class Space3D:
         Mounting deactivates the character's path and leaves its scene alone. If the character is already
         mounted, that mount is released first.
 
+        Args:
+            character (EffectCharacter): Character to mount or release.
+            anchor (Anchor): Anchor on which the character will ride.
+            blend_frames (int): Frames to travel to the anchor. Zero jumps immediately.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            layer_by_depth (bool): Raise nearer characters above their layer at mounting; release restores the layer.
+            hide_when_facing_away (bool): Hide the character after arrival while its anchor faces away from the viewer.
+
         Returns:
             Mount: The active mount.
+
+        Raises:
+            ValueError: If `blend_frames` is negative, the anchor belongs to another space,
+                or its body has been removed.
 
         """
         new = self.new_mount(
@@ -1788,6 +2470,13 @@ class Space3D:
         A character still blending toward its anchor stays where it is. Release undoes only what the mount did: it
         restores the layer if `layer_by_depth` was on and shows the character if the mount hid it. A
         `MOUNT_RELEASED` event follows.
+
+        Args:
+            character (EffectCharacter): Character to mount or release.
+
+        Returns:
+            None: No return value.
+
         """
         mount = self.mounts.get(character)
         if mount is not None:
@@ -1795,12 +2484,22 @@ class Space3D:
 
     @property
     def animating(self) -> bool:
-        """Whether any body has tweens queued or playing."""
+        """Whether any body has tweens queued or playing.
+
+        Returns:
+            bool: Whether any tweens are queued or playing.
+
+        """
         return any(body.animating for body in self.bodies)
 
     @property
     def blending(self) -> bool:
-        """Whether any active mount is still traveling toward its anchor. Advances on character ticks."""
+        """Whether any active mount is still traveling toward its anchor. Advances on character ticks.
+
+        Returns:
+            bool: Whether any active mount is still traveling toward its anchor.
+
+        """
         return any(mount.blend_progress < 1.0 for mount in self.mounts.values())
 
     def step(self) -> None:
@@ -1809,6 +2508,10 @@ class Space3D:
         Callbacks of tweens that finished this frame run after the readings are refreshed, so characters released
         from them are placed at the final pose. Readings are refreshed again after any callbacks, so changes they
         make show in this frame.
+
+        Returns:
+            None: No return value.
+
         """
         finished = [(body, body._callback_generation, callback) for body in self.bodies for callback in body._advance()]
         self._refresh_mounts()
