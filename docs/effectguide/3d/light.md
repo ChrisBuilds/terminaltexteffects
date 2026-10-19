@@ -75,6 +75,48 @@ uses that to brighten text as it turns toward the light. Only anchors with a
 [normal](coordinates.md#normals-for-anchors) have a direction to compare: `text_plane` and the shape layouts give
 their anchors one, and an anchor made without one always reports `light=1`.
 
+## World light or camera light?
+
+The light direction can live in either of two coordinate spaces:
+
+| Setting | Meaning of `light="front"` | When the camera turns |
+| --- | --- | --- |
+| `light_space="world"` (default) | Fixed world +z | The same world faces remain lit |
+| `light_space="camera"` | Camera-local +z, back toward the eye | The light rotates with the view, like a headlight |
+
+![The camera circles a fixed cube; a world light arrow stays fixed, while the camera-relative arrow turns with the eye](../../img/effectguide/3d/camera_light.webp)
+
+These recordings use the same stationary cube and camera orbit. Only `light_space` changes. The light remains
+**directional** in both: camera translation does not cause falloff or turn it into a point light at the eye.
+
+=== "World light"
+
+    ```python
+    self.space = Space3D(self.terminal, light="front", light_space="world")
+    ```
+
+    ```bash
+    tte --input-file concept_input.txt --canvas-width 80 --canvas-height 32 --anchor-text c cameralab --lesson world-light
+    ```
+
+    ![As the camera orbits, the cube's world-front face stays bright and its world-back face stays dark](../../img/effectguide/camera_world_light_demo.webp)
+
+=== "Camera light"
+
+    ```python
+    self.space = Space3D(self.terminal, light="front", light_space="camera")
+    ```
+
+    ```bash
+    tte --input-file concept_input.txt --canvas-width 80 --canvas-height 32 --anchor-text c cameralab --lesson camera-light
+    ```
+
+    ![As the camera orbits, the headlight keeps the currently viewed faces lit](../../img/effectguide/camera_camera_light_demo.webp)
+
+`space.light` stores the configured direction in the selected coordinate space. Surface shading and mount `light`
+readings use the same mode. Body normals remain in world space after the body transform, so a manual Lambert
+calculation must convert a camera-relative light into world coordinates first.
+
 ## Under the hood
 
 [`geometry3d.lambert(normal, light)`](../../engine/utils/geometry3d.md) returns the Lambert value. With a face's
@@ -83,7 +125,10 @@ normal from the depth buffer, choosing a symbol is one line:
 ```python
 from terminaltexteffects.utils import geometry3d as g3
 
-shade = g3.lambert(fragment.normal, self.space.light)
+world_light = self.space.light
+if self.space.light_space == "camera":
+    world_light = self.space.camera.rotation.apply(world_light)
+shade = g3.lambert(fragment.normal, world_light)
 symbol = ramp[min(len(ramp) - 1, int(shade * len(ramp)))]
 color = gradient.get_color_at_fraction(shade)
 ```
@@ -97,7 +142,7 @@ smooth fade, and why more segments make the shading smoother.
   bolder.
 - Color carries most of the shading in a dark terminal. A gradient from a dark color to a bright one works with
   almost any symbols.
-- A light straight from the front (`"front"`) points along +z, so faces turned toward the viewer come out bright and
-  the shape looks flat. In an orthographic view, facing the light and facing you are the same thing. With
-  perspective, you see points away from the canvas center at a slight angle, so the two differ a little there. A
-  light from one side shows form best.
+- A camera-relative `"front"` light points back along the current view axis, so visible faces come out bright and
+  the shape can look flat. In an orthographic view, facing that light and facing the viewer agree. In perspective,
+  off-axis viewing rays differ a little. A light from one side often shows form better. In world mode, `"front"`
+  means fixed world +z and is viewer-facing only while the camera has its default orientation.

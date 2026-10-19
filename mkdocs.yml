@@ -91,6 +91,7 @@ nav:
       - effectguide/3d/transforms.md
       - effectguide/3d/rotation.md
       - effectguide/3d/camera.md
+      - effectguide/3d/camera-movement.md
       - effectguide/3d/depth.md
       - effectguide/3d/meshes.md
       - effectguide/3d/light.md

@@ -240,6 +240,30 @@ GUIDE_DEMOS: dict[str, Demo] = {
         effects_dir=EXAMPLES_3D / "cameraorbit",
         end_on_text=False,
     ),
+    **{
+        f"camera_{lesson.replace('-', '_')}": Demo(
+            effect="cameralab",
+            effect_args=("--lesson", lesson),
+            tte_args=("--canvas-width", "80", "--canvas-height", "32", "--anchor-text", "c"),
+            input_file=CONCEPT_INPUT,
+            effects_dir=EXAMPLES_3D / "cameralab",
+            end_on_text=False,
+        )
+        for lesson in (
+            "travel",
+            "turns",
+            "orthographic",
+            "dolly",
+            "zoom",
+            "sampled",
+            "follow",
+            "world-light",
+            "camera-light",
+            "sequence",
+            "restore",
+            "clip",
+        )
+    },
     # The Spin tutorial: each step under one command name. Step 6 is the finished effect.
     **{
         f"myspin_step{step}": Demo(

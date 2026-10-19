@@ -14,7 +14,7 @@ know where to look when the high-level calls don't do what you need.
 
 | Layer | Module | What it gives you |
 | --- | --- | --- |
-| [`Space3D`](../../engine/space3d.md) | `terminaltexteffects.engine.space3d` | A camera, a light and **bodies**: shapes you move, turn and animate. You mount your characters on bodies, or draw the bodies as filled surfaces. |
+| [`Space3D`](../../engine/space3d.md) | `terminaltexteffects.engine.space3d` | A camera, a light and **bodies**: shapes you move, turn and animate, viewed through a camera you can also move and aim. You mount your characters on bodies, or draw the bodies as filled surfaces. |
 | [`geometry3d`](../../engine/utils/geometry3d.md) | `terminaltexteffects.utils.geometry3d` | The primitives underneath: vectors, rotations, the camera's projection, meshes, rasterizing into a depth buffer, wireframes and shading. |
 
 Most effects only need `Space3D`. Each chapter shows the `Space3D` calls first, then the primitives they use, for
@@ -41,7 +41,7 @@ mapping](textures.md#mounted-text-or-textured-surface) compares the two with the
 ## The frame loop
 
 A 3D effect is an ordinary effect (see the Engine chapter on the [frame loop](../engine/frame-loop.md)) with one
-extra call per frame, before `update()`. `space.step()` plays the bodies' queued animations, redraws any drawn
+extra call per frame, before `update()`. `space.step()` plays the camera's and bodies' queued animations, redraws any drawn
 surfaces and works out where every mounted anchor lands. `update()` then ticks the active characters, and a mounted
 character's tick moves it to its anchor's cell.
 
@@ -66,6 +66,16 @@ def __next__(self) -> str:
     self.update()
     return self.frame
 ```
+
+The same loop works when only the camera animates. Leave the body still and queue a viewpoint move instead:
+
+```python
+self.space = Space3D(self.terminal)
+self.cube = self.space.body(Cube(16)).draw(Shaded())
+self.space.camera.truck(12, frames=120)
+```
+
+`space.animating` stays true for that camera queue. [Moving the camera](camera-movement.md) explains the controls.
 
 ### Mounted text
 
@@ -101,7 +111,7 @@ def __next__(self) -> str:
 - **An active mount keeps its character active.** Mounted characters never finish on their own, even after the
   body's tweens end and any blend toward the anchor is over, so `update()` never drops them. Release them, as
   `on_complete` does here, or the effect never ends.
-- **`space.animating` only tracks body tweens.** It turns false when the queues are empty, while mounted characters,
+- **`space.animating` tracks camera and body tweens.** It turns false when all their queues are empty, while mounted characters,
   blends and any 2D paths you start after release may still be moving. End on `active_characters` too, as above.
 
 Bodies own no characters. A drawn body shows itself with characters the space creates, and characters you mount
@@ -113,8 +123,8 @@ stay yours: their scenes, events and layers keep working, and you can release th
 Every chapter has a small example effect with options. Each one lives in its own directory under
 [`docs/effectguide/examples/3d/`](https://github.com/ChrisBuilds/terminaltexteffects/tree/main/docs/effectguide/examples/3d).
 Save it in your community effects directory, as in the Engine chapters. The examples run on the same
-[`concept_input.txt`](../engine/characters.md#seeing-the-orders) as the Engine chapters, on an 80 by 24 canvas so the
-shapes have room:
+[`concept_input.txt`](../engine/characters.md#seeing-the-orders) as the Engine chapters, on the canvas size printed beside each example so the
+shapes have room. Most use 80 by 24; the camera lessons use 80 by 32 for captions and framing:
 
 ```bash
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c cubes
@@ -130,13 +140,16 @@ The concept examples end by swapping their shapes for the input text, so you can
 3. [Tall cells](tall-cells.md): why rows and columns aren't the same size, and how the camera corrects for it.
 4. [Transforms](transforms.md): moving, turning and scaling, and why order matters.
 5. [Rotation](rotation.md): axes, tumbles and getting back to rest.
-6. [Camera and projection](camera.md): perspective and the flat view.
-7. [Depth and hidden surfaces](depth.md): what hides what.
-8. [Meshes](meshes.md): the built-in shapes and making your own.
-9. [Light and shading](light.md): how faces get their symbols and colors.
-10. [Texture mapping](textures.md): wrapping text over surfaces.
-11. [Animating in 3D](animating.md): tweens, timing and handing the text back to 2D.
-12. [Performance](performance.md): what a frame costs.
-13. [Recipes](recipes.md): a spinning logo, a die, a globe, a ticker and wireframe solids.
+6. [Camera and projection](camera.md): perspective, focal length, framing, view coordinates and the flat view.
+7. [Moving the camera](camera-movement.md): travel, turning, aiming and orbiting a stationary scene.
+8. [Depth and hidden surfaces](depth.md): what hides what.
+9. [Meshes](meshes.md): the built-in shapes and making your own.
+10. [Light and shading](light.md): how faces get their symbols and colors.
+11. [Texture mapping](textures.md): wrapping text over surfaces.
+12. [Animating in 3D](animating.md): tweens, timing and handing the text back to 2D.
+13. [Performance](performance.md): what a frame costs.
+14. [Recipes](recipes.md): a spinning logo, a die, a globe, a ticker and wireframe solids.
+
+For a first camera experiment, try the [camera lab](camera-movement.md#run-the-camera-lab).
 
 Then the [Spin tutorial](spin/01-sheet.md) builds a complete 3D effect in six steps.

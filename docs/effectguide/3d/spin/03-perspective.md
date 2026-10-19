@@ -21,8 +21,8 @@ Replace `myspin.py` with this version:
 
 ### Perspective
 
-`Space3D(self.terminal, perspective=1)` uses the default camera. With perspective, a point's distance from the camera
-scales it on screen: far points crowd toward the center, and near points spread out. The edge of the sheet that
+`Space3D(self.terminal, perspective=1)` uses the default camera. With perspective, a point's view-axis depth
+controls its scale on screen: far points crowd toward the center, and near points spread out. The edge of the sheet that
 turns toward you now grows, and the far edge shrinks.
 
 ### Starting far away
@@ -50,6 +50,9 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 ![MySpin after step 3: the text grows from a small block as it spins forward](../../../img/effectguide/myspin_step3_demo.webp)
 
 While the sheet is far away, many characters land on the same cells, so the text reads as a jumble until it nears.
+
+This tutorial animates the sheet while keeping the camera at its default pose. For the complementary approach,
+leave the sheet in place and try [moving the camera](../camera-movement.md).
 
 ## Next step
 

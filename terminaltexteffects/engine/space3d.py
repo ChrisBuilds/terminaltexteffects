@@ -27,7 +27,8 @@ A body with a shape can also be drawn as a filled surface with `Body.draw` and a
 cell, so the effect's own characters are never used for them.
 
 World units are terminal columns. The origin is the canvas center, +x is right, +y is up and +z points toward the
-viewer. Angles are degrees, and axes are `"x"`, `"y"`, `"z"`, `"diagonal"` or any `(x, y, z)` direction.
+default viewer. World axes stay fixed when the camera turns. Angles are degrees, and axes are `"x"`, `"y"`, `"z"`,
+`"diagonal"` or any `(x, y, z)` direction.
 
 Classes:
     Space3D: Camera, light, bodies and mounts for one effect.
@@ -915,9 +916,9 @@ class Camera(g3.Camera):
         """Set the eye's world position, now, without changing distance or focal length.
 
         Args:
-            x (float): World x coordinate or displacement, in columns.
-            y (float): World y coordinate or displacement, in columns.
-            z (float): World z coordinate or displacement, in columns.
+            x (float): Absolute world x coordinate in columns; omitted coordinates default to zero.
+            y (float): Absolute world y coordinate in columns; omitted coordinates default to zero.
+            z (float): Absolute world z coordinate in columns; omitted coordinates default to zero.
 
         Returns:
             Camera: This camera, for chaining.
@@ -944,9 +945,9 @@ class Camera(g3.Camera):
         """Move by world displacement `(x, y, z)`, now.
 
         Args:
-            x (float): World x coordinate or displacement, in columns.
-            y (float): World y coordinate or displacement, in columns.
-            z (float): World z coordinate or displacement, in columns.
+            x (float): Displacement along fixed world x, in columns.
+            y (float): Displacement along fixed world y, in columns.
+            z (float): Displacement along fixed world z, in columns.
 
         Returns:
             Camera: This camera, for chaining.
@@ -985,6 +986,9 @@ class Camera(g3.Camera):
         Returns:
             Camera: This camera, for chaining.
 
+        Raises:
+            ValueError: If `frames` is negative.
+
         """
         return (
             self._travel(g3.X_AXIS, amount)
@@ -1005,6 +1009,9 @@ class Camera(g3.Camera):
 
         Returns:
             Camera: This camera, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
 
         """
         return (
@@ -1040,6 +1047,9 @@ class Camera(g3.Camera):
         Returns:
             Camera: This camera, for chaining.
 
+        Raises:
+            ValueError: If `frames` is negative.
+
         """
         return self._turn("y", degrees, frames, ease, together=together)
 
@@ -1056,6 +1066,9 @@ class Camera(g3.Camera):
 
         Returns:
             Camera: This camera, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
 
         """
         return self._turn("x", degrees, frames, ease, together=together)
@@ -1074,6 +1087,9 @@ class Camera(g3.Camera):
         Returns:
             Camera: This camera, for chaining.
 
+        Raises:
+            ValueError: If `frames` is negative.
+
         """
         return self._turn("z", degrees, frames, ease, together=together)
 
@@ -1085,6 +1101,9 @@ class Camera(g3.Camera):
 
         Returns:
             Camera: This camera, for chaining.
+
+        Raises:
+            ValueError: If `factor` is not positive.
 
         """
         if factor <= 0:
@@ -1145,8 +1164,8 @@ class Camera(g3.Camera):
         Args:
             x (float | Body | g3.Vec3 | tuple[float, float, float]): Target world x, a `Vec3`, an `(x,
                 y, z)` tuple or a body to aim at.
-            y (float): World y coordinate or displacement, in columns.
-            z (float): World z coordinate or displacement, in columns.
+            y (float): Target world y when `x` is numeric; ignored for a body or point target.
+            z (float): Target world z when `x` is numeric; ignored for a body or point target.
             up (Axis): Nonzero world-up direction; defaults to +y.
             frames (int | None): `None` applies now; otherwise queue this many frames. Zero preserves queue ordering.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
@@ -1154,6 +1173,10 @@ class Camera(g3.Camera):
 
         Returns:
             Camera: This camera, for chaining.
+
+        Raises:
+            ValueError: If frames is negative, up is unknown or zero, or the target is at the eye
+                when aiming begins.
 
         """
         target = g3.Vec3(x, y, z) if isinstance(x, (float, int)) else x
@@ -1195,6 +1218,10 @@ class Camera(g3.Camera):
 
         Returns:
             Camera: This camera, for chaining.
+
+        Raises:
+            ValueError: If both angle forms are supplied, an axis or up direction is invalid, frames is negative,
+                or the sampled target is at the eye when the action begins.
 
         """
         if degrees is not None and turns is not None:
@@ -1247,15 +1274,18 @@ class Camera(g3.Camera):
         """Queue an absolute world position, applying deltas that preserve concurrent nudges.
 
         Args:
-            x (float): World x coordinate or displacement, in columns.
-            y (float): World y coordinate or displacement, in columns.
-            z (float): World z coordinate or displacement, in columns.
+            x (float): Absolute world x coordinate in columns; omitted coordinates default to zero.
+            y (float): Absolute world y coordinate in columns; omitted coordinates default to zero.
+            z (float): Absolute world z coordinate in columns; omitted coordinates default to zero.
             frames (int): Duration in frames. Zero applies immediately only when no earlier tween is queued.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Play alongside the last queued group instead of after it.
 
         Returns:
             Camera: This camera, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
 
         """
         target = g3.Vec3(x, y, z)
@@ -1300,6 +1330,9 @@ class Camera(g3.Camera):
         Returns:
             Camera: This camera, for chaining.
 
+        Raises:
+            ValueError: If `frames` is negative.
+
         """
         return self._travel_by(-g3.Z_AXIS, amount, frames, ease, together=together)
 
@@ -1325,13 +1358,16 @@ class Camera(g3.Camera):
         """Queue the shortest turn to a world orientation, preserving concurrent rotation deltas.
 
         Args:
-            rotation (g3.Rotation): Target world orientation; `None`, when accepted, restores the default orientation.
+            rotation (g3.Rotation): Target world orientation as a `Rotation`.
             frames (int): Duration in frames. Zero applies immediately only when no earlier tween is queued.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Play alongside the last queued group instead of after it.
 
         Returns:
             Camera: This camera, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
 
         """
         return self._turn_to(rotation.normalized, frames, ease, together=together)
@@ -1349,6 +1385,9 @@ class Camera(g3.Camera):
 
         Returns:
             Camera: This camera, for chaining.
+
+        Raises:
+            ValueError: If `focal` is not positive or `frames` is negative.
 
         """
         if focal <= 0:
@@ -1732,7 +1771,7 @@ class Body:
         Args:
             x (float): World x coordinate in columns, increasing rightward.
             y (float): World y coordinate in columns, increasing upward.
-            z (float): World z coordinate in columns, increasing toward the viewer.
+            z (float): World z coordinate in columns, increasing toward the default viewer.
 
         Returns:
             Body: This body, for chaining.
@@ -1920,7 +1959,7 @@ class Body:
         Args:
             x (float): World x coordinate in columns, increasing rightward.
             y (float): World y coordinate in columns, increasing upward.
-            z (float): World z coordinate in columns, increasing toward the viewer.
+            z (float): World z coordinate in columns, increasing toward the default viewer.
             frames (int): Duration in frames. Zero applies immediately when no tween is queued ahead.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Run alongside the previously queued tween instead of after it.
@@ -2025,7 +2064,7 @@ class Body:
         Args:
             x (tuple[float, float] | None): Range for x. `None` uses the middle half of the canvas width.
             y (tuple[float, float] | None): Range for y. `None` uses the middle half of the canvas height.
-            z (tuple[float, float]): Range for world z, increasing toward the viewer; not camera depth.
+            z (tuple[float, float]): Range for world z, increasing toward the default viewer; not camera depth.
             frames (int): Frames the move takes. 0 jumps.
             ease (EasingFunction | None): Easing for the move.
             together (bool): Run alongside the previously queued tween.
@@ -2157,7 +2196,7 @@ class Body:
         Args:
             x (float): Columns right of the body's origin, before the body turns.
             y (float): Columns up.
-            z (float): World columns toward the viewer, before the body turns; not camera depth.
+            z (float): Local z toward the default viewer before the body turns; not camera depth.
             normal (Axis | None): Which way the surface faces there. Mounts on anchors with a normal report
                 `facing` and `light`.
 
@@ -2174,7 +2213,7 @@ class Body:
         return Anchor(self, point, unit)
 
     def text_plane(self, characters: Sequence[EffectCharacter]) -> list[Anchor]:
-        """Return an anchor for each character at its input cell, on a plane facing the viewer.
+        """Return anchors at input cells under the initial camera view and current body pose.
 
         At the body's current pose, each anchor meets its input cell in the default camera configuration
         created with the space. Camera movement and zoom do not rearrange this layout. Turning the body

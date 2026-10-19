@@ -14,7 +14,7 @@ wants them back. While a character is mounted, only its position comes from 3D, 
 working as usual.
 
 World units are terminal columns. The origin is the center of the canvas, +x points right, +y points up and +z points
-toward the viewer. Angles are degrees, and axes are `"x"`, `"y"`, `"z"`, `"diagonal"` or any `(x, y, z)` direction.
+toward the default viewer. World axes stay fixed when the camera turns. Angles are degrees, and axes are `"x"`, `"y"`, `"z"`, `"diagonal"` or any `(x, y, z)` direction.
 For the vectors, rotations and projection underneath, see [Geometry 3D](utils/geometry3d.md).
 
 ## Moving bodies
@@ -32,8 +32,32 @@ effect is also nudging.
 `space.camera` is a [`Camera`](#terminaltexteffects.engine.space3d.Camera), extending `geometry3d.Camera` with
 immediate movement and a tween queue. It supports dolly, truck, pedestal, pan, tilt, roll, look-at, orbit and zoom.
 Camera tweens count toward `space.animating` and advance in `space.step()` before body tweens. Completion callbacks
-run after mount readings refresh. See [Moving the camera](../effectguide/3d/camera.md#moving-the-camera) for the
+run after mount readings refresh. See [Moving the camera](../effectguide/3d/camera-movement.md) for the
 controls, target sampling, lighting and layout conventions.
+
+## Camera readouts and projection helpers
+
+The high-level `Camera` inherits its settings and projection helpers from `geometry3d.Camera`. They work on
+`space.camera` alongside the controls:
+
+| Members | Meaning |
+| --- | --- |
+| `position`, `rotation` | Read-only world eye and orientation; change them through setters or controls |
+| `distance`, `focal` | Legacy initial eye distance / fallback focal, and an optional explicit focal length |
+| `orthographic`, `near`, `row_scale` | Projection kind, minimum view-axis depth and tall-cell correction |
+| `center_column`, `center_row` | Optical center in canvas cells |
+| `project`, `project_points` | World points to projected cells and depths, or `None` before the near plane |
+| `depth`, `view_direction` | View-axis depth and direction back toward the viewer |
+| `ray`, `cell_to_world` | A world viewing ray, or its intersection with a world-z plane |
+
+Defaults, mutable-setting behavior, orthographic differences and errors are explained in
+[Camera and projection](../effectguide/3d/camera.md). `set_position` and `move_to` take absolute coordinates;
+`move_by` takes a world displacement; dolly/truck/pedestal use camera-local axes. `look_at` and `orbit` sample body
+targets when queued actions begin. Their `frames` argument is optional: omission applies immediately, whereas zero
+obeys queue ordering. Other tween methods default to 60 frames.
+
+Camera cancellation drops pending callbacks and keeps the pose. Reset also restores initial projection settings.
+`space.clear()` removes bodies; cancel camera work separately if you are ending the whole scene.
 
 ## Mounting characters
 
@@ -126,3 +150,21 @@ def __next__(self) -> str:
    characters onto their anchors.
 
 ::: terminaltexteffects.engine.space3d
+    options:
+      inherited_members:
+        - position
+        - rotation
+        - center_column
+        - center_row
+        - distance
+        - focal
+        - orthographic
+        - near
+        - row_scale
+        - project
+        - project_points
+        - depth
+        - view_direction
+        - ray
+        - cell_to_world
+        - for_canvas

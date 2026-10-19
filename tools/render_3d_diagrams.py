@@ -2,7 +2,7 @@
 
 These are drawings, not TTE output: smooth lines and shapes that explain an idea (a camera, a projection, a turn)
 before the guide shows what it looks like in cells. The 3D math comes from `terminaltexteffects.utils.geometry3d`,
-so the diagrams follow the same conventions as the engine: x right, y up, z toward the viewer.
+so the diagrams follow the same conventions as the engine: x right, y up, z toward the default viewer.
 
 Requires Pillow, installed on Python 3.10 and later by `uv sync --group dev`.
 
@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING
 
 from PIL import Image, ImageDraw, ImageFont
 
+from terminaltexteffects.engine.space3d import Camera
 from terminaltexteffects.utils import geometry3d as g3
 from terminaltexteffects.utils.geometry3d import Rotation, Vec3
 
@@ -347,12 +348,12 @@ def world_axes() -> list[Image.Image]:
         for corner in corners:
             canvas.line(view(eye), view(corner), FAINT, 1, dash=4)
         canvas.circle(view(eye), 7, AMBER)
-        canvas.text((view(eye)[0], view(eye)[1] - 20), "camera", AMBER, 13)
+        canvas.text((view(eye)[0], view(eye)[1] - 20), "default camera", AMBER, 13)
         # Axes, drawn far to near so nearer ones cover farther ones.
         axes = [
             (Vec3(52, 0, 0), RED, "+x right"),
             (Vec3(0, 36, 0), GREEN, "+y up"),
-            (Vec3(0, 0, 70), BLUE, "+z toward you"),
+            (Vec3(0, 0, 70), BLUE, "+z: default eye"),
         ]
         axes.sort(key=lambda item: view.depth(item[0]))
         for tip, color, label in axes:
@@ -582,8 +583,8 @@ def projection() -> list[Image.Image]:
                 canvas.circle(eye, 7, AMBER)
                 canvas.text((eye[0], eye[1] + 24), "camera", AMBER, 12)
             else:
-                canvas.text((left + 340, ground + 110), "camera infinitely far", AMBER, 12)
-                canvas.text((left + 340, ground + 126), "away: rays are parallel", AMBER, 12)
+                canvas.text((left + 340, ground + 110), "parallel projection", AMBER, 12)
+                canvas.text((left + 340, ground + 126), "finite depth still clips", AMBER, 12)
             # An object moving between near and far, standing on the axis.
             depth_x = left + 30 + 170 * t
             height = 70
@@ -860,7 +861,9 @@ def tween_timeline() -> list[Image.Image]:
     end = left + 240 * unit
     canvas.line((end, 70), (end, 236), WHITE, 1.5, dash=4)
     canvas.text((end + 8, 74), "on_complete", WHITE, 12, "lm", mono=True)
-    canvas.text((430, 285), "space.step() plays one frame of the tweens at the front of each body's queue.", MUTED, 12)
+    canvas.text(
+        (430, 285), "space.step() advances both body and camera queues; this example shows one body.", MUTED, 12
+    )
     return [canvas.finish()]
 
 
@@ -1103,6 +1106,215 @@ def camera_movement() -> list[Image.Image]:
     return frames
 
 
+def camera_axes() -> list[Image.Image]:
+    """Compare world travel with camera-local travel after a pan."""
+    canvas = Canvas(900, 390)
+    canvas.text((450, 25), "World axes stay fixed when the camera turns", TEXT, 18)
+    for panel, angle in enumerate((0, 35)):
+        left = panel * 450
+        eye = (left + 220, 235)
+        radians = math.radians(angle)
+        right = (math.cos(radians), -math.sin(radians))
+        forward = (-math.sin(radians), -math.cos(radians))
+        canvas.text((left + 225, 65), "Default view" if not angle else "After pan(+35 degrees)", TEXT, 15)
+        canvas.arrow((left + 90, 310), (left + 365, 310), RED, 1.5)
+        canvas.text((left + 225, 333), "world +x: move_by(x=...)", RED, 12)
+        canvas.arrow((left + 90, 310), (left + 90, 135), GREEN, 1.5)
+        canvas.text((left + 90, 115), "world -z", GREEN, 12)
+        canvas.arrow(eye, (eye[0] + forward[0] * 105, eye[1] + forward[1] * 105), CYAN, 3)
+        canvas.arrow(eye, (eye[0] + right[0] * 105, eye[1] + right[1] * 105), AMBER, 3)
+        canvas.circle(eye, 7, WHITE)
+        canvas.text((left + 285, 260), "camera", WHITE, 12)
+        canvas.text((left + 240, 95), "dolly: local -z", CYAN, 12)
+        canvas.text((left + 350, 190), "truck: local +x", AMBER, 12)
+    canvas.text(
+        (450, 370), "Top view. Pedestal follows local +y; a tilt or roll changes that direction too.", MUTED, 13
+    )
+    return [canvas.finish()]
+
+
+def camera_up() -> list[Image.Image]:
+    """Use real look-at rotations to show how up chooses the roll at a fixed eye and target."""
+    canvas = Canvas(900, 390)
+    canvas.text((450, 25), "Same eye, same target; up chooses the camera's roll", TEXT, 18)
+    glyph = ((Vec3(-55, 55, 0), Vec3(55, 55, 0)), (Vec3(0, 55, 0), Vec3(0, -55, 0)))
+    for panel, up in enumerate(("y", "x")):
+        cx = 225 + panel * 450
+        camera = Camera(cx, 0, row_scale=1)
+        camera.look_at(0, 0, 0, up=up)
+        canvas.text((cx, 83), f'look_at(target, up="{up}")', TEXT, 16, mono=True)
+        canvas.rect(cx - 115, 140, cx + 115, 315, None, FAINT)
+        for first, last in glyph:
+            a, b = camera.project(first), camera.project(last)
+            assert a is not None
+            assert b is not None
+            canvas.line((a.column, 235 - a.row), (b.column, 235 - b.row), CYAN, 7)
+        canvas.circle((cx, 235), 4, AMBER)
+        canvas.text((cx, 340), f"camera top follows world +{up}", MUTED, 13)
+    canvas.text((450, 376), "The world-space T stays still. The gold aim point remains at the image center.", MUTED, 13)
+    return [canvas.finish()]
+
+
+def camera_view() -> list[Image.Image]:
+    """Show the view transform between world placement and terminal projection."""
+    canvas = Canvas(940, 420)
+    canvas.text((470, 25), "A point passes through four coordinate spaces", TEXT, 18)
+    labels = (
+        ("Body local", "anchor on the body"),
+        ("World", "body transform"),
+        ("Camera / view", "subtract eye; undo its turn"),
+        ("Canvas cells", "project, then round"),
+    )
+    for i, (title, note) in enumerate(labels):
+        x = 20 + 235 * i
+        canvas.rect(x, 70, x + 195, 145, mix(CYAN, BACKGROUND, 0.88), FAINT)
+        canvas.text((x + 97, 92), title, CYAN, 15)
+        canvas.text((x + 97, 120), note, MUTED, 11)
+        if i < 3:
+            canvas.arrow((x + 200, 107), (x + 230, 107), MUTED, 1.5)
+    canvas.text((470, 182), "Depth is measured along the current view axis", TEXT, 16)
+    eye, point, foot = (380.0, 265.0), (180.0, 345.0), (180.0, 265.0)
+    canvas.arrow(eye, (100, 265), AMBER, 2)
+    canvas.circle(eye, 7, AMBER)
+    canvas.circle(point, 6, CYAN)
+    canvas.line(point, foot, MUTED, 1.5, dash=5)
+    canvas.line((180, 238), (380, 238), WHITE, 2)
+    canvas.text((280, 221), "view-axis depth = 25", WHITE, 13)
+    canvas.text((385, 292), "eye (30, 0, 0)", AMBER, 12)
+    canvas.text((185, 370), "point (5, 0, 10)", CYAN, 12)
+    canvas.text((120, 287), "looks along world -x", MUTED, 11)
+    canvas.text((690, 250), "The world point stays where it is.", TEXT, 14)
+    canvas.text((690, 280), "The camera changes the coordinates used to draw it.", MUTED, 12)
+    canvas.text((690, 315), "distance - world_z describes only the default view.", MUTED, 12)
+    canvas.text(
+        (470, 401), "Camera movement adds a view transform; it does not rewrite the bodies' transforms.", MUTED, 12
+    )
+    return [canvas.finish()]
+
+
+def camera_lens() -> list[Image.Image]:
+    """Compare dolly and zoom with equal final foreground framing."""
+    canvas = Canvas(900, 430)
+    canvas.text((450, 25), "Match the foreground; compare the background", TEXT, 18)
+    for panel, (title, eye, focal, back_scale) in enumerate(
+        (("Dolly forward 30", 90, 120, 0.8), ("Zoom by 4/3", 120, 160, 8 / 9))
+    ):
+        left = panel * 450
+        canvas.text((left + 225, 65), title, TEXT, 16)
+        canvas.text((left + 225, 93), f"eye z = {eye}; focal = {focal}", MUTED, 13, mono=True)
+        baseline = 320
+        front_height, back_height = 160 * 4 / 3, 160 * back_scale
+        canvas.rect(left + 95, baseline - front_height, left + 165, baseline, CYAN)
+        canvas.rect(left + 265, baseline - back_height, left + 335, baseline, PURPLE)
+        canvas.text((left + 130, 345), "foreground", CYAN, 13)
+        canvas.text((left + 300, 345), "background", mix(PURPLE, WHITE, 0.4), 13)
+        canvas.text((left + 130, 370), "scale 1.333", MUTED, 12)
+        canvas.text((left + 300, 370), f"scale {back_scale:.3f}", MUTED, 12)
+    canvas.line((450, 60), (450, 385), FAINT, 1)
+    canvas.text((450, 410), "Starting eye and focal: 120. Foreground world z: 0. Background world z: -60.", MUTED, 13)
+    return [canvas.finish()]
+
+
+def camera_timing() -> list[Image.Image]:
+    """Show separate body/camera queues, group completion and the frame loop order."""
+    canvas = Canvas(980, 410)
+    canvas.text((490, 24), "Separate queues; one space.step() per frame", TEXT, 18)
+    left, unit = 160, 2.8
+    canvas.text((145, 100), "camera", CYAN, 14, anchor="rm")
+    canvas.text((145, 239), "body", PURPLE, 14, anchor="rm")
+    for label, start, length, y, color in (
+        ("hold", 0, 24, 85, FAINT),
+        ("truck: 90 frames", 24, 90, 85, CYAN),
+        ("pan: 45 frames", 24, 45, 130, AMBER),
+        ("hold", 114, 24, 85, FAINT),
+        ("zoom: 60", 138, 60, 85, CYAN),
+        ("spin: 120 frames", 0, 120, 222, PURPLE),
+    ):
+        x = left + start * unit
+        canvas.rect(x, y, x + length * unit, y + 31, mix(color, BACKGROUND, 0.35), color)
+        canvas.text((x + length * unit / 2, y + 15), label, TEXT, 11)
+    for frame, label, y, color in ((69, "pan complete", 180, AMBER), (114, "group complete", 200, CYAN)):
+        x = left + frame * unit
+        canvas.line((x, 120), (x, y - 14), color, 1, dash=4)
+        canvas.text((x, y), label, color, 12)
+    canvas.line((left, 280), (left + 270 * unit, 280), MUTED, 1)
+    for frame in (0, 24, 69, 114, 138, 198, 270):
+        x = left + frame * unit
+        canvas.text((x, 296), str(frame), MUTED, 11)
+    canvas.text((490, 329), "Tweens that start together capture the same initial pose.", TEXT, 13)
+    for i, label in enumerate(
+        ("camera tweens", "body tweens", "refresh mounts", "callbacks", "refresh + draw", "update()")
+    ):
+        x = 18 + i * 160
+        canvas.rect(x, 355, x + 145, 389, mix(CYAN, BACKGROUND, 0.9), FAINT)
+        canvas.text((x + 72, 372), label, MUTED, 11)
+        if i < 5:
+            canvas.arrow((x + 147, 372), (x + 158, 372), MUTED, 1, head=4)
+    return [canvas.finish()]
+
+
+def camera_light() -> list[Image.Image]:
+    """Compare a fixed world light with a camera-relative directional headlight."""
+    frames = []
+    for frame in range(90):
+        canvas = Canvas(900, 380)
+        canvas.text((450, 25), "The light has a direction, not a position", TEXT, 18)
+        angle = 2 * math.pi * frame / 90
+        for panel, mode in enumerate(("world", "camera")):
+            cx, cy = 225 + 450 * panel, 205
+            canvas.text((cx, 65), f'light_space="{mode}", light="front"', TEXT, 14)
+            canvas.circle((cx, cy), 95, None, FAINT, 1)
+            canvas.rect(cx - 22, cy - 22, cx + 22, cy + 22, PURPLE, CYAN)
+            eye = (cx + 95 * math.sin(angle), cy + 95 * math.cos(angle))
+            canvas.circle(eye, 6, WHITE)
+            canvas.line(eye, (cx, cy), MUTED, 1, dash=4)
+            light_angle = 0 if mode == "world" else angle
+            light = (cx + 75 * math.sin(light_angle), cy + 75 * math.cos(light_angle))
+            canvas.arrow((cx, cy), light, AMBER, 3)
+            canvas.text(
+                (cx, 332), "world +z stays fixed" if mode == "world" else "direction turns with the camera", AMBER, 13
+            )
+        canvas.text(
+            (450, 363), "Top view. White: camera. Gold: direction toward the light. The cube stays still.", MUTED, 12
+        )
+        frames.append(canvas.finish())
+    return frames
+
+
+def camera_near() -> list[Image.Image]:
+    """Move a side-view camera and its perpendicular near plane past fixed geometry."""
+    frames = []
+    for frame in range(100):
+        t = ease(abs(1 - 2 * frame / 100))
+        eye_x = 528 - 126 * t
+        near_x = eye_x - 27
+        canvas = Canvas(860, 380)
+        canvas.text((430, 25), "The near plane moves and turns with the camera", TEXT, 18)
+        canvas.rect(240, 115, 420, 260, mix(RED, BACKGROUND, 0.35), RED)
+        canvas.rect(240, 115, min(420, near_x), 260, mix(CYAN, BACKGROUND, 0.4), CYAN)
+        canvas.line((near_x, 85), (near_x, 285), WHITE, 2, dash=5)
+        canvas.text((near_x, 68), "near plane", WHITE, 12)
+        canvas.circle((eye_x, 190), 7, AMBER)
+        canvas.arrow((eye_x - 10, 190), (eye_x - 52, 190), AMBER, 2)
+        canvas.text((eye_x, 216), "eye", AMBER, 12)
+        canvas.text((330, 294), "stationary body", CYAN, 13)
+        canvas.arrow((100, 325), (550, 325), RED, 1.5)
+        canvas.text((335, 346), "world +x", RED, 12)
+        canvas.text((685, 130), "View: world -x", TEXT, 15)
+        canvas.text((685, 169), "cyan: retained", CYAN, 13)
+        canvas.text((685, 195), "red: clipped", RED, 13)
+        canvas.text((685, 240), "Orthographic projection", MUTED, 12)
+        canvas.text((685, 260), "isolates clipping from zoom.", MUTED, 12)
+        canvas.text(
+            (430, 369),
+            "near = 3 view-axis units, on a plane perpendicular to the current forward direction.",
+            MUTED,
+            12,
+        )
+        frames.append(canvas.finish())
+    return frames
+
+
 CLIPPED: set[str] = set()
 """Labels and markers drawn reaching past a frame's edges since this was last cleared, so tests can catch them."""
 
@@ -1125,6 +1337,13 @@ DIAGRAMS: dict[str, Callable[[], list[Image.Image]]] = {
     "rotation_order": rotation_order,
     "projection": projection,
     "camera_movement": camera_movement,
+    "camera_axes": camera_axes,
+    "camera_up": camera_up,
+    "camera_view": camera_view,
+    "camera_lens": camera_lens,
+    "camera_timing": camera_timing,
+    "camera_light": camera_light,
+    "camera_near": camera_near,
     "perspective_strength": perspective_strength,
     "depth_buffer": depth_buffer,
     "back_faces": back_faces,

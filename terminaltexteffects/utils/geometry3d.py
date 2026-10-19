@@ -1,7 +1,7 @@
 """3D geometry primitives for placing and drawing things in 3D space on a terminal canvas.
 
 World space is measured in terminal columns. The origin is the center of the canvas, +x points right, +y points
-up, and +z points toward the viewer. Terminal cells are about twice as tall as they are wide, so one row spans
+up, and +z points toward the default viewer. Terminal cells are about twice as tall as they are wide, so one row spans
 `TERMINAL_ROW_SCALE` world units vertically; `Camera` corrects for this when projecting, so a cube looks like a
 cube rather than a tall box.
 
@@ -62,7 +62,7 @@ class Vec3:
     Attributes:
         x (float): Right, in terminal columns.
         y (float): Up, in terminal columns.
-        z (float): Toward the viewer, in terminal columns.
+        z (float): Toward the default viewer, in terminal columns.
 
     """
 
@@ -139,7 +139,7 @@ X_AXIS = Vec3(1.0, 0.0, 0.0)
 Y_AXIS = Vec3(0.0, 1.0, 0.0)
 """The unit vector pointing up."""
 Z_AXIS = Vec3(0.0, 0.0, 1.0)
-"""The unit vector pointing toward the viewer."""
+"""The unit vector pointing toward the default viewer."""
 
 
 @dataclass(frozen=True, **_DATACLASS_SLOT_OPTIONS)
@@ -178,7 +178,7 @@ class Rotation:
 
     @staticmethod
     def about_x(angle: float) -> Rotation:
-        """Return a rotation of `angle` radians about the x axis. Positive angles tip the top toward the viewer."""
+        """Return an x-axis rotation of `angle` radians; positive angles tip the top toward the default viewer."""
         return Rotation(math.cos(angle / 2), math.sin(angle / 2), 0.0, 0.0)
 
     @staticmethod
@@ -397,9 +397,9 @@ class Camera:
         """Set the eye's world coordinates, independently of `distance`, now.
 
         Args:
-            x (float): World x coordinate or displacement, in columns.
-            y (float): World y coordinate or displacement, in columns.
-            z (float): World z coordinate or displacement, in columns.
+            x (float): Absolute world x coordinate in columns; omitted coordinates default to zero.
+            y (float): Absolute world y coordinate in columns; omitted coordinates default to zero.
+            z (float): Absolute world z coordinate in columns; omitted coordinates default to zero.
 
         Returns:
             Camera: This camera, for chaining.
@@ -869,7 +869,7 @@ class Fragment(NamedTuple):
     """The nearest surface `rasterize` found in one canvas cell.
 
     Attributes:
-        depth (float): Distance from the camera. Smaller is nearer.
+        depth (float): Distance along the camera view axis. Smaller is nearer.
         normal (Vec3): The face's world-space unit normal, for shading.
         facing (bool): Whether the face points toward the camera.
         face (int): Index of the face in the mesh.
@@ -1117,7 +1117,7 @@ class EdgeCell(NamedTuple):
     """One cell of a wireframe edge found by `wireframe`.
 
     Attributes:
-        depth (float): Distance from the camera. Smaller is nearer.
+        depth (float): Distance along the camera view axis. Smaller is nearer.
         front (bool): Whether the edge borders a face turned toward the camera and, with `depth_test`,
             is not behind the filled surface at this cell.
         symbol (str): A line symbol following the edge's on-screen slope.

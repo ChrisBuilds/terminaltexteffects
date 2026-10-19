@@ -10,7 +10,7 @@ Low-level building blocks for placing and drawing things in 3D on a terminal can
 camera, meshes, rasterization into a per-cell depth buffer, wireframe edges and Lambert shading.
 
 World space is measured in terminal columns. The origin is the center of the canvas, +x points right, +y points
-up, and +z points toward the viewer. A `Camera` projects world points onto canvas cells and corrects for cells
+up, and +z points toward the default viewer. A `Camera` projects world points onto canvas cells and corrects for cells
 being about twice as tall as they are wide, so a cube looks like a cube. With the default settings, a cell lifted
 onto the z=0 plane with `Camera.cell_to_world()` projects back onto the same cell.
 
@@ -31,6 +31,13 @@ for cell, fragment in g3.rasterize(cube, camera, rotation=turn).items():
 Camera position and orientation can change with `set_position` and `set_rotation`. `depth(point)` reports
 view-axis depth. `ray(coord)` supplies a world ray, and `cell_to_world(coord, z=...)` intersects it with a world-z
 plane, raising `ValueError` for parallel rays. For movement helpers and tweens, use `Space3D.camera`.
+
+`position` and `rotation` are read-only. `distance` moves the implicit eye until `set_position` makes that
+position explicit; with `focal=None`, focal length continues to follow `distance`. A camera's world-z plane
+intersection can lie behind its eye; project the result and handle `None` when visibility matters.
+`ray` directions are scaled to one unit of view-axis depth rather than normalized to unit Euclidean length.
+The low-level class has pose setters and projection, while `space3d.Camera` adds travel/aiming controls and a
+queue played by `Space3D.step()`.
 
 Angles are in radians. Rotations compose with `*`: `second * first` applies `first`, then `second`.
 

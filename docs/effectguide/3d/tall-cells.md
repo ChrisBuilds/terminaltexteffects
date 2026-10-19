@@ -60,7 +60,8 @@ before measuring an edge's angle, so a 45 degree edge on screen is drawn with `/
 
 - Vertical detail is half as fine as horizontal detail. A sphere 16 columns wide is only 8 rows tall, so its top
   and bottom edges are coarse. Wider shapes hide this best.
-- Moving a body by 1 unit in y moves it half a row, so slow vertical motion steps once every two units. Horizontal
+- In the default orthographic view, moving a body by 1 unit in y moves it half a row, so slow vertical motion steps
+  once every two units. A turned camera or perspective changes screen displacement. Horizontal
   motion steps every unit and looks smoother.
 - Turning doesn't favor either axis. Text on a face turning about x and text turning about y both shrink by the
   cosine of the angle, so at 60 degrees each shows half its rows or half its columns. The row correction already

@@ -16,6 +16,17 @@ the most expensive thing in it. This chapter shows what it costs and how to keep
 Bodies that are neither drawn nor carrying characters cost almost nothing. A body that has finished its tweens and
 hasn't moved is still drawn every frame, because the space doesn't know whether anything else in the scene changed.
 
+## Camera movement and frame cost
+
+An unchanged default camera uses the default projection path. A moved or turned camera also transforms world points
+into its view coordinates. The renderer prepares those coordinates once per vertex for a mesh and reuses them for
+near-plane clipping, two-sided fills and depth-tested wireframe work. Mounts project their anchors independently.
+
+Camera movement can change the **number of covered cells** far more than the arithmetic cost of that view transform.
+A dolly close to a large face or a strong zoom may fill the canvas. Keep wide shots and close shots in the same
+benchmark scenario, and compare frame counts and output before making timing claims. The older measurements below
+are identified by their revisions; they are not measurements of the new camera lessons.
+
 ## Measured costs
 
 These are the guide's own examples on the concept input, on an 80 by 24 canvas with the frame-rate limit off. Each

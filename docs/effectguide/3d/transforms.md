@@ -64,6 +64,9 @@ origin, then moves, so `move_by(30, 0, 0)` followed by `rotate("y", 45)` still s
 it doesn't swing it around the world's origin. To orbit with these methods, compute the moon's position yourself by
 turning its starting offset, as the example does, then `set_position` there.
 
+The [camera orbit](camera-movement.md#orbit-a-stationary-scene) is a different operation: it leaves these body
+transforms fixed and moves the viewpoint around the scene.
+
 ## Under the hood
 
 [`geometry3d.transform_points`](../../engine/utils/geometry3d.md) applies a transform to many points at once:
