@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
 [project]
 name = "terminaltexteffects"
 version = "0.15.0"
@@ -6,19 +10,43 @@ authors = [{ name = "Chris", email = "741258@pm.me" }]
 requires-python = ">=3.9.2"
 readme = "README.md"
 license = "MIT"
+keywords = ["terminal", "text", "effects", "animation", "ansi", "cli", "tui"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Artistic Software",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Terminals",
+    "Typing :: Typed",
+]
 
 [project.urls]
 Repository = "https://github.com/ChrisBuilds/terminaltexteffects"
 Documentation = "https://chrisbuilds.github.io/terminaltexteffects/"
+Changelog = "https://chrisbuilds.github.io/terminaltexteffects/changelog/"
+Issues = "https://github.com/ChrisBuilds/terminaltexteffects/issues"
 
 [project.scripts]
 tte = "terminaltexteffects.__main__:main"
 terminaltexteffects = "terminaltexteffects.__main__:main"
 
 [project.optional-dependencies]
-tui = ["textual>=8.0", "pillow>=12.3; python_version >= '3.10'"]
 # GIF and WebP export. Pillow releases without known vulnerabilities need Python 3.10 or later.
 export = ["pillow>=12.3; python_version >= '3.10'"]
+# The interactive interface, which includes export.
+tui = ["textual>=8.0", "terminaltexteffects[export]"]
 # Every feature extra: the interactive interface and GIF and WebP export.
 all = ["terminaltexteffects[tui,export]"]
 docs = [
@@ -29,6 +57,53 @@ docs = [
     "requests>=2.33.0; python_version >= '3.10'",
     "urllib3>=2.8.0; python_version >= '3.10'",
 ]
+
+[dependency-groups]
+quality = [
+    "ruff==0.16.10",
+    "pyright==1.1.414",
+]
+test = [
+    "pytest>=8.3.5,<9; python_version < '3.10'",
+    "pytest>=9.0.3; python_version >= '3.10'",
+    "pytest-cov>=5.0.0",
+    "pytest-randomly>=4.0.1,<4.1; python_version < '3.10'",
+    "pytest-randomly>=5.0.0; python_version >= '3.10'",
+    "pytest-xdist>=3.6.1",
+    "shtab==1.12.1",
+    "towncrier==26.9.0",
+    "diff-cover>=10.6.0; python_version >= '3.10'",
+    "textual>=8.0",
+    { include-group = "demos" },
+]
+hooks = [
+    { include-group = "quality" },
+    "pre-commit>=3.8",
+    "pre-commit-hooks>=6",
+    "actionlint-py==1.7.12.25",
+    "shellcheck-py==0.11.0.1",
+]
+dev = [
+    { include-group = "artifacts" },
+    { include-group = "test" },
+    { include-group = "hooks" },
+    "terminaltexteffects[docs]",
+]
+demos = [
+    "pillow>=12.3; python_version >= '3.10'",
+]
+artifacts = [
+    "hatchling>=1.27",
+    "tomli>=2",
+    "twine>=6",
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["docs/**", "tests/**", "/dev_effects/**", "/terminaltexteffects/effects/effect_dev.py"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["terminaltexteffects"]
+exclude = ["/dev_effects/**", "/terminaltexteffects/effects/effect_dev.py"]
 
 [tool.uv]
 # Security floors for optional documentation and release-tool dependencies.
@@ -50,10 +125,10 @@ ignore = [
     "COM812", # formatting owns trailing commas
     "D203",   # use D211: no blank line before class docstrings
     "D213",   # use D212: summary on the first line
-    "C90",
-    "CPY001",
-    "ANN401",
-    "EXE",
+    "C90",     # complexity is reviewed by hand
+    "CPY001",  # no per-file copyright headers
+    "ANN401",  # Any is allowed where a value is genuinely untyped
+    "EXE",     # executable bits and shebangs are not tracked
     "PLR0912", # too many branches
     "PLR0913", # too many function args
     "PLR0917", # positional-argument count follows the same policy as PLR0913
@@ -72,10 +147,6 @@ typing-extensions = false
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "D104"]
-"**/tests/*" = [
-    "S101", # assert
-
-]
 # Effect Guide examples are flat community effect modules, loaded one directory at a time. They import names
 # used only in annotations at runtime to keep the tutorial code simple.
 "docs/effectguide/examples/**" = ["INP001", "TC001"]
@@ -84,7 +155,7 @@ typing-extensions = false
 
 [tool.pytest.ini_options]
 console_output_style = "progress"
-minversion = "6.0"
+minversion = "8.3"
 addopts = ["--capture=sys", "--strict-markers", "--strict-config", "-ra", "-m", "not manual and not visual"]
 markers = [
     "manual: subset to run manually",
@@ -160,57 +231,3 @@ showcontent = true
 directory = "security"
 name = "Security"
 showcontent = true
-
-[tool.hatch.build.targets.sdist]
-exclude = ["docs/**", "tests/**", "/dev_effects/**", "/terminaltexteffects/effects/effect_dev.py"]
-
-[tool.hatch.build.targets.wheel]
-packages = ["terminaltexteffects"]
-exclude = ["/dev_effects/**", "/terminaltexteffects/effects/effect_dev.py"]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[dependency-groups]
-quality = [
-    "ruff==0.16.10",
-    "pyright==1.1.414",
-]
-test = [
-    "pytest>=8.3.5,<9; python_version < '3.10'",
-    "pytest>=9.0.3; python_version >= '3.10'",
-    "pytest-cov>=5.0.0",
-    "pytest-randomly>=4.0.1,<4.1; python_version < '3.10'",
-    "pytest-randomly>=5.0.0; python_version >= '3.10'",
-    "pytest-xdist>=3.6.1",
-    "shtab==1.12.1",
-    "towncrier==26.9.0",
-    "diff-cover>=10.6.0; python_version >= '3.10'",
-    "textual>=8.0",
-    { include-group = "demos" },
-]
-hooks = [
-    { include-group = "quality" },
-    "pre-commit>=3.8",
-    "pre-commit-hooks>=6",
-    "actionlint-py==1.7.12.25",
-    "shellcheck-py==0.11.0.1",
-]
-dev = [
-    { include-group = "artifacts" },
-    { include-group = "test" },
-    { include-group = "hooks" },
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.6.22",
-    "mkdocstrings-python>=1.11.1",
-    "pymdown-extensions>=11.0.1,<13",
-]
-demos = [
-    "pillow>=12.3; python_version >= '3.10'",
-]
-artifacts = [
-    "hatchling>=1.27",
-    "tomli>=2",
-    "twine>=6",
-]
