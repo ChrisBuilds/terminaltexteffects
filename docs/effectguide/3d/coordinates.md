@@ -6,7 +6,7 @@ convention everywhere, chosen so that the input text sits exactly where it does 
 ## The idea
 
 - The **origin** is the center of the canvas.
-- **x** points right, **y** points up and **z** points toward you, out of the screen.
+- **x** points right, **y** points up and **z** points toward the **default** viewer. These world axes stay fixed when the camera turns.
 - One **unit** is the width of one terminal column. Positions, sizes and distances are all in columns, including
   heights: a shape 10 units tall is 10 columns tall, which is about 5 rows (see [Tall cells](tall-cells.md)).
 - **Angles** are in degrees in `Space3D`, and **axes** can be named `"x"`, `"y"`, `"z"` or `"diagonal"`, or given
@@ -14,9 +14,10 @@ convention everywhere, chosen so that the input text sits exactly where it does 
 
 ![The canvas lies on the z = 0 plane with the origin at its center. x points right, y up, and z out toward the camera](../../img/effectguide/3d/world_axes.webp)
 
-Think of the canvas as a window in the z = 0 plane, with the camera standing in front of it on the z axis, looking
-straight through. Anything behind the window (negative z) is farther from you; anything in front of it (positive z)
-is nearer.
+In the default view, you can think of the canvas as a window in the world z=0 plane, with the camera on +z
+looking straight through it. Negative z is farther away in that view. After the camera moves, distance and facing
+follow its view direction instead. [Camera coordinates](camera.md#camera-coordinates-and-depth) distinguishes
+world axes from the camera's axes.
 
 The input text lies flat on the plane where z is 0. With the camera at rest, every point on that plane lands back on
 the cell it came from, so text mounted there, on a body that hasn't moved, looks exactly like the input.
@@ -53,7 +54,7 @@ see it come out of the screen.
   anchors on.
 - `body.anchor(x, y, z)` is a point in the body's own coordinates. It moves and turns with the body.
 - `text_plane(characters)` makes one anchor per character, placed so each one meets its character's input cell
-  **at the body's pose when you call it**. It works backward from the body's current rotation, position and scale.
+  **at the body's pose when you call it, under the space's initial camera view**. It works backward from the body's current rotation, position and scale.
   The Axes example builds it on a body that hasn't moved yet, so the text meets its input cells whenever the body is
   back at its starting pose.
 - `add_chars(characters, anchors)` mounts each character on its anchor. From then on, the anchor decides where the
@@ -68,7 +69,9 @@ rest, but leave position and scale alone.
 So text built with `text_plane` lands on its input cells when the body returns to the pose it had when the anchors
 were made. Build the anchors first, on an unmoved body, then apply the starting transforms: the text is then home
 whenever the body is back at rest, at the origin and at scale 1. Build them on a body already turned 30 degrees, and
-the text reads correctly at that turn instead, and moves off its input cells at rest.
+the text reads correctly at that turn instead, and moves off its input cells at rest. These landing guarantees also
+require the camera's initial view. Camera movement and zoom do not change the anchors; restore the view before
+returning text to its input cells.
 
 ## Normals for anchors
 
@@ -96,7 +99,7 @@ of characters:
 
 | Layout | Anchors | Normals | Choose it for |
 | --- | --- | --- | --- |
-| `text_plane(characters)` | One per character, on its input cell at the current pose | The plane's | Text that must land back on its input cells |
+| `text_plane(characters)` | One per character, at the current body pose under the initial camera view | The plane's | Text that must land back on its input cells |
 | `surface(count)` | About `count`, spread evenly over the shape | Out of each face | Covering a shape with characters in no particular order |
 | `vertices()` | One per corner | Away from the center | Marking a shape's corners |
 | `edges(count)` | About `count`, spread along the edges | Away from the center | Outlining a shape with characters |
@@ -125,23 +128,29 @@ mounts each character on its own anchor, so it keeps its colors and scenes and c
 ## Under the hood
 
 A point is a [`Vec3`](../../engine/utils/geometry3d.md). `text_plane` lifts each input cell into 3D with
-`camera.cell_to_world(coord)`, the exact inverse of `camera.project(point)` on the z = 0 plane:
+the initial camera's cell-to-world mapping. The active camera's `cell_to_world` instead intersects its current
+viewing ray with the requested world-z plane. Under the default view, that is the familiar exact round trip:
 
 ```python
 from terminaltexteffects.utils.geometry3d import Vec3
 
 point = self.space.camera.cell_to_world(character.input_coord)  # Vec3(x, y, 0.0)
-cell = self.space.camera.project(point).coord  # Back to character.input_coord.
+projected = self.space.camera.project(point)
+if projected is not None:
+    cell = projected.coord  # Back to character.input_coord in the default view.
 ```
 
 `body.world_point(local)` turns a point in the body's coordinates into world coordinates, using the body's current
 position, orientation and scale. `text_plane` runs the other way: it takes each lifted point and undoes the body's
-current transform to find the local anchor, which is why the result depends on the pose at the time of the call.
+current transform to find the local anchor, which is why the result depends on the body pose at the time of the call. The active camera's
+`cell_to_world` may raise `ValueError` when the viewing ray is parallel to the world-z plane; `text_plane` does not
+use that moved view. See [Cells, rays and the text layout](camera.md#cells-rays-and-the-text-layout).
 
 ## At cell resolution
 
 - World y is measured in columns, but the canvas counts rows. A row is about two columns tall, so moving a body up
-  by 10 moves it up about 5 rows.
+  by 10 moves it up about 5 rows in the default orthographic view. Perspective and a turned camera change that
+  screen displacement.
 - Anchors snap to the nearest cell. Two anchors less than a cell apart land in the same cell, and only one of their
   characters shows there.
 - The canvas center can fall between two cells when the canvas has an even width or height, so a shape at the

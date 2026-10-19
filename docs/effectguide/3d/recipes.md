@@ -7,6 +7,20 @@ sitting, and each one is a good starting point for an effect of your own. Run th
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c logo
 ```
 
+## A queued camera shot
+
+Keep bodies in world space and give the camera a short script: hold, truck and pan together, then zoom. The
+[camera lab](camera-movement.md#run-the-camera-lab) includes a complete standalone iterator with this setup:
+
+```python
+--8<-- "docs/effectguide/examples/3d/cameralab/cameralab.py:sequence"
+```
+
+The subject's turn uses its own body queue. The camera's individual and group callbacks label the timing without
+changing the body's animation. See [Camera shots and timing](animating.md#camera-shots-and-timing) for the recording,
+the frame loop and callback definitions. The `restore` lesson then demonstrates a return shot that restores the
+camera before releasing mounted text to 2D.
+
 ## Spinning logo
 
 The input text spins like a sign on a post, brightening as it faces the light, then settles back into place and

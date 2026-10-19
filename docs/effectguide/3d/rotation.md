@@ -9,8 +9,8 @@ A turn has an **axis** and an **angle**. The axis is a line through the body's o
 counterclockwise when you look down the axis toward the origin:
 
 - About **y** (up), the body turns like a revolving door.
-- About **x** (right), it tips forward or back. A positive angle tips the top toward you, so you see it from above.
-- About **z** (toward you), it turns like a clock hand, counterclockwise.
+- About **x** (right), it tips forward or back. A positive angle tips the top toward the default viewer, so you see it from above in that view.
+- About **z** (toward the default viewer), it turns like a clock hand, counterclockwise.
 
 ![Three cubes turning about x, y and z, each with its axis drawn through it](../../img/effectguide/3d/rotation_axes.webp)
 
@@ -123,7 +123,8 @@ point = both.apply(Vec3(10, 0, 0))
 
 - A fast turn skips cells. At more than a few degrees per frame, a large shape's edges jump visibly. Ease spins in and
   out, or slow them down.
-- Turns about z look flat, because they only move cells around on screen. Turns about x and y show depth and
-  shading.
+- In the default view, turns about world z look flat because they move points parallel to the image. Once the
+  camera turns, world z need not be the view axis. A [camera roll](camera-movement.md#turn-the-view-without-moving-the-eye)
+  always turns about the camera's own backward axis; it is distinct from turning a body about world z.
 - Text turned edge-on loses characters (see [Depth and hidden surfaces](depth.md)), so don't leave a text plane
   turned past about 60 degrees for long.

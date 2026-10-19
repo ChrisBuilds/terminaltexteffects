@@ -5,7 +5,8 @@ tools: a **depth buffer** for surfaces, and **layers** for characters.
 
 ## The idea
 
-**Depth** is a point's distance from the camera. Smaller is nearer.
+**Depth** is a point's distance along the camera's current viewing axis, not its Euclidean range to the eye.
+Smaller positive depth is nearer. Moving or turning the camera changes that measurement even when bodies stay still.
 
 A **depth buffer** keeps, for every cell, the nearest surface found there so far. Each face is filled cell by cell,
 and a cell only takes the new face if it's nearer than what the cell already holds. Draw every shape into the same
@@ -110,6 +111,38 @@ The low-level `geometry3d.wireframe` accepts the same `depth_test=True` option. 
 pass within the viewport and tests depth at terminal cell centers, so cell rounding can affect silhouettes.
 
 
+## Moving the near plane
+
+In the default view, clipping is easy to picture as a body approaching a fixed camera:
+
+![Default view: a box approaches a fixed eye and near plane; only the part beyond the near plane is drawn](../../img/effectguide/3d/near_plane.webp)
+
+The camera can move instead, with the same rule. The near plane belongs to the active view. It stays `camera.near` columns **forward from the eye**, perpendicular to
+the viewing direction. A side-view camera looking along world -x clips along that direction, rather than along world
+z. There is no separate rule for each body: projection, face/edge clipping, mount visibility and depth ordering all
+follow the same camera.
+
+![A side-view camera and its near plane move along world -x, progressively clipping a body that stays fixed](../../img/effectguide/3d/camera_near.webp)
+
+The Clip lesson deliberately uses orthographic projection so approach does not enlarge the shape. The stationary
+cube is cut by the moving plane; its mounted A is hidden once its anchor is before the plane. This isolates **near
+clipping** from **viewport cropping**, where an otherwise visible projection falls outside the terminal canvas.
+
+```python
+--8<-- "docs/effectguide/examples/3d/cameralab/cameralab.py:clip"
+```
+
+```bash
+tte --input-file concept_input.txt --canvas-width 80 --canvas-height 32 --anchor-text c cameralab --lesson clip
+```
+
+![The stationary cube is clipped by a moving orthographic side-view camera; a caption reports whether mounted A still projects](../../img/effectguide/camera_clip_demo.webp)
+
+A camera orbit also changes which faces point toward the viewer and which surfaces hide the mounted text. Compare
+the [stationary-cube orbit](camera-movement.md#orbit-a-stationary-scene) with the moving-body examples above.
+`Mount.facing` and `facing_amount` need a normal; they follow the active view. `Mount.nearness` measures depth relative
+to the body's center and extent, so pure camera translation preserves it, while camera rotation can change it.
+
 ## Under the hood
 
 [`geometry3d.rasterize`](../../engine/utils/geometry3d.md) fills a mesh into a buffer and returns it:
@@ -137,7 +170,7 @@ A mount with `layer_by_depth` splits the character's nearness to the camera, `ca
 number of columns and the rest. It adds the whole part to the layer the character had when it was mounted, uses the
 rest as its depth order, and restores both on release. So between two characters mounted from the **same base
 layer**, the nearer one draws on top, however small the difference. A different base layer shifts that comparison by
-the difference in layers, in columns of depth: a character on layer 10 at z = -2 sorts as `(8, 0)` and still draws
+the difference in layers, in columns of depth. In the default camera view, a character on layer 10 at z = -2 sorts as `(8, 0)` and still draws
 over a nearer one on layer 0 at z = 1, which sorts as `(1, 0)`, but it would lose to one more than 10 columns nearer.
 Give characters the same base layer when depth should decide. When a character must always draw on top, turn
 `layer_by_depth` off for it and give it a layer above every mounted character's range.

@@ -1,222 +1,219 @@
 # Camera and Projection
 
-The camera decides how 3D points become cells. Its one setting you'll change most is how strong the perspective is:
-how much nearer things grow and farther things shrink.
+A camera answers two questions: **where are we looking from?** and **how does that view become terminal cells?**
+Its position and orientation answer the first. Projection and focal length answer the second. Start here for
+framing and perspective, then read [Moving the camera](camera-movement.md) for travel, turning, aiming and orbiting.
 
-## The idea
+## The default view
 
-By default, the camera sits on the +z axis, looking back at the origin. To draw a point, it **projects** it: it finds where the
-line from the point to the camera crosses the screen.
+A new `Space3D` puts its eye at `(0, 0, 120)`, looking along world **-z**, with **+y** up. The canvas center is the
+center of the image. This is the view used by the earlier chapters; moving the camera changes the view while the
+world axes and body positions stay fixed.
 
-- With **perspective**, things farther away look smaller, and parallel lines running away from you converge. A point
-  at depth `d` from the camera is scaled by `distance / d`, so the z = 0 plane keeps its size, nearer points grow
-  and farther ones shrink.
-- An **orthographic** view drops the scaling. Everything keeps its size whatever its depth, like a technical drawing.
-  It's flat, but it's also stable: nothing swells as it turns toward you.
+![Perspective uses converging rays, while orthographic projection uses parallel rays; moving an object changes its size only in perspective](../../img/effectguide/3d/projection.webp)
 
-![Side view: with perspective, rays from an object converge on the camera, so its drawn size shrinks as it moves away; with an orthographic view the rays are parallel and the size stays the same](../../img/effectguide/3d/projection.webp)
+- **Perspective** makes farther things smaller. A point's projected size is multiplied by `focal / depth`, where
+  depth is distance along the camera's forward axis. Initially focal length is 120 too, so the world z=0 plane
+  keeps its size and the input text meets its original cells.
+- **Orthographic** projection skips that multiplication. Depth still exists for clipping and occlusion; it just
+  does not change apparent size. The eye has a finite position and a near plane even though its rays are parallel.
 
-Perspective strength comes from the camera's distance. A camera close to the scene makes small changes in depth
-look large. A distant camera barely changes sizes at all.
+Once the camera moves or turns, the world z=0 plane is no longer necessarily face-on, centered or at its initial
+size. [Camera coordinates and depth](#camera-coordinates-and-depth) explains the extra transform.
 
-![The same near and far objects drawn with perspective 0, 1 and 2: the far object shrinks more as the camera comes closer](../../img/effectguide/3d/perspective_strength.webp)
+## Setting up perspective
 
-## In TTE
+`Space3D(terminal, perspective=...)` chooses the initial projection:
 
-The Lens example places three cubes, each 26 columns to the right of and 60 columns farther away than the one
-before:
+| Setting | Initial eye z | Focal length when `focal=None` | Result |
+| --- | --- | --- | --- |
+| `0` | 120 | Ignored for size | Orthographic, with no depth magnification |
+| `1` | 120 | 120 | Default perspective |
+| `2` | 60 | 60 | Closer eye and stronger differences between near and far objects |
+
+![The same near and far objects under orthographic projection, default perspective and a closer initial camera](../../img/effectguide/3d/perspective_strength.webp)
+
+The Lens example keeps the bodies still and changes only that initial setup:
 
 ```python
 self.space = Space3D(self.terminal, perspective=self.config.perspective)
 for x, z in ((-26, 0), (0, -60), (26, -120)):
-    cube = self.space.body(Cube(14), at=(x, 0, z)).draw(Shaded())
+    self.space.body(Cube(14), at=(x, 0, z)).draw(Shaded())
 ```
 
 ??? example "lens.py"
 
-    Save it in your community effects directory as `lens.py`.
+    Save this module in your community effects directory as `lens.py`.
 
     ```python
     --8<-- "docs/effectguide/examples/3d/lens/lens.py"
     ```
 
-=== "perspective 0"
+=== "Orthographic"
 
     ```bash
     tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c lens --perspective 0
     ```
 
-    ![Three cubes the same size, evenly spaced](../../img/effectguide/lens_0_demo.webp)
+    ![Three cubes keep the same size at different depths](../../img/effectguide/lens_0_demo.webp)
 
-=== "perspective 1"
+=== "Default perspective"
 
     ```bash
     tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c lens
     ```
 
-    ![The farther cubes are smaller and closer to the center](../../img/effectguide/lens_1_demo.webp)
+    ![Farther cubes appear smaller and nearer the center of the image](../../img/effectguide/lens_1_demo.webp)
 
-=== "perspective 2"
+=== "Closer initial camera"
 
     ```bash
     tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c lens --perspective 2
     ```
 
-    ![The farthest cube is tiny and near the center](../../img/effectguide/lens_2_demo.webp)
+    ![The closer camera exaggerates the size difference between the cubes](../../img/effectguide/lens_2_demo.webp)
 
-`Space3D(terminal, perspective=...)` sets the strength:
-
-- `1`, the default, is a natural perspective. The camera is 120 columns from the origin.
-- Larger values move the camera closer. `2` puts it 60 columns away, which exaggerates depth.
-- `0` is orthographic.
+`perspective` is a constructor setting. It establishes both eye distance and the default focal length. The controls
+below let an effect change position and focal length independently afterward.
 
 ## Moving the camera
 
-Bodies can stay still while the camera moves around them. `space.camera` has immediate controls and a tween queue,
-like a body. Its local axes are right (+x), up (+y) and backward (+z); it looks along local -z. World axes stay fixed
-when the camera turns.
+[Moving the camera](camera-movement.md) teaches eye position, camera-local travel, pan/tilt/roll, aiming and orbiting.
+[Camera shots and timing](animating.md#camera-shots-and-timing) combines those controls into queued shots. Start with
+the comparison below when deciding between changing position and changing focal length.
 
-![Top view: the camera orbits a stationary cube, with arrows showing forward dolly and sideways truck movement](../../img/effectguide/3d/camera_movement.webp)
+## Dolly or zoom?
 
-| Operation | Immediate call | Queued call |
-| --- | --- | --- |
-| World position | `set_position(x, y, z)`, `move_by(x, y, z)` | `move_to(x, y, z, frames=60)` |
-| Forward / backward | `dolly(amount)` | `dolly_by(amount, frames=60)` |
-| Right / left | `truck(amount)` | `truck(amount, frames=60)` |
-| Up / down | `pedestal(amount)` | `pedestal(amount, frames=60)` |
-| Yaw, pitch, roll | `pan(degrees)`, `tilt(degrees)`, `roll(degrees)` | The same calls with `frames=60` |
-| World orientation | `set_rotation(rotation)` | `turn_to(rotation, frames=60)` |
-| Aim at a point or body | `look_at(x, y, z)`, `look_at(body)` | The same calls with `frames=60` |
-| Orbit a point or body | `orbit("y", degrees=30, around=body)` | `orbit("y", turns=1, around=body, frames=240)` |
-| Focal length | `zoom(factor)` multiplies it | `zoom_to(focal, frames=60)` targets an absolute length |
+A **dolly** moves the eye forward or backward. The foreground grows faster than the background as you approach,
+and their relative positions can change: that is **parallax**. A **zoom** changes focal length while the eye stays
+still. It magnifies the whole perspective image, keeping its perspective proportions.
 
-Positive travel goes forward, right or up; use negative amounts for the reverse. Positive pan turns the view left,
-positive tilt looks up, and positive roll rotates the camera counterclockwise about its backward axis. `up="y"`
-is the default world-up direction for aiming and orbiting; an `(x, y, z)` direction also works. When looking along
-that direction, the previous right axis supplies a stable roll. A target at the eye has no aiming direction and
-raises `ValueError`.
+![Dolly and zoom reach the same foreground scale of 1.333, but the background scales to 0.800 with dolly and 0.889 with zoom](../../img/effectguide/3d/camera_lens.webp)
 
-A dolly changes position and perspective relationships. Zoom changes focal length without moving the eye;
-it does not change sizes in orthographic mode. Moving the camera never changes focal length automatically.
+The camera lab starts with eye z=120 and focal=120. Cyan **F** has its front face at world z=0; purple **B** has its
+front face at z=-60. Both are the same physical size. These two moves give F the same final framing:
 
-### Queues and targets
+| Move | Final eye z | Final focal | F's front-face scale | B's front-face scale |
+| --- | --- | --- | --- | --- |
+| `dolly_by(30)` | 90 | 120 | 120 / 90 = 1.333 | 120 / 150 = 0.800 |
+| `zoom_to(160)` | 120 | 160 | 160 / 120 = 1.333 | 160 / 180 = 0.889 |
 
-Queued moves accept `ease` and `together=True`. All tweens starting together capture the same initial camera pose. `hold`, `on_complete`, `on_group_complete`, `cancel` and `reset`
-work like their body counterparts. Callbacks receive the camera. `space.animating` includes camera tweens, and
-`space.step()` advances them before body tweens, refreshes mount readings, runs camera callbacks followed by body
-callbacks, refreshes again, then draws surfaces. Callbacks can read final mount positions and release text there.
-
-```python
-camera = self.space.camera
-camera.dolly_by(25, frames=60, ease=easing.in_out_sine)
-camera.look_at(cube, frames=60, together=True)
-camera.orbit("y", turns=1, around=cube, frames=240)
-camera.hold(30).zoom_to(160, frames=60)
-```
-
-`look_at` and `orbit` are immediate when `frames` is omitted. Supplying `frames=0` follows queue ordering: it
-applies immediately only when no earlier work is queued. Negative frame counts raise `ValueError`.
-
-Travel tweens capture their local direction when they start, so a simultaneous pan does not curve a dolly path.
-Body targets are sampled when the action starts, after any preceding camera actions. They are not continuously
-tracked. To follow a moving body, call `camera.look_at(body)` each frame after moving it. Orbit aims at its target when it starts and uses a world axis
-through that sampled target. A nonzero orbit radius is required.
-
-Tweens apply deltas: immediate nudges and turns survive later tween frames. Without concurrent edits, a move or
-turn reaches its target and an orbit keeps its radius and ends aimed at its target. With concurrent edits, the
-final pose includes those edits. Zoom deltas multiply, so an immediate `zoom(2)` doubles the rest of a zoom tween.
-
-`cancel()` drops queued work and pending completion callbacks while keeping the current view. `reset()` also
-restores all camera settings from space creation, including position, orientation and focal length.
-
-### A stationary cube, seen from a moving camera
-
-The CameraOrbit example mounts text on the front of a cube. The cube stays still while the camera makes one
-complete orbit. Its mounted letters disappear behind the cube and return as the camera comes around.
-
-```python
-self.space = Space3D(self.terminal)
-self.cube = self.space.body(Cube(48)).draw(Shaded())
-anchors = [self.cube.anchor(a.point.x, a.point.y, 24, normal="z")
-           for a in self.cube.text_plane(characters)]
-self.cube.add_chars(characters, anchors, blend_frames=0,
-                    hide_when_facing_away=True)
-self.space.camera.set_position(0, 20, 170).look_at(self.cube).zoom(1.4)
-self.space.camera.orbit("y", turns=1, around=self.cube, frames=360)
-```
-
-??? example "cameraorbit.py"
-
-    Save it in your community effects directory as `cameraorbit.py`.
+=== "Move the eye"
 
     ```python
-    --8<-- "docs/effectguide/examples/3d/cameraorbit/cameraorbit.py"
+    camera.dolly_by(30, frames=120, ease=easing.in_out_sine)
     ```
 
+    ```bash
+    tte --input-file concept_input.txt --canvas-width 80 --canvas-height 32 --anchor-text c cameralab --lesson dolly
+    ```
+
+    ![The camera approaches two stationary cubes; foreground F grows faster than background B](../../img/effectguide/camera_dolly_demo.webp)
+
+=== "Change focal length"
+
+    ```python
+    camera.zoom_to(160, frames=120, ease=easing.in_out_sine)
+    ```
+
+    ```bash
+    tte --input-file concept_input.txt --canvas-width 80 --canvas-height 32 --anchor-text c cameralab --lesson zoom
+    ```
+
+    ![Zoom magnifies both cubes while the eye stays still; B ends larger than in the dolly recording](../../img/effectguide/camera_zoom_demo.webp)
+
+`dolly(amount)` and `zoom(factor)` are immediate. `dolly_by(amount, frames=...)` is relative travel;
+`zoom_to(focal, frames=...)` targets an **absolute** positive focal length. For example, `zoom(2)` doubles the current
+focal length, while `zoom_to(2)` targets a focal length of two columns. Choose dolly to travel through a scene and
+zoom to reframe the image from the same viewpoint.
+
+### Orthographic camera movement
+
+Orthographic travel and turns still work. Truck and pedestal move the image; pan, tilt and roll change which way
+you see the scene. Dolly changes depth and can cross the near plane, but does not magnify. Focal length is ignored,
+so zoom does not magnify either. Watch the readout change during the first two phases of this recording:
+
 ```bash
-tte --input-file concept_input.txt --canvas-width 80 --canvas-height 32 --anchor-text c cameraorbit
+tte --input-file concept_input.txt --canvas-width 80 --canvas-height 32 --anchor-text c cameralab --lesson orthographic
 ```
 
-![A camera circles a stationary shaded cube with mounted text](../../img/effectguide/cameraorbit_demo.webp)
+![An orthographic camera dollies and zooms without changing apparent size, then trucks and pans to change the view](../../img/effectguide/camera_orthographic_demo.webp)
 
-### Light and text layouts
+The standalone camera lab and its lesson snippets are introduced in [Moving the camera](camera-movement.md#run-the-camera-lab).
 
-`Space3D(..., light_space="world")` keeps the light fixed in the world, which is the default. With
-`light_space="camera"`, the configured light direction rotates with the camera. Use `light="front"` for a headlight;
-translation does not change a directional light. Mount light readings and shaded surfaces use the same mode.
+## Camera coordinates and depth
 
-`text_plane` and other at-rest layouts keep using the camera configuration from space creation, so camera
-movement and zoom do not rearrange their anchors. `camera.cell_to_world(coord, z=...)` uses the active view and
-intersects its ray with the requested **world-z** plane. It raises `ValueError` if the ray runs along that plane,
-where there is no unique intersection. `camera.ray(coord)` returns the active world-space ray directly.
+Body coordinates describe points on a body. A body's transform places them in **world space**. The camera then
+subtracts its eye position and undoes its orientation to express those world points in **view space**. In that
+space, forward is always -z, right is +x and up is +y. Projection turns view x/y into canvas columns/rows.
 
-## Under the hood
+![The body-to-world-to-view-to-canvas pipeline, followed by a side-view example with eye at world x=30 and view-axis depth 25](../../img/effectguide/3d/camera_view.webp)
 
-[`geometry3d.Camera`](../../engine/utils/geometry3d.md) does the projection. `Space3D` makes one centered on the
-canvas, and you can read it as `space.camera`:
+For a world point `point`, the geometry is equivalent to:
 
 ```python
-projected = self.space.camera.project(point)  # None if the point is nearer than camera.near.
-if projected is not None:
-    cell = projected.coord
-    depth = projected.depth  # Distance from the camera. Smaller is nearer.
+view = camera.rotation.inverse().apply(point - camera.position)
+depth = -view.z
 ```
 
-- `distance` sets the initial eye z and the focal length when `focal=None`. Assigning it moves the eye until
-  explicit positioning, then only the fallback focal length changes. `focal` controls scaling independently.
-- `near` clips points closer than that to the camera: `project` returns `None` when a point's depth is below `near`,
-  which covers points behind the camera and points just in front of it. Clipping is per point and per face, not per
-  body. Crossing faces and edges keep their visible portions; texture coordinates are interpolated at the clipped
-  corners.
+`camera.depth(point)`, `Projected.depth` and `Mount.depth` all use this view-axis depth. It is **not Euclidean range**
+to the eye. With the default orientation and position it equals `camera.distance - point.z`; after camera movement,
+use `depth(point)` instead of assuming that formula still describes the view.
 
-  ![Side view: a box slides toward the camera; the part nearer than the near plane is clipped away and the rest is drawn](../../img/effectguide/3d/near_plane.webp)
-- `orthographic=True` turns the scaling off.
-- `view_direction(point)` is the direction from a point toward the camera, which decides which faces turn toward it.
+Projection returns `None` before the near plane, including behind the eye:
 
-## At cell resolution
+```python
+projected = self.space.camera.project(point)
+if projected is not None:
+    cell = projected.coord
+    depth = projected.depth
+```
 
-Each projected point is drawn in the cell it falls in, so a point that moves smoothly in 3D moves on screen in
-whole-cell steps:
+The near plane is perpendicular to the current forward axis and moves with the eye. Faces and wireframe edges
+crossing it retain their visible portions. [Depth and hidden surfaces](depth.md#moving-the-near-plane) shows this
+with a stationary body and a moving side-view camera.
 
-![A point follows a smooth curve across a grid of cells, and the cell it is drawn in jumps from cell to cell, leaving a staircase](../../img/effectguide/3d/cell_snapping.webp)
+## Cells, rays and the text layout
 
-- Strong perspective makes near faces large and far faces tiny. Tiny faces become a few cells of noise, so keep
-  perspective at 1 or below for small shapes.
-- Perspective magnifies whatever comes toward you, including text on a surface. Letters on the near side of a large
-  shape can double up (see [Texture mapping](textures.md)). Gentler perspective, such as 0.5, reduces it.
-- Orthographic views are good for text: with no depth magnification, a text plane never swells as it turns toward
-  you. A turn can still make it wider or taller on screen, as a long line of text turned about z stands on end.
-- Nothing may come nearer than the camera's `near` distance. With `perspective=2` the camera is only 60 columns away,
-  so a body moved to z = 60 has its origin right at the camera. What's clipped is each anchor and face that crosses
-  `near`, not the body as a whole: an anchor on that body at local z = -5 is 5 columns in front of the camera and
-  still projects.
+`camera.cell_to_world(coord, z=...)` intersects the **active** viewing ray with a plane of constant **world z**.
+For example, at the default view, `z=0` lifts a cell onto the input-text plane. A moved or rolled camera uses a
+different ray, so the resulting world x/y may change. If that ray is parallel to the plane, there is no unique
+intersection and the method raises `ValueError`.
 
-## Coordinates and mutable settings
+For an arbitrary camera view, a ray is often a better building block:
 
-World **z** increases toward the default viewer. Camera **depth** is distance along the active view axis,
-so smaller positive depth is nearer. In the default view it equals `camera.distance - world_z`. `cell_to_world(coord, z=...)` accepts world z; `Projected.depth`
-and `Mount.depth` report camera depth. Both are measured in columns.
+```python
+origin, direction = camera.ray(coord)
+point_at_depth_30 = origin + direction * 30
+```
 
-Camera settings are mutable. Construction checks positive `distance`, `focal` (when set), `near`
-and `row_scale`, and requires `near < distance`. Assignments do not revalidate: preserve those
-constraints when changing a field. With `focal=None`, focal length follows the current distance.
+Perspective rays begin at the eye; orthographic rays begin at the cell's position on the eye plane. The direction
+is scaled so advancing by 30 gives a point at **camera depth 30**. It is not normalized to Euclidean length.
+
+`body.text_plane(characters)` has a different job: it lays out text using the **initial camera configuration**,
+undoing the body's pose at the time of the call. Moving or zooming the active camera does not rebuild those anchors.
+To return text to its input cells, restore the body's construction pose **and** the initial camera view before
+release. [Returning the view](animating.md#returning-the-view-before-release) demonstrates it.
+
+## Settings and troubleshooting
+
+| Symptom or task | Check |
+| --- | --- |
+| Everything disappears after moving the eye | Is the camera aimed at the scene? Movement alone does not turn it. Use `look_at` and check view-axis depth against `near`. |
+| Objects enlarge when you wanted a flat view | Use `Space3D(..., perspective=0)`; a long focal length alone is still perspective. |
+| Text doubles or loses letters as the camera approaches | Projected characters are colliding or the textured surface is magnified. Use gentler framing or more canvas space. |
+| Zoom appears to do nothing | Is the view orthographic? Its size ignores focal length. |
+| Input text does not land home | Restore both camera and body; resetting only one does not restore the other. |
+| You need a new optical center | `center_column` and `center_row` are canvas coordinates for the image center, not world positions. |
+
+![A smoothly moving 3D point lands in discrete cells, producing whole-cell steps](../../img/effectguide/3d/cell_snapping.webp)
+
+`distance` remains the legacy setup value: the eye follows it until an explicit `set_position` or travel call.
+Afterward, changing it does not move the eye. With `focal=None`, it still supplies the focal length. `zoom` makes
+focal length explicit. `camera.reset()` restores the initial configuration, including the implicit position/focal
+relationship. `position` and `rotation` are read-only properties; change them through the control methods.
+
+Construction checks positive `distance`, `focal` when set, `near` and `row_scale`, and requires `near < distance` for
+the initial view. Later field assignments do not revalidate. Keep projection values positive; a moved camera clips
+using its current view depth rather than its distance from the world origin. `row_scale` remains the terminal's
+tall-cell correction; see [Tall cells](tall-cells.md).
