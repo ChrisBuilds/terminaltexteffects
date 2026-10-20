@@ -149,6 +149,12 @@ def __next__(self) -> str:
 3. Plays the tweens and refreshes every mount's readings. `update()` then ticks the characters, which moves mounted
    characters onto their anchors.
 
+Position arguments accept a `geometry3d.Vec3` or an `(x, y, z)` tuple in terminal columns.
+Body/camera placement uses world coordinates; `Body.anchor` and `Body.world_point` take body-local
+coordinates. `move_by` takes a relative world displacement. Existing scalar x/y/z calls remain
+supported; omit y/z when supplying a complete point and use keywords for animation timing.
+See [position input forms](../effectguide/3d/coordinates.md#position-input-forms) for examples.
+
 ::: terminaltexteffects.engine.space3d
     options:
       inherited_members:

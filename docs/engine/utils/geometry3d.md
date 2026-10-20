@@ -44,4 +44,9 @@ Angles are in radians. Rotations compose with `*`: `second * first` applies `fir
 `rasterize` and `wireframe` take `bounds=g3.Bounds.for_canvas(canvas)` to fill only cells on the canvas. Without
 bounds they fill every cell a shape covers, which can be a great many for a shape close to the camera.
 
+Camera point queries accept `Vec3` values or `(x, y, z)` world positions in terminal columns.
+`transform_points` also accepts tuples for local input points and its world translation;
+`rasterize` and `wireframe` accept either form for the mesh origin's world `position`.
+Returned positions remain `Vec3` values.
+
 ::: terminaltexteffects.utils.geometry3d
