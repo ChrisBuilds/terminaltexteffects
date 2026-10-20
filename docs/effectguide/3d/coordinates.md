@@ -22,6 +22,31 @@ world axes from the camera's axes.
 The input text lies flat on the plane where z is 0. With the camera at rest, every point on that plane lands back on
 the cell it came from, so text mounted there, on a body that hasn't moved, looks exactly like the input.
 
+## Position input forms
+
+Public position and displacement arguments accept a `geometry3d.Vec3` or an `(x, y, z)`
+three-tuple. The components are ordered right, up, and toward the default viewer, measured in
+terminal columns. World axes stay fixed when the camera turns; body-local points turn with their body.
+
+```python
+source = space.body(Cube(10), at=(10, 0, -20))
+copy = space.body(Cube(10), at=source.position)
+copy.set_position((15, 0, -20))
+copy.move_by((0, 5, 0))  # Relative world displacement, not an absolute target.
+space.camera.move_to(source.position, frames=60)
+anchor = copy.anchor((1, 2, 3))  # Body-local x, y, z, in columns.
+```
+
+Existing scalar calls such as `copy.set_position(x=15, z=-20)` still work. Omitted scalar
+coordinates default to zero, except `anchor`, which requires all three scalars. When passing a
+complete point, omit `y` and `z`: mixing forms raises `TypeError`, even if the extra coordinate
+is zero. For queued motion with a point, use keyword arguments for `frames` and `ease`; the
+existing scalar positional argument slots have not moved.
+
+Two-tuples elsewhere have their own meaning: `random_position` takes `(minimum, maximum)`
+world-coordinate ranges, and a texture offset is `(column_offset, row_offset)` in text cells.
+They are not abbreviated 3D points. Argument docstrings specify their component order and units.
+
 ## In TTE
 
 The Axes example draws the three axes as lines of dots, mounts the input text on a plane, and turns them all

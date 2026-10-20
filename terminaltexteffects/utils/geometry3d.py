@@ -34,7 +34,7 @@ import math
 import sys
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple, Union
 
 from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE, Coord, rasterize_line
 
@@ -130,6 +130,30 @@ class Vec3:
             self.y + (other.y - self.y) * t,
             self.z + (other.z - self.z) * t,
         )
+
+
+Point3 = Union[Vec3, tuple[float, float, float]]
+"""A `Vec3` or `(x, y, z)` triple, in the coordinate space and units of the receiving API."""
+
+
+def _vec3(point: Point3) -> Vec3:
+    """Normalize a public point argument without copying an existing vector."""
+    if isinstance(point, Vec3):
+        return point
+    if not isinstance(point, tuple) or len(point) != 3 or not all(isinstance(v, (int, float)) for v in point):
+        msg = "Expected a Vec3 or an (x, y, z) tuple of three numbers."
+        raise TypeError(msg)
+    return Vec3(*point)
+
+
+def _coordinates(x: float | Point3, y: float | None, z: float | None) -> Vec3:
+    """Normalize either scalar coordinates or a complete point, rejecting mixed forms."""
+    if isinstance(x, (int, float)):
+        return Vec3(x, 0.0 if y is None else y, 0.0 if z is None else z)
+    if y is not None or z is not None:
+        msg = "A Vec3 or (x, y, z) tuple cannot be combined with y or z arguments."
+        raise TypeError(msg)
+    return _vec3(x)
 
 
 ORIGIN = Vec3(0.0, 0.0, 0.0)
@@ -258,20 +282,29 @@ class Rotation:
 
 
 def transform_points(
-    points: Iterable[Vec3],
+    points: Iterable[Point3],
     rotation: Rotation | None = None,
     *,
     scale: float = 1.0,
-    position: Vec3 = ORIGIN,
+    position: Point3 = ORIGIN,
 ) -> list[Vec3]:
     """Return `points` scaled, then rotated, then moved to `position`.
 
+    `points` contains local `(x, y, z)` positions or `Vec3` values in terminal columns.
+    `position` is the world `(x, y, z)` translation in columns, supplied as a tuple or `Vec3`.
+
     The rotation is converted to a matrix once, so this is faster than calling `Rotation.apply` per point.
+
+    Raises:
+        TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple.
+
     """
     a, b, c, d, e, f, g, h, i = (rotation or Rotation()).matrix()
+    position = _vec3(position)
     px, py, pz = position.x, position.y, position.z
     transformed = []
-    for point in points:
+    for value in points:
+        point = _vec3(value)
         x, y, z = point.x * scale, point.y * scale, point.z * scale
         transformed.append(
             Vec3(a * x + b * y + c * z + px, d * x + e * y + f * z + py, g * x + h * y + i * z + pz),
@@ -393,19 +426,25 @@ class Camera:
         """World orientation; identity looks along -z, with +x right and +y up."""
         return self._rotation
 
-    def set_position(self, x: float = 0.0, y: float = 0.0, z: float = 0.0) -> Camera:
+    def set_position(self, x: float | Point3 = 0.0, y: float | None = None, z: float | None = None) -> Camera:
         """Set the eye's world coordinates, independently of `distance`, now.
 
+        Mixing a complete point with y or z raises `TypeError`.
+
         Args:
-            x (float): Absolute world x coordinate in columns; omitted coordinates default to zero.
-            y (float): Absolute world y coordinate in columns; omitted coordinates default to zero.
-            z (float): Absolute world z coordinate in columns; omitted coordinates default to zero.
+            x (float | Point3): Absolute world x in columns, or a `Vec3` / `(x, y, z)` tuple in columns.
+            y (float | None): World y in columns; omitted/`None` means zero for scalar x. Omit for a point.
+            z (float | None): World z in columns; omitted/`None` means zero for scalar x. Omit for a point.
 
         Returns:
             Camera: This camera, for chaining.
 
+        Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple. Coordinates cannot be mixed with a
+                complete point.
+
         """
-        self._position = Vec3(x, y, z)
+        self._position = _coordinates(x, y, z)
         self._moved = True
         return self
 
@@ -432,32 +471,40 @@ class Camera:
         a, b, c, d, e, f, g, h, i = self._view_matrix
         return Vec3(a * x + b * y + c * z, d * x + e * y + f * z, self.distance + g * x + h * y + i * z)
 
-    def depth(self, point: Vec3) -> float:
+    def depth(self, point: Point3) -> float:
         """Signed distance along the view axis; smaller positive values are nearer.
 
         Args:
-            point (Vec3): World point to project or measure.
+            point (Point3): World `(x, y, z)` position in terminal columns, or a `Vec3`.
 
         Returns:
             float: Signed distance along the viewing axis.
 
+        Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple.
+
         """
+        point = _vec3(point)
         if not self._moved:
             return self.distance - point.z
         eye = self.position
         g, h, i = self._view_matrix[6:]
         return -(g * (point.x - eye.x) + h * (point.y - eye.y) + i * (point.z - eye.z))
 
-    def project(self, point: Vec3) -> Projected | None:
+    def project(self, point: Point3) -> Projected | None:
         """Project a world point, or return `None` when it is before the near plane.
 
         Args:
-            point (Vec3): World point to project or measure.
+            point (Point3): World `(x, y, z)` position in terminal columns, or a `Vec3`.
 
         Returns:
             Projected | None: Projected position and depth, or `None` before the near plane.
 
+        Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple.
+
         """
+        point = _vec3(point)
         return self._project_view(self._view_point(point) if self._moved else point)
 
     def _project_view(self, point: Vec3) -> Projected | None:
@@ -470,19 +517,22 @@ class Camera:
             self.center_column + point.x * scale, self.center_row + point.y * scale / self.row_scale, depth
         )
 
-    def project_points(self, points: Iterable[Vec3]) -> list[Projected | None]:
+    def project_points(self, points: Iterable[Point3]) -> list[Projected | None]:
         """Return `project` applied to each point.
 
         Args:
-            points (Iterable[Vec3]): World points to project.
+            points (Iterable[Point3]): World `(x, y, z)` positions in terminal columns, or `Vec3` values.
 
         Returns:
             list[Projected | None]: One projected result per input point.
 
+        Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple.
+
         """
         if not self._moved:
-            return [self._project_view(point) for point in points]
-        return [self._project_view(self._view_point(point)) for point in points]
+            return [self._project_view(_vec3(point)) for point in points]
+        return [self._project_view(self._view_point(_vec3(point))) for point in points]
 
     def _prepare(self, world: list[Vec3]) -> tuple[list[Vec3], list[Projected | None]]:
         """Share view coordinates for projection, clipping and additional surface passes."""
@@ -537,16 +587,20 @@ class Camera:
         point = origin + direction * ((z - origin.z) / direction.z)
         return Vec3(point.x, point.y, z)
 
-    def view_direction(self, point: Vec3) -> Vec3:
+    def view_direction(self, point: Point3) -> Vec3:
         """Return the unit vector from `point` toward the eye, or opposite the orthographic view.
 
         Args:
-            point (Vec3): World point to project or measure.
+            point (Point3): World `(x, y, z)` position in terminal columns, or a `Vec3`.
 
         Returns:
             Vec3: World-space point or direction.
 
+        Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple.
+
         """
+        point = _vec3(point)
         if self.orthographic:
             return self.rotation.apply(Z_AXIS) if self._moved else Z_AXIS
         return (self.position - point).normalized()
@@ -570,8 +624,8 @@ class Face:
 
     Attributes:
         indices (tuple[int, ...]): Indexes into the mesh's vertices, at least three.
-        uvs (tuple[tuple[float, float], ...] | None): Texture coordinates for each vertex, from 0 to 1, with v
-            increasing upward. `None` for faces without texture coordinates.
+        uvs (tuple[tuple[float, float], ...] | None): `(u, v)` texture coordinates per vertex, each from 0 to 1;
+            u increases rightward and v upward. `None` for faces without texture coordinates.
         tag (int): A label the mesh constructor gives the face, such as the side number of a prism.
 
     """
@@ -927,7 +981,7 @@ def rasterize(
     *,
     rotation: Rotation | None = None,
     scale: float = 1.0,
-    position: Vec3 = ORIGIN,
+    position: Point3 = ORIGIN,
     cull: str = "back",
     buffer: dict[Coord, Fragment] | None = None,
     bounds: Bounds | None = None,
@@ -944,7 +998,7 @@ def rasterize(
         camera (Camera): Projects the mesh onto the canvas.
         rotation (Rotation | None): Orientation of the mesh. Defaults to no rotation.
         scale (float): Uniform size multiplier.
-        position (Vec3): Where the mesh's origin sits in world space.
+        position (Point3): Absolute world `(x, y, z)` position of the mesh origin, in columns, or a `Vec3`.
         cull (str): Skip faces turned `"back"` (away from the camera), `"front"` (toward it), or `"none"`.
         buffer (dict[Coord, Fragment] | None): A buffer to draw into. Defaults to a new one.
         bounds (Bounds | None): Only fill cells inside these bounds, such as the canvas. Work outside them is
@@ -955,6 +1009,7 @@ def rasterize(
 
     Raises:
         ValueError: If `cull` is not "back", "front" or "none".
+        TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple.
 
     """
     if cull not in ("back", "front", "none"):
@@ -1135,7 +1190,7 @@ def wireframe(
     *,
     rotation: Rotation | None = None,
     scale: float = 1.0,
-    position: Vec3 = ORIGIN,
+    position: Point3 = ORIGIN,
     bounds: Bounds | None = None,
     depth_test: bool = False,
 ) -> dict[Coord, EdgeCell]:
@@ -1145,9 +1200,16 @@ def wireframe(
     the near plane retain their visible segment. With `bounds`, only the cells of each edge inside them are
     visited, so an edge reaching far off screen costs no more than one on it.
 
+    `position` is the absolute world `(x, y, z)` position of the mesh origin in columns,
+    supplied as a tuple or `Vec3`.
+
     By default, `front` classifies adjacent face orientation, which only approximates visibility for concave
     meshes. With `depth_test=True`, cells behind the mesh's filled surface are also classified as hidden.
     This adds a rasterization pass, restricted to the same `bounds`.
+
+    Raises:
+        TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple.
+
     """
     rotation = rotation or Rotation()
     world = transform_points(mesh.vertices, rotation, scale=scale, position=position)

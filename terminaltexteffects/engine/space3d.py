@@ -126,7 +126,7 @@ def rotation_about(axis: Axis, degrees: float) -> g3.Rotation:
     """Return a rotation of `degrees` about `axis`, counterclockwise when looking down the axis toward the origin.
 
     Args:
-        axis (Axis): `"x"`, `"y"`, `"z"`, `"diagonal"` or an `(x, y, z)` direction.
+        axis (Axis): `"x"`, `"y"`, `"z"`, `"diagonal"` or unitless `(x, y, z)` direction components.
         degrees (float): Angle of the rotation.
 
     Returns:
@@ -734,7 +734,8 @@ class Textured:
         back (str): `"hide"` draws spaces in the text as blank surface. `"dim"` lets the far side show through
             them, drawn in `back_color`.
         back_color (Color): Color of the far side and of faces without a texture layout.
-        offset (tuple[float, float]): Text column and row added before sampling. Positive values scroll left/up.
+        offset (tuple[float, float]): `(column_offset, row_offset)` in text cells, added before sampling. Positive
+            values scroll left/up.
         repeat (bool): Repeat the text, or clamp sampling to its edge cells when false.
         scale (float): Positive text size multiplier in both dimensions; 2 doubles each character's footprint.
 
@@ -912,16 +913,22 @@ class Camera(g3.Camera):
         """Whether camera tweens are queued or playing."""
         return bool(self._queue)
 
-    def set_position(self, x: float = 0, y: float = 0, z: float = 0) -> Camera:
+    def set_position(self, x: float | g3.Point3 = 0, y: float | None = None, z: float | None = None) -> Camera:
         """Set the eye's world position, now, without changing distance or focal length.
 
+        Do not combine a complete point with y or z; mixed forms raise `TypeError`.
+
         Args:
-            x (float): Absolute world x coordinate in columns; omitted coordinates default to zero.
-            y (float): Absolute world y coordinate in columns; omitted coordinates default to zero.
-            z (float): Absolute world z coordinate in columns; omitted coordinates default to zero.
+            x (float | g3.Point3): Absolute world position as a `Vec3` or `(x, y, z)` tuple in columns, or scalar x.
+            y (float | None): Scalar y in columns; omit for a complete point. Omitted/`None` means zero.
+            z (float | None): Scalar z in columns; omit for a complete point. Omitted/`None` means zero.
 
         Returns:
             Camera: This camera, for chaining.
+
+        Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple. Coordinates cannot be mixed with a
+                complete point.
 
         """
         super().set_position(x, y, z)
@@ -941,19 +948,25 @@ class Camera(g3.Camera):
         super().set_rotation(rotation)
         return self
 
-    def move_by(self, x: float = 0, y: float = 0, z: float = 0) -> Camera:
+    def move_by(self, x: float | g3.Point3 = 0, y: float | None = None, z: float | None = None) -> Camera:
         """Move by world displacement `(x, y, z)`, now.
 
+        Do not combine a complete point with y or z; mixed forms raise `TypeError`.
+
         Args:
-            x (float): Displacement along fixed world x, in columns.
-            y (float): Displacement along fixed world y, in columns.
-            z (float): Displacement along fixed world z, in columns.
+            x (float | g3.Point3): World displacement as a `Vec3` or `(x, y, z)` tuple in columns, or scalar x.
+            y (float | None): Scalar y in columns; omit for a complete point. Omitted/`None` means zero.
+            z (float | None): Scalar z in columns; omit for a complete point. Omitted/`None` means zero.
 
         Returns:
             Camera: This camera, for chaining.
 
+        Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple. Coordinates cannot be mixed with a
+                complete point.
+
         """
-        point = self.position + g3.Vec3(x, y, z)
+        point = self.position + g3._coordinates(x, y, z)
         return self.set_position(point.x, point.y, point.z)
 
     def _travel(self, axis: g3.Vec3, amount: float) -> Camera:
@@ -1116,7 +1129,7 @@ class Camera(g3.Camera):
     def _point(target: Body | g3.Vec3 | tuple[float, float, float]) -> g3.Vec3:
         if isinstance(target, Body):
             return target.position
-        return target if isinstance(target, g3.Vec3) else g3.Vec3(*target)
+        return g3._vec3(target)
 
     def _aim(self, point: g3.Vec3, up: g3.Vec3, *, eye: g3.Vec3 | None = None) -> g3.Rotation:
         """Build an orthonormal camera basis, with a stable fallback when up follows the view."""
@@ -1148,8 +1161,8 @@ class Camera(g3.Camera):
     def look_at(
         self,
         x: float | Body | g3.Vec3 | tuple[float, float, float],
-        y: float = 0,
-        z: float = 0,
+        y: float | None = None,
+        z: float | None = None,
         *,
         up: Axis = "y",
         frames: int | None = None,
@@ -1163,10 +1176,10 @@ class Camera(g3.Camera):
 
         Args:
             x (float | Body | g3.Vec3 | tuple[float, float, float]): Target world x, a `Vec3`, an `(x,
-                y, z)` tuple or a body to aim at.
-            y (float): Target world y when `x` is numeric; ignored for a body or point target.
-            z (float): Target world z when `x` is numeric; ignored for a body or point target.
-            up (Axis): Nonzero world-up direction; defaults to +y.
+                y, z)` tuple in columns or a body to aim at.
+            y (float | None): World y in columns when x is numeric; omitted/`None` means zero. Omit for a target.
+            z (float | None): World z in columns when x is numeric; omitted/`None` means zero. Omit for a target.
+            up (Axis): Nonzero world `(x, y, z)` up direction (unitless) or axis name; defaults to +y.
             frames (int | None): `None` applies now; otherwise queue this many frames. Zero preserves queue ordering.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Play alongside the last queued group instead of after it.
@@ -1175,11 +1188,18 @@ class Camera(g3.Camera):
             Camera: This camera, for chaining.
 
         Raises:
+            TypeError: If a point is malformed, or y/z is combined with a point or body target.
             ValueError: If frames is negative, up is unknown or zero, or the target is at the eye
                 when aiming begins.
 
         """
-        target = g3.Vec3(x, y, z) if isinstance(x, (float, int)) else x
+        if isinstance(x, Body):
+            if y is not None or z is not None:
+                msg = "A body target cannot be combined with y or z arguments."
+                raise TypeError(msg)
+            target: Body | g3.Vec3 = x
+        else:
+            target = g3._coordinates(x, y, z)
         vertical = _direction(up, _AXES, "up")
         if frames is None:
             return self.set_rotation(self._aim(self._point(target), vertical))
@@ -1205,13 +1225,14 @@ class Camera(g3.Camera):
         Raises `ValueError` for both angle forms, invalid directions, negative frames or zero radius.
 
         Args:
-            axis (Axis): World axis name or nonzero direction for the orbit.
+            axis (Axis): World axis name or nonzero `(x, y, z)` direction components (unitless).
             degrees (float | None): Signed angle in degrees.
-            around (Body | g3.Vec3 | tuple[float, float, float]): World point or body whose position is
+            around (Body | g3.Vec3 | tuple[float, float, float]): World `(x, y, z)` point in columns, or body whose
+                position is
                 sampled when the orbit starts.
             turns (float | None): Signed full turns, as an alternative to degrees. Defaults to one turn
                 if neither is supplied.
-            up (Axis): Nonzero world-up direction; defaults to +y.
+            up (Axis): Nonzero world `(x, y, z)` up direction (unitless) or axis name; defaults to +y.
             frames (int | None): `None` applies now; otherwise queue this many frames. Zero preserves queue ordering.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Play alongside the last queued group instead of after it.
@@ -1263,9 +1284,9 @@ class Camera(g3.Camera):
 
     def move_to(
         self,
-        x: float = 0,
-        y: float = 0,
-        z: float = 0,
+        x: float | g3.Point3 = 0,
+        y: float | None = None,
+        z: float | None = None,
         frames: int = 60,
         ease: EasingFunction | None = None,
         *,
@@ -1273,10 +1294,12 @@ class Camera(g3.Camera):
     ) -> Camera:
         """Queue an absolute world position, applying deltas that preserve concurrent nudges.
 
+        Do not combine a complete point with y or z; mixed forms raise `TypeError`.
+
         Args:
-            x (float): Absolute world x coordinate in columns; omitted coordinates default to zero.
-            y (float): Absolute world y coordinate in columns; omitted coordinates default to zero.
-            z (float): Absolute world z coordinate in columns; omitted coordinates default to zero.
+            x (float | g3.Point3): Absolute world position as a `Vec3` or `(x, y, z)` tuple in columns, or scalar x.
+            y (float | None): Scalar y in columns; omit for a complete point. Omitted/`None` means zero.
+            z (float | None): Scalar z in columns; omit for a complete point. Omitted/`None` means zero.
             frames (int): Duration in frames. Zero applies immediately only when no earlier tween is queued.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Play alongside the last queued group instead of after it.
@@ -1285,10 +1308,12 @@ class Camera(g3.Camera):
             Camera: This camera, for chaining.
 
         Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple. Coordinates cannot be mixed with a
+                complete point.
             ValueError: If `frames` is negative.
 
         """
-        target = g3.Vec3(x, y, z)
+        target = g3._coordinates(x, y, z)
         state: dict[str, g3.Vec3] = {}
 
         def begin() -> None:
@@ -1559,9 +1584,7 @@ class Body:
 
     """
 
-    def __init__(
-        self, space: Space3D, shape: Shape | None = None, *, at: tuple[float, float, float] = (0, 0, 0)
-    ) -> None:
+    def __init__(self, space: Space3D, shape: Shape | None = None, *, at: g3.Point3 = (0, 0, 0)) -> None:
         """Initialize a body. Use `Space3D.body` rather than calling this directly.
 
         Exceptions from a custom shape's `build_mesh` propagate unchanged.
@@ -1569,12 +1592,13 @@ class Body:
         Args:
             space (Space3D): The space the body belongs to.
             shape (Shape | None): The body's shape, if any.
-            at (tuple[float, float, float]): Starting position in columns from the canvas center.
+            at (g3.Point3): Absolute world `(x, y, z)` position in columns from the canvas center, or a `Vec3`.
 
         Returns:
             None: No return value.
 
         Raises:
+            TypeError: If `at` is not a `Vec3` or a numeric `(x, y, z)` tuple.
             ValueError: If a built-in shape has invalid mesh segment, ring or side counts.
             NotImplementedError: If the shape does not implement `Shape.build_mesh`.
 
@@ -1584,7 +1608,7 @@ class Body:
         self._mesh = shape.build_mesh() if shape is not None else None
         self._removed = False
         self._callback_generation = 0
-        self._home = g3.Vec3(*at)
+        self._home = g3._vec3(at)
         self._rotation = g3.Rotation()
         self._position = self._home
         self._scale = 1.0
@@ -1660,16 +1684,20 @@ class Body:
         """
         return bool(self._queue)
 
-    def world_point(self, local: g3.Vec3) -> g3.Vec3:
+    def world_point(self, local: g3.Point3) -> g3.Vec3:
         """Return where a point in the body's own coordinates is in world space right now.
 
         Args:
-            local (g3.Vec3): Point in the body's own coordinates.
+            local (g3.Point3): Body-local `(x, y, z)` position in columns, or a `Vec3`.
 
         Returns:
             g3.Vec3: Current world position in columns from the canvas center.
 
+        Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple.
+
         """
+        local = g3._vec3(local)
         a, b, c, d, e, f, g, h, i, px, py, pz = self._world_transform()
         x, y, z = local.x, local.y, local.z
         return g3.Vec3(a * x + b * y + c * z + px, d * x + e * y + f * z + py, g * x + h * y + i * z + pz)
@@ -1710,7 +1738,7 @@ class Body:
         """Turn about a world `axis` through the origin, or a body axis with `local=True`, now.
 
         Args:
-            axis (Axis): Axis name or nonzero direction to turn about.
+            axis (Axis): Axis name or nonzero `(x, y, z)` direction components (unitless).
             degrees (float): Angle to turn, in degrees.
             local (bool): Turn about a body axis when true; otherwise use a world axis.
 
@@ -1724,19 +1752,25 @@ class Body:
         turn = rotation_about(axis, degrees)
         return self._set(rotation=self._rotation * turn if local else turn * self._rotation)
 
-    def move_by(self, x: float = 0.0, y: float = 0.0, z: float = 0.0) -> Body:
+    def move_by(self, x: float | g3.Point3 = 0.0, y: float | None = None, z: float | None = None) -> Body:
         """Move the body by `(x, y, z)` columns, now.
 
+        Do not combine a complete point with y or z; mixed forms raise `TypeError`.
+
         Args:
-            x (float): Displacement along world x, in columns.
-            y (float): Displacement along world y, in columns.
-            z (float): Displacement along world z, in columns.
+            x (float | g3.Point3): World displacement as a `Vec3` or `(x, y, z)` tuple in columns, or scalar x.
+            y (float | None): Scalar y in columns; omit for a complete point. Omitted/`None` means zero.
+            z (float | None): Scalar z in columns; omit for a complete point. Omitted/`None` means zero.
 
         Returns:
             Body: This body, for chaining.
 
+        Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple. Coordinates cannot be mixed with a
+                complete point.
+
         """
-        return self._set(position=self._position + g3.Vec3(x, y, z))
+        return self._set(position=self._position + g3._coordinates(x, y, z))
 
     def scale_by(self, factor: float) -> Body:
         """Multiply the body's size by `factor`, now. Raises `ValueError` unless `factor` is positive.
@@ -1765,19 +1799,25 @@ class Body:
         """
         return self._set(rotation=rotation or g3.Rotation())
 
-    def set_position(self, x: float = 0.0, y: float = 0.0, z: float = 0.0) -> Body:
+    def set_position(self, x: float | g3.Point3 = 0.0, y: float | None = None, z: float | None = None) -> Body:
         """Move the body's origin to `(x, y, z)`, now.
 
+        Do not combine a complete point with y or z; mixed forms raise `TypeError`.
+
         Args:
-            x (float): World x coordinate in columns, increasing rightward.
-            y (float): World y coordinate in columns, increasing upward.
-            z (float): World z coordinate in columns, increasing toward the default viewer.
+            x (float | g3.Point3): Absolute world position as a `Vec3` or `(x, y, z)` tuple in columns, or scalar x.
+            y (float | None): Scalar y in columns; omit for a complete point. Omitted/`None` means zero.
+            z (float | None): Scalar z in columns; omit for a complete point. Omitted/`None` means zero.
 
         Returns:
             Body: This body, for chaining.
 
+        Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple. Coordinates cannot be mixed with a
+                complete point.
+
         """
-        return self._set(position=g3.Vec3(x, y, z))
+        return self._set(position=g3._coordinates(x, y, z))
 
     def set_scale(self, scale: float) -> Body:
         """Set the body's size multiplier, now. Raises `ValueError` unless `scale` is positive.
@@ -1832,7 +1872,7 @@ class Body:
         The local axis follows the current orientation, including other concurrent turns.
 
         Args:
-            axis (Axis): Axis name or nonzero direction to turn about.
+            axis (Axis): Axis name or nonzero `(x, y, z)` direction components (unitless).
             turns (float): Number of full turns; negative values reverse the direction.
             frames (int): Duration in frames. Zero applies immediately when no tween is queued ahead.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
@@ -1867,7 +1907,7 @@ class Body:
         """Queue `turns` turns about `axis` while easing out any other tilt, ending at the rest orientation.
 
         Args:
-            axis (Axis): Axis name or nonzero direction to turn about.
+            axis (Axis): Axis name or nonzero `(x, y, z)` direction components (unitless).
             turns (float): Number of full turns; negative values reverse the direction.
             frames (int): Duration in frames. Zero applies immediately when no tween is queued ahead.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
@@ -1946,9 +1986,9 @@ class Body:
 
     def move_to(
         self,
-        x: float = 0.0,
-        y: float = 0.0,
-        z: float = 0.0,
+        x: float | g3.Point3 = 0.0,
+        y: float | None = None,
+        z: float | None = None,
         frames: int = 60,
         ease: EasingFunction | None = None,
         *,
@@ -1956,10 +1996,12 @@ class Body:
     ) -> Body:
         """Queue a move of the body's origin to `(x, y, z)`.
 
+        Do not combine a complete point with y or z; mixed forms raise `TypeError`.
+
         Args:
-            x (float): World x coordinate in columns, increasing rightward.
-            y (float): World y coordinate in columns, increasing upward.
-            z (float): World z coordinate in columns, increasing toward the default viewer.
+            x (float | g3.Point3): Absolute world position as a `Vec3` or `(x, y, z)` tuple in columns, or scalar x.
+            y (float | None): Scalar y in columns; omit for a complete point. Omitted/`None` means zero.
+            z (float | None): Scalar z in columns; omit for a complete point. Omitted/`None` means zero.
             frames (int): Duration in frames. Zero applies immediately when no tween is queued ahead.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Run alongside the previously queued tween instead of after it.
@@ -1968,10 +2010,12 @@ class Body:
             Body: This body, for chaining.
 
         Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple. Coordinates cannot be mixed with a
+                complete point.
             ValueError: If `frames` is negative.
 
         """
-        target = g3.Vec3(x, y, z)
+        target = g3._coordinates(x, y, z)
         state: dict[str, g3.Vec3] = {}
 
         def begin() -> None:
@@ -2062,9 +2106,12 @@ class Body:
         """Queue a move to a random point drawn with the space's RNG.
 
         Args:
-            x (tuple[float, float] | None): Range for x. `None` uses the middle half of the canvas width.
-            y (tuple[float, float] | None): Range for y. `None` uses the middle half of the canvas height.
-            z (tuple[float, float]): Range for world z, increasing toward the default viewer; not camera depth.
+            x (tuple[float, float] | None): `(minimum, maximum)` world x range in columns. `None` uses the middle half
+                of the canvas width.
+            y (tuple[float, float] | None): `(minimum, maximum)` world y range in columns. `None` uses the middle half
+                of the canvas height.
+            z (tuple[float, float]): `(minimum, maximum)` world z range in columns, increasing toward the default
+                viewer; not camera depth.
             frames (int): Frames the move takes. 0 jumps.
             ease (EasingFunction | None): Easing for the move.
             together (bool): Run alongside the previously queued tween.
@@ -2190,24 +2237,33 @@ class Body:
 
     # Anchors and layouts
 
-    def anchor(self, x: float, y: float, z: float, *, normal: Axis | None = None) -> Anchor:
+    def anchor(
+        self, x: float | g3.Point3, y: float | None = None, z: float | None = None, *, normal: Axis | None = None
+    ) -> Anchor:
         """Return an anchor at `(x, y, z)` in the body's own coordinates.
 
+        Do not combine a complete point with y or z; mixed forms raise `TypeError`.
+
         Args:
-            x (float): Columns right of the body's origin, before the body turns.
-            y (float): Columns up.
-            z (float): Local z toward the default viewer before the body turns; not camera depth.
-            normal (Axis | None): Which way the surface faces there. Mounts on anchors with a normal report
+            x (float | g3.Point3): Body-local position as a `Vec3` or `(x, y, z)` tuple in columns, or scalar x.
+            y (float | None): Scalar y in columns; omit for a complete point. Required when x is scalar.
+            z (float | None): Scalar z in columns; omit for a complete point. Required when x is scalar.
+            normal (Axis | None): Body-local `(x, y, z)` normal components (unitless), or axis name. Mounts report
                 `facing` and `light`.
 
         Returns:
             Anchor: The new anchor.
 
         Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple. Coordinates cannot be mixed with a
+                complete point.
             ValueError: If `normal` is an unknown axis name or a zero direction.
 
         """
-        point = g3.Vec3(x, y, z)
+        if isinstance(x, (int, float)) and (y is None or z is None):
+            msg = "Scalar anchor coordinates require x, y and z."
+            raise TypeError(msg)
+        point = g3._coordinates(x, y, z)
         self._extent = max(self._extent, point.length())
         unit = _direction(normal, _AXES, "normal") if normal is not None else None
         return Anchor(self, point, unit)
@@ -2304,7 +2360,7 @@ class Body:
         Args:
             count (int): Requested number of points or anchors.
             radius (float): Circle radius in columns.
-            axis (Axis): Axis name or nonzero direction to turn about.
+            axis (Axis): Axis name or nonzero `(x, y, z)` direction components (unitless).
 
         Returns:
             list[Anchor]: Anchors around the circle with outward normals.
@@ -2874,7 +2930,7 @@ class Space3D:
             orthographic view.
         light_space (Literal["world", "camera"]): Keep the light in world space (default) or rotate it with the camera.
         light (Direction): Direction toward the light: `"upper left"`, `"upper right"`, `"front"`, `"above"`,
-            `"left"`, `"right"` or an `(x, y, z)` direction.
+            `"left"`, `"right"` or unitless `(x, y, z)` components in the selected `light_space`.
         rng (random.Random | None): Random source for `random_pose` and `random_position`. `None` uses the
             `random` module, so `random.seed` makes runs repeatable.
 
@@ -2910,7 +2966,8 @@ class Space3D:
         Args:
             terminal (Terminal): The effect's terminal.
             perspective (float): Perspective strength; 0 selects an orthographic view and 1 the natural perspective.
-            light (Direction): Named light direction or nonzero direction pointing toward the light.
+            light (Direction): Named light direction or nonzero `(x, y, z)` direction components toward the light
+                (unitless).
             light_space (Literal["world", "camera"]): Coordinate space of the configured light direction.
             rng (random.Random | None): Random source, or `None` to use the `random` module.
 
@@ -3014,19 +3071,20 @@ class Space3D:
         control.set_rotation(camera.rotation)
         self._camera = control
 
-    def body(self, shape: Shape | None = None, *, at: tuple[float, float, float] = (0, 0, 0)) -> Body:
+    def body(self, shape: Shape | None = None, *, at: g3.Point3 = (0, 0, 0)) -> Body:
         """Create a body, with a shape or as a plain frame of reference for anchors.
 
         Exceptions from a custom shape's `build_mesh` propagate unchanged.
 
         Args:
             shape (Shape | None): `Cube(...)`, `Prism(...)`, `Sphere(...)` or another `Shape`.
-            at (tuple[float, float, float]): Starting position in columns from the canvas center.
+            at (g3.Point3): Absolute world `(x, y, z)` position in columns from the canvas center, or a `Vec3`.
 
         Returns:
             Body: The new body.
 
         Raises:
+            TypeError: If a point is not a `Vec3` or a numeric `(x, y, z)` tuple.
             ValueError: If a built-in shape has invalid mesh segment, ring or side counts.
             NotImplementedError: If the shape does not implement `Shape.build_mesh`.
 
