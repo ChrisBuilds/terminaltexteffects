@@ -9,11 +9,13 @@ Classes:
 
 from __future__ import annotations
 
+import functools
 import math
 import typing
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from terminaltexteffects.utils import easing, geometry
+from terminaltexteffects.utils import geometry3d as g3
 from terminaltexteffects.utils.exceptions import (
     ActivateEmptyPathError,
     DuplicatePathIDError,
@@ -28,21 +30,117 @@ if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character  # pragma: no cover
     from terminaltexteffects.engine.space3d import Mount  # pragma: no cover
 
+Point = typing.Union[Coord, g3.Vec3]
+"""A waypoint position: a `Coord` cell, which means `Vec3(column, row, 0)`, or a `Vec3` in the parent's frame."""
+
+PointT = typing.TypeVar("PointT", Coord, g3.Vec3)
+
+_ROW = geometry.TERMINAL_ROW_SCALE
+
+
+XYZ = tuple[float, float, float]
+"""A position as plain floats. Motion steps with these: building a `Vec3` on every step costs more than it should."""
+
+
+def _as_xyz(value: Point | g3.Point3) -> XYZ:
+    """Return a waypoint position as floats: a `Coord` is `(column, row, 0)` on its parent's surface."""
+    if type(value) is Coord:
+        return (value.column, value.row, 0.0)
+    point = g3._vec3(typing.cast("g3.Point3", value))
+    return (point.x, point.y, point.z)
+
+
+def _line_length(start: XYZ, end: XYZ) -> float:
+    """Return the length of a straight segment in a surface frame, where a row is two units tall."""
+    dz = end[2] - start[2]
+    if dz:
+        return math.hypot(end[0] - start[0], (end[1] - start[1]) * _ROW, dz)
+    return math.hypot(end[0] - start[0], (end[1] - start[1]) * _ROW)
+
+
+@functools.lru_cache(maxsize=4096)
+def _curve_length(points: tuple[XYZ, ...]) -> float:
+    """Return the length of a Bezier curve through float 3D points, by the same adaptive subdivision as 2D curves."""
+    scaled = [(x, y * _ROW, z) for x, y, z in points]
+
+    def approximate(curve: list[tuple[float, float, float]], depth: int = 0) -> float:
+        chord = math.dist(curve[0], curve[-1])
+        polygon = sum(math.dist(a, b) for a, b in zip(curve, curve[1:]))
+        if depth >= geometry._BEZIER_LENGTH_MAX_DEPTH or polygon - chord <= geometry._BEZIER_LENGTH_TOLERANCE:
+            return (polygon + chord) / 2
+        levels = [curve]
+        while len(levels[-1]) > 1:
+            levels.append(
+                [((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2) for a, b in zip(levels[-1], levels[-1][1:])],
+            )
+        left = [level[0] for level in levels]
+        right = [level[-1] for level in reversed(levels)]
+        return approximate(left, depth + 1) + approximate(right, depth + 1)
+
+    return approximate(scaled)
+
+
+def _segment_length(start: Point, controls: tuple[Point, ...] | None, end: Point) -> float:
+    """Return the length of a segment, using the cached 2D functions when every point is a cell."""
+    if controls:
+        if type(start) is Coord and type(end) is Coord and all(type(c) is Coord for c in controls):
+            cells = typing.cast("tuple[Coord, ...]", controls)
+            return geometry.find_length_of_bezier_curve(start, cells, end, terminal_adjusted=True)
+        return _curve_length((_as_xyz(start), *map(_as_xyz, controls), _as_xyz(end)))
+    if type(start) is Coord and type(end) is Coord:
+        return geometry.find_length_of_line(start, end, terminal_adjusted=True)
+    return _line_length(_as_xyz(start), _as_xyz(end))
+
+
+def _curve_point(points: tuple[XYZ, ...], t: float) -> XYZ:
+    """Return the point at `t` on a Bezier curve; `t` outside 0 to 1 extrapolates."""
+    if len(points) == 3:
+        (a, b, c), u = points, 1 - t
+        p, q, r = u * u, 2 * u * t, t * t
+        return (p * a[0] + q * b[0] + r * c[0], p * a[1] + q * b[1] + r * c[1], p * a[2] + q * b[2] + r * c[2])
+    coords = list(points)
+    while len(coords) > 1:
+        coords = [
+            ((1 - t) * a[0] + t * b[0], (1 - t) * a[1] + t * b[1], (1 - t) * a[2] + t * b[2])
+            for a, b in zip(coords, coords[1:])
+        ]
+    return coords[0]
+
 
 @dataclass(frozen=True)
-class Waypoint:
-    """A Waypoint comprises an identifier, a coordinate, and, optionally, bezier control point(s).
+class Waypoint(typing.Generic[PointT]):
+    """A Waypoint comprises an identifier, a position, and, optionally, bezier control point(s).
+
+    Positions are in the character's parent's frame. On the text plane a `Coord` is a cell, and means
+    `Vec3(column, row, 0)`; a `Vec3` can add a height toward the camera.
 
     Attributes:
         waypoint_id (str): Unique identifier for the waypoint.
-        coord (Coord): Coordinate of the waypoint.
-        bezier_control (tuple[Coord, ...] | None): Optional bezier control point(s). Defaults to None.
+        coord (Coord | g3.Vec3): Position of the waypoint, as given.
+        bezier_control (tuple[Coord | g3.Vec3, ...] | None): Optional bezier control point(s). Defaults to None.
+        point (g3.Vec3): `coord` as a `Vec3`.
 
     """
 
     waypoint_id: str
-    coord: Coord
-    bezier_control: tuple[Coord, ...] | None = None
+    coord: PointT
+    bezier_control: tuple[Point, ...] | None = None
+    _xyz: XYZ = field(init=False, repr=False, compare=False)
+    _curve_controls: tuple[XYZ, ...] | None = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        """Keep the position as floats too, for stepping."""
+        # Written to __dict__ directly: the dataclass is frozen, and this runs for every waypoint.
+        attributes = self.__dict__
+        coord = self.coord
+        attributes["_xyz"] = (coord.column, coord.row, 0.0) if type(coord) is Coord else _as_xyz(coord)
+        controls = self.bezier_control
+        attributes["_curve_controls"] = tuple(map(_as_xyz, controls)) if controls else None
+
+    @property
+    def point(self) -> g3.Vec3:
+        """`coord` as a `Vec3`."""
+        return g3.Vec3(*self._xyz)
 
 
 @dataclass
@@ -140,18 +238,19 @@ class Path:
 
     def new_waypoint(
         self,
-        coord: Coord,
+        coord: PointT,
         *,
-        bezier_control: tuple[Coord, ...] | Coord | None = None,
+        bezier_control: tuple[Point, ...] | Point | None = None,
         waypoint_id: str = "",
-    ) -> Waypoint:
+    ) -> Waypoint[PointT]:
         """Create a new Waypoint and appends adds it to the Path.
 
         Args:
             waypoint_id (str): Unique identifier for the waypoint. Used to query for the waypoint.
-            coord (Coord): coordinate
-            bezier_control (tuple[Coord, ...] | Coord | None): Optional bezier control point(s) for the
-                segment ending at this waypoint. A single Coord is normalized to a one-item tuple.
+            coord (Coord | g3.Vec3): Position in the character's parent's frame. A `Coord` means
+                `Vec3(column, row, 0)`.
+            bezier_control (tuple[Coord | g3.Vec3, ...] | Coord | g3.Vec3 | None): Optional bezier control
+                point(s) for the segment ending at this waypoint. A single point is normalized to a one-item tuple.
                 Defaults to None.
 
         Returns:
@@ -169,8 +268,8 @@ class Path:
                     current_id += 1
         if waypoint_id in self.waypoint_lookup:
             raise DuplicateWaypointIDError(waypoint_id)
-        bezier_control_tuple: tuple[Coord, ...] | None
-        if bezier_control and isinstance(bezier_control, Coord):
+        bezier_control_tuple: tuple[Point, ...] | None
+        if bezier_control and isinstance(bezier_control, (Coord, g3.Vec3)):
             bezier_control_tuple = (bezier_control,)
         elif bezier_control and isinstance(bezier_control, tuple):
             bezier_control_tuple = bezier_control
@@ -192,19 +291,7 @@ class Path:
         if len(self.waypoints) < 2:
             return
 
-        if waypoint.bezier_control:
-            distance_from_previous = geometry.find_length_of_bezier_curve(
-                self.waypoints[-2].coord,
-                waypoint.bezier_control,
-                waypoint.coord,
-                terminal_adjusted=True,
-            )
-        else:
-            distance_from_previous = geometry.find_length_of_line(
-                self.waypoints[-2].coord,
-                waypoint.coord,
-                terminal_adjusted=True,
-            )
+        distance_from_previous = _segment_length(self.waypoints[-2].coord, waypoint.bezier_control, waypoint.coord)
         self.total_distance += distance_from_previous
         self.segments.append(Segment(self.waypoints[-2], waypoint, distance_from_previous))
         self.max_steps = round(self.total_distance / self.speed)
@@ -224,10 +311,10 @@ class Path:
             raise WaypointNotFoundError(waypoint_id)
         return waypoint
 
-    def step(self, event_handler: base_character.EventHandler) -> Coord:
-        """Progresses to the next step along the path and returns the coordinate at that step.
+    def step(self, event_handler: base_character.EventHandler) -> g3.Vec3:
+        """Progresses to the next step along the path and returns the position at that step.
 
-        This method is called by the Motion.move() method. It calculates the next coordinate based on the current step,
+        This method is called by the Motion.move() method. It calculates the next position based on the current step,
         total distance, bezier control points, and the easing function if provided. It also handles the triggering
         of segment enter and exit events.
 
@@ -235,12 +322,16 @@ class Path:
             event_handler (base_character.EventHandler): The EventHandler for the character.
 
         Returns:
-            Coord: The next coordinate on the path.
+            g3.Vec3: The next position on the path, in the character's parent's frame.
 
         """
+        return g3.Vec3(*self._step(event_handler))
+
+    def _step(self, event_handler: base_character.EventHandler) -> XYZ:
+        """Step as `step()` does, returning the position as floats."""
         if not self.max_steps or self.current_step >= self.max_steps or not self.total_distance:
-            # if the path has zero distance or there are no more steps, return the final waypoint coordinate
-            return self.segments[-1].end.coord
+            # if the path has zero distance or there are no more steps, return the final waypoint position
+            return self.segments[-1].end._xyz
         self.current_step += 1
         if self.ease:
             distance_factor = self.ease(self.current_step / self.max_steps)
@@ -259,19 +350,19 @@ class Path:
                     segment.enter_event_triggered = True
                     event_handler._handle_event(event_handler.Event.SEGMENT_ENTERED, segment.end)
                     if motion.active_path is not active_path or motion._path_generation != path_generation:
-                        return motion.current_coord
+                        return motion._xyz
                 break
             distance_to_travel -= segment.distance
             if not segment.enter_event_triggered:
                 segment.enter_event_triggered = True
                 event_handler._handle_event(event_handler.Event.SEGMENT_ENTERED, segment.end)
                 if motion.active_path is not active_path or motion._path_generation != path_generation:
-                    return motion.current_coord
+                    return motion._xyz
             if not segment.exit_event_triggered:
                 segment.exit_event_triggered = True
                 event_handler._handle_event(event_handler.Event.SEGMENT_EXITED, segment.end)
                 if motion.active_path is not active_path or motion._path_generation != path_generation:
-                    return motion.current_coord
+                    return motion._xyz
         # if the distance_to_travel is further than the last waypoint,
         # preserve the distance from the start of the final segment
         else:
@@ -284,21 +375,14 @@ class Path:
         else:
             segment_distance_to_travel_factor = min((distance_to_travel / active_segment.distance, 1))
 
-        if active_segment.end.bezier_control:
-            next_coord = geometry.find_coord_on_bezier_curve(
-                active_segment.start.coord,
-                active_segment.end.bezier_control,
-                active_segment.end.coord,
-                segment_distance_to_travel_factor,
-            )
-        else:
-            next_coord = geometry.interpolate_coord(
-                active_segment.start.coord,
-                active_segment.end.coord,
-                segment_distance_to_travel_factor,
-            )
-
-        return next_coord
+        start = active_segment.start._xyz
+        end = active_segment.end
+        t = segment_distance_to_travel_factor
+        if end._curve_controls:
+            return _curve_point((start, *end._curve_controls, end._xyz), t)
+        stop = end._xyz
+        u = 1 - t
+        return (u * start[0] + t * stop[0], u * start[1] + t * stop[1], u * start[2] + t * stop[2])
 
     def __eq__(self, other: object) -> bool:
         """Check if two Path objects are equal.
@@ -370,6 +454,12 @@ class Motion:
         self.paths: dict[str, Path] = {}
         self.character = character
         self.current_coord: Coord = Coord(character.input_coord.column, character.input_coord.row)
+        # The cell the engine last wrote to `current_coord`. When `current_coord` is no longer this object, an
+        # effect assigned it, and the position follows at the next move or read.
+        self._cell: Coord = self.current_coord
+        # The exact position in the parent's frame, as floats; `position` reads it as a `Vec3`.
+        self._xyz: XYZ = (self._cell.column, self._cell.row, 0.0)
+        self._depth_from_view = False
         self.previous_coord: Coord = Coord(-1, -1)
         self.active_path: Path | None = None
         self.mount: Mount | None = None
@@ -377,13 +467,68 @@ class Motion:
         self._path_generation = 0
 
     def set_coordinate(self, coord: Coord) -> None:
-        """Set the current coordinate to the given coordinate.
+        """Move the character to a cell, now: column and row in its parent's frame, keeping its height.
+
+        Assigning `current_coord` does the same.
 
         Args:
             coord (Coord): coordinate
 
         """
         self.current_coord = coord
+        self._sync()
+
+    @property
+    def position(self) -> g3.Vec3:
+        """The character's position in its parent's frame: `(column, row, height)` on the text plane."""
+        if self.current_coord is not self._cell:
+            self._sync()
+        return g3.Vec3(*self._xyz)
+
+    @position.setter
+    def position(self, value: Point | g3.Point3) -> None:
+        self._xyz = _as_xyz(value)
+        self._resolve()
+
+    def _sync(self) -> None:
+        """Move the position to the cell an effect assigned to `current_coord`, keeping the height."""
+        cell = self.current_coord
+        self._cell = cell
+        height = self._xyz[2]
+        self._xyz = (cell.column, cell.row, height)
+        if height:
+            self._resolve()
+
+    def _resolve(self) -> None:
+        """Project the position to the cell `current_coord` reports, and order the character by its depth."""
+        position = self._xyz
+        character = self.character
+        parent = character._parent or character.parent
+        if parent._flat and not position[2]:
+            # On an untouched text plane under the default camera, a cell is the rounded column and row.
+            column, row = round(position[0]), round(position[1])
+            cell = self._cell
+            if cell.column != column or cell.row != row:
+                cell = self._cell = Coord(column, row)
+                self.current_coord = cell
+            if self._depth_from_view:
+                self._depth_from_view = False
+                character._set_depth_order(0.0)
+            return
+        camera = parent.world.camera
+        projected = camera.project(parent.to_world(position))
+        if projected is None:
+            return  # behind the near plane: stay on the last cell
+        column, row = round(projected.column), round(projected.row)
+        cell = self._cell
+        if cell.column != column or cell.row != row:
+            cell = self._cell = Coord(column, row)
+            self.current_coord = cell
+        # Nearer than the text plane paints later within the layer, farther paints earlier.
+        reference = camera.distance
+        order = max(-0.49, min(0.49, (reference - projected.depth) / (4 * reference)))
+        self._depth_from_view = True
+        character._set_depth_order(order)
 
     def new_path(
         self,
@@ -533,21 +678,26 @@ class Motion:
         self.active_path = found_path
         self._path_generation += 1
         first_waypoint = self.active_path.waypoints[0]
+        # Start from the exact position. A character sitting on a cell starts from that `Coord`, which keeps the
+        # cached 2D lengths.
+        if self.current_coord is not self._cell:
+            self._sync()
+        position = self._xyz
+        cell = self._cell
+        origin: Waypoint[Coord] | Waypoint[g3.Vec3] = (
+            Waypoint("origin", cell)
+            if position == (cell.column, cell.row, 0.0)
+            else Waypoint("origin", g3.Vec3(*position))
+        )
         if first_waypoint.bezier_control:
-            distance_to_first_waypoint = geometry.find_length_of_bezier_curve(
-                self.current_coord,
-                first_waypoint.bezier_control,
-                first_waypoint.coord,
-                terminal_adjusted=True,
+            distance_to_first_waypoint = _segment_length(
+                origin.coord, first_waypoint.bezier_control, first_waypoint.coord
             )
         else:
             # This small calculation is cheaper than hashing coordinates through the geometry cache.
-            distance_to_first_waypoint = math.hypot(
-                first_waypoint.coord.column - self.current_coord.column,
-                (first_waypoint.coord.row - self.current_coord.row) * geometry.TERMINAL_ROW_SCALE,
-            )
+            distance_to_first_waypoint = _line_length(position, first_waypoint._xyz)
         new_origin_segment = Segment(
-            Waypoint("origin", self.current_coord),
+            origin,
             first_waypoint,
             distance_to_first_waypoint,
         )
@@ -697,7 +847,10 @@ class Motion:
         the tick it finishes blending onto the anchor.
         """
         # preserve previous coordinate to allow for clearing the location in the terminal
-        self.previous_coord = self.current_coord
+        cell = self.current_coord
+        if cell is not self._cell:
+            self._sync()
+        self.previous_coord = cell
 
         mounted = self.mount is not None
         if mounted:
@@ -706,10 +859,20 @@ class Motion:
             return
         path = self.active_path
         path_generation = self._path_generation
-        next_coord = path.step(self.character.event_handler)
+        next_position = path._step(self.character.event_handler)
         if self.active_path is not path or self._path_generation != path_generation:
             return
-        self.current_coord = next_coord
+        self._xyz = next_position
+        character = self.character
+        parent = character._parent or character.parent
+        if parent._flat and not next_position[2] and not self._depth_from_view:
+            # _resolve()'s text-plane shortcut, inline: this runs for every moving character on every frame.
+            column, row = round(next_position[0]), round(next_position[1])
+            cell = self._cell
+            if cell.column != column or cell.row != row:
+                self.current_coord = self._cell = Coord(column, row)
+        else:
+            self._resolve()
         if self.active_path.current_step == self.active_path.max_steps:
             final_segment = self.active_path.segments[-1]
             if final_segment.enter_event_triggered and not final_segment.exit_event_triggered:

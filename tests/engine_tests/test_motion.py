@@ -7,6 +7,7 @@ import pytest
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
 from terminaltexteffects.engine.motion import Path, Segment, Waypoint
 from terminaltexteffects.utils import easing
+from terminaltexteffects.utils import geometry3d as g3
 from terminaltexteffects.utils.exceptions import (
     ActivateEmptyPathError,
     DuplicatePathIDError,
@@ -230,7 +231,7 @@ def test_path_step_zero_distance(character: EffectCharacter) -> None:
     p = Path("p")
     p.new_waypoint(Coord(0, 0))
     p.new_waypoint(Coord(0, 0))
-    assert p.step(character.event_handler) == Coord(0, 0)
+    assert p.step(character.event_handler) == g3.Vec3(0, 0, 0)
 
 
 def test_path_step_single_segment(character: EffectCharacter) -> None:
@@ -239,7 +240,7 @@ def test_path_step_single_segment(character: EffectCharacter) -> None:
     p.new_waypoint(Coord(0, 0))
     p.new_waypoint(Coord(10, 0))
     current_point = p.step(character.event_handler)
-    while current_point != Coord(10, 0):
+    while current_point != g3.Vec3(10, 0, 0):
         current_point = p.step(character.event_handler)
 
 
@@ -249,7 +250,7 @@ def test_path_step_single_segment_eased(character: EffectCharacter) -> None:
     p.new_waypoint(Coord(0, 0))
     p.new_waypoint(Coord(10, 0))
     current_point = p.step(character.event_handler)
-    while current_point != Coord(10, 0):
+    while current_point != g3.Vec3(10, 0, 0):
         current_point = p.step(character.event_handler)
 
 
@@ -261,7 +262,7 @@ def test_path_step_multiple_segments(character: EffectCharacter) -> None:
     p.new_waypoint(Coord(10, 10))
     p.new_waypoint(Coord(0, 10))
     current_point = p.step(character.event_handler)
-    while current_point != Coord(0, 10):
+    while current_point != g3.Vec3(0, 10, 0):
         current_point = p.step(character.event_handler)
 
 
@@ -339,7 +340,7 @@ def test_path_step_multiple_segments_eased(character: EffectCharacter) -> None:
     p.new_waypoint(Coord(10, 10))
     p.new_waypoint(Coord(0, 10))
     current_point = p.step(character.event_handler)
-    while current_point != Coord(0, 10):
+    while current_point != g3.Vec3(0, 10, 0):
         current_point = p.step(character.event_handler)
 
 
@@ -351,7 +352,7 @@ def test_path_step_multiple_segments_zero_distance(character: EffectCharacter) -
     p.new_waypoint(Coord(0, 0))
     p.new_waypoint(Coord(0, 0))
     current_point = p.step(character.event_handler)
-    while current_point != Coord(0, 0):
+    while current_point != g3.Vec3(0, 0, 0):
         current_point = p.step(character.event_handler)
 
 
@@ -363,7 +364,7 @@ def test_path_step_multiple_segments_mutiple_bezier(character: EffectCharacter) 
     p.new_waypoint(Coord(10, 10), bezier_control=Coord(0, 10))
     p.new_waypoint(Coord(0, 10), bezier_control=Coord(0, 0))
     current_point = p.step(character.event_handler)
-    while current_point != Coord(0, 10):
+    while current_point != g3.Vec3(0, 10, 0):
         current_point = p.step(character.event_handler)
 
 

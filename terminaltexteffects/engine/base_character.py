@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from types import MappingProxyType
 
-from terminaltexteffects.engine import animation, motion, space3d
+from terminaltexteffects.engine import animation, motion, space3d, world
 from terminaltexteffects.utils.exceptions import (
     DuplicateEventRegistrationError,
     EventRegistrationCallerError,
@@ -22,9 +22,14 @@ from terminaltexteffects.utils.exceptions import (
 )
 from terminaltexteffects.utils.geometry import Coord
 
+if typing.TYPE_CHECKING:
+    from terminaltexteffects.utils import geometry3d as g3
+
 
 class _CharacterOwner(typing.Protocol):
     """Terminal capability used to lazily prepare character neighbors."""
+
+    world: world.World
 
     def prepare_character_graph(self) -> None:
         """Materialize fill characters and neighbor relationships."""
@@ -472,7 +477,7 @@ _ACTION_TARGET_TYPES: typing.Mapping[
 )
 
 
-class EffectCharacter:
+class EffectCharacter(world.SpatialNode):
     """A class representing a single character from the input data.
 
     EffectCharacters are created and managed by the Terminal and are used to apply
@@ -489,6 +494,11 @@ class EffectCharacter:
         is_visible (bool): Whether the character is currently visible and should be printed to the terminal.
         animation (animation.Animation): The animation object that controls the character's appearance.
         motion (motion.Motion): The motion object that controls the character's movement.
+        parent (world.Body): The body the character's position is measured against: the terminal's text plane
+            until it's moved elsewhere.
+        position (g3.Vec3): The character's position in its parent's frame, `(column, row, height)` on the text
+            plane. The same as `motion.position`.
+        world_position (g3.Vec3): The character's position in the world.
         event_handler (EventHandler): The event handler object that handles events related to the character.
         layer (int): The layer of the character. Lower layers are painted first. When characters on the same layer
             collide, the character with the higher `character_id` is painted last and wins the collision. Within a
@@ -529,6 +539,16 @@ class EffectCharacter:
         self.uses_input_preexisting_colors = False
         self.links: set[EffectCharacter] = set()
         self._neighbors: dict[str, EffectCharacter | None] | None = None
+
+    def _default_parent(self) -> world.Body:
+        """Join the owning terminal's text plane, or the shared free plane for a character no terminal owns."""
+        owner = self._terminal_owner_token() if self._terminal_owner_token is not None else None
+        return owner.world.text_plane if owner is not None else world.free_text_plane()
+
+    @property
+    def position(self) -> g3.Vec3:
+        """The character's position in its parent's frame: `(column, row, height)` on the text plane."""
+        return self.motion.position
 
     @property
     def neighbors(self) -> dict[str, EffectCharacter | None]:
