@@ -582,7 +582,8 @@ class Motion:
         self._cell = cell
         height = self._xyz[2]
         self._xyz = (cell.column, cell.row, height)
-        if height:
+        character = self.character
+        if height or not (character._parent or character.parent)._flat:
             self._resolve()
 
     def _row(self) -> float:

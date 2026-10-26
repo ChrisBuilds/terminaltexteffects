@@ -539,6 +539,7 @@ class World:
                 not camera._moved
                 and camera.focal in (None, camera.distance)
                 and camera.row_scale == TERMINAL_ROW_SCALE
+                and plane._parent is self.root
                 and plane._position == g3.ORIGIN
                 and plane._rotation == g3.Rotation()
                 and plane._scale == 1.0

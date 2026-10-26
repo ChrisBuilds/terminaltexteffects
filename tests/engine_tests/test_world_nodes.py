@@ -284,3 +284,29 @@ def test_update_steps_bodies_and_reprojects() -> None:
     for _ in range(3):
         iterator.update()
     assert character.motion.current_coord == Coord(start.column + 3, start.row)
+
+
+def test_text_plane_on_a_moving_body_is_projected(terminal: Terminal, world: World) -> None:
+    """A text plane attached to another body moves with it: the cell-for-cell shortcut is off while it's there."""
+    character = terminal.get_characters()[0]
+    cell = character.motion.current_coord
+    pivot = world.body()
+    world.text_plane.attach(pivot)
+    pivot.position = g3.Vec3(5, 0, 0)
+    assert world.step()
+    assert not world.flat
+    terminal._project_all_characters()
+    assert character.motion.current_coord == Coord(cell.column + 5, cell.row)
+
+
+def test_set_coordinate_on_a_moved_body_projects(terminal: Terminal, world: World) -> None:
+    """Setting a cell on a body that isn't at the text plane's place reports the cell it lands in on screen."""
+    character = terminal.get_characters()[0]
+    pivot = world.body(at=(10, 0, 0))
+    character.attach(pivot, at=g3.Vec3(0, 0, 0))
+    character.motion.set_coordinate(Coord(2, 0))
+    assert character.position == g3.Vec3(2, 0, 0)
+    projected = world.camera.project(character.world_position)
+    assert projected is not None
+    assert character.motion.current_coord == projected.coord
+    assert character.motion.current_coord != Coord(2, 0)
