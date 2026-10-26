@@ -796,7 +796,9 @@ class Body(SpatialNode, TweenQueue):
 
     # Drawing
 
-    def draw(self, look: Look | None = None, *, faces: typing.Mapping[str, Look] | typing.Mapping[int, Look] | None = None) -> Body:
+    def draw(
+        self, look: Look | None = None, *, faces: typing.Mapping[str, Look] | typing.Mapping[int, Look] | None = None
+    ) -> Body:
         """Draw the body with a look, from this frame on, replacing any earlier look.
 
         The world draws the body with characters it creates, one per covered cell, so none of the effect's own
