@@ -282,7 +282,8 @@ class Body(SpatialNode, TweenQueue):
     Attributes:
         world (World): The world the body belongs to.
         shape (Shape | None): The body's shape, or `None` for a pivot.
-        surface (Surface | None): The grid of cells over the shape, or `None` for a pivot or a shape without one.
+        surface (Surface): The grid of cells over the shape. Raises `ValueError` for a pivot or a shape without one.
+        has_surface (bool): Whether the body has a surface.
         position (g3.Vec3): Position in the parent's frame, in units.
         rotation (g3.Rotation): Orientation relative to the parent.
         scale (float): Uniform scale relative to the parent.
@@ -339,9 +340,11 @@ class Body(SpatialNode, TweenQueue):
             surface = shape.build_surface()
         if surface is not None:
             surface._body = self
-        self.surface = surface
-        # True only for the text plane while it and the camera are as the world made them (see `World.step`).
+        self._surface = surface
+        # True only for the text plane while it and the camera are as the world made them (see `World.step`), and
+        # always for the screen.
         self._flat = False
+        self._screen = False
         # The world transform, recomputed when this body or an ancestor changes; `version` changes with it.
         self.version = 0
         self._matrix: g3.Matrix3 = _IDENTITY
@@ -354,6 +357,24 @@ class Body(SpatialNode, TweenQueue):
 
     def _default_parent(self) -> Body:  # pragma: no cover
         return self.world.root
+
+    @property
+    def surface(self) -> Surface:
+        """The grid of cells over the body's shape.
+
+        Raises:
+            ValueError: If the body has no surface: it is a pivot, or its shape has none. Check `has_surface`.
+
+        """
+        if self._surface is None:
+            msg = "This body has no surface: it has no shape, or its shape has no surface."
+            raise ValueError(msg)
+        return self._surface
+
+    @property
+    def has_surface(self) -> bool:
+        """Whether the body has a surface characters can sit on."""
+        return self._surface is not None
 
     @property
     def motion(self) -> BodyMotion:  # type: ignore[override]
@@ -676,6 +697,9 @@ class Body(SpatialNode, TweenQueue):
         if self is self.world.root:
             msg = "The world root never moves, turns or scales."
             raise ValueError(msg)
+        if self._screen:
+            msg = "The screen never moves, turns or scales."
+            raise ValueError(msg)
 
     def _changed(self) -> None:
         self._dirty = True
@@ -717,8 +741,8 @@ class Body(SpatialNode, TweenQueue):
         """
         self._refresh()
         position = g3._vec3(position)
-        if surface and self.surface is not None:
-            position = self.surface._local(position)
+        if surface and self._surface is not None:
+            position = self._surface._local(position)
         return self._local_to_world(position)
 
     def from_world(self, point: g3.Point3, *, surface: bool = True) -> g3.Vec3:
@@ -738,7 +762,7 @@ class Body(SpatialNode, TweenQueue):
         # The matrix is a rotation times a uniform scale, so its inverse is its transpose over the scale squared.
         s2 = self.world_scale**2
         local = g3.Vec3((a * x + d * y + g * z) / s2, (b * x + e * y + h * z) / s2, (c * x + f * y + i * z) / s2)
-        return self.surface._locate(local) if surface and self.surface is not None else local
+        return self._surface._locate(local) if surface and self._surface is not None else local
 
     @property
     def world_rotation(self) -> g3.Rotation:
@@ -772,7 +796,7 @@ class Body(SpatialNode, TweenQueue):
 
     # Drawing
 
-    def draw(self, look: Look | None = None, *, faces: typing.Mapping[FaceName, Look] | None = None) -> Body:
+    def draw(self, look: Look | None = None, *, faces: typing.Mapping[str, Look] | typing.Mapping[int, Look] | None = None) -> Body:
         """Draw the body with a look, from this frame on, replacing any earlier look.
 
         The world draws the body with characters it creates, one per covered cell, so none of the effect's own
@@ -796,7 +820,7 @@ class Body(SpatialNode, TweenQueue):
         if self.shape is None:
             msg = "Only a body with a shape can be drawn."
             raise ValueError(msg)
-        face_looks = dict(faces or {})
+        face_looks: dict[FaceName, Look] = dict(faces.items()) if faces else {}
         if isinstance(look, Wireframe) and face_looks:
             msg = "A Wireframe look draws the whole body, so it can't be combined with per-face looks."
             raise ValueError(msg)
@@ -863,6 +887,9 @@ class World:
         root (Body): A shapeless body at the world origin that never moves. Free nodes are its children.
         text_plane (Body): The flat body the input characters start on. Its surface positions are canvas
             coordinates.
+        screen (Body): A flat body fixed to the canvas, for labels and overlays: characters attached to it sit on
+            their canvas cells whatever the camera does. It never moves, and heights on it are ignored.
+        bodies (tuple[Body, ...]): The bodies made with `body()` and not removed.
         camera (Camera): Projects world points onto canvas cells, with controls that move it now or over frames.
         light (g3.Vec3): Unit vector from the scene toward the light, in `light_space`.
         light_space (str): `"world"` keeps the light fixed as the camera moves; `"camera"` turns it with the camera.
@@ -893,6 +920,19 @@ class World:
                 center_row=self.camera.center_row,
             ),
         )
+        self.screen = Body(
+            self,
+            self.root,
+            surface=PlaneSurface(
+                canvas.left,
+                canvas.right,
+                canvas.bottom,
+                canvas.top,
+                center_column=self.camera.center_column,
+                center_row=self.camera.center_row,
+            ),
+        )
+        self.screen._flat = self.screen._screen = True
         self.light = LIGHTS["upper left"].normalized()
         self.light_space = "world"
         self._frame = 0
@@ -918,6 +958,11 @@ class World:
             camera.center_row,
             camera.row_scale,
         )
+
+    @property
+    def bodies(self) -> tuple[Body, ...]:
+        """The bodies made with `body()` and not removed, oldest first, without the root, text plane and screen."""
+        return tuple(body for body in self._bodies if body is not self.text_plane and body is not self.screen)
 
     @property
     def animating(self) -> bool:
@@ -965,9 +1010,9 @@ class World:
                 and plane._position == g3.ORIGIN
                 and plane._rotation == g3.Rotation()
                 and plane._scale == 1.0
-                and isinstance(plane.surface, PlaneSurface)
-                and plane.surface.center_column == camera.center_column
-                and plane.surface.center_row == camera.center_row
+                and isinstance(plane._surface, PlaneSurface)
+                and plane._surface.center_column == camera.center_column
+                and plane._surface.center_row == camera.center_row
             )
         return changed
 
@@ -1042,11 +1087,11 @@ class World:
             body (Body): The body to remove.
 
         Raises:
-            ValueError: For the root or the text plane, which every world keeps, or a body from another world.
+            ValueError: For the root, text plane or screen, which every world keeps, or a body from another world.
 
         """
-        if body is self.root or body is self.text_plane:
-            msg = "The world root and the text plane can't be removed."
+        if body is self.root or body is self.text_plane or body is self.screen:
+            msg = "The world root, the text plane and the screen can't be removed."
             raise ValueError(msg)
         if body.world is not self:
             msg = "That body belongs to another world."
@@ -1075,7 +1120,7 @@ def _free_world() -> World:
     world = World(Canvas(top=1, right=1))
     surface = PlaneSurface(1, 1, 1, 1, center_column=0.0, center_row=0.0)
     surface._body = world.text_plane
-    world.text_plane.surface = surface
+    world.text_plane._surface = surface
     world.camera.center_column = world.camera.center_row = 0.0
     world.step()
     return world

@@ -680,12 +680,12 @@ class Motion:
     def _row(self) -> float:
         """Return how many units a row is in the frame this motion moves in: 2 on a surface, otherwise 1."""
         node = self.character
-        return _ROW if node._ON_SURFACE and node.parent.surface is not None else 1.0
+        return _ROW if node._ON_SURFACE and node.parent._surface is not None else 1.0
 
     def _surface(self) -> Surface | None:
         """Return the surface this motion moves over, if the mover sits on one."""
         node = self.character
-        return node.parent.surface if node._ON_SURFACE else None
+        return node.parent._surface if node._ON_SURFACE else None
 
     def _from_world(self, point: g3.Vec3) -> XYZ:
         """Return a world point in the frame this motion moves in."""
@@ -698,8 +698,9 @@ class Motion:
         position = self._xyz
         character = self.character
         parent = character._parent or character.parent
-        if parent._flat and not position[2]:
-            # On an untouched text plane under the default camera, a cell is the rounded column and row.
+        if parent._flat and (not position[2] or parent._screen):
+            # On an untouched text plane under the default camera, or on the screen, a cell is the rounded column
+            # and row.
             column, row = round(position[0]), round(position[1])
             cell = self._cell
             if cell.column != column or cell.row != row:
@@ -711,7 +712,7 @@ class Motion:
                 if self._view_hidden:
                     self._show(hidden=False)
             return
-        surface = parent.surface
+        surface = parent._surface
         if surface is not None and surface.closed:
             # Positions on a closed surface are kept normalized: the column within the grid, the row pole to pole.
             position = self._xyz = surface._normalize(position)
@@ -726,7 +727,8 @@ class Motion:
             self._show(hidden=hide)
         if projected is None:
             return  # behind the near plane: stay on the last cell
-        column, row = round(projected.column), round(projected.row)
+        # Halves round up, as drawn bodies do, so neighboring points land on neighboring cells.
+        column, row = math.floor(projected.column + 0.5), math.floor(projected.row + 0.5)
         cell = self._cell
         if cell.column != column or cell.row != row:
             cell = self._cell = Coord(column, row)

@@ -57,6 +57,28 @@ class Camera(g3.Camera, TweenQueue):
         )
         self._init_queue()
 
+    def set_perspective(self, strength: float = 1.0) -> Camera:
+        """Set how strongly depth shrinks things, now: 1 is natural, larger exaggerates depth, 0 is orthographic.
+
+        The eye's reference distance becomes `120 / strength` (120 when orthographic) and focal length follows it, so
+        the z = 0 plane keeps its size at any strength. An explicitly positioned eye stays where it is. `reset`
+        keeps the perspective set here.
+
+        Args:
+            strength (float): Perspective strength; 0 or more, and less than 120 divided by `near`.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        Raises:
+            ValueError: If `strength` is negative or puts the eye at or inside the near plane.
+
+        """
+        super().set_perspective(strength)
+        center_column, center_row, _, _, _, near, row_scale = self._home
+        self._home = (center_column, center_row, self.distance, self.focal, self.orthographic, near, row_scale)
+        return self
+
     def set_position(self, x: float | g3.Point3 = 0, y: float | None = None, z: float | None = None) -> Camera:
         """Set the eye's world position, now, without changing distance or focal length.
 
@@ -575,6 +597,8 @@ class Camera(g3.Camera, TweenQueue):
 
     def reset(self) -> Camera:
         """Cancel animations and restore the settings and pose the world created the camera with.
+
+        The perspective stays as `set_perspective` last set it.
 
         Returns:
             Camera: This camera, for chaining.

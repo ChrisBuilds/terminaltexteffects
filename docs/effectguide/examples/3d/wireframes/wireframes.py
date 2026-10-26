@@ -10,7 +10,8 @@ from dataclasses import dataclass
 from terminaltexteffects import Color, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Cube, Icosahedron, Octahedron, Space3D, Tetrahedron, Wireframe
+from terminaltexteffects.engine.drawing import Wireframe
+from terminaltexteffects.engine.shapes import Cube, Icosahedron, Octahedron, Tetrahedron
 from terminaltexteffects.utils import argutils
 
 
@@ -37,29 +38,26 @@ class WireframesIterator(BaseEffectIterator[WireframesConfig]):
     def __init__(self, effect: Wireframes) -> None:
         """Line up four solids and tumble each one differently."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
+        self.world = self.terminal.world
         solids = (Tetrahedron(11), Cube(14), Octahedron(10), Icosahedron(10))
         colors = ("#ff5fd7", "#00D1FF", "#5fff87", "#ffd75f")
         for index, (shape, color) in enumerate(zip(solids, colors)):
             look = Wireframe(color=Color(color), hidden_color=Color("#55556a"))
-            body = self.space.body(shape, at=(-30 + 20 * index, 0, 0)).draw(look)
+            body = self.world.body(shape, at=(-30 + 20 * index, 0, 0)).draw(look)
             body.spin("y", turns=1 + index % 2, frames=420, ease=easing.in_out_sine)
             body.spin("x", turns=1 - index % 2 * 0.5, frames=420, ease=easing.in_out_sine, together=True)
         self.text_shown = False
 
     def __next__(self) -> str:
         """Tumble the solids, then swap them for the text."""
-        if self.space.animating:
-            self.space.step()
-        elif not self.text_shown:
-            for body in self.space.bodies:
-                body.erase()
-            self.space.step()  # Hides the surface characters once nothing is drawn.
+        if not self.world.animating:
+            if self.text_shown:
+                raise StopIteration
+            for body in self.world.bodies:
+                body.erase()  # The world hides its cells when it next paints.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True
-        else:
-            raise StopIteration
         self.update()
         return self.frame
 

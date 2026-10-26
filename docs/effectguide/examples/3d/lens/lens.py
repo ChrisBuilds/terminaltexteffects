@@ -10,7 +10,8 @@ from dataclasses import dataclass
 from terminaltexteffects import easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Cube, Shaded, Space3D
+from terminaltexteffects.engine.drawing import Shaded
+from terminaltexteffects.engine.shapes import Cube
 from terminaltexteffects.utils import argutils
 
 
@@ -45,27 +46,25 @@ class LensIterator(BaseEffectIterator[LensConfig]):
     def __init__(self, effect: Lens) -> None:
         """Place three cubes from near and left to far and right, and spin them."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal, perspective=self.config.perspective)
+        self.world = self.terminal.world
+        self.world.camera.set_perspective(self.config.perspective)
         # Each cube is 26 columns right of and 60 columns farther away than the one before it.
         for x, z in ((-26, 0), (0, -60), (26, -120)):
-            cube = self.space.body(Cube(14), at=(x, 0, z)).draw(Shaded())
+            cube = self.world.body(Cube(14), at=(x, 0, z)).draw(Shaded())
             cube.rotate("x", 20)
             cube.spin("y", turns=1, frames=240, ease=easing.in_out_sine)
         self.text_shown = False
 
     def __next__(self) -> str:
         """Spin the cubes, then swap them for the text."""
-        if self.space.animating:
-            self.space.step()
-        elif not self.text_shown:
-            for body in self.space.bodies:
-                body.erase()
-            self.space.step()  # Hides the surface characters once nothing is drawn.
+        if not self.world.animating:
+            if self.text_shown:
+                raise StopIteration
+            for body in self.world.bodies:
+                body.erase()  # The world hides its cells when it next paints.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True
-        else:
-            raise StopIteration
         self.update()
         return self.frame
 

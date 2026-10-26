@@ -364,7 +364,7 @@ class Painter:
         """
         decals: dict[Coord, float] = {}
         for body in {cell[4] for cell in cells.values()}:
-            surface = body.surface
+            surface = body._surface
             if surface is None:
                 continue
             for node in body._children:

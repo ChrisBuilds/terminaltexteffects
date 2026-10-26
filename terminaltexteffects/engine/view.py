@@ -31,8 +31,8 @@ class View:
     """How a character is seen from the camera, read through `character.view`.
 
     Readings follow the character's surface: the outward normal of its parent's surface where it sits. A character
-    on a body without a surface, or free in the world, has no normal, so it counts as facing the camera and fully
-    lit.
+    on a body without a surface, free in the world or on `world.screen` has no normal, so it counts as facing the
+    camera and fully lit.
 
     Attributes:
         cell (Coord): The cell the character projects onto.
@@ -131,6 +131,14 @@ class View:
             return
         self._key = key
         camera = world.camera
+        if parent._screen:
+            # On the screen: on its cell, at the text plane's depth, facing the camera in full light.
+            self._projected = True
+            self._cell = motion.current_coord
+            self._depth = camera.distance
+            self._nearness = self._facing_amount = self._light = 1.0
+            self._face = None
+            return
         position = motion.position
         point = parent.to_world(position)
         projected = camera.project(point)
@@ -145,7 +153,7 @@ class View:
             self._nearness = min(max((center + reach - projected.depth) / (2 * reach), 0.0), 1.0)
         else:
             self._nearness = 1.0
-        surface = parent.surface
+        surface = parent._surface
         if surface is None:
             self._facing_amount = 1.0
             self._light = 1.0

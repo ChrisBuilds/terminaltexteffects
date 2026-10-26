@@ -10,7 +10,9 @@ from dataclasses import dataclass
 from terminaltexteffects import Color, ColorPair, EffectCharacter, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Cube, Shaded, Space3D, rotation_about
+from terminaltexteffects.engine.drawing import Shaded
+from terminaltexteffects.engine.shapes import Cube
+from terminaltexteffects.engine.tweens import rotation_about
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.geometry import Coord
 
@@ -46,25 +48,25 @@ class TurnsIterator(BaseEffectIterator[TurnsConfig]):
     def __init__(self, effect: Turns) -> None:
         """Queue the turns for the chosen mode."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
+        self.world = self.terminal.world
         self.labels: list[EffectCharacter] = []
         if self.config.mode == "axes":
             for axis, x in (("x", -26), ("y", 0), ("z", 26)):
-                cube = self.space.body(Cube(14), at=(x, 0, 0)).draw(Shaded())
+                cube = self.world.body(Cube(14), at=(x, 0, 0)).draw(Shaded())
                 cube.hold(30).spin(axis, turns=1, frames=240, ease=easing.in_out_sine).hold(30)
                 self.label(f"about {axis}", x)
         elif self.config.mode == "tumble":
-            cube = self.space.body(Cube(20)).draw(Shaded())
+            cube = self.world.body(Cube(20)).draw(Shaded())
             # Spins queued with together=True run at the same time, and their turns add up into a tumble.
             cube.spin("y", turns=2, frames=360, ease=easing.in_out_sine)
             cube.spin("x", turns=1, frames=360, ease=easing.in_out_sine, together=True)
         else:
             pose = rotation_about("diagonal", 140) * rotation_about("y", 60)
             for x in (-20, 20):
-                cube = self.space.body(Cube(16), at=(x, 0, 0)).draw(Shaded())
-                cube.set_rotation(pose)
+                cube = self.world.body(Cube(16), at=(x, 0, 0)).draw(Shaded())
+                cube.rotation = pose
                 cube.hold(45)
-            left, right = self.space.bodies
+            left, right = self.world.bodies
             left.turn_to_rest(frames=150, ease=easing.in_out_cubic).hold(45)
             right.settle("y", turns=1, frames=150, ease=easing.in_out_cubic).hold(45)
             self.label("turn_to_rest", -20)
@@ -72,7 +74,7 @@ class TurnsIterator(BaseEffectIterator[TurnsConfig]):
         self.text_shown = False
 
     def label(self, text: str, x: int) -> None:
-        """Write `text` on the bottom row, under the body at `x`. Labels are plain characters, not part of the space."""
+        """Write `text` on the bottom row, under the body at `x`. Labels are plain characters on the text plane."""
         start = self.terminal.canvas.center.column + x - len(text) // 2
         for offset, symbol in enumerate(text):
             character = self.terminal.add_character(symbol, Coord(start + offset, self.terminal.canvas.bottom))
@@ -82,19 +84,16 @@ class TurnsIterator(BaseEffectIterator[TurnsConfig]):
 
     def __next__(self) -> str:
         """Play the turns, then swap the cubes for the text."""
-        if self.space.animating:
-            self.space.step()
-        elif not self.text_shown:
-            for body in self.space.bodies:
-                body.erase()
+        if not self.world.animating:
+            if self.text_shown:
+                raise StopIteration
+            for body in self.world.bodies:
+                body.erase()  # The world hides its cells when it next paints.
             for character in self.labels:
                 self.terminal.set_character_visibility(character, is_visible=False)
-            self.space.step()  # Hides the surface characters once nothing is drawn.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True
-        else:
-            raise StopIteration
         self.update()
         return self.frame
 

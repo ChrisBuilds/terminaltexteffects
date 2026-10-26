@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from terminaltexteffects import Color, ColorPair, Gradient
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Cube, Solid, Space3D
+from terminaltexteffects.engine.drawing import Solid
+from terminaltexteffects.engine.shapes import Cube
 from terminaltexteffects.utils import argutils, easing
 from terminaltexteffects.utils.geometry import Coord
 
@@ -35,49 +36,49 @@ class CameraOrbitIterator(BaseEffectIterator[CameraOrbitConfig]):
     def __init__(self, effect: CameraOrbit) -> None:
         """Place text on the cube's front face and queue a complete orbit."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
-        # A quiet surface lets the mounted letters carry the detail.
-        self.cube = self.space.body(Cube(48)).draw(Solid(gradient=Gradient(Color("132432"), Color("247b91"), steps=12)))
+        self.world = self.terminal.world
+        # A quiet surface lets the letters on it carry the detail.
+        self.cube = self.world.body(Cube(48)).draw(Solid(gradient=Gradient(Color("132432"), Color("247b91"), steps=12)))
         for x, z in ((-30, -15), (30, -15), (0, 32)):
-            self.space.body(Cube(4), at=(x, -23, z)).draw(
+            self.world.body(Cube(4), at=(x, -23, z)).draw(
                 Solid(gradient=Gradient(Color("493522"), Color("e4ac59"), steps=8))
             )
         self.labels = []
         title = "CAMERA ORBIT: cube and gold landmarks stay still"
         start = self.terminal.canvas.center.column - len(title) // 2
         for offset, symbol in enumerate(title):
-            label = self.terminal.add_character(symbol, Coord(start + offset, self.terminal.canvas.top))
+            coord = Coord(start + offset, self.terminal.canvas.top)
+            label = self.terminal.add_character(symbol, coord)
+            # On the screen, the title stays on its cells while the camera moves. A high layer keeps it in front.
+            label.attach(self.world.screen, at=coord)
             label.layer = 10_000
             label.animation.set_appearance(symbol, ColorPair(fg=Color("d9e5ef")))
             self.terminal.set_character_visibility(label, is_visible=True)
             self.labels.append(label)
         characters = self.terminal.get_characters()
-        anchors = [self.cube.anchor(a.point.x, a.point.y, 24, normal="z") for a in self.cube.text_plane(characters)]
-        self.cube.add_chars(characters, anchors, blend_frames=0, hide_when_facing_away=True)
+        self.cube.surface.face("front").layout_text(characters)
+        self.cube.hide_facing_away = True
         for character in characters:
             self.terminal.set_character_visibility(character, is_visible=True)
             self.active_characters.add(character)
-        self.space.camera.set_position(0, 20, 170).look_at(self.cube).zoom(1.25)
-        self.space.camera.orbit("y", turns=1, around=self.cube, frames=360, ease=easing.in_out_sine)
+        self.world.camera.set_position(0, 20, 170).look_at(self.cube).zoom(1.25)
+        self.world.camera.orbit("y", turns=1, around=self.cube, frames=360, ease=easing.in_out_sine)
         self.finished = False
 
     def __next__(self) -> str:
-        """Orbit once, then release the text back to its input cells."""
-        if self.space.animating:
-            self.space.step()
-        elif not self.finished:
-            self.cube.release_all()
-            for body in self.space.bodies:
-                body.erase()
+        """Orbit once, then put the text back on its input cells."""
+        if not self.world.animating:
+            if self.finished:
+                raise StopIteration
+            for body in self.world.bodies:
+                body.erase()  # The world hides its cells when it next paints.
             for label in self.labels:
                 self.terminal.set_character_visibility(label, is_visible=False)
-            self.space.step()
+            self.world.camera.reset()
             for character in self.terminal.get_characters():
-                character.motion.set_coordinate(character.input_coord)
+                character.attach(self.world.text_plane, at=character.input_coord)
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.finished = True
-        else:
-            raise StopIteration
         self.update()
         return self.frame
 
