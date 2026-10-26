@@ -21,6 +21,12 @@ Classes:
     SpatialNode: The common base of characters and bodies: a parent, children and a position.
     Body: A node with rotation and scale, which other nodes are measured against.
     World: The root, the text plane, the camera and the light for one terminal.
+
+Moving nodes between parents:
+
+    character.attach(pivot)        # keeps its place in the world; its position is now in the pivot's frame
+    character.attach(pivot, at=g3.Vec3(5, 0, 0))   # placed at that position in the pivot's frame
+    character.detach()             # free in the world: the same as attach(world.root)
 """
 
 from __future__ import annotations
@@ -33,7 +39,10 @@ from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE
 if typing.TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from terminaltexteffects.engine.base_character import EventHandler
     from terminaltexteffects.engine.canvas import Canvas
+    from terminaltexteffects.engine.motion import BodyMotion, Motion
+    from terminaltexteffects.utils.geometry import Coord
 
 __all__ = ["Body", "SpatialNode", "World"]
 
@@ -78,10 +87,18 @@ class SpatialNode:
         children (tuple[SpatialNode, ...]): Nodes whose parent is this node (always empty for characters).
         position (g3.Vec3): Position in the parent's frame.
         world_position (g3.Vec3): Position in the world frame, the root's frame.
+        motion (Motion): Moves the node's position along paths in its parent's frame.
+        event_handler (EventHandler): Handles the node's path and attach events.
 
     """
 
     _parent: Body | None = None
+    _ON_SURFACE = False
+    """Whether the node's position is a surface position `(column, row, height)` when its parent has a surface.
+    Characters' positions are; bodies always use their parent's local frame."""
+
+    motion: Motion
+    event_handler: EventHandler
 
     @property
     def parent(self) -> Body:
@@ -89,7 +106,7 @@ class SpatialNode:
         parent = self._parent
         if parent is None:
             parent = self._parent = self._default_parent()
-            parent._children.append(self)
+            parent._children[self] = None
         return parent
 
     def _default_parent(self) -> Body:
@@ -115,7 +132,70 @@ class SpatialNode:
     @property
     def world_position(self) -> g3.Vec3:
         """Position in the world frame."""
-        return self.parent.to_world(self.position)
+        return self.parent.to_world(self.position, surface=self._ON_SURFACE)
+
+    def attach(self, parent: Body, *, at: g3.Point3 | Coord | None = None) -> None:
+        """Become a child of `parent`, so the node moves, turns and scales with it.
+
+        Without `at`, the node stays where it is in the world: its position becomes that same place in the new
+        parent's frame, so it doesn't jump on screen. With `at`, it is placed at that position in the new parent's
+        frame. Either way the active path is cancelled, because its waypoints were in the old frame.
+
+        Attaching triggers `DETACHED` (the caller is the old parent) unless the old parent was the world root,
+        then `ATTACHED` (the caller is the new parent) unless the new parent is the root.
+
+        Args:
+            parent (Body): The new parent: a body in the same world, or `world.root`.
+            at (g3.Point3 | Coord | None): Where to place the node in the new parent's frame. `None` keeps its
+                place in the world.
+
+        Raises:
+            ValueError: If `parent` belongs to another world or has been removed, or a body would become its own
+                ancestor.
+
+        """
+        old = self.parent
+        world = old.world
+        if parent.world is not world:
+            msg = "A node can only be attached to a body in its own world."
+            raise ValueError(msg)
+        if parent._removed:
+            msg = "That body has been removed from its world."
+            raise ValueError(msg)
+        self._check_new_parent(parent)
+        if at is None:
+            position = parent.from_world(self.world_position, surface=self._ON_SURFACE)
+        else:
+            from terminaltexteffects.engine.motion import _as_xyz  # noqa: PLC0415 (motion imports this module)
+
+            position = g3.Vec3(*_as_xyz(at))
+        self.motion.deactivate_path()
+        if parent is not old:
+            del old._children[self]
+            parent._children[self] = None
+            self._parent = parent
+        self._place(position)
+        handler = self._handler()
+        if handler is not None:
+            if parent is not old and old is not world.root:
+                handler._handle_event(handler.Event.DETACHED, old)
+            if parent is not world.root:
+                handler._handle_event(handler.Event.ATTACHED, parent)
+
+    def detach(self) -> None:
+        """Leave the current parent and stay where the node is, free in the world. The same as `attach(world.root)`."""
+        self.attach(self.parent.world.root)
+
+    def _check_new_parent(self, parent: Body) -> None:
+        """Raise if `parent` can't be this node's parent."""
+
+    def _place(self, position: g3.Vec3) -> None:
+        """Set the position in the (new) parent's frame, now."""
+        raise NotImplementedError  # pragma: no cover
+
+    def _handler(self) -> EventHandler | None:
+        """Return the node's event handler, if it has one yet."""
+        return self.event_handler
 
 
 class _PlaneSurface:
@@ -152,11 +232,18 @@ class Body(SpatialNode):
     when it has a surface, otherwise `(x, y, z)` in its axes. Moving, turning or scaling a body carries its children
     with it.
 
+    A body moves like a character: `body.motion` takes paths of `Vec3` waypoints in its parent's local frame, and
+    `body.event_handler` registers path and attach events with the node actions (`ACTIVATE_PATH`,
+    `DEACTIVATE_PATH`, `SET_COORDINATE`, `ATTACH`, `DETACH`, `CALLBACK`). The world steps bodies' paths at the
+    start of every frame.
+
     Attributes:
         world (World): The world the body belongs to.
         position (g3.Vec3): Position in the parent's frame, in units.
         rotation (g3.Rotation): Orientation relative to the parent.
         scale (float): Uniform scale relative to the parent.
+        motion (BodyMotion): Moves the body along paths in its parent's local frame.
+        event_handler (EventHandler): Handles the body's path and attach events.
 
     """
 
@@ -179,8 +266,12 @@ class Body(SpatialNode):
         """
         self.world = world
         self._parent = parent
-        self._children: list[SpatialNode] = []
+        # A dict keeps insertion order and removes a child in constant time, with thousands of characters.
+        self._children: dict[SpatialNode, None] = {}
         self._position = g3._vec3(at)
+        self._motion: BodyMotion | None = None
+        self._event_handler: EventHandler | None = None
+        self._removed = False
         self._rotation = g3.Rotation()
         self._scale = 1.0
         self.surface = surface
@@ -193,10 +284,47 @@ class Body(SpatialNode):
         self._parent_version = -1
         self._dirty = True
         if parent is not None:
-            parent._children.append(self)
+            parent._children[self] = None
+            world._bodies.append(self)
 
     def _default_parent(self) -> Body:  # pragma: no cover
         return self.world.root
+
+    @property
+    def motion(self) -> BodyMotion:  # type: ignore[override]
+        """Moves the body along paths of `Vec3` waypoints in its parent's local frame."""
+        if self._motion is None:
+            from terminaltexteffects.engine.motion import BodyMotion  # noqa: PLC0415 (motion imports this module)
+
+            self._motion = BodyMotion(self)
+        return self._motion
+
+    @property
+    def event_handler(self) -> EventHandler:  # type: ignore[override]
+        """Handles the body's path and attach events."""
+        if self._event_handler is None:
+            from terminaltexteffects.engine.base_character import EventHandler  # noqa: PLC0415 (import cycle)
+
+            self._event_handler = EventHandler(self)
+        return self._event_handler
+
+    def _handler(self) -> EventHandler | None:
+        return self._event_handler
+
+    def _check_new_parent(self, parent: Body) -> None:
+        self._check_movable()
+        node: Body | None = parent
+        while node is not None:
+            if node is self:
+                msg = "A body can't be attached to itself or to a body attached below it."
+                raise ValueError(msg)
+            node = node._parent
+
+    def _place(self, position: g3.Vec3) -> None:
+        if self._motion is not None:
+            self._motion._xyz = (position.x, position.y, position.z)
+        self._position = position
+        self._changed()
 
     @property
     def children(self) -> tuple[SpatialNode, ...]:
@@ -211,8 +339,7 @@ class Body(SpatialNode):
     @position.setter
     def position(self, value: g3.Point3) -> None:
         self._check_movable()
-        self._position = g3._vec3(value)
-        self._changed()
+        self._place(g3._vec3(value))
 
     @property
     def rotation(self) -> g3.Rotation:
@@ -276,14 +403,31 @@ class Body(SpatialNode):
         o = self._offset
         return g3.Vec3(a * x + b * y + c * z + o.x, d * x + e * y + f * z + o.y, g * x + h * y + i * z + o.z)
 
-    def to_world(self, position: g3.Point3) -> g3.Vec3:
-        """Return a child's position, in this body's frame, as a world point."""
+    def to_world(self, position: g3.Point3, *, surface: bool = True) -> g3.Vec3:
+        """Return a child's position, in this body's frame, as a world point.
+
+        Args:
+            position (g3.Point3): The position: `(column, row, height)` on the body's surface if it has one and
+                `surface` is true, otherwise `(x, y, z)` in the body's axes.
+            surface (bool): Read the position as a surface position when the body has a surface. Bodies' positions
+                are always in their parent's axes.
+
+        """
         self._refresh()
         position = g3._vec3(position)
-        return self._local_to_world(self.surface.point(position) if self.surface is not None else position)
+        if surface and self.surface is not None:
+            position = self.surface.point(position)
+        return self._local_to_world(position)
 
-    def from_world(self, point: g3.Point3) -> g3.Vec3:
-        """Return a world point as a position in this body's frame, for its children."""
+    def from_world(self, point: g3.Point3, *, surface: bool = True) -> g3.Vec3:
+        """Return a world point as a position in this body's frame, for its children.
+
+        Args:
+            point (g3.Point3): A point in the world.
+            surface (bool): Return a surface position `(column, row, height)` when the body has a surface,
+                otherwise `(x, y, z)` in the body's axes.
+
+        """
         self._refresh()
         point = g3._vec3(point)
         a, b, c, d, e, f, g, h, i = self._matrix
@@ -292,7 +436,7 @@ class Body(SpatialNode):
         # The matrix is a rotation times a uniform scale, so its inverse is its transpose over the scale squared.
         s2 = self.world_scale**2
         local = g3.Vec3((a * x + d * y + g * z) / s2, (b * x + e * y + h * z) / s2, (c * x + f * y + i * z) / s2)
-        return self.surface.locate(local) if self.surface is not None else local
+        return self.surface.locate(local) if surface and self.surface is not None else local
 
     @property
     def world_scale(self) -> float:
@@ -333,6 +477,7 @@ class World:
             canvas (Canvas): The canvas the text plane covers.
 
         """
+        self._bodies: list[Body] = []
         self.root = Body(self, None)
         self.root._dirty = False
         self.camera = g3.Camera.for_canvas(canvas, distance=_CAMERA_DISTANCE)
@@ -365,13 +510,24 @@ class World:
             camera.row_scale,
         )
 
+    @property
+    def animating(self) -> bool:
+        """Whether any body is still moving along a path."""
+        return any(body._motion is not None and body._motion.active_path is not None for body in self._bodies)
+
     def step(self) -> bool:
-        """Note changes to the camera and bodies since the last frame. Called by `update()` before characters move.
+        """Move bodies along their paths and note changes to the camera and bodies since the last frame.
+
+        Called by `update()` before characters move.
 
         Returns:
             bool: Whether the view changed, so characters that didn't move must still be projected again.
 
         """
+        for body in tuple(self._bodies):
+            motion = body._motion
+            if motion is not None and motion.active_path is not None:
+                motion.move()
         key = self._camera_key()
         changed = self._view_changed or key != self._view_key
         if changed:
@@ -383,6 +539,7 @@ class World:
                 not camera._moved
                 and camera.focal in (None, camera.distance)
                 and camera.row_scale == TERMINAL_ROW_SCALE
+                and plane._parent is self.root
                 and plane._position == g3.ORIGIN
                 and plane._rotation == g3.Rotation()
                 and plane._scale == 1.0
@@ -436,7 +593,38 @@ class World:
             Body: The new body.
 
         """
+        if parent is not None and (parent.world is not self or parent._removed):
+            msg = "A body's parent must be a body in the same world that hasn't been removed."
+            raise ValueError(msg)
         return Body(self, parent if parent is not None else self.root, at=at)
+
+    def remove(self, body: Body) -> None:
+        """Take a body out of the world. Its children are detached and stay where they are in the world.
+
+        Args:
+            body (Body): The body to remove.
+
+        Raises:
+            ValueError: For the root or the text plane, which every world keeps, or a body from another world.
+
+        """
+        if body is self.root or body is self.text_plane:
+            msg = "The world root and the text plane can't be removed."
+            raise ValueError(msg)
+        if body.world is not self:
+            msg = "That body belongs to another world."
+            raise ValueError(msg)
+        if body._removed:
+            return
+        for child in tuple(body._children):
+            child.detach()
+        if body._motion is not None:
+            body._motion.deactivate_path()
+        parent = body.parent
+        del parent._children[body]
+        self._bodies.remove(body)
+        body._removed = True
+        self._view_changed = True
 
 
 def _free_world() -> World:
