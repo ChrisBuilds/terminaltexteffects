@@ -8,7 +8,6 @@ from terminaltexteffects.utils.exceptions.base_terminaltexteffects_exception imp
 
 if TYPE_CHECKING:
     from terminaltexteffects import Coord, EventHandler, Path, Scene, Waypoint
-    from terminaltexteffects.engine.space3d import Mount
     from terminaltexteffects.engine.world import Body
 
 
@@ -44,22 +43,21 @@ class EventRegistrationCallerError(TerminalTextEffectsError):
         - SEGMENT_* -> Path
         - PATH_*    -> Path
         - SCENE_*   -> Scene
-        - MOUNT_*   -> Mount
         - ATTACHED, DETACHED -> Body
     """
 
     def __init__(
         self,
         event: EventHandler.Event,
-        caller: Scene | Waypoint | Path | Mount | Body | str,
-        required: type[Scene | Waypoint | Path | Mount | Body],
+        caller: Scene | Waypoint | Path | Body | str,
+        required: type[Scene | Waypoint | Path | Body],
     ) -> None:
         """Initialize an EventRegistrationCallerError.
 
         Args:
             event (EventHandler.Event): The event that was registered.
-            caller (Scene | Waypoint | Path | Mount | Body | str): The object provided to trigger the event.
-            required (Scene | Waypoint | Path | Mount | Body): The valid caller types for the event.
+            caller (Scene | Waypoint | Path | Body | str): The object provided to trigger the event.
+            required (Scene | Waypoint | Path | Body): The valid caller types for the event.
 
         """
         self.event = event
@@ -89,7 +87,6 @@ class EventRegistrationTargetError(TerminalTextEffectsError):
         - SET_COORDINATE   -> Coord
         - CALLBACK         -> EventHandler.Callback
         - RESET_APPEARANCE -> None
-        - MOUNT, UNMOUNT   -> Mount
         - ATTACH           -> Body
         - DETACH           -> None
     """
@@ -97,16 +94,16 @@ class EventRegistrationTargetError(TerminalTextEffectsError):
     def __init__(
         self,
         action: EventHandler.Action,
-        target: Scene | Path | Mount | Body | int | Coord | EventHandler.Callback | str | None,
-        required: type[Scene | Path | Mount | Body | int | Coord | EventHandler.Callback | str | None],
+        target: Scene | Path | Body | int | Coord | EventHandler.Callback | str | None,
+        required: type[Scene | Path | Body | int | Coord | EventHandler.Callback | str | None],
     ) -> None:
         """Initialize an EventRegistrationTargetError.
 
         Args:
             action (EventHandler.Action): The action that was registered.
-            target (Scene | Path | Mount | Body | int | Coord | EventHandler.Callback | str | None): The target
+            target (Scene | Path | Body | int | Coord | EventHandler.Callback | str | None): The target
                 provided to the action.
-            required (type[Scene | Path | Mount | Body | int | Coord | EventHandler.Callback | str | None]): The valid
+            required (type[Scene | Path | Body | int | Coord | EventHandler.Callback | str | None]): The valid
                 target types.
 
         """
@@ -132,17 +129,17 @@ class DuplicateEventRegistrationError(TerminalTextEffectsError):
     def __init__(
         self,
         event: EventHandler.Event,
-        caller: Scene | Waypoint | Path | Mount | Body,
+        caller: Scene | Waypoint | Path | Body,
         action: EventHandler.Action,
-        target: Scene | Path | Mount | Body | int | Coord | EventHandler.Callback | str | None,
+        target: Scene | Path | Body | int | Coord | EventHandler.Callback | str | None,
     ) -> None:
         """Initialize a DuplicateEventRegistrationError.
 
         Args:
             event (EventHandler.Event): The event that was already registered.
-            caller (Scene | Waypoint | Path | Mount | Body): The caller object that was already registered.
+            caller (Scene | Waypoint | Path | Body): The caller object that was already registered.
             action (EventHandler.Action): The action that was already registered.
-            target (Scene | Path | Mount | Body | int | Coord | EventHandler.Callback | str | None): The target that was
+            target (Scene | Path | Body | int | Coord | EventHandler.Callback | str | None): The target that was
                 already registered.
 
         """

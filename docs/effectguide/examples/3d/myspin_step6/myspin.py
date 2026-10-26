@@ -19,8 +19,9 @@ from terminaltexteffects.engine.base_config import (
     FinalGradientStopsArg,
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Body, Space3D
+from terminaltexteffects.engine.world import Body
 from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.geometry3d import Vec3
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -155,7 +156,7 @@ class MySpinIterator(BaseEffectIterator[MySpinConfig]):
     """Number of colors between the shadow color and a character's final color."""
 
     def __init__(self, effect: MySpin) -> None:
-        """Mount the text on a sheet far behind the canvas and queue its approach and spin.
+        """Move the text plane far behind the canvas and queue its approach and spin.
 
         Args:
             effect (MySpin): The effect to iterate over.
@@ -163,11 +164,14 @@ class MySpinIterator(BaseEffectIterator[MySpinConfig]):
         """
         super().__init__(effect)
         self.final_colors: dict[EffectCharacter, ColorPair] = {}
-        self.space = Space3D(self.terminal, perspective=self.config.perspective, light="front")
+        self.world = self.terminal.world
         self.build()
 
     def build(self) -> None:
         """Build the effect."""
+        world = self.world
+        world.camera.set_perspective(self.config.perspective)
+        world.set_light("front")
         dynamic = self.terminal.config.existing_color_handling == "dynamic"
         final_gradient = Gradient(*self.config.final_gradient_stops, steps=self.config.final_gradient_steps)
         final_gradient_mapping = final_gradient.build_coordinate_color_mapping(
@@ -177,7 +181,7 @@ class MySpinIterator(BaseEffectIterator[MySpinConfig]):
             self.terminal.canvas.text_right,
             self.config.final_gradient_direction,
         )
-        # Spaces are invisible, so only those with an input background color are worth mounting.
+        # Spaces are invisible, so only those with an input background color are worth shading and showing.
         characters = [
             character
             for character in self.terminal.get_characters()
@@ -189,7 +193,7 @@ class MySpinIterator(BaseEffectIterator[MySpinConfig]):
             else:
                 colors = ColorPair(fg=final_gradient_mapping[character.input_coord])
             self.final_colors[character] = colors
-            # The mount's light reading picks the frame: shadow when the text faces away, the final color facing
+            # The light on its spot picks the frame: shadow when the text faces away, the final color facing
             # the viewer. The background, if any, stays the same, and input colors without a foreground keep their
             # colors throughout.
             scene = character.animation.new_scene(sync=Scene.SyncMetric.LIGHT)
@@ -203,27 +207,28 @@ class MySpinIterator(BaseEffectIterator[MySpinConfig]):
             self.terminal.set_character_visibility(character, is_visible=True)
             self.active_characters.add(character)
 
-        # The anchors are placed for the sheet's pose at rest, so set the start pose after mounting.
-        self.sheet = self.space.body()
-        self.sheet.add_chars(characters, self.sheet.text_plane(characters), hide_when_facing_away=self.config.hide_back)
-        self.sheet.set_position(0, 0, -self.config.start_distance)
-        self.sheet.random_pose()
+        self.sheet = world.text_plane
+        self.sheet.hide_facing_away = self.config.hide_back
         frames, ease = self.config.spin_frames, self.config.spin_easing
+        if self.config.start_distance:
+            self.sheet.position = Vec3(0, 0, -self.config.start_distance)
+            approach = self.sheet.motion.new_path(speed=self.config.start_distance / frames, ease=ease)
+            approach.new_waypoint(Vec3(0, 0, 0))
+            self.sheet.motion.activate_path(approach)
+        self.sheet.random_pose()
         self.sheet.settle("y", turns=self.config.spin_turns, frames=frames, ease=ease)
-        self.sheet.move_to(0, 0, 0, frames=frames, ease=ease, together=True)
         self.sheet.on_complete(self.finish)
 
     def finish(self, sheet: Body) -> None:
-        """Release the text onto its input cells and show it in its final colors."""
-        sheet.release_all()
+        """Put the text plane back at rest and show the characters in their final colors."""
+        sheet.reset()
         for character, colors in self.final_colors.items():
             character.animation.deactivate_scene()
             character.animation.set_appearance(character.input_symbol, colors)
 
     def __next__(self) -> str:
         """Return the next frame in the animation."""
-        if self.space.animating or self.active_characters:
-            self.space.step()
+        if self.world.animating or self.active_characters:
             self.update()
             return self.frame
         raise StopIteration

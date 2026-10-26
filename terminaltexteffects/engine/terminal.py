@@ -410,6 +410,7 @@ class Terminal:
         )
         self.canvas = canvas_module.Canvas(*self._get_canvas_dimensions())
         self.world = World(self.canvas)
+        self.world._attach_terminal(self)
         if not self.config.ignore_terminal_dimensions:
             self.canvas_column_offset, self.canvas_row_offset = self._calc_canvas_offsets()
         else:

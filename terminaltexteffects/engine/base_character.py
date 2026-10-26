@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from types import MappingProxyType
 
-from terminaltexteffects.engine import animation, motion, space3d, world
+from terminaltexteffects.engine import animation, motion, view, world
 from terminaltexteffects.utils.exceptions import (
     DuplicateEventRegistrationError,
     EventRegistrationCallerError,
@@ -43,6 +43,9 @@ class _CharacterOwner(typing.Protocol):
 
     def _notify_character_cell_width_changed(self, character: EffectCharacter, previous_width: int) -> None:
         """Notify the terminal that an owned character's current visual width changed."""
+
+    def set_character_visibility(self, character: EffectCharacter, is_visible: bool) -> None:  # noqa: FBT001
+        """Show or hide an owned character."""
 
 
 class EventHandler:
@@ -78,14 +81,13 @@ class EventHandler:
         # Typed as a character: a body's handler only takes the node actions, which bodies have too.
         self.character: EffectCharacter = typing.cast("EffectCharacter", character)
         self.registered_events: dict[
-            tuple[EventHandler.Event, animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body],
+            tuple[EventHandler.Event, animation.Scene | motion.Waypoint | motion.Path | world.Body],
             list[
                 tuple[
                     EventHandler.Action,
                     animation.Scene
                     | motion.Waypoint
                     | motion.Path
-                    | space3d.Mount
                     | world.Body
                     | int
                     | Coord
@@ -109,9 +111,6 @@ class EventHandler:
             PATH_HOLDING (Event): A path has entered the holding state.
             SCENE_ACTIVATED (Event): An animation scene has been activated.
             SCENE_COMPLETE (Event): An animation scene has completed.
-            MOUNT_COMPLETE (Event): A 3D mount has finished blending, so the character rides its anchor. The
-                caller is the `Mount`.
-            MOUNT_RELEASED (Event): The character has been released from a 3D mount. The caller is the `Mount`.
             ATTACHED (Event): The node was attached to a body (not the world root). The caller is the new parent.
             DETACHED (Event): The node left a body (not the world root), by `attach` to another or `detach`. The
                 caller is the old parent.
@@ -125,8 +124,6 @@ class EventHandler:
         PATH_HOLDING = auto()
         SCENE_ACTIVATED = auto()
         SCENE_COMPLETE = auto()
-        MOUNT_COMPLETE = auto()
-        MOUNT_RELEASED = auto()
         ATTACHED = auto()
         DETACHED = auto()
 
@@ -147,10 +144,6 @@ class EventHandler:
             SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
             SET_COORDINATE (Action): Sets the coordinate of the character. The action target is the coordinate.
             CALLBACK (Action): Calls a callback function. The action target is an EventHandler.Callback object.
-            MOUNT (Action): Mounts the character on a 3D anchor. The action target is a `Mount` made with
-                `Space3D.new_mount`.
-            UNMOUNT (Action): Releases the character from its 3D mount. The action target is the `Mount`, or None
-                to release any active mount.
             ATTACH (Action): Attaches the node to a body, keeping its place in the world. The action target is the
                 body.
             DETACH (Action): Detaches the node into the world, keeping its place. Takes no target.
@@ -165,8 +158,6 @@ class EventHandler:
         SET_LAYER = auto()
         SET_COORDINATE = auto()
         CALLBACK = auto()
-        MOUNT = auto()
-        UNMOUNT = auto()
         ATTACH = auto()
         DETACH = auto()
 
@@ -207,7 +198,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: typing.Literal[Action.ACTIVATE_SCENE],
         target: animation.Scene | str,
     ) -> None: ...
@@ -215,7 +206,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: typing.Literal[Action.DEACTIVATE_SCENE],
         target: animation.Scene | str | None = ...,
     ) -> None: ...
@@ -223,7 +214,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: typing.Literal[Action.ACTIVATE_PATH],
         target: motion.Path | str,
     ) -> None: ...
@@ -231,7 +222,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: typing.Literal[Action.DEACTIVATE_PATH],
         target: motion.Path | str | None = ...,
     ) -> None: ...
@@ -239,7 +230,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: typing.Literal[Action.SET_COORDINATE],
         target: Coord,
     ) -> None: ...
@@ -247,7 +238,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: typing.Literal[Action.SET_LAYER],
         target: int,
     ) -> None: ...
@@ -255,7 +246,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: typing.Literal[Action.CALLBACK],
         target: Callback,
     ) -> None: ...
@@ -263,7 +254,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: typing.Literal[Action.RESET_APPEARANCE],
         target: None = None,
     ) -> None: ...
@@ -271,23 +262,7 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
-        action: typing.Literal[Action.MOUNT],
-        target: space3d.Mount,
-    ) -> None: ...
-    @typing.overload
-    def register_event(
-        self,
-        event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
-        action: typing.Literal[Action.UNMOUNT],
-        target: space3d.Mount | None = ...,
-    ) -> None: ...
-    @typing.overload
-    def register_event(
-        self,
-        event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: typing.Literal[Action.ATTACH],
         target: world.Body,
     ) -> None: ...
@@ -295,16 +270,16 @@ class EventHandler:
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: typing.Literal[Action.DETACH],
         target: None = None,
     ) -> None: ...
     def register_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: Action,
-        target: animation.Scene | motion.Path | space3d.Mount | world.Body | int | Coord | Callback | str | None = None,
+        target: animation.Scene | motion.Path | world.Body | int | Coord | Callback | str | None = None,
     ) -> None:
         """Register an event to be handled by the EventHandler.
 
@@ -314,16 +289,15 @@ class EventHandler:
         `PATH_HOLDING` and segment events require their corresponding object instances.
         For `ACTIVATE_PATH`, `DEACTIVATE_PATH`, `ACTIVATE_SCENE`, and `DEACTIVATE_SCENE`,
         string targets are resolved from registered path or scene IDs. `DEACTIVATE_PATH`,
-        `DEACTIVATE_SCENE`, `UNMOUNT`, and `RESET_APPEARANCE` may use `None` where supported by the action.
-        `MOUNT_COMPLETE` and `MOUNT_RELEASED` take the `Mount` as the caller; `ATTACHED` and `DETACHED` take
-        the parent body.
+        `DEACTIVATE_SCENE`, and `RESET_APPEARANCE` may use `None` where supported by the action.
+        `ATTACHED` and `DETACHED` take the parent body as the caller.
 
         Args:
             event (Event): The event to register.
-            caller (animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body | str): The object
+            caller (animation.Scene | motion.Waypoint | motion.Path | world.Body | str): The object
                 that triggers the event.
             action (Action): The action to take when the event is triggered.
-            target (animation.Scene | motion.Path | space3d.Mount | world.Body | int | Coord | Callback | str | None):
+            target (animation.Scene | motion.Path | world.Body | int | Coord | Callback | str | None):
                 The target of the action.
 
         Raises:
@@ -381,7 +355,7 @@ class EventHandler:
 
         elif (
             action
-            in (EventHandler.Action.DEACTIVATE_PATH, EventHandler.Action.DEACTIVATE_SCENE, EventHandler.Action.UNMOUNT)
+            in (EventHandler.Action.DEACTIVATE_PATH, EventHandler.Action.DEACTIVATE_SCENE)
             and target is None
         ):
             pass
@@ -395,7 +369,7 @@ class EventHandler:
         ):
             raise EventRegistrationTargetError(action, target, _ACTION_TARGET_TYPES[action])
 
-        assert isinstance(caller, (motion.Path, animation.Scene, motion.Waypoint, space3d.Mount, world.Body))
+        assert isinstance(caller, (motion.Path, animation.Scene, motion.Waypoint, world.Body))
         new_event = (event, caller)
         new_action = (action, target)
 
@@ -411,7 +385,7 @@ class EventHandler:
     def _handle_event(
         self,
         event: Event,
-        caller: animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body,
+        caller: animation.Scene | motion.Waypoint | motion.Path | world.Body,
     ) -> None:
         """Handle a registered event by executing all associated actions.
 
@@ -431,12 +405,10 @@ class EventHandler:
         - SET_LAYER: Sets the character's rendering layer
         - SET_COORDINATE: Sets the character's current coordinate
         - CALLBACK: Executes a custom callback function with the character and additional arguments
-        - MOUNT: Mounts the character on a 3D anchor
-        - UNMOUNT: Releases a specific mount or, when the target is `None`, any active mount
 
         Args:
             event (Event): The event to handle. Must be one of the Event enum values.
-            caller (animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body): The object that
+            caller (animation.Scene | motion.Waypoint | motion.Path | world.Body): The object that
                 triggered the event.
                 The caller type must match the expected type for the given event (e.g., PATH_COMPLETE
                 events must be triggered by motion.Path objects).
@@ -477,10 +449,6 @@ class EventHandler:
                 self.character.motion.set_coordinate(target)  # type: ignore[arg-type]
             elif action is EventHandler.Action.CALLBACK:
                 target.callback(self.character, *target.args)  # type: ignore[union-attr]
-            elif action is EventHandler.Action.MOUNT:
-                self.character.motion.activate_mount(target)  # type: ignore[arg-type]
-            elif action is EventHandler.Action.UNMOUNT:
-                self.character.motion.deactivate_mount(target)  # type: ignore[arg-type]
             elif action is EventHandler.Action.ATTACH:
                 self.character.attach(target)  # type: ignore[arg-type]
             elif action is EventHandler.Action.DETACH:
@@ -490,7 +458,7 @@ class EventHandler:
 # Registration rules are shared; per-character event actions remain independent.
 _EVENT_CALLER_TYPES: typing.Mapping[
     EventHandler.Event,
-    type[animation.Scene | motion.Waypoint | motion.Path | space3d.Mount | world.Body],
+    type[animation.Scene | motion.Waypoint | motion.Path | world.Body],
 ] = MappingProxyType(
     {
         EventHandler.Event.SEGMENT_ENTERED: motion.Waypoint,
@@ -500,15 +468,13 @@ _EVENT_CALLER_TYPES: typing.Mapping[
         EventHandler.Event.PATH_HOLDING: motion.Path,
         EventHandler.Event.SCENE_ACTIVATED: animation.Scene,
         EventHandler.Event.SCENE_COMPLETE: animation.Scene,
-        EventHandler.Event.MOUNT_COMPLETE: space3d.Mount,
-        EventHandler.Event.MOUNT_RELEASED: space3d.Mount,
         EventHandler.Event.ATTACHED: world.Body,
         EventHandler.Event.DETACHED: world.Body,
     },
 )
 _ACTION_TARGET_TYPES: typing.Mapping[
     EventHandler.Action,
-    type[animation.Scene | motion.Path | space3d.Mount | world.Body | int | Coord | EventHandler.Callback | None],
+    type[animation.Scene | motion.Path | world.Body | int | Coord | EventHandler.Callback | None],
 ] = MappingProxyType(
     {
         EventHandler.Action.ACTIVATE_PATH: motion.Path,
@@ -519,8 +485,6 @@ _ACTION_TARGET_TYPES: typing.Mapping[
         EventHandler.Action.SET_LAYER: int,
         EventHandler.Action.SET_COORDINATE: Coord,
         EventHandler.Action.CALLBACK: EventHandler.Callback,
-        EventHandler.Action.MOUNT: space3d.Mount,
-        EventHandler.Action.UNMOUNT: space3d.Mount,
         EventHandler.Action.ATTACH: world.Body,
         EventHandler.Action.DETACH: type(None),
     },
@@ -530,8 +494,6 @@ _CHARACTER_EVENTS = frozenset(
     {
         EventHandler.Event.SCENE_ACTIVATED,
         EventHandler.Event.SCENE_COMPLETE,
-        EventHandler.Event.MOUNT_COMPLETE,
-        EventHandler.Event.MOUNT_RELEASED,
     },
 )
 _NODE_ACTIONS = frozenset(
@@ -571,7 +533,7 @@ class EffectCharacter(world.SpatialNode):
         event_handler (EventHandler): The event handler object that handles events related to the character.
         layer (int): The layer of the character. Lower layers are painted first. When characters on the same layer
             collide, the character with the higher `character_id` is painted last and wins the collision. Within a
-            layer, characters placed by depth in 3D (see `Space3D`) are also ordered by their exact depth.
+            layer, characters are ordered by their depth from the camera, farther first.
         is_fill_character (bool): Whether the character is a fill character. Fill characters are used to fill
             the empty cells of the Canvas.
         uses_input_preexisting_colors (bool): Whether engine-level `existing_color_handling="always"` should treat
@@ -608,8 +570,16 @@ class EffectCharacter(world.SpatialNode):
         self.uses_input_preexisting_colors = False
         self.links: set[EffectCharacter] = set()
         self._neighbors: dict[str, EffectCharacter | None] | None = None
+        self._view: view.View | None = None
 
     _ON_SURFACE = True
+
+    @property
+    def view(self) -> view.View:
+        """How the character is seen from the camera: its cell, depth, facing, light and face."""
+        if self._view is None:
+            self._view = view.View(self)
+        return self._view
 
     def _default_parent(self) -> world.Body:
         """Join the owning terminal's text plane, or the shared free plane for a character no terminal owns."""
@@ -623,8 +593,6 @@ class EffectCharacter(world.SpatialNode):
 
     def _place(self, position: g3.Vec3) -> None:
         motion = self.motion
-        if motion.mount is not None:
-            motion.deactivate_mount()
         motion.current_coord = motion._cell
         motion._xyz = (position.x, position.y, position.z)
         motion._resolve()
@@ -709,8 +677,7 @@ class EffectCharacter(world.SpatialNode):
         """Returns whether the character is currently active.
 
         A character is active when its animation has an incomplete active scene or its
-        motion has an incomplete active path or an active mount. A mount keeps the character active
-        after its blend finishes, until it is released.
+        motion has an incomplete active path.
 
         Returns:
             bool: True if the character is active, False if not.
