@@ -30,14 +30,14 @@ for cell, fragment in g3.rasterize(cube, camera, rotation=turn).items():
 
 Camera position and orientation can change with `set_position` and `set_rotation`. `depth(point)` reports
 view-axis depth. `ray(coord)` supplies a world ray, and `cell_to_world(coord, z=...)` intersects it with a world-z
-plane, raising `ValueError` for parallel rays. For movement helpers and tweens, use `Space3D.camera`.
+plane, raising `ValueError` for parallel rays. For movement helpers and tweens, use the world's camera, `terminal.world.camera`.
 
 `position` and `rotation` are read-only. `distance` moves the implicit eye until `set_position` makes that
 position explicit; with `focal=None`, focal length continues to follow `distance`. A camera's world-z plane
 intersection can lie behind its eye; project the result and handle `None` when visibility matters.
 `ray` directions are scaled to one unit of view-axis depth rather than normalized to unit Euclidean length.
-The low-level class has pose setters and projection, while `space3d.Camera` adds travel/aiming controls and a
-queue played by `Space3D.step()`.
+The low-level class has pose setters and projection, while `engine.camera.Camera` adds travel/aiming controls and
+a queue the world plays inside the effect's `update()`.
 
 Angles are in radians. Rotations compose with `*`: `second * first` applies `first`, then `second`.
 

@@ -1,14 +1,14 @@
 # Transforms
 
-A body's **transform** is where it is, which way it faces and how big it is. Every point of its shape and every
-anchor on it is placed by applying that transform. Three operations make it up, and the order you apply them in
+A body's **transform**, or pose, is where it is, which way it faces and how big it is. Every point of its shape and
+every node attached to it is placed by applying that transform. Three operations make it up, and the order you apply them in
 changes the result.
 
 ## The idea
 
 - **Scale** grows or shrinks the body about its own origin.
 - **Rotate** turns it about an axis through its own origin.
-- **Move** shifts it to a position in the world.
+- **Move** shifts it to a position in its parent's frame.
 
 ![A square in its own coordinates is scaled, then rotated about its origin, then moved](../../img/effectguide/3d/transform_pipeline.webp)
 
@@ -27,10 +27,9 @@ its orientation changes. The moon's starting position is turned too, so it trave
 
 ```python
 turn = rotation_about("y", 360 * self.frame_number / self.config.frames)
-self.planet.set_rotation(self.tilt * turn)  # Spin in place.
-self.moon.set_rotation(self.tilt * turn)
-point = (self.tilt * turn).apply(self.moon_start)  # Orbit: turn the moon's offset yourself...
-self.moon.set_position(point.x, point.y, point.z)  # ...then move the moon there.
+self.planet.rotation = self.tilt * turn  # Spin in place.
+self.moon.rotation = self.tilt * turn
+self.moon.position = (self.tilt * turn).apply(self.moon_start)  # Orbit: turn the moon's offset, then move there.
 ```
 
 ??? example "orbit.py"
@@ -47,22 +46,23 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 
 ![A cube turns in place while a small cube circles it, passing behind and in front](../../img/effectguide/orbit_demo.webp)
 
-`Body` has a method for each operation. Some change the transform relative to where it is now, and some set it
-outright:
+Each part of the transform can be set now or changed over frames:
 
-| Change by | Set to | Effect |
+| Part | Now | Over frames |
 | --- | --- | --- |
-| `rotate(axis, degrees)` | `set_rotation(rotation)` | Turn about the body's own origin. |
-| `move_by(x, y, z)` | `set_position(x, y, z)` | Move the body's origin. |
-| `scale_by(factor)` | `set_scale(scale)` | Grow or shrink about the origin. |
+| Rotation | `rotate(axis, degrees)`, or set `body.rotation` | `spin`, `settle`, `turn_to`, `turn_to_rest` |
+| Position | Set `body.position` | A path on `body.motion`, like a character's |
+| Scale | Set `body.scale` | `scale_to(scale, frames)` |
 
-`reset()` puts all three back to how the body was created and clears its queued tweens. `rotation`, `position` and `scale` read the current
-values. Each method returns the body, so calls chain: `cube.set_position(10, 0, 0).rotate("y", 45)`.
+`reset()` puts all three back to how the body was created and cancels its queued tweens. The properties read the
+current values, and the methods return the body, so calls chain: `cube.rotate("x", 20).spin("y")`.
 
-The order you call these methods in doesn't change that pipeline. A body always scales, then turns about its own
-origin, then moves, so `move_by(30, 0, 0)` followed by `rotate("y", 45)` still spins the body in place at x = 30;
-it doesn't swing it around the world's origin. To orbit with these methods, compute the moon's position yourself by
-turning its starting offset, as the example does, then `set_position` there.
+The order you change these in doesn't change that pipeline. A body always scales, then turns about its own origin,
+then moves, so setting `position = (30, 0, 0)` and then calling `rotate("y", 45)` still spins the body in place at
+x = 30; it doesn't swing it around the world's origin. To orbit, either turn the moon's starting offset yourself, as
+the example does, or let a parent do it: attach the moon to a pivot at the planet's center and turn the pivot. The
+pivot turns first and the moon's offset swings round with it, which is moving and then turning (see
+[The world](world.md#parents-and-children)).
 
 The [camera orbit](camera-movement.md#orbit-a-stationary-scene) is a different operation: it leaves these body
 transforms fixed and moves the viewpoint around the scene.
@@ -77,8 +77,8 @@ from terminaltexteffects.utils.geometry3d import Rotation, Vec3, transform_point
 world = transform_points(points, Rotation.about_y(angle), scale=2.0, position=Vec3(10, 0, 0))
 ```
 
-It scales each point, rotates it with the rotation's matrix and adds the position. `Body.world_point(local)` does the
-same for one point with the body's own transform.
+It scales each point, rotates it with the rotation's matrix and adds the position. `body.to_world(point, surface=False)` does the
+same for one point, with the body's pose and every parent's (see [Frames and coordinates](coordinates.md#under-the-hood)).
 
 ## At cell resolution
 
@@ -86,5 +86,5 @@ same for one point with the body's own transform.
   combine them with a turn.
 - Scaling changes how many cells a shape covers. A shape scaled below about 6 columns stops reading as a shape at
   all (see [3D in a terminal](terminal.md)).
-- Anchors scale with the body, but characters don't. A text plane scaled to half size crowds two characters into
+- Positions scale with the body, but characters don't. A text plane scaled to half size crowds two characters into
   each cell, and only one of them can show.

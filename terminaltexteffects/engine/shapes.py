@@ -98,24 +98,6 @@ class Shape:
         """
         return None
 
-    def surface_points(self, count: int) -> list[tuple[g3.Vec3, g3.Vec3]]:
-        """Return about `count` points spread over the surface, each with its outward normal.
-
-        The default spreads points over the mesh's faces in proportion to their area. Curved shapes override it
-        with an even parametric layout.
-
-        Args:
-            count (int): Requested number of points or anchors.
-
-        Returns:
-            list[tuple[g3.Vec3, g3.Vec3]]: Surface points paired with their outward unit normals.
-
-        Raises:
-            NotImplementedError: If the shape does not implement `build_mesh`.
-
-        """
-        return _mesh_surface_points(self.build_mesh(), count)
-
     def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:  # noqa: ARG002
         """Return where a drawn cell falls in a `Textured` look's text, as a fractional (column, row).
 
@@ -466,47 +448,6 @@ class Cylinder(Shape):
         around = 2 * math.pi * self.radius
         return _face_cell(fragment, around, self.height, around / 4, around)
 
-    def surface_points(self, count: int) -> list[tuple[g3.Vec3, g3.Vec3]]:
-        """Return about `count` points in even rings around the side.
-
-        Args:
-            count (int): Requested number of points or anchors.
-
-        Returns:
-            list[tuple[g3.Vec3, g3.Vec3]]: Surface points paired with their outward unit normals.
-
-        Raises:
-            ZeroDivisionError: If `radius` is zero.
-            ValueError: If the ring-count calculation takes the square root of a negative value.
-
-        """
-        circumference = 2 * math.pi * self.radius
-        rings = max(1, round(math.sqrt(count * self.height / circumference)))
-        per_ring = max(1, math.ceil(count / rings))
-        points = []
-        for ring in range(rings):
-            y = self.height * ((ring + 0.5) / rings - 0.5)
-            for step in range(per_ring):
-                angle = 2 * math.pi * (step + 0.5 * (ring % 2)) / per_ring
-                normal = g3.Vec3(math.sin(angle), 0.0, math.cos(angle))
-                points.append((g3.Vec3(normal.x * self.radius, y, normal.z * self.radius), normal))
-        return points[:count]
-
-    def wrap_point(self, around: float, up: float) -> tuple[g3.Vec3, g3.Vec3]:
-        """Return the side point `around` turns from the front and `up` of the way from bottom to top.
-
-        Args:
-            around (float): Fraction of a turn from the front, increasing around the y axis.
-            up (float): Fraction of the vertical wrapping range, from bottom to top.
-
-        Returns:
-            tuple[g3.Vec3, g3.Vec3]: Local surface point and its outward unit normal.
-
-        """
-        angle = 2 * math.pi * around
-        normal = g3.Vec3(math.sin(angle), 0.0, math.cos(angle))
-        return g3.Vec3(normal.x * self.radius, self.height * (up - 0.5), normal.z * self.radius), normal
-
 
 @dataclass(frozen=True)
 class Sphere(Shape):
@@ -557,46 +498,6 @@ class Sphere(Shape):
         around = 2 * math.pi * self.radius
         return _face_cell(fragment, around, math.pi * self.radius, around / 4, around)
 
-    def surface_points(self, count: int) -> list[tuple[g3.Vec3, g3.Vec3]]:
-        """Return `count` points spread evenly over the sphere (a Fibonacci lattice).
-
-        Args:
-            count (int): Requested number of points or anchors.
-
-        Returns:
-            list[tuple[g3.Vec3, g3.Vec3]]: Surface points paired with their outward unit normals.
-
-        """
-        golden_angle = math.pi * (3 - math.sqrt(5))
-        points = []
-        for index in range(count):
-            y = 1 - 2 * (index + 0.5) / count
-            ring_radius = math.sqrt(max(0.0, 1 - y * y))
-            angle = golden_angle * index
-            normal = g3.Vec3(ring_radius * math.sin(angle), y, ring_radius * math.cos(angle))
-            points.append((normal * self.radius, normal))
-        return points
-
-    def wrap_point(self, around: float, up: float) -> tuple[g3.Vec3, g3.Vec3]:
-        """Return the point `around` turns from the front, `up` of the way from 60 degrees south to 60 north.
-
-        Args:
-            around (float): Fraction of a turn from the front, increasing around the y axis.
-            up (float): Fraction from 60 degrees south (0) to 60 degrees north (1).
-
-        Returns:
-            tuple[g3.Vec3, g3.Vec3]: Local surface point and its outward unit normal.
-
-        """
-        latitude = math.radians(-60 + 120 * up)
-        longitude = 2 * math.pi * around
-        normal = g3.Vec3(
-            math.cos(latitude) * math.sin(longitude),
-            math.sin(latitude),
-            math.cos(latitude) * math.cos(longitude),
-        )
-        return normal * self.radius, normal
-
 
 @dataclass(frozen=True)
 class Torus(Shape):
@@ -635,37 +536,6 @@ class Torus(Shape):
 
         """
         return TorusSurface(self.major_radius, self.minor_radius)
-
-
-def _mesh_surface_points(mesh: g3.Mesh, count: int) -> list[tuple[g3.Vec3, g3.Vec3]]:
-    """Spread about `count` points over `mesh`'s faces in proportion to their area."""
-    triangles: list[tuple[g3.Vec3, g3.Vec3, g3.Vec3, g3.Vec3, float]] = []
-    for face, normal in zip(mesh.faces, mesh.normals):
-        corners = [mesh.vertices[index] for index in face.indices]
-        for k in range(1, len(corners) - 1):
-            a, b, c = corners[0], corners[k], corners[k + 1]
-            area = (b - a).cross(c - a).length() / 2
-            if area > _EPSILON:
-                triangles.append((a, b, c, normal, area))
-    total = sum(triangle[4] for triangle in triangles)
-    if count <= 0 or total <= 0:
-        return []
-    points = []
-    owed = 0.0
-    for a, b, c, normal, area in triangles:
-        owed += count * area / total
-        share = round(owed) - len(points)
-        for _ in range(max(0, share)):
-            # An R2 low-discrepancy sequence folded into the triangle spreads points evenly with no clumps. It
-            # carries on from triangle to triangle rather than restarting, and starts past its first point, which
-            # lands on an edge, so neighboring faces never share a point.
-            index = len(points) + 1
-            u = (0.5 + index * 0.7548776662466927) % 1
-            v = (0.5 + index * 0.5698402909980532) % 1
-            if u + v > 1:
-                u, v = 1 - u, 1 - v
-            points.append((a + (b - a) * u + (c - a) * v, normal))
-    return points
 
 
 @dataclass(frozen=True)

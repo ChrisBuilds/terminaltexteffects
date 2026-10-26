@@ -17,15 +17,15 @@ Replace `myspin.py` with this version:
 
 ### A light in front
 
-`Space3D(..., light="front")` points the light along +z, from behind the viewer toward the canvas. It's a direction,
+`world.set_light("front")` points the light along +z, from behind the viewer toward the canvas. It's a direction,
 not a lamp at a position, so a surface turned toward the viewer is turned toward the light too. How lit the sheet is
 and how squarely it faces you are nearly the same thing here. They match exactly in an orthographic view; with
 perspective, the parts of the sheet away from the center are seen at a slight angle.
 
 ### Scenes synced to the light
 
-Every mount measures its anchor's light each frame: 1 when its surface faces the light squarely, 0 when edge-on or
-facing away. A scene created with `sync=Scene.SyncMetric.LIGHT` picks its frame from that reading instead of playing
+Every character on a surface has a light reading, `character.view.light`: 1 when its spot faces the light squarely,
+0 when edge-on or facing away. A scene created with `sync=Scene.SyncMetric.LIGHT` picks its frame from that reading instead of playing
 in order.
 
 Each character gets a scene with one frame per color of a gradient, from `SHADOW_COLOR` to its final color. Its final
@@ -34,13 +34,15 @@ color comes from `FINAL_GRADIENT` mapped over the text from top to bottom, as in
 ### The back side
 
 When the sheet faces away, its light reading is 0, so the mirrored text shows in the shadow color. That reads as the
-back of the sheet. `HIDE_BACK = True` would pass `hide_when_facing_away=True` to `add_chars` instead, which hides each
-character while its back faces you.
+back of the sheet. `HIDE_BACK = True` would set `hide_facing_away` on the text plane instead, which hides each
+character while its spot faces away from you.
 
 ### Final colors
 
-`finish` now also stops each scene and sets the character to its final color. Without this, a released character
-would keep whichever frame its scene showed last.
+`on_complete(self.finish)` calls `finish` when the sheet's last tween ends. `finish` resets the plane, then stops each
+scene and sets the character to its final color. Without this, each character would keep whichever frame its scene
+showed last. The scenes keep the characters in `active_characters` until then, so `__next__` runs until `finish` has
+stopped them.
 
 ## Run it
 

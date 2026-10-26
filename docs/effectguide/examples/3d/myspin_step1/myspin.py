@@ -1,4 +1,4 @@
-"""MySpin, tutorial step 1: the text mounted on a flat sheet.
+"""MySpin, tutorial step 1: the text on its sheet, the text plane.
 
 The text starts on a sheet turned away to one side, and the sheet turns back to face the viewer. Later steps build
 it up into the Spin effect.

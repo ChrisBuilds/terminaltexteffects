@@ -20,7 +20,7 @@ focal length, perspective and depth.
 | Look up/down | `tilt(degrees)` | Same call with `frames=60` | Orientation about local +x |
 | Turn the image | `roll(degrees)` | Same call with `frames=60` | Orientation about local +z |
 | Set a world orientation | `set_rotation(rotation)` | `turn_to(rotation, frames=60)` | Orientation |
-| Aim at a point or body | `look_at(x, y, z)` or `look_at(body)` | Same call with `frames=60` | Orientation |
+| Aim at a point or node | `look_at(x, y, z)` or `look_at(node)` | Same call with `frames=60` | Orientation |
 | Circle a target, staying aimed at it | `orbit("y", degrees=30, around=body)` | `orbit("y", turns=1, around=body, frames=240)` | Position and orientation |
 | Magnify from the same position | `zoom(factor)` | `zoom_to(focal, frames=60)` | Focal length |
 
@@ -37,9 +37,9 @@ world +y. Once the camera turns, its axes turn with it. The world axes do not.
 ![World +x remains fixed while the panned camera's local right and forward directions turn](../../img/effectguide/3d/camera_axes.webp)
 
 ```python
-from terminaltexteffects.engine.space3d import rotation_about
+from terminaltexteffects.engine.tweens import rotation_about
 
-camera = self.space.camera
+camera = self.world.camera
 camera.set_rotation(rotation_about("y", 35))
 camera.truck(10)       # Along the turned camera's right axis.
 camera.move_by(x=10)   # Along fixed world +x instead.
@@ -82,8 +82,8 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 32 --anchor
 --8<-- "docs/effectguide/examples/3d/cameralab/cameralab.py:turns"
 ```
 
-A body rotation and a camera rotation have different meanings. Rotating a body changes that body and its anchors.
-Turning the camera changes how **every** body is seen. Body-local face names such as a cube's "front" remain attached
+A body rotation and a camera rotation have different meanings. Rotating a body turns that body and everything
+attached to it. Turning the camera changes how **every** body is seen. Body-local face names such as a cube's "front" remain attached
 to the cube; they do not switch to whichever face is nearest the camera.
 
 `set_rotation(rotation)` sets a world orientation immediately. `turn_to(rotation, frames=...)` takes the shortest
@@ -114,7 +114,7 @@ A target at the eye and a zero up vector raise `ValueError`.
 
 A queued `look_at(body, frames=...)` samples the body's position **when the tween starts**, after any earlier camera
 groups. It then turns toward that sampled point. It does not keep watching the body as it moves. To follow a moving
-body, move it and call immediate `look_at(body)` each frame before `space.step()`.
+body, move it and call immediate `look_at(body)` each frame before `update()`.
 
 === "Sample once"
 
@@ -133,20 +133,20 @@ body, move it and call immediate `look_at(body)` each frame before `space.step()
     ![Immediate aiming after each target move keeps the moving cube centered while the background shifts](../../img/effectguide/camera_follow_demo.webp)
 
 The two recordings use the same target motion. The following code moves the body **directly**, then aims from its
-current position. The normal frame loop steps the space once and ticks the characters afterward:
+current position. `update()` then steps the world once and ticks the characters:
 
 ```python
 --8<-- "docs/effectguide/examples/3d/cameralab/cameralab.py:follow"
 ```
 
-If the target moves through body tweens, those advance inside `space.step()` instead. Use the
+If the target moves through body tweens or a body path, those advance inside `update()` instead. Use the
 [completion-phase tracking pattern](animating.md#tracking-a-moving-body) to aim after that motion without stepping twice.
 
 ## Orbit a stationary scene
 
 Orbit changes position and orientation together. A world axis passes through the target, the eye turns around that
-axis, and the camera stays aimed at the target. The radius must be nonzero. `around` accepts a body, a `Vec3`, or an
-`(x, y, z)` world point. A body target is sampled when the action starts, just like `look_at`.
+axis, and the camera stays aimed at the target. The radius must be nonzero. `around` accepts any node, a `Vec3`, or an
+`(x, y, z)` world point. A node target is sampled when the action starts, just like `look_at`.
 
 ![A top view of the camera circling a fixed cube, with local forward and right arrows following the eye](../../img/effectguide/3d/camera_movement.webp)
 
@@ -163,11 +163,11 @@ is queued ahead. Its `up` direction controls aiming roll as for `look_at`.
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 32 --anchor-text c cameraorbit
 ```
 
-![A camera circles a stationary blue cube with white mounted text and fixed gold landmarks; the full cube remains in frame](../../img/effectguide/cameraorbit_demo.webp)
+![A camera circles a stationary blue cube with white text on its front and fixed gold landmarks; the full cube remains in frame](../../img/effectguide/cameraorbit_demo.webp)
 
 The cube and gold landmarks stay fixed in world space. Their changing overlap and relative position show that the
 viewpoint is moving. This differs from the [body-orbit example](transforms.md), where the moon itself travels around
-a fixed planet. Moving the camera affects the whole scene, including mount depth and facing, occlusion and clipping.
+a fixed planet. Moving the camera affects the whole scene, including each character's depth and facing, occlusion and clipping.
 
 ??? example "Standalone orbit example"
 
@@ -193,5 +193,5 @@ that iterator, not separate effects. These examples need the development version
 | `sequence`, `restore` | [Animating in 3D](animating.md#camera-shots-and-timing) |
 | `clip` | [Depth and hidden surfaces](depth.md#moving-the-near-plane) |
 
-The captions are ordinary 2D characters at a high layer. They remain readable while the camera moves and do not
-participate in 3D depth ordering. Each lesson ends by hiding its scene and restoring the original input text.
+The captions are characters attached to `world.screen` at a high layer. The screen keeps them in fixed canvas cells
+while the camera moves, and the layer keeps them above the scene. Each lesson ends by hiding its scene and restoring the original input text.
