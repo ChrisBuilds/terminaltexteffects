@@ -258,3 +258,40 @@ def test_surface_raises_for_a_body_without_one(world: World) -> None:
     with pytest.raises(ValueError, match="no surface"):
         _ = pivot.surface
     assert world.body(Sphere(4)).has_surface
+
+
+def test_leaving_the_near_plane_for_the_text_plane_shows_again(terminal: Terminal) -> None:
+    """A character hidden behind the camera straight from the text plane shows again once back at height 0."""
+    character = shown(terminal)
+    character.motion.position = (1, 1, 200)
+    assert not character.view.projected
+    assert not character.is_visible
+    character.motion.position = (1, 1, 0)
+    assert character.is_visible
+    assert character.motion.current_coord == Coord(1, 1)
+
+
+def test_showing_a_hidden_character_attached_behind_waits_for_the_view(terminal: Terminal, world: World) -> None:
+    """A character attached behind the camera while hidden can't be shown until the view sees it."""
+    character = terminal.get_characters()[0]
+    body = world.body(at=(0, 0, world.camera.distance))
+    character.attach(body, at=(0, 0, 0))
+    step(terminal, character)
+    terminal.set_character_visibility(character, is_visible=True)
+    step(terminal, character)
+    assert not character.is_visible
+    body.position = (0, 0, 0)
+    step(terminal, character)
+    assert character.is_visible
+
+
+def test_hiding_a_view_hidden_character_keeps_it_hidden(terminal: Terminal, world: World) -> None:
+    """An effect that hides a character while the view hides it keeps it hidden when the view sees it again."""
+    character = shown(terminal)
+    body = world.body(at=(0, 0, world.camera.distance))
+    character.attach(body, at=(0, 0, 0))
+    step(terminal, character)
+    terminal.set_character_visibility(character, is_visible=False)
+    body.position = (0, 0, 0)
+    step(terminal, character)
+    assert not character.is_visible

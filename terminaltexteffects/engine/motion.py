@@ -636,8 +636,10 @@ class Motion:
         # The exact position in the parent's frame, as floats; `position` reads it as a `Vec3`.
         self._xyz: XYZ = (self._cell.column, self._cell.row, 0.0)
         self._depth_from_view = False
-        # Whether the view hid the character: behind the camera, or facing away on a body that hides those.
+        # Whether the view hides the character: behind the camera, or facing away on a body that hides those.
         self._view_hidden = False
+        # Whether the effect wants the character shown once the view sees it again.
+        self._show_when_seen = False
         self.previous_coord: Coord = Coord(-1, -1)
         self.active_path: Path | None = None
         # Detect callback-driven restarts even when the active path's identity is unchanged.
@@ -709,8 +711,8 @@ class Motion:
             if self._depth_from_view:
                 self._depth_from_view = False
                 character._set_depth_order(0.0)
-                if self._view_hidden:
-                    self._show(hidden=False)
+            if self._view_hidden:
+                self._show(hidden=False)
             return
         surface = parent._surface
         if surface is not None and surface.closed:
@@ -742,18 +744,22 @@ class Motion:
     def _show(self, *, hidden: bool) -> None:
         """Hide the character while it is behind the camera or faces away, or show it again once it isn't.
 
-        Only a character the view hid is shown again, so one the effect hid itself stays hidden.
+        The view tracks hiding whether or not the character is shown. Only a character that was shown when the view
+        hid it, or that the effect showed while hidden, is shown again, so one the effect hid itself stays hidden.
         """
         character = self.character
         owner = character._terminal_owner_token() if character._terminal_owner_token is not None else None
         if hidden:
+            self._view_hidden = True
             if character.is_visible and owner is not None:
-                self._view_hidden = True
                 owner.set_character_visibility(character, is_visible=False)
+                self._show_when_seen = True
         else:
             self._view_hidden = False
-            if not character.is_visible and owner is not None:
-                owner.set_character_visibility(character, is_visible=True)
+            if self._show_when_seen:
+                self._show_when_seen = False
+                if not character.is_visible and owner is not None:
+                    owner.set_character_visibility(character, is_visible=True)
 
     def new_path(
         self,
@@ -1087,6 +1093,7 @@ class BodyMotion(Motion):
         # Bodies have no cell: this keeps move() from taking the characters' text-plane shortcut.
         self._depth_from_view = True
         self._view_hidden = False
+        self._show_when_seen = False
         self.previous_coord = Coord(-1, -1)
         self.active_path = None
         self._path_generation = 0

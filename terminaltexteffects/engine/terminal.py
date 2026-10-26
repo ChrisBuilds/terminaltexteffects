@@ -1409,8 +1409,12 @@ class Terminal:
             raise InvalidCharacterError(character)
         if not isinstance(is_visible, bool):
             raise InvalidCharacterVisibilityError(is_visible)
-        if is_visible and character.motion._view_hidden:
-            return  # Behind the camera or facing away: it shows once the view sees it again.
+        motion = character.motion
+        if motion._view_hidden:
+            # Behind the camera or facing away: a request to show waits until the view sees it again.
+            motion._show_when_seen = is_visible
+            if is_visible:
+                return
         visibility_changed = character._is_visible != is_visible
         character._is_visible = is_visible
         if is_visible:
