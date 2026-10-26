@@ -10,7 +10,8 @@ from dataclasses import dataclass
 from terminaltexteffects import Color, ColorPair, EffectCharacter, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Shaded, Space3D, Sphere, Wireframe
+from terminaltexteffects.engine.drawing import Shaded, Wireframe
+from terminaltexteffects.engine.shapes import Sphere
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.geometry import Coord
 
@@ -49,19 +50,19 @@ class DetailIterator(BaseEffectIterator[DetailConfig]):
     def __init__(self, effect: Detail) -> None:
         """Draw the spheres side by side and turn them together."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
+        self.world = self.terminal.world
         self.labels: list[EffectCharacter] = []
         look = Wireframe() if self.config.wireframe else Shaded()
         for index, (segments, rings) in enumerate(DETAIL):
             x = (index - 1) * 26
-            sphere = self.space.body(Sphere(radius=11, segments=segments, rings=rings), at=(x, 0, 0)).draw(look)
+            sphere = self.world.body(Sphere(radius=11, segments=segments, rings=rings), at=(x, 0, 0)).draw(look)
             sphere.rotate("x", 20)
             sphere.spin("y", turns=1, frames=360, ease=easing.in_out_sine)
             self.label(f"{segments} by {rings}", x)
         self.text_shown = False
 
     def label(self, text: str, x: int) -> None:
-        """Write `text` on the bottom row, under the body at `x`. Labels are plain characters, not part of the space."""
+        """Write `text` on the bottom row, under the body at `x`. Labels are plain characters on the text plane."""
         start = self.terminal.canvas.center.column + x - len(text) // 2
         for offset, symbol in enumerate(text):
             character = self.terminal.add_character(symbol, Coord(start + offset, self.terminal.canvas.bottom))
@@ -71,19 +72,16 @@ class DetailIterator(BaseEffectIterator[DetailConfig]):
 
     def __next__(self) -> str:
         """Turn the spheres, then swap them for the text."""
-        if self.space.animating:
-            self.space.step()
-        elif not self.text_shown:
-            for body in self.space.bodies:
-                body.erase()
+        if not self.world.animating:
+            if self.text_shown:
+                raise StopIteration
+            for body in self.world.bodies:
+                body.erase()  # The world hides its cells when it next paints.
             for character in self.labels:
                 self.terminal.set_character_visibility(character, is_visible=False)
-            self.space.step()  # Hides the surface characters once nothing is drawn.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True
-        else:
-            raise StopIteration
         self.update()
         return self.frame
 

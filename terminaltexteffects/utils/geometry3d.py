@@ -45,6 +45,7 @@ if TYPE_CHECKING:
 
 _DATACLASS_SLOT_OPTIONS = {"slots": True} if sys.version_info >= (3, 10) else {}
 _EPSILON = 1e-9
+_DEFAULT_DISTANCE = 120.0
 
 Matrix3 = tuple[float, float, float, float, float, float, float, float, float]
 """A 3x3 matrix in row-major order."""
@@ -446,6 +447,34 @@ class Camera:
         """
         self._position = _coordinates(x, y, z)
         self._moved = True
+        return self
+
+    def set_perspective(self, strength: float = 1.0) -> Camera:
+        """Set how strongly depth shrinks things, now: 1 is natural, larger exaggerates depth, 0 is orthographic.
+
+        The eye's reference distance becomes `120 / strength` (120 when orthographic) and focal length follows it, so
+        the z = 0 plane keeps its size at any strength. An explicitly positioned eye stays where it is.
+
+        Args:
+            strength (float): Perspective strength; 0 or more, and less than 120 divided by `near`.
+
+        Returns:
+            Camera: This camera, for chaining.
+
+        Raises:
+            ValueError: If `strength` is negative or puts the eye at or inside the near plane.
+
+        """
+        if strength < 0:
+            msg = "Perspective strength must not be negative."
+            raise ValueError(msg)
+        distance = _DEFAULT_DISTANCE / strength if strength else _DEFAULT_DISTANCE
+        if distance <= self.near:
+            msg = f"Perspective strength {strength} puts the eye inside the near plane."
+            raise ValueError(msg)
+        self.distance = distance
+        self.focal = None
+        self.orthographic = strength == 0
         return self
 
     def set_rotation(self, rotation: Rotation | None = None) -> Camera:

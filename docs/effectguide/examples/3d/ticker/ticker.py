@@ -10,7 +10,9 @@ from dataclasses import dataclass
 from terminaltexteffects import Color, Gradient
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Cylinder, Space3D, Textured, rotation_about
+from terminaltexteffects.engine.drawing import Textured
+from terminaltexteffects.engine.shapes import Cylinder
+from terminaltexteffects.engine.tweens import rotation_about
 from terminaltexteffects.utils import argutils
 
 
@@ -44,11 +46,13 @@ class TickerIterator(BaseEffectIterator[TickerConfig]):
         """Wrap the message around a short, wide cylinder."""
         super().__init__(effect)
         # Gentle perspective keeps the front of the drum from magnifying the letters too much.
-        self.space = Space3D(self.terminal, perspective=0.5, light="front")
+        self.world = self.terminal.world
+        self.world.camera.set_perspective(0.5)
+        self.world.set_light("front")
         amber = Gradient(Color("#3a2000"), Color("#ffb000"), Color("#fff0c0"), steps=10)
         # Two columns tall is one row, so the message runs around the drum once, in a single line.
         drum = Cylinder(radius=26, height=2, segments=72)
-        self.drum = self.space.body(drum).draw(Textured(self.config.message, gradient=amber))
+        self.drum = self.world.body(drum).draw(Textured(self.config.message, gradient=amber))
         self.tilt = rotation_about("x", 10)  # Tip the top toward the viewer, so we look down on the drum a little.
         self.frames = 420
         self.frame_number = 0
@@ -60,12 +64,10 @@ class TickerIterator(BaseEffectIterator[TickerConfig]):
             # Turn about the drum's own axis first, then tilt. Calling rotate("y") on the tilted drum would turn it
             # about the world's y axis instead, and the drum would wobble.
             turn = rotation_about("y", -0.6 * self.frame_number)  # Right to left, so the message reads forward.
-            self.drum.set_rotation(self.tilt * turn)
-            self.space.step()
+            self.drum.rotation = self.tilt * turn
             self.frame_number += 1
         elif not self.text_shown:
-            self.drum.erase()
-            self.space.step()  # Hides the surface characters once nothing is drawn.
+            self.drum.erase()  # The world hides its cells when it next paints.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True

@@ -27,6 +27,7 @@ from terminaltexteffects.engine._row_cache import RowCache
 from terminaltexteffects.engine.base_character import EffectCharacter
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.terminal_input import ParsedCharacter, VirtualScreenParser
+from terminaltexteffects.engine.world import World
 from terminaltexteffects.utils import ansitools, argutils, geometry
 from terminaltexteffects.utils.argutils import CharacterGroup, CharacterOrder, CharacterSort, ColorSort
 from terminaltexteffects.utils.exceptions import (
@@ -324,6 +325,7 @@ class Terminal:
         config (TerminalConfig): Immutable construction-time configuration snapshot. To apply different settings,
             construct a new `Terminal` from a mutable `TerminalConfig`.
         canvas (Canvas): The canvas in the terminal.
+        world (World): The 3D world: its text plane covers the canvas, and every character starts on it.
         character_by_input_coord (dict[Coord, EffectCharacter]): Mapping of input-character leading coordinates and
             fill characters keyed by canvas coordinates. Accessing the mapping materializes any deferred fill
             characters. Characters created with `add_character()` are tracked separately.
@@ -407,6 +409,8 @@ class Terminal:
             terminal_dimensions if terminal_dimensions is not None else self._get_terminal_dimensions()
         )
         self.canvas = canvas_module.Canvas(*self._get_canvas_dimensions())
+        self.world = World(self.canvas)
+        self.world._attach_terminal(self)
         if not self.config.ignore_terminal_dimensions:
             self.canvas_column_offset, self.canvas_row_offset = self._calc_canvas_offsets()
         else:
@@ -498,6 +502,20 @@ class Terminal:
             *self._added_characters,
         ):
             self._row_cache.track(character)
+
+    def _project_all_characters(self) -> None:
+        """Project every character again, after the camera or a body moved."""
+        for character in (
+            *self._input_characters,
+            *self._inner_fill_characters,
+            *self._outer_fill_characters,
+            *self._added_characters,
+        ):
+            motion = character.motion
+            if motion.current_coord is not motion._cell:
+                # The effect assigned a cell since the last tick: take it before projecting, or it would be lost.
+                motion._sync()
+            motion._resolve()
 
     def _build_input_character(self, parsed_character: ParsedCharacter, character_id_offset: int) -> EffectCharacter:
         """Allocate one terminal-owned character from parser output."""
@@ -1375,7 +1393,9 @@ class Terminal:
         """Set whether a character participates in terminal rendering.
 
         This updates both the character's internal visibility flag and the terminal's
-        tracked set of currently visible characters.
+        tracked set of currently visible characters. A character the world hides, because
+        it is behind the camera or faces away on a body that hides such characters, stays
+        hidden until the view sees it again.
 
         Args:
             character (EffectCharacter): Character whose visibility should be updated.
@@ -1393,6 +1413,12 @@ class Terminal:
             raise InvalidCharacterError(character)
         if not isinstance(is_visible, bool):
             raise InvalidCharacterVisibilityError(is_visible)
+        motion = character.motion
+        if motion._view_hidden:
+            # Behind the camera or facing away: a request to show waits until the view sees it again.
+            motion._show_when_seen = is_visible
+            if is_visible:
+                return
         visibility_changed = character._is_visible != is_visible
         character._is_visible = is_visible
         if is_visible:

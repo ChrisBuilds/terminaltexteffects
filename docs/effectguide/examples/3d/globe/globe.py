@@ -10,7 +10,8 @@ from dataclasses import dataclass
 from terminaltexteffects import easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Space3D, Sphere, Textured
+from terminaltexteffects.engine.drawing import Textured
+from terminaltexteffects.engine.shapes import Sphere
 from terminaltexteffects.utils import argutils
 
 
@@ -37,26 +38,23 @@ class GlobeIterator(BaseEffectIterator[GlobeConfig]):
     def __init__(self, effect: Globe) -> None:
         """Wrap the input text around a sphere and turn it."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
+        self.world = self.terminal.world
         # More segments and rings make a rounder outline. back="dim" shows the far side through the text's spaces.
-        globe = self.space.body(Sphere(radius=20, segments=48, rings=24)).draw(Textured(back="dim"))
+        globe = self.world.body(Sphere(radius=20, segments=48, rings=24)).draw(Textured(back="dim"))
         globe.rotate("z", -15).rotate("x", 15)
         globe.spin("y", turns=1, frames=480, ease=easing.in_out_sine, local=True)
         self.text_shown = False
 
     def __next__(self) -> str:
         """Turn the globe, then swap it for the text."""
-        if self.space.animating:
-            self.space.step()
-        elif not self.text_shown:
-            for body in self.space.bodies:
-                body.erase()
-            self.space.step()  # Hides the surface characters once nothing is drawn.
+        if not self.world.animating:
+            if self.text_shown:
+                raise StopIteration
+            for body in self.world.bodies:
+                body.erase()  # The world hides its cells when it next paints.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True
-        else:
-            raise StopIteration
         self.update()
         return self.frame
 

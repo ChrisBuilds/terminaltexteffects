@@ -29,7 +29,7 @@ The Turns example has three modes. In the first, each cube spins about one axis:
 
 ```python
 for axis, x in (("x", -26), ("y", 0), ("z", 26)):
-    cube = self.space.body(Cube(14), at=(x, 0, 0)).draw(Shaded())
+    cube = self.world.body(Cube(14), at=(x, 0, 0)).draw(Shaded())
     cube.hold(30).spin(axis, turns=1, frames=240, ease=easing.in_out_sine).hold(30)
 ```
 
@@ -49,18 +49,18 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 
 ![Three cubes, labeled about x, about y and about z, each turn about that axis](../../img/effectguide/turns_axes_demo.webp)
 
-`spin(axis, turns, frames, ease)` queues whole or partial turns about an axis. It's a **tween**: the space plays it
-one frame at a time in `step()`. `rotate(axis, degrees)` turns the body by that much right away instead, which is
+`spin(axis, turns, frames, ease)` queues whole or partial turns about an axis. It's a **tween**: the world plays it
+one frame at a time inside `update()`. `rotate(axis, degrees)` turns the body by that much right away instead, which is
 useful when your own code decides the angle each frame.
 
-Both turn about the **world's** axes by default. `rotate("y", 5)` on a body you've already tipped forward
-turns it about the screen's vertical. Use `rotate("y", 5, local=True)` or
+Both turn about the **parent's** axes by default, which for a body in the world are the world's axes.
+`rotate("y", 5)` on a body you've already tipped forward turns it about the screen's vertical. Use `rotate("y", 5, local=True)` or
 `spin("y", local=True)` to turn about the body's own tipped axis. The local axis follows the body
 when other turns run alongside it.
 
 ![Two tilted boxes turn. Left, spin("y") turns about world y, and the box's own axis sweeps a cone. Right, spin("y", local=True) turns about the box's own axis, which stays put](../../img/effectguide/3d/rotation_local.webp)
 
-`settle` still spins about a world axis while returning to rest. `turn_to` and `turn_to_rest`
+`settle` still spins about a parent axis while returning to rest. `turn_to` and `turn_to_rest`
 target an absolute orientation, so they have no local-axis option.
 
 ### Tumbling
@@ -82,11 +82,11 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 
 ![Two cubes start in the same pose. The left one, labeled turn_to_rest, turns straight back to rest. The right one, labeled settle, spins as it settles](../../img/effectguide/turns_rest_demo.webp)
 
-**Rest** is the orientation a body was created in, with no turn applied. It matters because `text_plane` places each
-character on its input cell at the pose the body has when you call it. The usual pattern, used by these examples and
-the Spin tutorial, is to build the text plane on an unmoved body and only then turn it away, so returning to rest
-brings the text home. Rest is only an orientation: if you also moved or scaled the body, bring its position and scale
-back too, with `move_to` and `scale_to` (see [Space and coordinates](coordinates.md#rest-and-pose)).
+**Rest** is the orientation a body was created in, with no turn applied. It matters most for the text plane: its
+characters are in their input cells whenever it is at rest, at the origin and at scale 1. The Spin tutorial turns the
+text plane away and back, so returning to rest brings the text home. Rest is only an orientation: if you also moved
+or scaled the body, bring its position and scale back too, with a path and `scale_to`, or all at once with `reset()`
+(see [Frames and coordinates](coordinates.md#rest-and-pose)).
 
 There are two ways back to rest:
 
@@ -95,7 +95,7 @@ There are two ways back to rest:
   It looks like a coin or a sign coming to a stop.
 
 `turn_to(rotation)` turns along the shortest path to any orientation, and `random_pose()` turns to a random one,
-drawn from the space's `rng`.
+drawn from Python's `random` module, so `random.seed` makes it repeatable.
 
 ## Under the hood
 
@@ -104,7 +104,7 @@ drawn from the space's `rng`.
 ```python
 import math
 
-from terminaltexteffects.engine.space3d import rotation_about
+from terminaltexteffects.engine.tweens import rotation_about
 from terminaltexteffects.utils.geometry3d import Rotation, Vec3
 
 tip = Rotation.about_x(math.radians(20))

@@ -11,7 +11,9 @@ from dataclasses import dataclass
 from terminaltexteffects import Color, ColorPair
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Shaded, Space3D, Sphere, Torus, rotation_about
+from terminaltexteffects.engine.drawing import Shaded
+from terminaltexteffects.engine.shapes import Sphere, Torus
+from terminaltexteffects.engine.tweens import rotation_about
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.geometry3d import Vec3
 
@@ -53,19 +55,19 @@ class LightIterator(BaseEffectIterator[LightConfig]):
     def __init__(self, effect: Light) -> None:
         """Draw the shape with the chosen symbols."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
+        self.world = self.terminal.world
         shape = Sphere(radius=16, segments=32, rings=16) if self.config.shape == "sphere" else Torus(18, 7)
-        self.body = self.space.body(shape).draw(Shaded(symbols=self.config.symbols))
+        self.body = self.world.body(shape).draw(Shaded(symbols=self.config.symbols))
         self.body.rotate("x", 30)
-        # A sun and a dotted ray mark where the light is. They are mounted on a body of their own that turns with the
-        # light, so the space places them in 3D and the shape hides them while the light is behind.
-        self.marker = self.space.body()
+        # A sun and a dotted ray mark where the light is. They are attached to a body of their own that turns with
+        # the light, so the world places them in 3D and the shape hides them while the light is behind.
+        self.marker = self.world.body()
         start = Vec3(0, 0.5, 1).normalized()  # The light's direction at the start of its circle.
         self.markers = []
         for distance, symbol in ((32, "☼"), (29, "•"), (26, "•"), (23, "•"), (20, "•")):
             character = self.terminal.add_character(symbol, self.terminal.canvas.center)
             character.animation.set_appearance(symbol, ColorPair(fg=Color("#ffd75f")))
-            self.marker.add_char(character, self.marker.anchor(0, start.y * distance, start.z * distance))
+            character.attach(self.marker, at=(0, start.y * distance, start.z * distance))
             self.terminal.set_character_visibility(character, is_visible=True)
             self.active_characters.add(character)
             self.markers.append(character)
@@ -77,20 +79,17 @@ class LightIterator(BaseEffectIterator[LightConfig]):
         """Move the light one step around the shape, then swap the shape for the text."""
         if self.frame_number < self.frames:
             # The light travels a full circle around the y axis, a little above the shape and in front of it at
-            # the start. Space3D.light is the direction toward the light, so it must be a unit vector.
+            # the start. set_light takes the direction toward the light.
             angle = 2 * math.pi * self.frame_number / self.frames
-            self.space.light = Vec3(math.sin(angle), 0.5, math.cos(angle)).normalized()
+            self.world.set_light((math.sin(angle), 0.5, math.cos(angle)))
             # Turning the marker about y by the same angle carries it along the light's circle.
-            self.marker.set_rotation(rotation_about("y", math.degrees(angle)))
+            self.marker.rotation = rotation_about("y", math.degrees(angle))
             self.body.rotate("y", 0.5)
-            self.space.step()
             self.frame_number += 1
         elif not self.text_shown:
-            self.body.erase()
-            self.marker.release_all()
+            self.body.erase()  # The world hides its cells when it next paints.
             for character in self.markers:
                 self.terminal.set_character_visibility(character, is_visible=False)
-            self.space.step()  # Hides the surface characters once nothing is drawn.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True

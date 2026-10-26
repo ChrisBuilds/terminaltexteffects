@@ -10,9 +10,9 @@ from dataclasses import dataclass
 from terminaltexteffects import easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Cube, Shaded, Space3D
+from terminaltexteffects.engine.drawing import Shaded
+from terminaltexteffects.engine.shapes import Box, Cube
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.geometry3d import Camera
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -36,34 +36,30 @@ class CellsIterator(BaseEffectIterator[CellsConfig]):
     """Produce the frames of the Cells effect."""
 
     def __init__(self, effect: Cells) -> None:
-        """Make two spaces, one of them treating cells as square, and turn a cube in each."""
+        """Turn a cube beside a box twice its height: how the cube would look if rows counted as one unit."""
         super().__init__(effect)
-        corrected = Space3D(self.terminal)
-        # The same camera, except that it treats one row as one column tall.
-        square = Space3D(self.terminal)
-        square.camera = Camera.for_canvas(self.terminal.canvas, distance=square.camera.distance, row_scale=1.0)
-        self.spaces = (corrected, square)
-        for space, x in ((corrected, -20), (square, 20)):
-            cube = space.body(Cube(16), at=(x, 0, 0)).draw(Shaded())
-            cube.rotate("x", 20)
-            cube.spin("y", turns=1, frames=300, ease=easing.in_out_sine)
+        self.world = self.terminal.world
+        # The camera counts a row as two units tall, so the cube on the left is square on screen. Treating rows
+        # as one unit would draw everything twice as tall, like the box on the right.
+        self.bodies = (
+            self.world.body(Cube(16), at=(-20, 0, 0)).draw(Shaded()),
+            self.world.body(Box(16, 32, 16), at=(20, 0, 0)).draw(Shaded()),
+        )
+        for body in self.bodies:
+            body.rotate("x", 20)
+            body.spin("y", turns=1, frames=300, ease=easing.in_out_sine)
         self.text_shown = False
 
     def __next__(self) -> str:
-        """Turn the cubes, then swap them for the text."""
-        if any(space.animating for space in self.spaces):
-            for space in self.spaces:
-                space.step()
-        elif not self.text_shown:
-            for space in self.spaces:
-                for body in space.bodies:
-                    body.erase()
-                space.step()  # Hides the surface characters once nothing is drawn.
+        """Turn the bodies, then swap them for the text."""
+        if not self.world.animating:
+            if self.text_shown:
+                raise StopIteration
+            for body in self.bodies:
+                body.erase()  # The world hides its cells when it next paints.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True
-        else:
-            raise StopIteration
         self.update()
         return self.frame
 

@@ -10,6 +10,7 @@ from terminaltexteffects.utils.exceptions.animation_exceptions import (
 from terminaltexteffects.utils.exceptions.base_character_exceptions import (
     DuplicateEventRegistrationError,
     EventRegistrationCallerError,
+    EventRegistrationNodeError,
     EventRegistrationTargetError,
     InvalidSymbolError,
 )

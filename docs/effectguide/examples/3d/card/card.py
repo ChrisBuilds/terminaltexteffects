@@ -1,4 +1,4 @@
-"""Card: the input text turns like a card, showing how mounted characters thin out edge-on.
+"""Card: the input text turns like a card, showing how characters on a turning body thin out edge-on.
 
 An Effect Guide example for the Depth and Hidden Surfaces chapter.
 """
@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from terminaltexteffects import easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Space3D
 from terminaltexteffects.utils import argutils
 
 
@@ -42,26 +41,19 @@ class CardIterator(BaseEffectIterator[CardConfig]):
     """Produce the frames of the Card effect."""
 
     def __init__(self, effect: Card) -> None:
-        """Mount the text on a plane and queue one slow turn."""
+        """Turn the text plane itself, the body every character starts on, once and slowly."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
-        self.card = self.space.body()
-        characters = [c for c in self.terminal.get_characters() if c.input_symbol != " "]
-        self.card.add_chars(
-            characters,
-            self.card.text_plane(characters),
-            hide_when_facing_away=self.config.hide_back,
-        )
-        for character in characters:
-            self.terminal.set_character_visibility(character, is_visible=True)
-            self.active_characters.add(character)
-        self.card.hold(20).spin("y", turns=1, frames=360, ease=easing.in_out_sine).hold(20)
-        self.card.on_complete(lambda card: card.release_all())
+        self.world = self.terminal.world
+        card = self.world.text_plane
+        card.hide_facing_away = self.config.hide_back
+        for character in self.terminal.get_characters():
+            if character.input_symbol != " ":
+                self.terminal.set_character_visibility(character, is_visible=True)
+        card.hold(20).spin("y", turns=1, frames=360, ease=easing.in_out_sine).hold(20)
 
     def __next__(self) -> str:
         """Turn the card until it is back at rest."""
-        if self.space.animating or self.active_characters:
-            self.space.step()
+        if self.world.animating:
             self.update()
             return self.frame
         raise StopIteration

@@ -27,9 +27,8 @@ rounder at a higher cost per frame.
 
 ## Shape ownership
 
-A body's `shape` is read-only: its mesh and texture layouts are built from that shape when
-`space.body(shape)` is called. Create another body to use a different shape. Anchors belong to
-the body that created them and keep their original local coordinates.
+A body's `shape` is read-only: its mesh, surface and texture layouts are built from that shape when
+`world.body(shape)` is called. Create another body to use a different shape, and attach the characters to it.
 
 
 ## In TTE
@@ -37,7 +36,7 @@ the body that created them and keep their original local coordinates.
 The Gallery example shows every built-in shape, a few at a time so each is large enough to read. Each shape is one body:
 
 ```python
-body = self.space.body(shape, at=(x, 0, 0)).draw(self.look)  # shape is Cube(...), Torus(...) and so on.
+body = self.world.body(shape, at=(x, 0, 0)).draw(self.look)  # shape is Cube(...), Torus(...) and so on.
 body.rotate("x", 25)
 body.spin("y", turns=1, frames=180, ease=easing.in_out_sine)
 ```
@@ -73,7 +72,7 @@ The Star example builds its own shape. A custom shape subclasses `Shape`, like t
 a mesh from `build_mesh`. Once defined, it's used like any other shape:
 
 ```python
-star = self.space.body(StarPrism()).draw(Shaded())
+star = self.world.body(StarPrism()).draw(Shaded())
 star.rotate("x", -70)  # Stand the star up, with a cap facing the viewer.
 ```
 
@@ -112,13 +111,13 @@ has `indices` into the vertices, optional `uvs` for [texture mapping](textures.m
 each face's normal from its corner order when it's created, and `edges()` lists each edge once.
 
 The builders, such as `g3.box`, `g3.prism` and `g3.uv_sphere`, return meshes, and `mesh.scaled(x, y, z)` stretches
-one. A `Shape` adds what a body needs on top of its mesh: `surface_points` for spreading anchors over it and
+one. A `Shape` adds what a body needs on top of its mesh: `build_surface` for the grid characters sit on and
 `texture_cell` for `Textured` looks.
 
-A mesh is also something to mount characters on. `body.surface(count)`, `vertices()` and `edges(count)` read the
-body's mesh to place anchors over its faces, on its corners or along its edges, with normals pointing outward, and they
-work whether or not the body is drawn. [Anchor layouts](coordinates.md#anchor-layouts) compares them with
-`text_plane`, `ring` and `wrap`.
+A mesh is only for drawing. Characters sit on the body's **surface**, a grid built by `build_surface`, which is a
+separate thing from the mesh's faces (see [Surfaces](surfaces.md)). A custom shape like `StarPrism` doesn't define
+`build_surface`, so its body has no surface: it can be drawn, and characters can be attached to it with `(x, y, z)`
+positions in its axes, as on a pivot.
 
 ## At cell resolution
 

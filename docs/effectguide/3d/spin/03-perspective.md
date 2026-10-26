@@ -21,25 +21,29 @@ Replace `myspin.py` with this version:
 
 ### Perspective
 
-`Space3D(self.terminal, perspective=1)` uses the default camera. With perspective, a point's view-axis depth
+`world.camera.set_perspective(1)` gives the camera its default perspective. With perspective, a point's view-axis depth
 controls its scale on screen: far points crowd toward the center, and near points spread out. The edge of the sheet that
 turns toward you now grows, and the far edge shrinks.
 
 ### Starting far away
 
-`set_position(0, 0, -START_DISTANCE)` moves the sheet 200 columns away from the viewer, along z. It's still centered,
-so it appears as a small block in the middle of the canvas.
+`self.sheet.position = Vec3(0, 0, -START_DISTANCE)` moves the sheet 200 columns away from the viewer, along z.
+It's still centered, so it appears as a small block in the middle of the canvas.
 
-Two tweens now run together:
+The sheet comes back with a **path**, exactly as a character would travel. A body's path is in its parent's frame,
+which for the text plane is the world, so the waypoint is the world origin:
 
 ```python
 self.sheet.spin("y", turns=2, frames=SPIN_FRAMES, ease=easing.out_cubic)
-self.sheet.move_to(0, 0, 0, frames=SPIN_FRAMES, ease=easing.out_cubic, together=True)
+approach = self.sheet.motion.new_path(speed=START_DISTANCE / SPIN_FRAMES, ease=easing.out_cubic)
+approach.new_waypoint(Vec3(0, 0, 0))
+self.sheet.motion.activate_path(approach)
 ```
 
-`together=True` starts `move_to` alongside the spin instead of after it. Both take `SPIN_FRAMES`, which is what makes
-them finish on the same frame. Both also use `out_cubic`, so the sheet arrives fast and slows as it lands, and the
-spin and the approach stay in step all the way: halfway through the turn, it's also halfway home.
+A path's speed is units per frame, so a speed of `START_DISTANCE / SPIN_FRAMES` takes exactly `SPIN_FRAMES` frames,
+and the approach and the spin finish on the same frame. Both also use `out_cubic`, so the sheet arrives fast and slows
+as it lands, and the spin and the approach stay in step all the way: halfway through the turn, it's also halfway
+home. `world.animating` covers body paths as well as tweens, so the effect runs until both are done.
 
 ## Run it
 
