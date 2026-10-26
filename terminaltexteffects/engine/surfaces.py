@@ -764,7 +764,7 @@ class Surface:
 
         Columns are unwrapped so each point follows on from the last, points at a pole take the columns either
         side of it, and the height changes evenly along the way. With `simplify`, a route that is just a straight
-        line in the grid to `end` itself is None.
+        line in the grid to `end` itself, as long as the grid line, is None.
         """
         if lengths is None:
             lengths = [_length(_sub(b, a)) for a, b in zip(samples, samples[1:])]
@@ -794,7 +794,12 @@ class Surface:
         points = tuple(
             (column, row, start[2] + rise * distance / total) for (column, row), distance in zip(unwrapped, travelled)
         )
-        if simplify and len(points) == 2 and points[-1] == end:
+        if (
+            simplify
+            and len(points) == 2
+            and points[-1] == end
+            and math.isclose(total, math.hypot(end[0] - start[0], (end[1] - start[1]) * _ROW), rel_tol=1e-9)
+        ):
             return None
         return points, tuple(distance * stretch for distance in travelled)
 
@@ -1218,7 +1223,10 @@ class ExtrudedSurface(_PolyhedralSurface):
                 point2 = (rim[0], rim[2])
                 on_band = False
             else:
-                chord = -2 * (point2[0] * d2[0] + point2[1] * d2[1])
+                # Where the ray leaves the disc; from the rim this is the chord, -2 * along.
+                along = point2[0] * d2[0] + point2[1] * d2[1]
+                inside = radius * radius - point2[0] * point2[0] - point2[1] * point2[1]
+                chord = -along + math.sqrt(max(0.0, along * along + inside))
                 reach = min(remaining, chord) if chord > _EPSILON else remaining
                 pieces = max(1, math.ceil(reach / _STEP))
                 for k in range(1, pieces + 1):

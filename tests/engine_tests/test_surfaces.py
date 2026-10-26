@@ -451,3 +451,32 @@ def test_walk_along_and_off_a_cylinder_rim(world: World, mover: EffectCharacter)
     assert close(mover.position, (8, edge - 3, 0))
     travel(world, mover, cylinder, (8, edge, 0), lambda p: p.walk(rows=10))
     assert close(mover.position, (8 + surface.columns / 2, edge, 0))
+
+
+def test_short_sphere_routes_keep_their_length(world: World, mover: EffectCharacter) -> None:
+    """A route shorter than one unit near a pole is measured along the sphere, not across the grid."""
+    sphere = world.body(Sphere(10))
+    path, _ = travel(world, mover, sphere, (1, 0.1, 0), lambda p: p.new_waypoint(g3.Vec3(20, 0.1, 0)))
+    assert path.total_distance < 1
+
+
+def test_waypoints_past_the_grid_are_reached_the_short_way(world: World, mover: EffectCharacter) -> None:
+    """A waypoint given past the end of the columns is moved toward where it lands, not across the whole grid."""
+    cube = world.body(Cube(16))
+    mover.attach(cube, at=(2, 8, 0))
+    path = mover.motion.new_path(speed=0.2)
+    path.new_waypoint(g3.Vec3(65, 8, 0))
+    mover.motion.activate_path(path)
+    columns = []
+    while mover.motion.active_path is not None:
+        mover.motion.move()
+        columns.append(mover.position.x)
+    assert all(1 <= column <= 2 for column in columns)
+    assert columns[-1] == 1
+
+
+def test_walk_from_inside_a_cylinder_cap(world: World, mover: EffectCharacter) -> None:
+    """A walk starting inside a cap crosses the rest of it before going down the far side."""
+    cylinder = world.body(Cylinder(10, 12))
+    travel(world, mover, cylinder, (8, 14, 0), lambda p: p.walk(rows=10))
+    assert math.isclose(mover.position.y, 8, abs_tol=1e-6)

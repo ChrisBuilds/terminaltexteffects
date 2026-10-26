@@ -398,6 +398,7 @@ class Path:
             else:
                 if walk is None and closed and not end._curve_controls:
                     stop = typing.cast("Surface", surface)._normalize(stop)
+                    end.__dict__["_xyz"] = stop
                     route = typing.cast("Surface", surface)._route(previous, stop)
                 segment._route = route
                 if route is not None:
