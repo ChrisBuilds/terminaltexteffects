@@ -10,7 +10,8 @@ from dataclasses import dataclass
 from terminaltexteffects import Color, ColorPair, EffectCharacter, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import (
+from terminaltexteffects.engine.drawing import Shaded, Wireframe
+from terminaltexteffects.engine.shapes import (
     Box,
     Cube,
     Cylinder,
@@ -18,13 +19,10 @@ from terminaltexteffects.engine.space3d import (
     Octahedron,
     Prism,
     Pyramid,
-    Shaded,
     Shape,
-    Space3D,
     Sphere,
     Tetrahedron,
     Torus,
-    Wireframe,
 )
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.geometry import Coord
@@ -73,7 +71,8 @@ class GalleryIterator(BaseEffectIterator[GalleryConfig]):
     def __init__(self, effect: Gallery) -> None:
         """Show the first page of shapes."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal, perspective=0.5)
+        self.world = self.terminal.world
+        self.world.camera.set_perspective(0.5)
         self.look = Wireframe() if self.config.wireframe else Shaded()
         self.labels: list[EffectCharacter] = []
         self.pages = iter(PAGES)
@@ -81,20 +80,20 @@ class GalleryIterator(BaseEffectIterator[GalleryConfig]):
         self.text_shown = False
 
     def show_page(self, shapes: tuple[tuple[str, Shape], ...]) -> None:
-        """Erase the shapes on screen and spin the next few, side by side, each named underneath."""
-        for body in self.space.bodies:
-            body.erase()
+        """Remove the shapes on screen and spin the next few, side by side, each named underneath."""
+        for body in self.world.bodies:
+            self.world.remove(body)  # Its cells are hidden when the world next paints.
         self.clear_labels()
         spacing = 27 if len(shapes) == 3 else 34
         for index, (name, shape) in enumerate(shapes):
             x = (index - (len(shapes) - 1) / 2) * spacing
-            body = self.space.body(shape, at=(x, 0, 0)).draw(self.look)
+            body = self.world.body(shape, at=(x, 0, 0)).draw(self.look)
             body.rotate("x", 25)
             body.spin("y", turns=1, frames=180, ease=easing.in_out_sine)
             self.label(name, self.terminal.canvas.center.column + round(x))
 
     def label(self, text: str, column: int) -> None:
-        """Write `text` on the bottom row, centered on `column`. Labels are plain characters, not part of the space."""
+        """Write `text` on the bottom row, centered on `column`. Labels are plain characters on the text plane."""
         start = column - len(text) // 2
         for offset, symbol in enumerate(text):
             character = self.terminal.add_character(symbol, Coord(start + offset, self.terminal.canvas.bottom))
@@ -110,21 +109,19 @@ class GalleryIterator(BaseEffectIterator[GalleryConfig]):
 
     def __next__(self) -> str:
         """Spin each page of shapes in turn, then swap them for the text."""
-        if self.space.animating:
-            self.space.step()
-        elif (page := next(self.pages, None)) is not None:
-            self.show_page(page)
-            self.space.step()
-        elif not self.text_shown:
-            for body in self.space.bodies:
-                body.erase()
-            self.clear_labels()
-            self.space.step()  # Hides the surface characters once nothing is drawn.
-            for character in self.terminal.get_characters():
-                self.terminal.set_character_visibility(character, is_visible=True)
-            self.text_shown = True
-        else:
-            raise StopIteration
+        if not self.world.animating:
+            page = next(self.pages, None)
+            if page is not None:
+                self.show_page(page)
+            elif self.text_shown:
+                raise StopIteration
+            else:
+                for body in self.world.bodies:
+                    self.world.remove(body)
+                self.clear_labels()
+                for character in self.terminal.get_characters():
+                    self.terminal.set_character_visibility(character, is_visible=True)
+                self.text_shown = True
         self.update()
         return self.frame
 

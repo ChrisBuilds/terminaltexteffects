@@ -10,8 +10,10 @@ from dataclasses import dataclass
 from terminaltexteffects import Coord, EffectCharacter, EventHandler, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Body, Space3D, rotation_about
+from terminaltexteffects.engine.tweens import rotation_about
+from terminaltexteffects.engine.world import Body
 from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.geometry3d import Vec3
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
@@ -35,28 +37,29 @@ class HandoffIterator(BaseEffectIterator[HandoffConfig]):
     """Produce the frames of the Handoff effect."""
 
     def __init__(self, effect: Handoff) -> None:
-        """Mount the text on a plane, push the plane away, and queue its return."""
+        """Push the text plane away, and queue its return."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
-        self.plane = self.space.body()
-        characters = [c for c in self.terminal.get_characters() if c.input_symbol != " "]
-        # Anchors are made at the body's rest pose, so each one meets its character's input cell at rest.
-        self.plane.add_chars(characters, self.plane.text_plane(characters))
-        for character in characters:
+        self.world = self.terminal.world
+        self.plane = self.world.text_plane
+        for character in self.plane_characters():
             self.terminal.set_character_visibility(character, is_visible=True)
             self.active_characters.add(character)
 
-        # Jump away at once (frames=0), then come back with a turn that ends exactly at rest.
-        self.plane.set_rotation(rotation_about("x", 60) * rotation_about("y", 200)).set_position(0, 0, -300)
-        self.plane.move_to(0, 0, 0, frames=150, ease=easing.out_cubic)
-        self.plane.settle("y", turns=1, frames=150, ease=easing.out_cubic, together=True)
+        # Jump away at once, then come back with a turn that ends exactly at rest. The return path's speed is
+        # units per frame, so it takes 150 frames, as long as the turn.
+        self.plane.rotation = rotation_about("x", 60) * rotation_about("y", 200)
+        self.plane.position = Vec3(0, 0, -300)
+        back = self.plane.motion.new_path(speed=300 / 150, ease=easing.out_cubic)
+        back.new_waypoint(Vec3(0, 0, 0))
+        self.plane.motion.activate_path(back)
+        self.plane.settle("y", turns=1, frames=150, ease=easing.out_cubic)
         self.plane.on_complete(self.hand_off)
         self.columns: list[list[EffectCharacter]] = []
         self.frame_number = 0
 
     def hand_off(self, plane: Body) -> None:
-        """Release every character where it sits and give it an ordinary 2D hop."""
-        plane.release_all()
+        """Put the plane back at rest and give every character an ordinary 2D hop from its input cell."""
+        plane.reset()
         for character in self.plane_characters():
             up = character.motion.new_path(speed=0.4, ease=easing.out_quad, path_id="up")
             up.new_waypoint(Coord(character.input_coord.column, character.input_coord.row + 2))
@@ -75,8 +78,7 @@ class HandoffIterator(BaseEffectIterator[HandoffConfig]):
 
     def __next__(self) -> str:
         """Play the 3D return, then start the hops one column at a time."""
-        if self.space.animating or self.columns or self.active_characters:
-            self.space.step()
+        if self.world.animating or self.columns or self.active_characters:
             if self.columns and self.frame_number % 2 == 0:
                 for character in self.columns.pop():
                     if character.input_symbol != " ":

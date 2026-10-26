@@ -667,6 +667,10 @@ class Surface:
     def _build_face(self, name: FaceName) -> Face:
         raise NotImplementedError  # pragma: no cover
 
+    def _face_at(self, position: XYZ) -> FaceName | None:  # noqa: ARG002
+        """Return the face a normalized position is on, or None for a surface without faces."""
+        return None
+
     # Random positions and text
 
     def random_coord(self) -> g3.Vec3:
@@ -913,6 +917,9 @@ class PlaneSurface(Surface):
     def _build_face(self, name: FaceName) -> Face:  # noqa: ARG002
         return _GridFace(self, "front", int(self.columns), int(self.rows), (self.left - 1, self.bottom - 1))
 
+    def _face_at(self, position: XYZ) -> FaceName | None:  # noqa: ARG002
+        return "front"
+
     def random_coord(self) -> g3.Vec3:
         """Return a random position within the plane's edges."""
         return g3.Vec3(
@@ -1034,6 +1041,13 @@ class _PolyhedralSurface(Surface):
     def _build_face(self, name: FaceName) -> Face:
         facet = self._polyhedron.facets[self._face_facets[name]]
         return _FlatFace(self, name, facet)
+
+    def _face_at(self, position: XYZ) -> FaceName | None:
+        facet = self._polyhedron.project(self._surface_point(position))[0]
+        for name, index in self._face_facets.items():
+            if index == facet:
+                return name
+        return "side"  # one of the facets a cylinder's side is routed over
 
     def _area_facets(self) -> Sequence[_Facet]:
         return self._polyhedron.facets

@@ -10,8 +10,11 @@ from dataclasses import dataclass
 from terminaltexteffects import Color, Gradient, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Cube, Space3D, Textured, rotation_about
+from terminaltexteffects.engine.drawing import Textured
+from terminaltexteffects.engine.shapes import Cube
+from terminaltexteffects.engine.tweens import rotation_about
 from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.geometry3d import Vec3
 
 SIZE = 20
 """The die's width in columns. A face is `SIZE` columns wide and `SIZE // 2` rows tall."""
@@ -60,31 +63,31 @@ class DieIterator(BaseEffectIterator[DieConfig]):
     def __init__(self, effect: Die) -> None:
         """Draw the die with a pip pattern per face and roll it to the center."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
+        self.world = self.terminal.world
         ivory = Gradient(Color("#4a3f35"), Color("#fff4e0"), steps=10)
         looks = {tag: Textured(text, gradient=ivory) for tag, text in FACES.items()}
-        die = self.space.body(Cube(SIZE), at=(-60, 0, 0)).draw(faces=looks)
-        die.set_rotation(rotation_about("diagonal", 120))
+        die = self.world.body(Cube(SIZE), at=(-60, 0, 0)).draw(faces=looks)
+        die.rotation = rotation_about("diagonal", 120)
         # Roll to the center while tumbling, then settle with the five facing the viewer and a slight tilt.
-        die.move_to(0, 0, 0, frames=150, ease=easing.out_cubic)
-        die.spin("z", turns=-1.5, frames=150, ease=easing.out_cubic, together=True)
+        # A path's speed is units per frame, so the roll takes 150 frames, as long as the spin.
+        roll = die.motion.new_path(speed=60 / 150, ease=easing.out_cubic)
+        roll.new_waypoint(Vec3(0, 0, 0))
+        die.motion.activate_path(roll)
+        die.spin("z", turns=-1.5, frames=150, ease=easing.out_cubic)
         die.turn_to(rotation_about("x", 20) * rotation_about("y", -25), frames=60, ease=easing.out_back)
         die.hold(60)
         self.text_shown = False
 
     def __next__(self) -> str:
         """Roll the die, then swap it for the text."""
-        if self.space.animating:
-            self.space.step()
-        elif not self.text_shown:
-            for body in self.space.bodies:
-                body.erase()
-            self.space.step()  # Hides the surface characters once nothing is drawn.
+        if not self.world.animating:
+            if self.text_shown:
+                raise StopIteration
+            for body in self.world.bodies:
+                body.erase()  # The world hides its cells when it next paints.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True
-        else:
-            raise StopIteration
         self.update()
         return self.frame
 

@@ -39,21 +39,29 @@ Moving nodes between parents:
 
 from __future__ import annotations
 
+import math
+import random
 import typing
 
+from terminaltexteffects.engine.camera import Camera
+from terminaltexteffects.engine.drawing import Painter, Shaded, Wireframe
 from terminaltexteffects.engine.shapes import Plane
 from terminaltexteffects.engine.surfaces import PlaneSurface
+from terminaltexteffects.engine.tweens import AXES, Axis, Tween, TweenQueue, direction, rotation_about
 from terminaltexteffects.utils import geometry3d as g3
 from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
 
-    from terminaltexteffects.engine.base_character import EventHandler
+    from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
     from terminaltexteffects.engine.canvas import Canvas
+    from terminaltexteffects.engine.drawing import Look
     from terminaltexteffects.engine.motion import BodyMotion, Motion
     from terminaltexteffects.engine.shapes import Shape
-    from terminaltexteffects.engine.surfaces import Surface
+    from terminaltexteffects.engine.surfaces import FaceName, Surface
+    from terminaltexteffects.engine.terminal import Terminal
+    from terminaltexteffects.utils.easing import EasingFunction
     from terminaltexteffects.utils.geometry import Coord
 
 __all__ = ["Body", "SpatialNode", "SurfaceTarget", "World"]
@@ -251,7 +259,7 @@ class SurfaceTarget(SpatialNode):
         raise TypeError(msg)
 
 
-class Body(SpatialNode):
+class Body(SpatialNode, TweenQueue):
     """A node with rotation and scale, which other nodes are measured against.
 
     A body's own position is in its parent's local frame. Its children are measured in its frame: surface positions
@@ -263,18 +271,29 @@ class Body(SpatialNode):
     `DEACTIVATE_PATH`, `SET_COORDINATE`, `ATTACH`, `DETACH`, `CALLBACK`). The world steps bodies' paths at the
     start of every frame.
 
+    A body turns and scales now (`rotate`, the `rotation` and `scale` setters) or over frames with queued tweens
+    (`spin`, `settle`, `turn_to`, `scale_to`, ...) that the world plays inside `update()`. Each tween runs after the
+    previous one, or alongside it with `together=True`, and applies its change as a delta, so tweens compose with
+    each other and with changes made now. Tween methods return the body, so calls chain.
+
     A body with a shape has a `surface`: a grid of cells over the shape. Characters attached to it sit on the surface
     at `(column, row, height)`, and their paths follow it, over folds and round laps.
 
     Attributes:
         world (World): The world the body belongs to.
         shape (Shape | None): The body's shape, or `None` for a pivot.
-        surface (Surface | None): The grid of cells over the shape, or `None` for a pivot or a shape without one.
+        surface (Surface): The grid of cells over the shape. Raises `ValueError` for a pivot or a shape without one.
+        has_surface (bool): Whether the body has a surface.
         position (g3.Vec3): Position in the parent's frame, in units.
         rotation (g3.Rotation): Orientation relative to the parent.
         scale (float): Uniform scale relative to the parent.
         motion (BodyMotion): Moves the body along paths in its parent's local frame.
         event_handler (EventHandler): Handles the body's path and attach events.
+        animating (bool): Whether turn or scale tweens are queued or playing.
+        mesh (g3.Mesh | None): The shape's mesh in the body's axes, or `None` without a shape.
+        drawn (bool): Whether the body is drawn with a look.
+        hide_facing_away (bool): Hide characters on the body's surface while their spot faces away from the
+            camera. Off by default.
 
     """
 
@@ -305,16 +324,27 @@ class Body(SpatialNode):
         self._motion: BodyMotion | None = None
         self._event_handler: EventHandler | None = None
         self._removed = False
+        self._home = self._position
         self._rotation = g3.Rotation()
         self._scale = 1.0
+        self._init_queue()
+        self.hide_facing_away = False
+        self._mesh: g3.Mesh | None = None
+        self._extent: float | None = None
+        self._look: Look | None = None
+        self._face_looks: dict[FaceName, Look] = {}
+        self._texts: dict[int, tuple[list[str], int]] = {}
+        self._cells: list[typing.Any] = []
         self.shape = shape
         if surface is None and shape is not None:
             surface = shape.build_surface()
         if surface is not None:
             surface._body = self
-        self.surface = surface
-        # True only for the text plane while it and the camera are as the world made them (see `World.step`).
+        self._surface = surface
+        # True only for the text plane while it and the camera are as the world made them (see `World.step`), and
+        # always for the screen.
         self._flat = False
+        self._screen = False
         # The world transform, recomputed when this body or an ancestor changes; `version` changes with it.
         self.version = 0
         self._matrix: g3.Matrix3 = _IDENTITY
@@ -327,6 +357,24 @@ class Body(SpatialNode):
 
     def _default_parent(self) -> Body:  # pragma: no cover
         return self.world.root
+
+    @property
+    def surface(self) -> Surface:
+        """The grid of cells over the body's shape.
+
+        Raises:
+            ValueError: If the body has no surface: it is a pivot, or its shape has none. Check `has_surface`.
+
+        """
+        if self._surface is None:
+            msg = "This body has no surface: it has no shape, or its shape has no surface."
+            raise ValueError(msg)
+        return self._surface
+
+    @property
+    def has_surface(self) -> bool:
+        """Whether the body has a surface characters can sit on."""
+        return self._surface is not None
 
     @property
     def motion(self) -> BodyMotion:  # type: ignore[override]
@@ -404,13 +452,253 @@ class Body(SpatialNode):
         self._scale = float(value)
         self._changed()
 
-    def rotate(self, rotation: g3.Rotation) -> None:
-        """Turn the body by `rotation`, applied after its current orientation."""
-        self.rotation = rotation * self._rotation
+    def rotate(self, axis: Axis | g3.Rotation, degrees: float = 0.0, *, local: bool = False) -> Body:
+        """Turn the body, now: `degrees` about an axis of its parent, or of its own with `local=True`.
+
+        Args:
+            axis (Axis | g3.Rotation): An axis name (`"x"`, `"y"`, `"z"`, `"diagonal"`), an `(x, y, z)` direction,
+                or a whole `Rotation`, in which case `degrees` is ignored.
+            degrees (float): The angle to turn.
+            local (bool): Turn about the body's own axis rather than its parent's.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If the axis is unknown or zero.
+
+        """
+        turn = axis if isinstance(axis, g3.Rotation) else rotation_about(axis, degrees)
+        self.rotation = self._rotation * turn if local else turn * self._rotation
+        return self
+
+    def reset(self) -> Body:
+        """Cancel tweens and put the body back where, and how, it was made: position, rotation and scale.
+
+        Returns:
+            Body: This body, for chaining.
+
+        """
+        self.cancel()
+        self._check_movable()
+        self._rotation = g3.Rotation()
+        self._scale = 1.0
+        self._place(self._home)
+        return self
+
+    # Tweens
+
+    def spin(
+        self,
+        axis: Axis = "y",
+        turns: float = 1.0,
+        frames: int = 120,
+        ease: EasingFunction | None = None,
+        *,
+        together: bool = False,
+        local: bool = False,
+    ) -> Body:
+        """Queue full turns about an axis of the parent, or of the body with `local=True`.
+
+        A local axis follows the body's orientation, including other turns playing at the same time.
+
+        Args:
+            axis (Axis): Axis name or nonzero `(x, y, z)` direction.
+            turns (float): Number of full turns; negative values turn the other way.
+            frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued tween instead of after it.
+            local (bool): Turn about the body's own axis.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative or the axis is unknown or zero.
+
+        """
+        unit = direction(axis, AXES, "axis")
+        total = 2 * math.pi * turns
+
+        def apply(previous: float, current: float) -> None:
+            turn = g3.Rotation.about_axis(unit, total * (current - previous))
+            self.rotation = self._rotation * turn if local else turn * self._rotation
+
+        return self._queue_tween(Tween(frames, apply, ease), together=together)
+
+    def settle(
+        self,
+        axis: Axis = "y",
+        turns: float = 1.0,
+        frames: int = 120,
+        ease: EasingFunction | None = None,
+        *,
+        together: bool = False,
+    ) -> Body:
+        """Queue `turns` turns about `axis` while easing out any other tilt, ending at the rest orientation.
+
+        Args:
+            axis (Axis): Axis name or nonzero `(x, y, z)` direction.
+            turns (float): Number of full turns; negative values turn the other way.
+            frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued tween instead of after it.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative or the axis is unknown or zero.
+
+        """
+        unit = direction(axis, AXES, "axis")
+        total = 2 * math.pi * turns
+        state: dict[str, g3.Rotation] = {}
+
+        def pose(fraction: float) -> g3.Rotation:
+            unwound = state["start"].slerp(g3.Rotation(), fraction)
+            return g3.Rotation.about_axis(unit, total * (fraction - 1)) * unwound
+
+        def begin() -> None:
+            state["start"] = g3.Rotation.about_axis(unit, total) * self._rotation
+            state["last"] = self._rotation
+
+        return self._queue_tween(Tween(frames, self._turn_through(pose, state), ease, begin), together=together)
+
+    def turn_to(
+        self,
+        rotation: g3.Rotation,
+        frames: int = 60,
+        ease: EasingFunction | None = None,
+        *,
+        together: bool = False,
+    ) -> Body:
+        """Queue a turn to `rotation`, relative to the parent, the shortest way round.
+
+        Args:
+            rotation (g3.Rotation): The orientation to end at. See `rotation_about`.
+            frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued tween instead of after it.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
+
+        """
+        state: dict[str, g3.Rotation] = {}
+
+        def begin() -> None:
+            state["start"] = state["last"] = self._rotation
+
+        def pose(fraction: float) -> g3.Rotation:
+            return state["start"].slerp(rotation, fraction)
+
+        return self._queue_tween(Tween(frames, self._turn_through(pose, state), ease, begin), together=together)
+
+    def turn_to_rest(self, frames: int = 60, ease: EasingFunction | None = None, *, together: bool = False) -> Body:
+        """Queue a turn back to the rest orientation, the shortest way round.
+
+        Args:
+            frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued tween instead of after it.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
+
+        """
+        return self.turn_to(g3.Rotation(), frames, ease, together=together)
+
+    def random_pose(self, frames: int = 0, ease: EasingFunction | None = None, *, together: bool = False) -> Body:
+        """Queue a turn to a random orientation, drawn evenly from all orientations with the `random` module.
+
+        Args:
+            frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued tween instead of after it.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative.
+
+        """
+        # Shoemake's method: uniform unit quaternions from three uniform numbers.
+        u1, u2, u3 = random.random(), random.random(), random.random()
+        a, b = math.sqrt(1 - u1), math.sqrt(u1)
+        target = g3.Rotation(
+            b * math.cos(2 * math.pi * u3),
+            a * math.sin(2 * math.pi * u2),
+            a * math.cos(2 * math.pi * u2),
+            b * math.sin(2 * math.pi * u3),
+        )
+        return self.turn_to(target, frames, ease, together=together)
+
+    def scale_to(
+        self,
+        scale: float,
+        frames: int = 60,
+        ease: EasingFunction | None = None,
+        *,
+        together: bool = False,
+    ) -> Body:
+        """Queue a change of the body's scale to `scale`.
+
+        Args:
+            scale (float): The positive scale to end at.
+            frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
+            ease (EasingFunction | None): Easing function, or `None` for linear progress.
+            together (bool): Play alongside the last queued tween instead of after it.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If `frames` is negative or `scale` isn't positive.
+
+        """
+        if scale <= 0:
+            msg = "A body's scale must be positive."
+            raise ValueError(msg)
+        state: dict[str, float] = {}
+
+        def begin() -> None:
+            state["start"] = state["last"] = self._scale
+
+        def apply(_previous: float, current: float) -> None:
+            value = max(state["start"] + (scale - state["start"]) * current, 1e-9)
+            self.scale = self._scale * value / state["last"]
+            state["last"] = value
+
+        return self._queue_tween(Tween(frames, apply, ease, begin), together=together)
+
+    def _turn_through(
+        self,
+        pose: Callable[[float], g3.Rotation],
+        state: dict[str, g3.Rotation],
+    ) -> Callable[[float, float], None]:
+        """Return a tween step that applies the change from the last pose to the next one."""
+
+        def apply(_previous: float, current: float) -> None:
+            target = pose(current)
+            self.rotation = target * state["last"].inverse() * self._rotation
+            state["last"] = target
+
+        return apply
 
     def _check_movable(self) -> None:
         if self is self.world.root:
             msg = "The world root never moves, turns or scales."
+            raise ValueError(msg)
+        if self._screen:
+            msg = "The screen never moves, turns or scales."
             raise ValueError(msg)
 
     def _changed(self) -> None:
@@ -453,8 +741,8 @@ class Body(SpatialNode):
         """
         self._refresh()
         position = g3._vec3(position)
-        if surface and self.surface is not None:
-            position = self.surface._local(position)
+        if surface and self._surface is not None:
+            position = self._surface._local(position)
         return self._local_to_world(position)
 
     def from_world(self, point: g3.Point3, *, surface: bool = True) -> g3.Vec3:
@@ -474,7 +762,106 @@ class Body(SpatialNode):
         # The matrix is a rotation times a uniform scale, so its inverse is its transpose over the scale squared.
         s2 = self.world_scale**2
         local = g3.Vec3((a * x + d * y + g * z) / s2, (b * x + e * y + h * z) / s2, (c * x + f * y + i * z) / s2)
-        return self.surface._locate(local) if surface and self.surface is not None else local
+        return self._surface._locate(local) if surface and self._surface is not None else local
+
+    @property
+    def world_rotation(self) -> g3.Rotation:
+        """The body's orientation in the world: its own rotation after its ancestors'."""
+        rotation, node = self._rotation, self._parent
+        while node is not None:
+            rotation = node._rotation * rotation
+            node = node._parent
+        return rotation
+
+    def _world_normal(self, normal: g3.Vec3) -> g3.Vec3:
+        """Return a direction in the body's axes as a unit direction in the world."""
+        self._refresh()
+        a, b, c, d, e, f, g, h, i = self._matrix
+        x, y, z = normal.x, normal.y, normal.z
+        return g3.Vec3(a * x + b * y + c * z, d * x + e * y + f * z, g * x + h * y + i * z).normalized()
+
+    @property
+    def mesh(self) -> g3.Mesh | None:
+        """The shape's mesh in the body's own axes, or `None` without a shape."""
+        if self._mesh is None and self.shape is not None:
+            self._mesh = self.shape.build_mesh()
+        return self._mesh
+
+    def _reach(self) -> float:
+        """How far the body's shape reaches from its origin, in world units."""
+        if self._extent is None:
+            mesh = self.mesh
+            self._extent = max((vertex.length() for vertex in mesh.vertices), default=0.0) if mesh else 0.0
+        return self._extent * self.world_scale if self._extent else 0.0
+
+    # Drawing
+
+    def draw(
+        self, look: Look | None = None, *, faces: typing.Mapping[str, Look] | typing.Mapping[int, Look] | None = None
+    ) -> Body:
+        """Draw the body with a look, from this frame on, replacing any earlier look.
+
+        The world draws the body with characters it creates, one per covered cell, so none of the effect's own
+        characters are used. Drawn cells and characters are painted farther first, so the nearest wins each cell,
+        and characters sitting on the body's surface draw over it.
+
+        Args:
+            look (Look | None): `Shaded()`, `Solid()`, `Textured()` or `Wireframe()`. With no `faces`, `None` means
+                `Shaded()`.
+            faces (Mapping[str | int, Look] | None): Looks for faces by the shape's face tags, such as one per side
+                of a die. Faces not listed use `look`, or are left out when `look` is `None`.
+
+        Returns:
+            Body: This body, for chaining.
+
+        Raises:
+            ValueError: If the body has no shape, or a `Wireframe` is combined with `faces` (a wireframe draws the
+                whole body).
+
+        """
+        if self.shape is None:
+            msg = "Only a body with a shape can be drawn."
+            raise ValueError(msg)
+        face_looks: dict[FaceName, Look] = dict(faces.items()) if faces else {}
+        if isinstance(look, Wireframe) and face_looks:
+            msg = "A Wireframe look draws the whole body, so it can't be combined with per-face looks."
+            raise ValueError(msg)
+        if any(isinstance(face_look, Wireframe) for face_look in face_looks.values()):
+            msg = "A Wireframe look draws the whole body, so it can't be given per face."
+            raise ValueError(msg)
+        self._look = Shaded() if look is None and not face_looks else look
+        self._face_looks = face_looks
+        self._texts = {}
+        return self
+
+    def erase(self) -> Body:
+        """Stop drawing the body. Its cells are hidden when the world next paints.
+
+        Returns:
+            Body: This body, for chaining.
+
+        """
+        self._look = None
+        self._face_looks = {}
+        self._texts = {}
+        return self
+
+    @property
+    def drawn(self) -> bool:
+        """Whether the body is drawn with a look."""
+        return self._look is not None or bool(self._face_looks)
+
+    @property
+    def surface_characters(self) -> dict[Coord, EffectCharacter]:
+        """The characters showing the drawn body after the last frame, by cell.
+
+        They belong to the world and are redrawn every frame, so changes an effect makes to them last until then.
+        """
+        return {slot.character.motion.current_coord: slot.character for slot in self._cells}
+
+    def _face_look(self, tag: FaceName) -> Look | None:
+        """Return the look for faces with `tag`."""
+        return self._face_looks.get(tag, self._look)
 
     @property
     def world_scale(self) -> float:
@@ -502,7 +889,10 @@ class World:
         root (Body): A shapeless body at the world origin that never moves. Free nodes are its children.
         text_plane (Body): The flat body the input characters start on. Its surface positions are canvas
             coordinates.
-        camera (g3.Camera): Projects world points onto canvas cells.
+        screen (Body): A flat body fixed to the canvas, for labels and overlays: characters attached to it sit on
+            their canvas cells whatever the camera does. It never moves, and heights on it are ignored.
+        bodies (tuple[Body, ...]): The bodies made with `body()` and not removed.
+        camera (Camera): Projects world points onto canvas cells, with controls that move it now or over frames.
         light (g3.Vec3): Unit vector from the scene toward the light, in `light_space`.
         light_space (str): `"world"` keeps the light fixed as the camera moves; `"camera"` turns it with the camera.
 
@@ -518,7 +908,7 @@ class World:
         self._bodies: list[Body] = []
         self.root = Body(self, None)
         self.root._dirty = False
-        self.camera = g3.Camera.for_canvas(canvas, distance=_CAMERA_DISTANCE)
+        self.camera = typing.cast("Camera", Camera.for_canvas(canvas, distance=_CAMERA_DISTANCE))
         self.text_plane = Body(
             self,
             self.root,
@@ -532,8 +922,23 @@ class World:
                 center_row=self.camera.center_row,
             ),
         )
+        self.screen = Body(
+            self,
+            self.root,
+            surface=PlaneSurface(
+                canvas.left,
+                canvas.right,
+                canvas.bottom,
+                canvas.top,
+                center_column=self.camera.center_column,
+                center_row=self.camera.center_row,
+            ),
+        )
+        self.screen._flat = self.screen._screen = True
         self.light = LIGHTS["upper left"].normalized()
         self.light_space = "world"
+        self._frame = 0
+        self._painter: Painter | None = None
         self._view_changed = True
         self._view_key: tuple[object, ...] | None = None
         self.step()
@@ -557,23 +962,41 @@ class World:
         )
 
     @property
+    def bodies(self) -> tuple[Body, ...]:
+        """The bodies made with `body()` and not removed, oldest first, without the root, text plane and screen."""
+        return tuple(body for body in self._bodies if body is not self.text_plane and body is not self.screen)
+
+    @property
     def animating(self) -> bool:
-        """Whether any body is still moving along a path."""
-        return any(body._motion is not None and body._motion.active_path is not None for body in self._bodies)
+        """Whether the camera or any body has tweens playing, or a body is still moving along a path."""
+        return self.camera.animating or any(
+            body._queue or (body._motion is not None and body._motion.active_path is not None) for body in self._bodies
+        )
 
     def step(self) -> bool:
-        """Move bodies along their paths and note changes to the camera and bodies since the last frame.
+        """Play camera and body tweens, move bodies along their paths and note changes since the last frame.
 
-        Called by `update()` before characters move.
+        Called by `update()` before characters move. Callbacks of tweens that finished run once the camera and every
+        body have moved.
 
         Returns:
             bool: Whether the view changed, so characters that didn't move must still be projected again.
 
         """
+        self._frame += 1
+        camera = self.camera
+        finished: list[tuple[TweenQueue, int, Callable[[typing.Any], None]]] = [
+            (camera, camera._callback_generation, callback) for callback in camera._advance()
+        ]
         for body in tuple(self._bodies):
+            if body._queue:
+                finished.extend((body, body._callback_generation, callback) for callback in body._advance())
             motion = body._motion
             if motion is not None and motion.active_path is not None:
                 motion.move()
+        for owner, generation, callback in finished:
+            if owner._callback_generation == generation and not getattr(owner, "_removed", False):
+                callback(owner)
         key = self._camera_key()
         changed = self._view_changed or key != self._view_key
         if changed:
@@ -582,18 +1005,33 @@ class World:
             plane = self.text_plane
             camera = self.camera
             plane._flat = (
-                not camera._moved
+                camera.rotation == g3.Rotation()
+                and camera.position == g3.Vec3(0.0, 0.0, camera.distance)
                 and camera.focal in (None, camera.distance)
                 and camera.row_scale == TERMINAL_ROW_SCALE
                 and plane._parent is self.root
                 and plane._position == g3.ORIGIN
                 and plane._rotation == g3.Rotation()
                 and plane._scale == 1.0
-                and isinstance(plane.surface, PlaneSurface)
-                and plane.surface.center_column == camera.center_column
-                and plane.surface.center_row == camera.center_row
+                and isinstance(plane._surface, PlaneSurface)
+                and plane._surface.center_column == camera.center_column
+                and plane._surface.center_row == camera.center_row
             )
         return changed
+
+    def _attach_terminal(self, terminal: Terminal) -> None:
+        """Let the world draw bodies with characters it adds to `terminal`."""
+        self._painter = Painter(self, terminal)
+
+    def paint(self) -> None:
+        """Draw the drawn bodies for this frame. Called by `update()` once the characters have moved."""
+        if self._painter is not None:
+            self._painter.paint()
+
+    @property
+    def surface_characters(self) -> dict[Coord, EffectCharacter]:
+        """Every character the world has created to draw bodies, shown or not, by cell."""
+        return self._painter.surface_characters() if self._painter is not None else {}
 
     def set_light(self, direction: str | g3.Point3, space: str = "world") -> None:
         """Point the light, now. Can be called on any frame.
@@ -652,11 +1090,11 @@ class World:
             body (Body): The body to remove.
 
         Raises:
-            ValueError: For the root or the text plane, which every world keeps, or a body from another world.
+            ValueError: For the root, text plane or screen, which every world keeps, or a body from another world.
 
         """
-        if body is self.root or body is self.text_plane:
-            msg = "The world root and the text plane can't be removed."
+        if body is self.root or body is self.text_plane or body is self.screen:
+            msg = "The world root, the text plane and the screen can't be removed."
             raise ValueError(msg)
         if body.world is not self:
             msg = "That body belongs to another world."
@@ -667,6 +1105,10 @@ class World:
             child.detach()
         if body._motion is not None:
             body._motion.deactivate_path()
+        body.cancel()
+        body.erase()
+        if self._painter is not None:
+            self._painter.hide(body)
         parent = body.parent
         del parent._children[body]
         self._bodies.remove(body)
@@ -681,7 +1123,7 @@ def _free_world() -> World:
     world = World(Canvas(top=1, right=1))
     surface = PlaneSurface(1, 1, 1, 1, center_column=0.0, center_row=0.0)
     surface._body = world.text_plane
-    world.text_plane.surface = surface
+    world.text_plane._surface = surface
     world.camera.center_column = world.camera.center_row = 0.0
     world.step()
     return world

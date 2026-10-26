@@ -11,7 +11,8 @@ from dataclasses import dataclass
 from terminaltexteffects import easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Shaded, Shape, Space3D, Wireframe
+from terminaltexteffects.engine.drawing import Shaded, Wireframe
+from terminaltexteffects.engine.shapes import Shape
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.geometry3d import Face, Mesh, Vec3
 
@@ -83,8 +84,8 @@ class StarIterator(BaseEffectIterator[StarConfig]):
     def __init__(self, effect: Star) -> None:
         """Stand the star up facing the viewer, and tumble it."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
-        star = self.space.body(StarPrism()).draw(Wireframe() if self.config.wireframe else Shaded())
+        self.world = self.terminal.world
+        star = self.world.body(StarPrism()).draw(Wireframe() if self.config.wireframe else Shaded())
         star.rotate("x", -70)  # Stand the star up, with a cap facing the viewer and a point at the top.
         star.spin("y", turns=1, frames=360, ease=easing.in_out_sine)
         star.spin("x", turns=0.5, frames=360, ease=easing.in_out_sine, together=True)
@@ -92,17 +93,14 @@ class StarIterator(BaseEffectIterator[StarConfig]):
 
     def __next__(self) -> str:
         """Tumble the star, then swap it for the text."""
-        if self.space.animating:
-            self.space.step()
-        elif not self.text_shown:
-            for body in self.space.bodies:
-                body.erase()
-            self.space.step()  # Hides the surface characters once nothing is drawn.
+        if not self.world.animating:
+            if self.text_shown:
+                raise StopIteration
+            for body in self.world.bodies:
+                body.erase()  # The world hides its cells when it next paints.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True
-        else:
-            raise StopIteration
         self.update()
         return self.frame
 

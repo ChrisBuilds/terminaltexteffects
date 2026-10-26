@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from terminaltexteffects import Color, ColorPair, Gradient, Scene, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Body, Space3D
+from terminaltexteffects.engine.world import Body
 from terminaltexteffects.utils import argutils
 
 
@@ -35,28 +35,30 @@ class LogoIterator(BaseEffectIterator[LogoConfig]):
     """Produce the frames of the Logo effect."""
 
     def __init__(self, effect: Logo) -> None:
-        """Mount the text on a plane, color it by the light, and queue the spin."""
+        """Color the text by the light on the text plane, and queue the plane's spin."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal, light="front")
-        self.sign = self.space.body()
+        self.world = self.terminal.world
+        self.world.set_light("front")
+        self.sign = self.world.text_plane
+        # Hide the text while its back faces the viewer.
+        self.sign.hide_facing_away = True
         characters = [c for c in self.terminal.get_characters() if c.input_symbol != " "]
         shade = Gradient(Color("#3a003a"), Color("#8A008A"), Color("#00D1FF"), Color("#ffffff"), steps=10)
         for character in characters:
-            # The mount's light reading picks the frame, so the text brightens as it turns toward the light.
+            # The light on its spot picks the frame, so the text brightens as it turns toward the light.
             scene = character.animation.new_scene(sync=Scene.SyncMetric.LIGHT)
             scene.apply_gradient_to_symbols(character.input_symbol, 1, fg_gradient=shade)
             character.animation.activate_scene(scene)
             self.terminal.set_character_visibility(character, is_visible=True)
             self.active_characters.add(character)
-        self.sign.add_chars(characters, self.sign.text_plane(characters), hide_when_facing_away=True)
 
         self.sign.spin("y", turns=2, frames=200, ease=easing.in_sine)
         self.sign.settle("y", turns=1, frames=160, ease=easing.out_back)
         self.sign.on_complete(self.finish)
 
     def finish(self, sign: Body) -> None:
-        """Release the text and show it in its input colors."""
-        sign.release_all()
+        """Put the sign back at rest and show the text in its input colors."""
+        sign.reset()
         # "always" reapplies input colors by itself. "dynamic" needs them passed, and "ignore" leaves them off.
         dynamic = self.terminal.config.existing_color_handling == "dynamic"
         for character in self.terminal.get_characters():
@@ -68,8 +70,7 @@ class LogoIterator(BaseEffectIterator[LogoConfig]):
 
     def __next__(self) -> str:
         """Spin the sign until it settles."""
-        if self.space.animating or self.active_characters:
-            self.space.step()
+        if self.world.animating or self.active_characters:
             self.update()
             return self.frame
         raise StopIteration

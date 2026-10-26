@@ -148,7 +148,7 @@ drum.spin("y", turns=1, frames=240)
 mounts each character on its own anchor, so it keeps its colors and scenes and can be released afterward. A
 `Textured` look, by contrast, draws the shape's surface out of text, resampled cell by cell (see
 [Texture mapping](textures.md#mounted-text-or-textured-surface)). For the full signatures, see the
-[`Body` reference](../../engine/space3d.md).
+[`Body` reference](../../engine/world.md).
 
 ## Under the hood
 

@@ -10,7 +10,9 @@ from dataclasses import dataclass
 
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Cube, Shaded, Space3D, rotation_about
+from terminaltexteffects.engine.drawing import Shaded
+from terminaltexteffects.engine.shapes import Cube
+from terminaltexteffects.engine.tweens import rotation_about
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.geometry3d import Vec3
 
@@ -46,9 +48,9 @@ class OrbitIterator(BaseEffectIterator[OrbitConfig]):
     def __init__(self, effect: Orbit) -> None:
         """Place the planet at the origin and the moon to its right."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
-        self.planet = self.space.body(Cube(16)).draw(Shaded())
-        self.moon = self.space.body(Cube(6)).draw(Shaded())
+        self.world = self.terminal.world
+        self.planet = self.world.body(Cube(16)).draw(Shaded())
+        self.moon = self.world.body(Cube(6)).draw(Shaded())
         self.moon_start = Vec3(30, 0, 0)  # Where the moon starts, relative to the origin.
         self.tilt = rotation_about("x", 20)  # Tip the top toward the viewer, so we look down on the orbit.
         self.frame_number = 0
@@ -59,17 +61,14 @@ class OrbitIterator(BaseEffectIterator[OrbitConfig]):
         if self.frame_number <= self.config.frames:
             turn = rotation_about("y", 360 * self.frame_number / self.config.frames)
             # Spin in place: only the planet's orientation changes. Its position stays at the origin.
-            self.planet.set_rotation(self.tilt * turn)
+            self.planet.rotation = self.tilt * turn
             # Orbit: the moon's position is turned about the origin, then the moon is moved there.
-            self.moon.set_rotation(self.tilt * turn)
-            point = (self.tilt * turn).apply(self.moon_start)
-            self.moon.set_position(point.x, point.y, point.z)
-            self.space.step()
+            self.moon.rotation = self.tilt * turn
+            self.moon.position = (self.tilt * turn).apply(self.moon_start)
             self.frame_number += 1
         elif not self.text_shown:
-            for body in self.space.bodies:
-                body.erase()
-            self.space.step()  # Hides the surface characters once nothing is drawn.
+            for body in (self.planet, self.moon):
+                body.erase()  # The world hides its cells when it next paints.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True

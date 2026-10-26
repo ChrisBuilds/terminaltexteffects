@@ -30,7 +30,6 @@ from terminaltexteffects.utils.geometry import Coord
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character  # pragma: no cover
-    from terminaltexteffects.engine.space3d import Mount  # pragma: no cover
     from terminaltexteffects.engine.surfaces import Route, Surface  # pragma: no cover
 
 Point = typing.Union[Coord, g3.Vec3]
@@ -597,7 +596,6 @@ class Motion:
         current_coord (Coord): current coordinate
         previous_coord (Coord): previous coordinate
         active_path (Path | None): active path
-        mount (Mount | None): active 3D mount, which supplies the position instead of a path
 
     Methods:
         set_coordinate:
@@ -616,13 +614,9 @@ class Motion:
             Activates the first waypoint in the path.
         deactivate_path:
             Unsets the current path if the current path is path.
-        activate_mount:
-            Hands the character's position to a 3D mount.
-        deactivate_mount:
-            Releases the character from its 3D mount.
         move:
             Moves the character one step closer to the target position based on an easing function if
-                present, otherwise linearly, or to its mount's anchor.
+                present, otherwise linearly.
 
     """
 
@@ -642,9 +636,12 @@ class Motion:
         # The exact position in the parent's frame, as floats; `position` reads it as a `Vec3`.
         self._xyz: XYZ = (self._cell.column, self._cell.row, 0.0)
         self._depth_from_view = False
+        # Whether the view hides the character: behind the camera, or facing away on a body that hides those.
+        self._view_hidden = False
+        # Whether the effect wants the character shown once the view sees it again.
+        self._show_when_seen = False
         self.previous_coord: Coord = Coord(-1, -1)
         self.active_path: Path | None = None
-        self.mount: Mount | None = None
         # Detect callback-driven restarts even when the active path's identity is unchanged.
         self._path_generation = 0
 
@@ -685,12 +682,12 @@ class Motion:
     def _row(self) -> float:
         """Return how many units a row is in the frame this motion moves in: 2 on a surface, otherwise 1."""
         node = self.character
-        return _ROW if node._ON_SURFACE and node.parent.surface is not None else 1.0
+        return _ROW if node._ON_SURFACE and node.parent._surface is not None else 1.0
 
     def _surface(self) -> Surface | None:
         """Return the surface this motion moves over, if the mover sits on one."""
         node = self.character
-        return node.parent.surface if node._ON_SURFACE else None
+        return node.parent._surface if node._ON_SURFACE else None
 
     def _from_world(self, point: g3.Vec3) -> XYZ:
         """Return a world point in the frame this motion moves in."""
@@ -703,8 +700,9 @@ class Motion:
         position = self._xyz
         character = self.character
         parent = character._parent or character.parent
-        if parent._flat and not position[2]:
-            # On an untouched text plane under the default camera, a cell is the rounded column and row.
+        if parent._flat and (not position[2] or parent._screen):
+            # On an untouched text plane under the default camera, or on the screen, a cell is the rounded column
+            # and row.
             column, row = round(position[0]), round(position[1])
             cell = self._cell
             if cell.column != column or cell.row != row:
@@ -713,16 +711,26 @@ class Motion:
             if self._depth_from_view:
                 self._depth_from_view = False
                 character._set_depth_order(0.0)
+            if self._view_hidden:
+                self._show(hidden=False)
             return
-        surface = parent.surface
+        surface = parent._surface
         if surface is not None and surface.closed:
             # Positions on a closed surface are kept normalized: the column within the grid, the row pole to pole.
             position = self._xyz = surface._normalize(position)
         camera = parent.world.camera
-        projected = camera.project(parent.to_world(position))
+        point = parent.to_world(position)
+        projected = camera.project(point)
+        hide = projected is None
+        if not hide and surface is not None and parent.hide_facing_away:
+            normal = parent._world_normal(surface._normal(position))
+            hide = normal.dot(camera.view_direction(point)) <= 0
+        if hide != self._view_hidden:
+            self._show(hidden=hide)
         if projected is None:
             return  # behind the near plane: stay on the last cell
-        column, row = round(projected.column), round(projected.row)
+        # Halves round up, as drawn bodies do, so neighboring points land on neighboring cells.
+        column, row = math.floor(projected.column + 0.5), math.floor(projected.row + 0.5)
         cell = self._cell
         if cell.column != column or cell.row != row:
             cell = self._cell = Coord(column, row)
@@ -732,6 +740,26 @@ class Motion:
         order = max(-0.49, min(0.49, (reference - projected.depth) / (4 * reference)))
         self._depth_from_view = True
         character._set_depth_order(order)
+
+    def _show(self, *, hidden: bool) -> None:
+        """Hide the character while it is behind the camera or faces away, or show it again once it isn't.
+
+        The view tracks hiding whether or not the character is shown. Only a character that was shown when the view
+        hid it, or that the effect showed while hidden, is shown again, so one the effect hid itself stays hidden.
+        """
+        character = self.character
+        owner = character._terminal_owner_token() if character._terminal_owner_token is not None else None
+        if hidden:
+            self._view_hidden = True
+            if character.is_visible and owner is not None:
+                owner.set_character_visibility(character, is_visible=False)
+                self._show_when_seen = True
+        else:
+            self._view_hidden = False
+            if self._show_when_seen:
+                self._show_when_seen = False
+                if not character.is_visible and owner is not None:
+                    owner.set_character_visibility(character, is_visible=True)
 
     def new_path(
         self,
@@ -808,10 +836,10 @@ class Motion:
         """Return whether movement is complete.
 
         Returns:
-            bool: True if the character has no active path and no active mount, False otherwise.
+            bool: True if the character has no active path, False otherwise.
 
         """
-        return self.active_path is None and self.mount is None
+        return self.active_path is None
 
     def chain_paths(self, paths: list[Path], *, loop: bool = False) -> None:
         """Create a chain of paths.
@@ -860,9 +888,6 @@ class Motion:
         the path has a layer, it sets the character's layer to it. Finally, it triggers the PATH_ACTIVATED event
         for the character.
 
-        If the character is mounted, the mount is released first (with its `MOUNT_RELEASED` event), so the path
-        starts from wherever the character is.
-
         Args:
             path (Path | str): The path to activate. Must be the Path itself, or the Path's ID.
 
@@ -875,9 +900,6 @@ class Motion:
             found_path = path
         if not found_path.waypoints:
             raise ActivateEmptyPathError(found_path.path_id)
-        if self.mount is not None:
-            self.deactivate_mount()
-            self._drop_callback_mount()
         self.active_path = found_path
         self._path_generation += 1
         found_path._measure(self)
@@ -973,76 +995,8 @@ class Motion:
             self.active_path = None
             self._path_generation += 1
 
-    def activate_mount(self, mount: Mount) -> None:
-        """Hand the character's position to a 3D mount, created with `Space3D.new_mount`.
-
-        Mounting deactivates the active path and leaves the active scene alone. A character already on another
-        mount is released from it first. Activating the mount the character is already on does nothing. From the
-        next tick, `move()` takes the position from the mount, blending from where the character is if the mount
-        has `blend_frames`, and a `MOUNT_COMPLETE` event follows when it arrives.
-
-        Args:
-            mount (Mount): The mount to ride. It must have been created for this character.
-
-        Raises:
-            ValueError: If the mount was created for a different character or its body has been removed.
-
-        """
-        if mount.character is not self.character:
-            msg = "The mount was created for a different character."
-            raise ValueError(msg)
-        if mount.anchor.body._removed:
-            msg = "The mount's body has been removed from its space."
-            raise ValueError(msg)
-        if self.mount is mount:
-            return
-        if self.mount is not None:
-            self.deactivate_mount()
-            self._drop_callback_mount()
-        if self.active_path is not None:
-            self.deactivate_path()
-        self.mount = mount
-        mount._begin()
-
-    def deactivate_mount(self, mount: Mount | None = None) -> None:
-        """Release the character from its mount, ready for a path or another mount.
-
-        The character is left on the cell its anchor projects to now, or where it is if it was still blending
-        toward the anchor.
-
-        The mount restores what it changed itself (its depth layering and hiding), then a `MOUNT_RELEASED`
-        event is triggered.
-
-        Args:
-            mount (Mount | None): Release only if this is the active mount. `None` releases any active mount.
-
-        """
-        active = self.mount
-        if active is None or (mount is not None and mount is not active):
-            return
-        self.mount = None
-        active._end()
-        self.character.event_handler._handle_event(self.character.event_handler.Event.MOUNT_RELEASED, active)
-
-    def _drop_callback_mount(self) -> None:
-        """End a mount that a `MOUNT_RELEASED` callback activated, so the caller's own request wins.
-
-        No event is triggered, so a callback that mounts on every release can't loop.
-        """
-        if self.mount is not None:
-            replacement, self.mount = self.mount, None
-            replacement._end()
-
-    def _follow_mount(self) -> None:
-        """Move to the cell the active mount reports and trigger `MOUNT_COMPLETE` when the blend finishes."""
-        mount = self.mount
-        assert mount is not None
-        self.current_coord, arrived = mount._step()
-        if arrived:
-            self.character.event_handler._handle_event(self.character.event_handler.Event.MOUNT_COMPLETE, mount)
-
     def move(self) -> None:
-        """Move the character along the active path, or to its mount's anchor.
+        """Move the character along the active path.
 
         The character's current coordinate is updated to the next step in the active path. If the active path
         is completed, an event is triggered based on whether the path is set to loop or not. Looping paths are
@@ -1061,9 +1015,6 @@ class Motion:
         If a segment or holding callback deactivates, replaces, or restarts the path,
         processing of the old traversal stops. Callback coordinates are preserved and
         any newly activated traversal begins moving on the next tick.
-
-        A mounted character moves to the cell its mount reports for this tick and triggers `MOUNT_COMPLETE` on
-        the tick it finishes blending onto the anchor.
         """
         # preserve previous coordinate to allow for clearing the location in the terminal
         cell = self.current_coord
@@ -1071,10 +1022,7 @@ class Motion:
             self._sync()
         self.previous_coord = cell
 
-        mounted = self.mount is not None
-        if mounted:
-            self._follow_mount()
-        if mounted or not self.active_path or not self.active_path.segments:
+        if not self.active_path or not self.active_path.segments:
             return
         path = self.active_path
         path_generation = self._path_generation
@@ -1144,9 +1092,10 @@ class BodyMotion(Motion):
         self._xyz = (position.x, position.y, position.z)
         # Bodies have no cell: this keeps move() from taking the characters' text-plane shortcut.
         self._depth_from_view = True
+        self._view_hidden = False
+        self._show_when_seen = False
         self.previous_coord = Coord(-1, -1)
         self.active_path = None
-        self.mount = None
         self._path_generation = 0
 
     def _row(self) -> float:
@@ -1181,3 +1130,18 @@ class BodyMotion(Motion):
             msg = "Bodies have no layer, so a body can't take a path with one."
             raise ValueError(msg)
         super().activate_path(path)
+
+
+class ScreenMotion(Motion):
+    """Keeps a character on its screen cell whatever the camera does: for the cells a drawn body is shown with."""
+
+    def _sync(self) -> None:
+        cell = self.current_coord
+        self._cell = cell
+        self._xyz = (cell.column, cell.row, 0.0)
+
+    def _resolve(self) -> None:
+        column, row = round(self._xyz[0]), round(self._xyz[1])
+        cell = self._cell
+        if cell.column != column or cell.row != row:
+            self.current_coord = self._cell = Coord(column, row)

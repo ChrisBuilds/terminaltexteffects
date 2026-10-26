@@ -135,7 +135,7 @@ nav:
       - engine/baseconfig.md
       - engine/eventhandler.md
       - engine/particles.md
-      - engine/space3d.md
+      - engine/world.md
       - Animation:
         - engine/animation/animation.md
         - engine/animation/charactervisual.md

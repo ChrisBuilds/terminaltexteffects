@@ -10,7 +10,9 @@ from dataclasses import dataclass
 from terminaltexteffects import easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.space3d import Cube, Shaded, Space3D, Wireframe
+from terminaltexteffects.engine.drawing import Shaded, Wireframe
+from terminaltexteffects.engine.shapes import Cube
+from terminaltexteffects.engine.world import Body
 from terminaltexteffects.utils import argutils
 
 
@@ -44,27 +46,26 @@ class CubesIterator(BaseEffectIterator[CubesConfig]):
     def __init__(self, effect: Cubes) -> None:
         """Place three cubes and queue their turns."""
         super().__init__(effect)
-        self.space = Space3D(self.terminal)
+        self.world = self.terminal.world
         look = Wireframe() if self.config.wireframe else Shaded()
+        self.cubes: list[Body] = []
         for size, x in ((6, -28), (12, -10), (24, 18)):
-            cube = self.space.body(Cube(size), at=(x, 0, 0)).draw(look)
+            cube = self.world.body(Cube(size), at=(x, 0, 0)).draw(look)
             cube.rotate("x", 20)
             cube.spin("y", turns=1, frames=240, ease=easing.in_out_sine)
+            self.cubes.append(cube)
         self.text_shown = False
 
     def __next__(self) -> str:
         """Turn the cubes, then swap them for the text."""
-        if self.space.animating:
-            self.space.step()
-        elif not self.text_shown:
-            for body in self.space.bodies:
-                body.erase()
-            self.space.step()  # Hides the surface characters once nothing is drawn.
+        if not self.world.animating:
+            if self.text_shown:
+                raise StopIteration
+            for cube in self.cubes:
+                cube.erase()  # The world hides its cells when it next paints.
             for character in self.terminal.get_characters():
                 self.terminal.set_character_visibility(character, is_visible=True)
             self.text_shown = True
-        else:
-            raise StopIteration
         self.update()
         return self.frame
 

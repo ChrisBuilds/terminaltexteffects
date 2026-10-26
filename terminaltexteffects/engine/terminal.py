@@ -410,6 +410,7 @@ class Terminal:
         )
         self.canvas = canvas_module.Canvas(*self._get_canvas_dimensions())
         self.world = World(self.canvas)
+        self.world._attach_terminal(self)
         if not self.config.ignore_terminal_dimensions:
             self.canvas_column_offset, self.canvas_row_offset = self._calc_canvas_offsets()
         else:
@@ -1388,7 +1389,9 @@ class Terminal:
         """Set whether a character participates in terminal rendering.
 
         This updates both the character's internal visibility flag and the terminal's
-        tracked set of currently visible characters.
+        tracked set of currently visible characters. A character the world hides, because
+        it is behind the camera or faces away on a body that hides such characters, stays
+        hidden until the view sees it again.
 
         Args:
             character (EffectCharacter): Character whose visibility should be updated.
@@ -1406,6 +1409,12 @@ class Terminal:
             raise InvalidCharacterError(character)
         if not isinstance(is_visible, bool):
             raise InvalidCharacterVisibilityError(is_visible)
+        motion = character.motion
+        if motion._view_hidden:
+            # Behind the camera or facing away: a request to show waits until the view sees it again.
+            motion._show_when_seen = is_visible
+            if is_visible:
+                return
         visibility_changed = character._is_visible != is_visible
         character._is_visible = is_visible
         if is_visible:
