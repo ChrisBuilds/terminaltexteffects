@@ -22,7 +22,7 @@ self.sheet.random_pose()
 self.sheet.settle("y", turns=2, frames=SPIN_FRAMES, ease=easing.out_cubic)
 ```
 
-`random_pose()` turns the sheet to a random orientation right away, drawn from the space's random number generator.
+`random_pose()` turns the sheet to a random orientation right away, drawn from Python's `random` module.
 
 `settle` spins about an axis while it unwinds every other part of the rotation, and lands exactly at rest. A plain
 `spin` from a tilted pose would keep the tilt: it turns about the world's vertical axis, so the sheet would wobble

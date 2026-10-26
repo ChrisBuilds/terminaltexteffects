@@ -10,9 +10,9 @@ Your copy is called **MySpin** and runs as `tte myspin`. It uses the same input 
 [3D Effects](../index.md#running-the-examples) chapters. If you haven't written an effect before, the
 [MySpray tutorial](../../tutorial/01-scaffold.md) covers the parts every effect has, which this one skips over.
 
-In this step you mount the text on a sheet, turn the sheet away, and turn it back.
+In this step you turn the text away on its sheet, the text plane, and turn it back.
 
-**3D chapters used:** [Space and coordinates](../coordinates.md), [Transforms](../transforms.md),
+**3D chapters used:** [The world](../world.md), [Frames and coordinates](../coordinates.md),
 [Rotation](../rotation.md).
 
 ## Create the module
@@ -25,44 +25,36 @@ Save this as `myspin.py` in your community effects directory:
 
 ## How it works
 
-### The space and the sheet
+### The world and the sheet
 
-`Space3D(self.terminal, perspective=0)` sets up a camera looking at the canvas. Perspective 0 is a flat view, so
-nothing grows or shrinks with distance yet. Step 3 turns it on.
+Every terminal has a world, `self.terminal.world`, with a camera looking at the canvas.
+`world.camera.set_perspective(0)` makes the view flat, so nothing grows or shrinks with distance yet. Step 3 turns
+perspective on.
 
-`self.space.body()` makes a body with no shape. A body is a position, a rotation and a scale. It owns no characters
-and draws nothing; it only carries the characters you mount on it.
+The sheet is `world.text_plane`, the body every character starts on. Each character's position is its input cell on
+the text plane's surface, and those positions never change in this tutorial: the effect moves the plane, and the
+plane carries the text. The text is in its input cells whenever the plane is at rest.
 
-### Mounting the text
+### Showing the text
 
-`text_plane(characters)` returns one **anchor** per character: a point on the body, placed so that it lands on the
-character's input cell at the body's pose right now. The sheet hasn't moved yet, so that's its rest pose. `add_chars`
-mounts each character on its anchor. From then on, `space.step()` works out where each anchor is on screen, and each
-character's tick in `update()` moves it there.
+`build` makes each character visible and adds it to `active_characters`, so it is drawn from the first frame.
+Characters in this step have nothing of their own to do, so `update()` drops them from `active_characters` after the
+first tick. They still move: whenever the view changes, the world projects every character on the plane again.
+Step 4 gives each character a scene, which does need a tick every frame.
 
-Mounting doesn't show or tick anything by itself, so `build` also makes each character visible and adds it to
-`active_characters`. A mounted character is never finished while its mount is active, so `update()` keeps ticking it
-until it's released.
-
-Spaces are left out. They're invisible, so mounting them would only cost time.
+Spaces are left out. They're invisible, so showing them would only cost time.
 
 ### Turning away and back
 
-`set_rotation(rotation_about("y", 70))` turns the sheet 70 degrees about the vertical axis, right away. The order
-matters: the anchors were placed first, at rest, so they turn with the sheet, and the text is home again whenever the
-sheet is back at rest. Built after the turn, the anchors would put the text on its input cells at 70 degrees instead.
+`rotate("y", 70)` turns the sheet 70 degrees about the vertical axis, right away.
 `turn_to_rest(frames=120, ease=easing.out_cubic)` queues a **tween** that turns it back to rest along the shortest
-path, slowing as it arrives.
+path, slowing as it arrives. The world plays the tween one frame at a time inside `update()`.
 
-### Handing the text back
+### Ending
 
-`on_complete(self.finish)` calls `finish` when the sheet's last tween ends. `release_all()` gives the characters back,
-on their input cells, as ordinary 2D characters. Once they have nothing left to do, `update()` drops them from
-`active_characters` and the effect ends.
-
-`__next__` keeps going while `self.space.animating` or `self.active_characters` is true. `animating` only tracks the
-sheet's tween queue, so it can't tell whether the characters are done; `active_characters` can. Without the release,
-the mounted characters would stay active and the effect would never end.
+`__next__` keeps going while `self.world.animating` or `self.active_characters` is true. `animating` is true while
+any body or camera tween is queued or playing, so the effect ends on the frame after the sheet comes to rest, with the
+text in its input cells.
 
 ## Run it
 

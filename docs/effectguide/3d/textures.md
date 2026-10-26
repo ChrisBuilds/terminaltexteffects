@@ -17,7 +17,7 @@ shapes, such as cylinders and spheres, run u all the way around, so the text con
 
 ![A face with u across and v up, covered by rows of text, and a cylinder seen from above with text wrapped around its side](../../img/effectguide/3d/uv_mapping.webp)
 
-When a cell is filled, the space finds the (u, v) at the cell's center, looks up the character there, and draws it in
+When a cell is filled, the world finds the (u, v) at the cell's center, looks up the character there, and draws it in
 a color from the light. So the text turns, tilts and foreshortens with the surface, while each cell still shows one
 upright character.
 
@@ -27,8 +27,8 @@ The Texture example wraps a grid pattern, or the input text, over a cube and a s
 
 ```python
 look = Textured() if self.config.text else Textured(GRID)  # Textured() wraps the input text.
-cube = self.space.body(Cube(22), at=(-20, 0, 0)).draw(look)
-sphere = self.space.body(Sphere(13, segments=32, rings=16), at=(20, 0, 0)).draw(look)
+cube = self.world.body(Cube(22), at=(-20, 0, 0)).draw(look)
+sphere = self.world.body(Sphere(13, segments=32, rings=16), at=(20, 0, 0)).draw(look)
 ```
 
 ??? example "texture.py"
@@ -63,10 +63,10 @@ sphere = self.space.body(Sphere(13, segments=32, rings=16), at=(20, 0, 0)).draw(
 - `back="dim"` shows the far side through the spaces in the text (see [Depth](depth.md)).
 - Each cell shows one character, so wide characters such as CJK can't be split across cells and are left blank.
 
-### Mounted text or textured surface
+### Attached text or textured surface
 
-Text can be part of a 3D scene in two ways. Mounting puts each character on an anchor, as in
-[Animating in 3D](animating.md): the character keeps its own symbol and moves as a whole. A `Textured` look draws the
+Text can be part of a 3D scene in two ways. Attaching puts each character on a body, as in
+[Attaching and detaching](attaching.md): the character keeps its own symbol and moves as a whole. A `Textured` look draws the
 surface out of text: each cell samples the text where it lands. The Surfaces example shows the same words both ways.
 
 ??? example "surfaces.py"
@@ -79,16 +79,16 @@ surface out of text: each cell samples the text where it lands. The Surfaces exa
 tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c surfaces
 ```
 
-![The same three words turn side by side: mounted on the left, where each letter stays upright and the order reverses on the back, and textured on the right, where the letters are resampled and shaded by the light](../../img/effectguide/surfaces_demo.webp)
+![The same three words turn side by side: attached on the left, where each letter stays upright and the order reverses on the back, and textured on the right, where the letters are resampled and shaded by the light](../../img/effectguide/surfaces_demo.webp)
 
-- Mounted characters keep their colors, scenes and symbols, and can be released to 2D paths afterward. Turned away,
-  the letters still read upright, in reverse order.
-- A textured surface is lit and hides what's behind it, but it can't hand its letters back: they belong to the space.
-- Mount text that has to land somewhere. Texture text that decorates a shape.
-- `body.wrap(characters)` and `Textured(text)` both put text around a cylinder or sphere, but differently. `wrap` gives
-  each of your characters its own anchor, one character per anchor whatever the shape's size, and the characters
-  ride the surface as wholes. `Textured` resamples the text into the surface's cells, so the letters stretch, repeat
-  and shade with the surface. See [Anchor layouts](surfaces.md#laying-out-text).
+- Attached characters keep their colors, scenes and symbols, and can fly home to their input cells afterward. Turned
+  away, the letters still read upright, in reverse order.
+- A textured surface is lit and hides what's behind it, but it can't hand its letters back: they belong to the world.
+- Attach text that has to land somewhere. Texture text that decorates a shape.
+- `surface.layout_text(characters)` and `Textured(text)` both put text around a cylinder or sphere, but differently.
+  `layout_text` attaches each of your characters to one cell of the surface's grid, and the characters ride the
+  surface as wholes. `Textured` resamples the text into the drawn cells, so the letters stretch, repeat and shade with
+  the surface. See [Laying out text](surfaces.md#laying-out-text).
 
 ## Under the hood
 
@@ -119,18 +119,17 @@ textured.
 scroll left; positive rows scroll up. `repeat=True` wraps the text in both directions.
 `repeat=False` clamps samples outside the text to the nearest edge cell. `scale=2` doubles each
 character's footprint in both dimensions; scale must be finite and positive. Row density follows
-`space.camera.row_scale`, including when it differs from the usual tall-cell ratio.
+`world.camera.row_scale`, including when it differs from the usual tall-cell ratio.
 
 Looks are immutable. Animate an offset by replacing the look each frame, without turning the body:
 
 ```python
 from dataclasses import replace
-from terminaltexteffects.engine.space3d import Textured
+from terminaltexteffects.engine.drawing import Textured
 
 look = Textured("A scrolling message")
-# In the effect's frame loop, with elapsed_frames advanced by the effect:
+# In the iterator's __next__, with elapsed_frames advanced by the effect, before update():
 body.draw(replace(look, offset=(elapsed_frames / 4, 0)))
-space.step()
 ```
 
 For custom shapes, `texture_cell` continues to return rows in the default terminal cell ratio;

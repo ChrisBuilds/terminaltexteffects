@@ -15,7 +15,7 @@ Replace `myspin.py` with this version:
 
 ## What changed
 
-The `set_rotation` and `turn_to_rest` calls are replaced with one call:
+The `rotate` and `turn_to_rest` calls are replaced with one call:
 
 ```python
 self.sheet.spin("y", turns=2, frames=240, ease=easing.in_out_sine)
@@ -24,7 +24,7 @@ self.sheet.spin("y", turns=2, frames=240, ease=easing.in_out_sine)
 `spin` turns the body about an axis by whole or partial turns, spread over `frames`. Two whole turns end where they
 started, so the text lands at rest. `in_out_sine` starts slowly, speeds up and slows down again.
 
-A spin turns about the **world's** axis, not the body's own. That doesn't matter yet, because the sheet isn't tilted.
+A spin turns about the **world's** axis, not the body's own, because the text plane's parent is the world's root. That doesn't matter yet, because the sheet isn't tilted.
 It will in step 5.
 
 ## Run it

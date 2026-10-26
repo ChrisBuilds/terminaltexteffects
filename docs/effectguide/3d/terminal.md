@@ -6,7 +6,7 @@ before you design an effect.
 
 ## The idea
 
-Every frame, the space works out which cells each shape covers and draws one symbol in each. Two things decide how
+Every frame, the world works out which cells each shape covers and draws one symbol in each. Two things decide how
 well a shape reads:
 
 - **Area beats outline.** A filled face covers many cells, and its symbol and color say which way it faces. A thin
@@ -17,7 +17,7 @@ well a shape reads:
 
 ![A slanted square, the cells whose centers it covers, and its edges drawn one cell per step](../../img/effectguide/3d/cell_sampling.webp)
 
-A cell is either covered or not. The space tests one point per cell, its center, so a face fills a solid patch of
+A cell is either covered or not. The world tests one point per cell, its center, so a face fills a solid patch of
 cells while a line that's thinner than a cell leaves a trail of single cells that steps sideways as it slants.
 
 ## In TTE
@@ -26,7 +26,7 @@ The Cubes example turns three cubes of different sizes side by side:
 
 ```python
 for size, x in ((6, -28), (12, -10), (24, 18)):
-    cube = self.space.body(Cube(size), at=(x, 0, 0)).draw(look)  # look is Shaded() or Wireframe().
+    cube = self.world.body(Cube(size), at=(x, 0, 0)).draw(look)  # look is Shaded() or Wireframe().
     cube.rotate("x", 20)
     cube.spin("y", turns=1, frames=240, ease=easing.in_out_sine)
 ```
@@ -55,8 +55,8 @@ for size, x in ((6, -28), (12, -10), (24, 18)):
 
     ![The same cubes drawn only as edges](../../img/effectguide/cubes_wireframe_demo.webp)
 
-- `space.body(Cube(size), at=(x, 0, 0))` makes a body with a cube shape, `x` columns from the center.
-- `.draw(look)` tells the space to fill the cells the body covers. `Shaded()` picks a symbol and color for each face
+- `world.body(Cube(size), at=(x, 0, 0))` makes a body with a cube shape, `x` columns from the center.
+- `.draw(look)` tells the world to fill the cells the body covers. `Shaded()` picks a symbol and color for each face
   from its angle to the light. `Wireframe()` draws only the edges, with hidden edges dimmed.
 - `rotate("x", 20)` tips the top toward you so you can see it, and `spin` queues a full turn.
 
@@ -75,5 +75,5 @@ together. Only the large one works as a wireframe.
 - Aim for shapes at least 12 columns across, and 20 or more for wireframes and textured faces.
 - Keep a few cells between shapes. Two shapes that touch on screen merge into one blob of symbols.
 - Prefer a few large shapes to many small ones. They read better and cost less (see [Performance](performance.md)).
-- Text mounted on a shape needs even more room than a surface: a character is one cell, so a 12 column face holds
+- Text attached to a shape needs even more room than a surface: a character is one cell, so a 12 column face holds
   12 characters across at most, and fewer as it turns away.

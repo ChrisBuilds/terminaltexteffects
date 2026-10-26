@@ -19,12 +19,12 @@ Keep bodies in world space and give the camera a short script: hold, truck and p
 The subject's turn uses its own body queue. The camera's individual and group callbacks label the timing without
 changing the body's animation. See [Camera shots and timing](animating.md#camera-shots-and-timing) for the recording,
 the frame loop and callback definitions. The `restore` lesson then demonstrates a return shot that restores the
-camera before releasing mounted text to 2D.
+camera before the text lands back in its input cells.
 
 ## Spinning logo
 
-The input text spins like a sign on a post, brightening as it faces the light, then settles back into place and
-hands the characters back to 2D.
+The input text spins like a sign on a post, brightening as it faces the light, then settles back into place in its
+input colors.
 
 ```python title="logo.py"
 --8<-- "docs/effectguide/examples/3d/logo/logo.py"
@@ -32,14 +32,14 @@ hands the characters back to 2D.
 
 ![The input text spins twice, brightening toward the front, then settles with a small overshoot](../../img/effectguide/logo_demo.webp)
 
-- **Mounting**: the characters are yours, mounted on a shapeless body with `text_plane`, so they land exactly on
-  their input cells at rest ([Transforms](transforms.md)).
-- **Light**: `light="front"` and scenes built with `sync=Scene.SyncMetric.LIGHT` pick each character's frame from how
-  squarely it faces the light ([Light and shading](light.md)).
-- **Back faces**: `hide_when_facing_away=True` hides the text while its back is to you, so it never reads mirrored
-  ([Depth and hidden surfaces](depth.md)).
+- **The text plane**: the characters never leave it. The effect turns `world.text_plane` itself, so the text is
+  exactly on its input cells whenever the plane is at rest ([The world](world.md)).
+- **Light**: `set_light("front")` and scenes built with `sync=Scene.SyncMetric.LIGHT` pick each character's frame from
+  how squarely it faces the light ([Light and shading](light.md)).
+- **Back faces**: `hide_facing_away = True` hides the text while its back is to you, so it never reads mirrored
+  ([Depth and hidden surfaces](depth.md#facing-away)).
 - **Timing**: `spin` then `settle` with `ease=easing.out_back` gives a fast spin that overshoots and springs back to
-  rest. `on_complete(self.finish)` releases the characters and restores their input colors when it lands
+  rest. `on_complete(self.finish)` resets the plane and restores the input colors when it lands
   ([Animating in 3D](animating.md)).
 
 To make it your own, change the gradient, the number of turns, or spin about `"x"` for a flip.
@@ -58,9 +58,9 @@ A die rolls in from the left, tumbling, and lands with the five facing you.
   ([Meshes](meshes.md)). Opposite faces add up to seven, as on a real die.
 - **Textures as pictures**: each face's text is a solid block of `█` with blank pips cut out. Each pip is two cells
   wide and one tall, which looks round on tall cells ([Tall cells](tall-cells.md), [Texture mapping](textures.md)).
-- **Combining tweens**: `move_to` and `spin(..., together=True)` roll it across the screen, then `turn_to` lands it
-  on an exact pose ([Rotation](rotation.md)).
-- **Starting pose**: `set_rotation(rotation_about("diagonal", 120))` starts it at an angle so no face is square to
+- **Moving and turning together**: a path on `die.motion` rolls it across the screen while a `spin` of the same
+  length tumbles it, then `turn_to` lands it on an exact pose ([Transforms](transforms.md), [Rotation](rotation.md)).
+- **Starting pose**: `die.rotation = rotation_about("diagonal", 120)` starts it at an angle so no face is square to
   the camera while it rolls.
 
 ## Globe
@@ -103,7 +103,7 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 - **Turning about a tilted axis**: the drum is tipped toward you, so turning it with `rotate("y", ...)` would turn it
   about the world's vertical and make it wobble. Instead, it sets its rotation each frame to the tilt times a turn
   about its own axis ([Rotation](rotation.md)).
-- **Perspective**: `perspective=0.5` keeps the near side from magnifying the letters too much
+- **Perspective**: `set_perspective(0.5)` keeps the near side from magnifying the letters too much
   ([Camera and projection](camera.md)).
 - **Driving it yourself**: there's no tween. `__next__` counts frames and sets the angle, which is how to make
   motion that never ends or follows your own rules.

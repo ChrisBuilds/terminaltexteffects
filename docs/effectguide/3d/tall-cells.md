@@ -17,13 +17,12 @@ final step, from world space to canvas rows, divides heights by 2.
 
 ## In TTE
 
-The Cells example turns the same cube twice: on the left with the usual camera, and on the right in a second space
-whose camera treats rows as one unit tall. The only difference is the second camera's `row_scale`:
+The Cells example turns two bodies side by side. On the left is a 16 unit cube. On the right is a box twice as tall,
+16 by 32 by 16, which is how the cube would look if the camera counted each row as one unit:
 
 ```python
-corrected = Space3D(self.terminal)
-square = Space3D(self.terminal)
-square.camera = Camera.for_canvas(self.terminal.canvas, distance=square.camera.distance, row_scale=1.0)
+self.world.body(Cube(16), at=(-20, 0, 0)).draw(Shaded())
+self.world.body(Box(16, 32, 16), at=(20, 0, 0)).draw(Shaded())
 ```
 
 ??? example "cells.py"
@@ -40,9 +39,8 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 
 ![A correct cube on the left, and a cube twice as tall on the right](../../img/effectguide/cells_demo.webp)
 
-You never need the right-hand camera in a real effect. It's here to show what the correction does. Notice that it
-also changes how the cube turns: the uncorrected cube stretches as its faces turn, because a turn that keeps
-distances the same in 3D no longer keeps them the same on screen.
+A world has one camera, so the example shows the uncorrected cube as a box built twice as tall. Setting
+`world.camera.row_scale = 1` would draw the whole scene that way. You never need it in a real effect.
 
 ## Under the hood
 
