@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING
 
 from PIL import Image, ImageDraw, ImageFont
 
-from terminaltexteffects.engine.space3d import Camera
+from terminaltexteffects.engine.camera import Camera
 from terminaltexteffects.utils import geometry3d as g3
 from terminaltexteffects.utils.geometry3d import Rotation, Vec3
 

@@ -1389,7 +1389,9 @@ class Terminal:
         """Set whether a character participates in terminal rendering.
 
         This updates both the character's internal visibility flag and the terminal's
-        tracked set of currently visible characters.
+        tracked set of currently visible characters. A character the world hides, because
+        it is behind the camera or faces away on a body that hides such characters, stays
+        hidden until the view sees it again.
 
         Args:
             character (EffectCharacter): Character whose visibility should be updated.
@@ -1407,6 +1409,8 @@ class Terminal:
             raise InvalidCharacterError(character)
         if not isinstance(is_visible, bool):
             raise InvalidCharacterVisibilityError(is_visible)
+        if is_visible and character.motion._view_hidden:
+            return  # Behind the camera or facing away: it shows once the view sees it again.
         visibility_changed = character._is_visible != is_visible
         character._is_visible = is_visible
         if is_visible:

@@ -13,14 +13,15 @@ Classes:
 
 from __future__ import annotations
 
+import math
 import typing
 
 from terminaltexteffects.utils import geometry3d as g3
+from terminaltexteffects.utils.geometry import Coord
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine.base_character import EffectCharacter
     from terminaltexteffects.engine.surfaces import FaceName
-    from terminaltexteffects.utils.geometry import Coord
 
 __all__ = ["View"]
 
@@ -145,7 +146,12 @@ class View:
         self._projected = projected is not None
         if projected is None:
             return
-        self._cell = motion.current_coord
+        if parent._flat and not position.z:
+            # The text-plane shortcut motion takes: the rounded column and row.
+            self._cell = Coord(round(position.x), round(position.y))
+        else:
+            # Halves round up, as motion rounds projected cells.
+            self._cell = Coord(math.floor(projected.column + 0.5), math.floor(projected.row + 0.5))
         self._depth = projected.depth
         reach = parent._reach()
         if reach > _EPSILON:

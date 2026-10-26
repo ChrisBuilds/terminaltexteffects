@@ -38,8 +38,9 @@ _DIM = Color("#7a3a86")
 _SHADE_SYMBOLS = ".,-~:;=!*#$@"
 _AMBIENT = 0.15
 _TEXT_NUDGE = 1e-6
-_SURFACE_BIAS = 1e-6
-"""How much farther a drawn cell is ordered than it is, so a character exactly on the surface draws on top."""
+_SURFACE_BIAS = 1e-3
+"""How much farther a drawn cell is ordered than it is, in units, so a character exactly on the surface draws on top.
+It is in units rather than order, so it stays smaller than real gaps however far away the eye is."""
 _DECAL_REACH = 2.0
 """How far behind its body's drawn cell, in units, a character on the surface still draws over it. It covers
 the gap between a curved surface and the flat facets it is drawn with, and the cell-center sampling at folds."""
@@ -307,7 +308,12 @@ class Painter:
         """Draw every drawn body into one depth buffer and show it with the pooled characters."""
         self.frame += 1
         world = self.world
-        drawn = [body for body in world._bodies if body._look is not None or body._face_looks]
+        drawn = []
+        for body in world._bodies:
+            if body._look is not None or body._face_looks:
+                drawn.append(body)
+            elif body._cells:
+                body._cells = []  # Erased: its slots are hidden below, as cells nothing drew this frame.
         if not drawn and not self._shown:
             return
         cells: dict[Coord, _Cell] = {}
@@ -333,7 +339,7 @@ class Painter:
             ):
                 animation.set_appearance(symbol, colors)
                 slot.symbol, slot.colors, slot.visual = symbol, colors, animation.current_character_visual
-            order = depth_order(decals.get(cell, depth), distance) - _SURFACE_BIAS
+            order = depth_order(decals.get(cell, depth) + _SURFACE_BIAS, distance)
             if slot.order != order:
                 character._set_depth_order(order)
                 slot.order = order

@@ -71,7 +71,7 @@ class CameraOrbitIterator(BaseEffectIterator[CameraOrbitConfig]):
             if self.finished:
                 raise StopIteration
             for body in self.world.bodies:
-                body.erase()  # The world hides its cells when it next paints.
+                self.world.remove(body)  # Its cells are hidden when the world next paints.
             for label in self.labels:
                 self.terminal.set_character_visibility(label, is_visible=False)
             self.world.camera.reset()

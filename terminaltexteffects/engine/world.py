@@ -1003,7 +1003,8 @@ class World:
             plane = self.text_plane
             camera = self.camera
             plane._flat = (
-                not camera._moved
+                camera.rotation == g3.Rotation()
+                and camera.position == g3.Vec3(0.0, 0.0, camera.distance)
                 and camera.focal in (None, camera.distance)
                 and camera.row_scale == TERMINAL_ROW_SCALE
                 and plane._parent is self.root

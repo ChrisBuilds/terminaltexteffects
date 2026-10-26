@@ -121,8 +121,8 @@ def test_grid_sizes_follow_the_shape(world: World) -> None:
     assert math.isclose(torus.rows, 4 * math.pi)
     plane = surface_of(world.body(Plane(20, 10)))
     assert (plane.columns, plane.rows) == (20, 5)
-    assert world.body(Icosahedron(8)).surface is None
-    assert world.body().surface is None
+    assert not world.body(Icosahedron(8)).has_surface
+    assert not world.body().has_surface
 
 
 def test_columns_start_at_the_front(world: World) -> None:

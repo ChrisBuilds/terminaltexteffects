@@ -1,8 +1,9 @@
 """Measure the frame costs quoted in the Effect Guide's 3D Performance chapter.
 
 Each guide example runs on the concept input on an 80 by 24 canvas with the frame-rate limit off, and the median of
-several runs is reported as milliseconds per frame. The sphere and mounted-character tables time `Space3D.step()`
-alone. The output is Markdown with the revision, Python version and processor it was measured on.
+several runs is reported as milliseconds per frame. The sphere and text-plane tables time the world's part of a
+frame: stepping, projecting characters again and painting drawn bodies. The output is Markdown with the revision,
+Python version and processor it was measured on.
 
 Run it from the repository root:
 
@@ -21,14 +22,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from terminaltexteffects import __main__ as tte_main
-from terminaltexteffects.engine.space3d import Shaded, Space3D, Sphere, Textured
+from terminaltexteffects.engine.drawing import Shaded, Textured
+from terminaltexteffects.engine.shapes import Sphere
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from tools.perf.benchmark_effects import build_configs, run_iteration
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-    from terminaltexteffects.engine.space3d import Look
+    from terminaltexteffects.engine.drawing import Look
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES = PROJECT_ROOT / "docs" / "effectguide" / "examples"
@@ -87,33 +89,36 @@ def make_terminal(text: str, width: int = 80, height: int = 24) -> Terminal:
     return Terminal(text, config=config)
 
 
-def time_steps(space: Space3D, steps: int, samples: int) -> float:
-    """Return the median milliseconds per `space.step()` over `steps` steps, `samples` times."""
+def time_steps(terminal: Terminal, steps: int, samples: int) -> float:
+    """Return the median milliseconds per world frame over `steps` frames, `samples` times."""
+    world = terminal.world
     times = []
     for _ in range(samples):
         start = time.perf_counter()
         for _ in range(steps):
-            space.step()
+            if world.step():
+                terminal._project_all_characters()
+            world.paint()
         times.append((time.perf_counter() - start) * 1000 / steps)
     return statistics.median(times)
 
 
 def time_sphere(segments: int, rings: int, look: Look, samples: int) -> float:
     """Return the median milliseconds per step of a turning sphere of radius 20."""
-    space = Space3D(make_terminal(CONCEPT_INPUT))
-    space.body(Sphere(radius=20, segments=segments, rings=rings)).draw(look).spin("y", turns=100, frames=100_000)
-    return time_steps(space, 60, samples)
+    terminal = make_terminal(CONCEPT_INPUT)
+    body = terminal.world.body(Sphere(radius=20, segments=segments, rings=rings))
+    body.draw(look).spin("y", turns=100, frames=100_000)
+    return time_steps(terminal, 60, samples)
 
 
-def time_mounts(text: str, width: int, height: int, samples: int) -> tuple[float, int]:
-    """Return the median milliseconds per step with every visible character mounted on a turning plane."""
+def time_text_plane(text: str, width: int, height: int, samples: int) -> tuple[float, int]:
+    """Return the median milliseconds per frame with every visible character on the turning text plane."""
     terminal = make_terminal(text, width, height)
-    space = Space3D(terminal)
     characters = [character for character in terminal.get_characters() if character.input_symbol != " "]
-    plane = space.body()
-    plane.add_chars(characters, plane.text_plane(characters))
-    plane.spin("y", turns=100, frames=100_000)
-    return time_steps(space, 60, samples), len(characters)
+    for character in characters:
+        terminal.set_character_visibility(character, is_visible=True)
+    terminal.world.text_plane.spin("y", turns=100, frames=100_000)
+    return time_steps(terminal, 60, samples), len(characters)
 
 
 def environment() -> str:
@@ -150,10 +155,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         made = look()
         name = type(made).__name__ + ('(back="dim")' if getattr(made, "back", "hide") == "dim" else "()")
         print(f"| {segments} by {rings}, `{name}` | {time_sphere(segments, rings, made, args.samples):.1f} ms |")
-    print("\n| Mounted characters | Time per step |\n| --- | --- |")
+    print("\n| Characters on the text plane | Time per step |\n| --- | --- |")
     full_screen = "\n".join("x" * 200 for _ in range(50))
     for text, width, height in ((CONCEPT_INPUT, 80, 24), (full_screen, 200, 50)):
-        per_step, count = time_mounts(text, width, height, args.samples)
+        per_step, count = time_text_plane(text, width, height, args.samples)
         print(f"| {count} | {per_step:.1f} ms |")
     return 0
 

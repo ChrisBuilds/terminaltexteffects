@@ -16,13 +16,14 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from types import ModuleType
 
-    from terminaltexteffects.engine.space3d import Space3D
+    from terminaltexteffects.engine.base_character import EffectCharacter
+    from terminaltexteffects.engine.world import World
 
 
 class GuideIterator(Protocol):
     """The public scene exposed by each standalone camera guide iterator."""
 
-    space: Space3D
+    world: World
 
     def __next__(self) -> str:
         """Produce one recorded frame."""
@@ -71,12 +72,12 @@ def test_camera_lessons_keep_the_scene_in_frame(camera_modules: dict[str, Module
     """Unintended viewport crops cannot masquerade as camera perspective or near-plane behavior."""
     iterator = make_iterator(camera_modules, lesson)
     for _ in iterator:
-        camera = iterator.space.camera
-        for body in iterator.space.bodies:
+        camera = iterator.world.camera
+        for body in iterator.world.bodies:
             if body.mesh is None:
                 continue
             for vertex in body.mesh.vertices:
-                projected = camera.project(body.world_point(vertex))
+                projected = camera.project(body.to_world(vertex, surface=False))
                 assert projected is not None
                 assert 0.5 <= projected.column <= 80.5
                 assert 0.5 <= projected.row <= 31.5  # The top row is reserved for the caption.
@@ -89,13 +90,13 @@ def test_dolly_and_zoom_match_foreground_framing(camera_modules: dict[str, Modul
         iterator = make_iterator(camera_modules, lesson)
         final_widths = []
         for _ in iterator:
-            if not iterator.space.bodies:
+            if not iterator.world.bodies:
                 break
             final_widths = []
-            for body in iterator.space.bodies[:2]:
+            for body in iterator.world.bodies[:2]:
                 # Both 16-column cubes have their front faces at local z=8.
-                left = iterator.space.camera.project(body.world_point(Vec3(-8, 0, 8)))
-                right = iterator.space.camera.project(body.world_point(Vec3(8, 0, 8)))
+                left = iterator.world.camera.project(body.to_world(Vec3(-8, 0, 8), surface=False))
+                right = iterator.world.camera.project(body.to_world(Vec3(8, 0, 8), surface=False))
                 assert left is not None
                 assert right is not None
                 final_widths.append(right.column - left.column)
@@ -111,43 +112,45 @@ def test_sampled_aim_and_explicit_tracking_are_visibly_different(camera_modules:
         iterator = make_iterator(camera_modules, lesson)
         errors[lesson] = []
         for _ in iterator:
-            if not iterator.space.bodies:
+            if not iterator.world.bodies:
                 break
-            camera = iterator.space.camera
-            projected = camera.project(iterator.space.bodies[0].position)
+            camera = iterator.world.camera
+            projected = camera.project(iterator.world.bodies[0].position)
             assert projected is not None
             errors[lesson].append(abs(projected.column - camera.center_column))
     assert max(errors["follow"]) < 1e-8
     assert max(errors["sampled"]) > 20
 
 
-def test_clip_lesson_hides_anchor_without_moving_the_body(camera_modules: dict[str, ModuleType]) -> None:
+def test_clip_lesson_hides_marker_without_moving_the_body(camera_modules: dict[str, ModuleType]) -> None:
     """The disappearing marker is caused by the moving near plane, not by body motion."""
     iterator = make_iterator(camera_modules, "clip")
-    body = iterator.space.bodies[0]
+    body = iterator.world.bodies[0]
+    marker = cast("EffectCharacter", iterator.clip_marker)  # type: ignore[attr-defined]
     start = (body.position, body.rotation)
     projected_states = set()
     for _ in iterator:
-        if not iterator.space.bodies:
+        if not iterator.world.bodies:
             break
         assert (body.position, body.rotation) == start
-        projected_states.update(mount.projected for mount in iterator.space.mounts.values())
+        projected_states.add(marker.view.projected)
     assert projected_states == {False, True}
 
 
-def test_restore_lesson_releases_text_at_the_home_view(camera_modules: dict[str, ModuleType]) -> None:
-    """The return shot releases before cleanup, only once the camera and text are back home."""
+def test_restore_lesson_ends_with_the_text_flat_at_the_home_view(camera_modules: dict[str, ModuleType]) -> None:
+    """Once the return shot completes, the camera is home and the text is back on its input cells."""
     iterator = make_iterator(camera_modules, "restore")
-    home = iterator.space.camera.position
+    home = iterator.world.camera.position
     released = False
     for _ in iterator:
-        if iterator.space.bodies and not iterator.space.mounts:
-            camera = iterator.space.camera
+        if iterator.title.startswith("HOME"):  # type: ignore[attr-defined]
+            camera = iterator.world.camera
             assert camera.position.x == pytest.approx(home.x)
             assert camera.position.y == pytest.approx(home.y)
             assert camera.position.z == pytest.approx(home.z)
             assert camera.rotation.matrix() == pytest.approx((1, 0, 0, 0, 1, 0, 0, 0, 1))
-            for character in iterator.space.terminal.get_characters():
+            for character in iterator.world.text_plane.children:
+                character = cast("EffectCharacter", character)
                 assert character.motion.current_coord == character.input_coord
             released = True
     assert released
