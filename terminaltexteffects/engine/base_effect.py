@@ -108,9 +108,13 @@ class BaseEffectIterator(ABC, Generic[T]):
     def update(self) -> None:
         """Run one tick for each active character and prune inactive characters.
 
-        Each character in `active_characters` is ticked once. After all ticks complete,
+        The world steps first: if the camera or a body moved since the last frame, every character is projected
+        again. Then each character in `active_characters` is ticked once. After all ticks complete,
         characters whose `is_active` flag is false are removed from the set.
         """
+        terminal = self.terminal
+        if terminal.world.step():
+            terminal._project_all_characters()
         for character in tuple(self.active_characters):
             character.tick()
         self.active_characters -= {character for character in self.active_characters if not character.is_active}
