@@ -72,7 +72,7 @@ self.space.light = Vec3(math.sin(angle), 0.5, math.cos(angle)).normalized()
 Mounted characters can follow the light too. Each mount reports `light`, the Lambert value for its anchor's normal,
 and a scene created with `sync=Scene.SyncMetric.LIGHT` picks its frame from it. The [logo recipe](recipes.md#spinning-logo)
 uses that to brighten text as it turns toward the light. Only anchors with a
-[normal](coordinates.md#normals-for-anchors) have a direction to compare: `text_plane` and the shape layouts give
+[normal](animating.md#what-a-character-sees) have a direction to compare: `text_plane` and the shape layouts give
 their anchors one, and an anchor made without one always reports `light=1`.
 
 ## World light or camera light?

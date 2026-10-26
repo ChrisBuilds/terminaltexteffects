@@ -193,7 +193,7 @@ is scaled so advancing by 30 gives a point at **camera depth 30**. It is not nor
 `body.text_plane(characters)` has a different job: it lays out text using the **initial camera configuration**,
 undoing the body's pose at the time of the call. Moving or zooming the active camera does not rebuild those anchors.
 To return text to its input cells, restore the body's construction pose **and** the initial camera view before
-release. [Returning the view](animating.md#returning-the-view-before-release) demonstrates it.
+release. [Returning the view](animating.md#returning-the-view) demonstrates it.
 
 ## Settings and troubleshooting
 

@@ -87,12 +87,15 @@ nav:
     - 3D Effects:
       - effectguide/3d/index.md
       - effectguide/3d/terminal.md
+      - effectguide/3d/world.md
       - effectguide/3d/coordinates.md
       - effectguide/3d/tall-cells.md
       - effectguide/3d/transforms.md
       - effectguide/3d/rotation.md
       - effectguide/3d/camera.md
       - effectguide/3d/camera-movement.md
+      - effectguide/3d/attaching.md
+      - effectguide/3d/surfaces.md
       - effectguide/3d/depth.md
       - effectguide/3d/meshes.md
       - effectguide/3d/light.md

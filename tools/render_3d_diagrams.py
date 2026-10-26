@@ -862,7 +862,7 @@ def tween_timeline() -> list[Image.Image]:
     canvas.line((end, 70), (end, 236), WHITE, 1.5, dash=4)
     canvas.text((end + 8, 74), "on_complete", WHITE, 12, "lm", mono=True)
     canvas.text(
-        (430, 285), "space.step() advances both body and camera queues; this example shows one body.", MUTED, 12
+        (430, 285), "update() advances the camera's and every body's queue; this example shows one body.", MUTED, 12
     )
     return [canvas.finish()]
 
@@ -1319,6 +1319,245 @@ CLIPPED: set[str] = set()
 """Labels and markers drawn reaching past a frame's edges since this was last cleared, so tests can catch them."""
 
 
+def _node(canvas: Canvas, center: Point, label: str, note: str, color: RGB, width: float = 150) -> None:
+    """Draw a tree node: a rounded box with a code label and a muted note under it."""
+    left, right = center[0] - width / 2, center[0] + width / 2
+    canvas.rect(left, center[1] - 18, right, center[1] + 18, mix(color, BACKGROUND, 0.7), color)
+    canvas.text(center, label, TEXT, 13, mono=True)
+    canvas.text((center[0], center[1] + 32), note, MUTED, 11)
+
+
+def world_tree() -> list[Image.Image]:
+    """Show the world's node tree: the root holds the text plane, the screen and an effect's bodies."""
+    canvas = Canvas(860, 380)
+    canvas.text((430, 26), "Every node has a parent body; its position is measured in that parent's frame.", TEXT, 14)
+    root = (430, 80)
+    plane, screen, arm = (150, 190), (430, 190), (710, 190)
+    letters, label, cube = (150, 310), (430, 310), (710, 310)
+    for a, b in ((root, plane), (root, screen), (root, arm), (plane, letters), (screen, label), (arm, cube)):
+        canvas.line((a[0], a[1] + 44), (b[0], b[1] - 18), FAINT, 2)
+    _node(canvas, root, "world.root", "never moves; free nodes and new bodies", WHITE)
+    _node(canvas, plane, "world.text_plane", "the canvas, at z = 0", CYAN)
+    _node(canvas, screen, "world.screen", "fixed to the canvas", AMBER)
+    _node(canvas, arm, "arm = world.body()", "a pivot: no shape", PURPLE, 170)
+    _node(canvas, letters, "'T', 'e', 'r', ...", "the input characters", TEXT, 170)
+    _node(canvas, label, '"SCORE 12"', "labels and overlays", TEXT)
+    _node(canvas, cube, "world.body(Cube(8))", "turns with the arm", PURPLE, 170)
+    return [canvas.finish()]
+
+
+def frames() -> list[Image.Image]:
+    """One character measured three ways: on the text plane's surface, along a pivot's axes, and in the world."""
+    canvas = Canvas(900, 380)
+    canvas.text((450, 24), "The same point, measured in three frames", TEXT, 15)
+    panels = (
+        (150, "on the text plane", "(column, row, height)", CYAN),
+        (450, "under a pivot", "(x, y, z) along its axes", PURPLE),
+        (750, "in the world", "(x, y, z) along the world axes", WHITE),
+    )
+    point = Vec3(6, 6, 16)
+    for x, title, form, color in panels:
+        view = View((x - 20, 240), 6.5, yaw=-35, pitch=20)
+        if color is CYAN:
+            # A patch of the text plane's grid, and the height up its normal.
+            for k in range(-2, 4):
+                canvas.line(view(Vec3(-12, k * 4, 0)), view(Vec3(18, k * 4, 0)), FAINT, 1)
+            for k in range(-3, 5):
+                canvas.line(view(Vec3(k * 4, -8, 0)), view(Vec3(k * 4, 12, 0)), FAINT, 1)
+            foot = Vec3(point.x, point.y, 0)
+            canvas.circle(view(foot), 3, CYAN)
+            canvas.line(view(foot), view(point), CYAN, 2, dash=4)
+            canvas.text((view(foot)[0] + 8, view(foot)[1] + 4), "cell", CYAN, 11, "lt")
+            middle = view(Vec3(point.x, point.y, point.z / 2))
+            canvas.text((middle[0], middle[1] - 10), "height", CYAN, 11, "mb")
+        else:
+            turn = Rotation.about_z(math.radians(30)) if color is PURPLE else Rotation()
+            origin = Vec3(-4, -6, 0) if color is PURPLE else Vec3(-6, -8, 0)
+            for axis, axis_color in ((g3.X_AXIS, RED), (g3.Y_AXIS, GREEN), (g3.Z_AXIS, BLUE)):
+                canvas.arrow(view(origin), view(origin + turn.apply(axis) * 16), axis_color, 2, 8)
+            canvas.circle(view(origin), 3, color)
+            canvas.line(view(origin), view(point), mix(color, BACKGROUND, 0.4), 1.5, dash=4)
+        canvas.circle(view(point), 6, AMBER)
+        canvas.text((x, 64), title, color, 14)
+        canvas.text((x, 86), form, MUTED, 12, mono=True)
+    canvas.text((450, 356), "A node's three numbers mean what its parent's frame says they mean.", MUTED, 12)
+    return [canvas.finish()]
+
+
+def attach() -> list[Image.Image]:
+    """Show that attaching keeps a node's place in the world: the same point, in the new parent's frame."""
+    canvas = Canvas(900, 380)
+    canvas.text((450, 24), "character.attach(cube): the same place in the world, new numbers", TEXT, 15)
+    turn = Rotation.about_y(math.radians(25))
+    center = Vec3(8, 2, -6)
+    point = center + turn.apply(Vec3(3, 3, 8))  # On the cube's front face.
+    for x, parent, numbers, active in (
+        (225, "before: on the text plane", "(column, row, height)", CYAN),
+        (675, "after: on the cube", "(column, row, 0) on its surface", PURPLE),
+    ):
+        view = View((x, 215), 4.0, yaw=-30, pitch=22)
+        plane = active if active is CYAN else FAINT
+        for k in range(-3, 4):
+            canvas.line(view(Vec3(-26, k * 4, -14)), view(Vec3(26, k * 4, -14)), mix(plane, BACKGROUND, 0.4), 1)
+        canvas.text(view(Vec3(-26, 15, -14)), "text plane", plane, 11, "lm")
+        solid(canvas, view, g3.box(16, 16, 16), turn, position=center)
+        if active is CYAN:
+            foot = view(Vec3(point.x, point.y, -14))
+            canvas.line(foot, view(point), CYAN, 2, dash=4)
+        canvas.circle(view(point), 6, AMBER)
+        canvas.text((x, 64), parent, active, 14)
+        canvas.text((x, 352), numbers, MUTED, 12, mono=True)
+    canvas.arrow((420, 215), (480, 215), WHITE, 2, 10)
+    return [canvas.finish()]
+
+
+def globe_grid() -> list[Image.Image]:
+    """Unfold a cube's surface grid: the sides in a band of columns, with the caps' rows running to the poles."""
+    canvas = Canvas(900, 470)
+    canvas.text((450, 24), "A cube's surface, unfolded: one grid for the whole shape", TEXT, 15)
+    size, left, top = 130, 160, 170
+    names = ("front", "right", "back", "left")
+    colors = (CYAN, PURPLE, FAINT, PURPLE)
+    for index, (name, color) in enumerate(zip(names, colors)):
+        x = left + index * size
+        canvas.rect(x, top, x + size, top + size, mix(color, BACKGROUND, 0.75), color)
+        for column in range(1, 8):
+            canvas.line(
+                (x + column * size / 8, top), (x + column * size / 8, top + size), mix(color, BACKGROUND, 0.5), 1
+            )
+        for row in range(1, 4):
+            canvas.line((x, top + row * size / 4), (x + size, top + row * size / 4), mix(color, BACKGROUND, 0.5), 1)
+        canvas.text((x + size / 2, top + size / 2), name, TEXT, 13)
+    # The caps hang off the front: their rows are rings that shrink toward the pole at the center.
+    for cap_top, name, label in ((top - size, "top", "top pole"), (top + size, "bottom", "bottom pole")):
+        canvas.rect(left, cap_top, left + size, cap_top + size, mix(AMBER, BACKGROUND, 0.8), AMBER)
+        for ring in range(1, 4):
+            inset = ring * size / 8
+            canvas.rect(
+                left + inset,
+                cap_top + inset,
+                left + size - inset,
+                cap_top + size - inset,
+                None,
+                mix(AMBER, BACKGROUND, 0.4),
+            )
+        canvas.circle((left + size / 2, cap_top + size / 2), 3, AMBER)
+        canvas.text(
+            (left + size + 12, cap_top + size / 2 + (-24 if name == "top" else 24)),
+            f"{name} cap: rows run to the {label}",
+            AMBER,
+            12,
+            "lm",
+        )
+    canvas.arrow((left + size, top - 14), (left + 4 * size, top - 14), TEXT, 2, 10)
+    canvas.text((left + 2.5 * size, top - 30), "columns go around, from the front to the right", TEXT, 12)
+    canvas.arrow((left - 20, top + 2 * size), (left - 20, top - size), TEXT, 2, 10)
+    canvas.text((left - 32, top + size / 2), "rows: pole to pole", TEXT, 12, "rm")
+    canvas.text(
+        (450, 450),
+        "Columns past the left edge come round to the front; rows past a pole come back down the far side.",
+        MUTED,
+        12,
+    )
+    return [canvas.finish()]
+
+
+def routes() -> list[Image.Image]:
+    """Two ways round a cube: a waypoint takes the shortest straight route, walk() goes straight ahead by an amount."""
+    from terminaltexteffects.engine.shapes import Cube  # noqa: PLC0415 (only this diagram needs the engine's shapes)
+
+    canvas = Canvas(860, 420)
+    canvas.text((430, 24), "Travelling over a cube's surface", TEXT, 15)
+    shape = Cube(16)
+    surface = shape.build_surface()
+    view = View((400, 225), 11.0, yaw=-35, pitch=25)
+    solid(
+        canvas, view, shape.build_mesh(), Rotation(), colors=lambda _tag, lit: mix(BACKGROUND, MUTED, 0.25 + 0.4 * lit)
+    )
+    start = surface.face("front").at(3, 3)
+    start_xyz = (start.x, start.y, start.z)
+    lid = surface.face("top").center
+    paths = (
+        (surface._route(start_xyz, (lid.x, lid.y, lid.z)), CYAN, 'new_waypoint(face("top").center)', (560, 80)),
+        (surface._walk(start_xyz, 24, 0), AMBER, "walk(columns=24)", (700, 300)),
+    )
+    for route, color, label, where in paths:
+        if route is None:
+            continue
+        points = [
+            view(surface.point(Vec3(*position))[0] + surface.point(Vec3(*position))[1] * 0.3) for position in route[0]
+        ]
+        for a, b in zip(points, points[1:-1]):
+            canvas.line(a, b, color, 3)
+        canvas.arrow(points[-2], points[-1], color, 3, 11)
+        canvas.text(where, label, color, 13, mono=True)
+    canvas.circle(view(surface.point(start)[0]), 6, WHITE)
+    first = view(surface.point(start)[0])
+    canvas.text((first[0] - 14, first[1]), "start, on the front", WHITE, 12, "rm")
+    canvas.text(
+        (430, 400),
+        "The waypoint goes the shortest way, over the edge; the walk goes straight on, round the corner.",
+        MUTED,
+        12,
+    )
+    return [canvas.finish()]
+
+
+def decal() -> list[Image.Image]:
+    """Side view: a character on its body's surface draws over the body's cell; anything in front still hides both."""
+    canvas = Canvas(860, 380)
+    eye = (790, 190)
+    screen_x = 600
+    canvas.circle(eye, 7, AMBER)
+    canvas.text((eye[0], eye[1] + 24), "camera", AMBER, 12)
+    canvas.text((screen_x, 56), "cells", TEXT, 14)
+    face_x = 300
+    canvas.rect(160, 90, face_x, 300, mix(CYAN, BACKGROUND, 0.7), CYAN)
+    canvas.text((230, 316), "drawn cube", CYAN, 12)
+    sphere = ((470, 252), 30)
+    canvas.circle(sphere[0], sphere[1], mix(PURPLE, BACKGROUND, 0.3), PURPLE)
+    canvas.text((sphere[0][0], sphere[0][1] + 46), "a sphere in front", PURPLE, 12)
+    size = 9
+    lettered = {-4, -3, -1, 0, 3, 4}  # Cells whose ray meets a character on the cube's face.
+    letters = []
+    for cell in range(-6, 9):
+        cell_y = eye[1] + cell * size
+        slope = (cell_y - eye[1]) / (screen_x - eye[0])
+
+        def at(x: float, slope: float = slope) -> float:
+            return eye[1] + slope * (x - eye[0])
+
+        hit_y = at(face_x)
+        color, end = FAINT, (80.0, at(80))
+        # The sphere first: does the ray meet it, in front of the cube?
+        nearest = next(
+            (
+                x
+                for x in range(sphere[0][0] + sphere[1], sphere[0][0] - sphere[1], -1)
+                if math.dist((x, at(x)), sphere[0]) <= sphere[1]
+            ),
+            None,
+        )
+        if cell in lettered:
+            letters.append(hit_y)
+        if nearest is not None:
+            color, end = PURPLE, (nearest, at(nearest))
+        elif 90 <= hit_y <= 300:
+            color, end = (AMBER if cell in lettered else CYAN), (face_x, hit_y)
+        canvas.line(eye, end, mix(color, BACKGROUND, 0.4), 1.2)
+        canvas.rect(screen_x - size / 2, cell_y - size / 2, screen_x + size / 2, cell_y + size / 2, color, BACKGROUND)
+    for y in letters:
+        canvas.circle((face_x, y), 4, AMBER)
+    canvas.text((face_x - 70, 70), "characters at height 0 on the cube's surface", AMBER, 12, "lm")
+    canvas.text(
+        (430, 356),
+        "A character on its body's surface, facing the camera, wins its cell; the sphere in front still hides it.",
+        MUTED,
+        12,
+    )
+    return [canvas.finish()]
+
+
 def find_clipped(name: str) -> set[str]:
     """Render the diagram `name` and return the labels and markers in any frame that reach past its edges."""
     CLIPPED.clear()
@@ -1355,6 +1594,12 @@ DIAGRAMS: dict[str, Callable[[], list[Image.Image]]] = {
     "cell_snapping": cell_snapping,
     "winding": winding,
     "texture_seam": texture_seam,
+    "world_tree": world_tree,
+    "frames": frames,
+    "attach": attach,
+    "globe_grid": globe_grid,
+    "routes": routes,
+    "decal": decal,
 }
 
 
