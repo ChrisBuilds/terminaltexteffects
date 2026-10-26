@@ -117,7 +117,7 @@ one. A `Shape` adds what a body needs on top of its mesh: `surface_points` for s
 
 A mesh is also something to mount characters on. `body.surface(count)`, `vertices()` and `edges(count)` read the
 body's mesh to place anchors over its faces, on its corners or along its edges, with normals pointing outward, and they
-work whether or not the body is drawn. [Anchor layouts](coordinates.md#anchor-layouts) compares them with
+work whether or not the body is drawn. [Anchor layouts](surfaces.md#laying-out-text) compares them with
 `text_plane`, `ring` and `wrap`.
 
 ## At cell resolution

@@ -88,7 +88,7 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 - `body.wrap(characters)` and `Textured(text)` both put text around a cylinder or sphere, but differently. `wrap` gives
   each of your characters its own anchor, one character per anchor whatever the shape's size, and the characters
   ride the surface as wholes. `Textured` resamples the text into the surface's cells, so the letters stretch, repeat
-  and shade with the surface. See [Anchor layouts](coordinates.md#anchor-layouts).
+  and shade with the surface. See [Anchor layouts](surfaces.md#laying-out-text).
 
 ## Under the hood
 

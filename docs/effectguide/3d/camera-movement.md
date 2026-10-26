@@ -140,7 +140,7 @@ current position. The normal frame loop steps the space once and ticks the chara
 ```
 
 If the target moves through body tweens, those advance inside `space.step()` instead. Use the
-[completion-phase tracking pattern](animating.md#tracking-a-body-tween) to aim after that motion without stepping twice.
+[completion-phase tracking pattern](animating.md#tracking-a-moving-body) to aim after that motion without stepping twice.
 
 ## Orbit a stationary scene
 
