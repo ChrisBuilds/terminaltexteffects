@@ -353,11 +353,7 @@ class EventHandler:
                 raise SceneNotFoundError(scene_id=target)
             target = scene_query_result
 
-        elif (
-            action
-            in (EventHandler.Action.DEACTIVATE_PATH, EventHandler.Action.DEACTIVATE_SCENE)
-            and target is None
-        ):
+        elif action in (EventHandler.Action.DEACTIVATE_PATH, EventHandler.Action.DEACTIVATE_SCENE) and target is None:
             pass
 
         elif action is EventHandler.Action.DETACH:
