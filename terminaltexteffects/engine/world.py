@@ -19,8 +19,16 @@ canvas center, +x is right, +y is up and +z points toward the default camera.
 
 Classes:
     SpatialNode: The common base of characters and bodies: a parent, children and a position.
-    Body: A node with rotation and scale, which other nodes are measured against.
+    Body: A node with rotation and scale, which other nodes are measured against, and optionally a shape.
+    SurfaceTarget: A point on a body's surface that moves with it: a live target for waypoints.
     World: The root, the text plane, the camera and the light for one terminal.
+
+A body with a shape has a surface, a grid of cells over the shape. Characters attached to it sit on the surface at
+`(column, row, height)` and travel over it:
+
+    cube = world.body(Cube(16), at=(0, 0, -20))
+    cube.surface.face("front").layout_text(characters)
+    path.new_waypoint(cube.surface.face("top").center)   # the shortest way, over the edge and across the lid
 
 Moving nodes between parents:
 
@@ -33,6 +41,8 @@ from __future__ import annotations
 
 import typing
 
+from terminaltexteffects.engine.shapes import Plane
+from terminaltexteffects.engine.surfaces import PlaneSurface
 from terminaltexteffects.utils import geometry3d as g3
 from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE
 
@@ -42,9 +52,11 @@ if typing.TYPE_CHECKING:
     from terminaltexteffects.engine.base_character import EventHandler
     from terminaltexteffects.engine.canvas import Canvas
     from terminaltexteffects.engine.motion import BodyMotion, Motion
+    from terminaltexteffects.engine.shapes import Shape
+    from terminaltexteffects.engine.surfaces import Surface
     from terminaltexteffects.utils.geometry import Coord
 
-__all__ = ["Body", "SpatialNode", "World"]
+__all__ = ["Body", "SpatialNode", "SurfaceTarget", "World"]
 
 _IDENTITY: g3.Matrix3 = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
 
@@ -198,31 +210,45 @@ class SpatialNode:
         return self.event_handler
 
 
-class _PlaneSurface:
-    """A flat grid of cells: the text plane's surface, centered on its body.
+class SurfaceTarget(SpatialNode):
+    """A point on a body's surface that moves with the body: a live target for waypoints.
 
-    Positions are `(column, row, height)` in canvas coordinates; the center of the canvas is the body's origin.
+    Made by `body.surface.target(column, row, height)`. A path heading for it reads where it is every tick, so the
+    mover arrives on the spot however the body moved, turned or scaled meanwhile. It isn't one of the body's
+    children and can't be attached anywhere.
+
+    Attributes:
+        parent (Body): The body whose surface the target is on.
+        position (g3.Vec3): `(column, row, height)` on that surface.
+        world_position (g3.Vec3): Where the target is in the world now.
+
     """
 
-    def __init__(self, center_column: float, center_row: float) -> None:
-        self.center_column = center_column
-        self.center_row = center_row
+    _ON_SURFACE = True
 
-    def point(self, position: g3.Vec3) -> g3.Vec3:
-        """Return a surface position as a point in the body's own axes."""
-        return g3.Vec3(
-            position.x - self.center_column,
-            (position.y - self.center_row) * TERMINAL_ROW_SCALE,
-            position.z,
-        )
+    def __init__(self, body: Body, position: g3.Vec3) -> None:
+        """Create a target. Targets are made by a surface, not directly.
 
-    def locate(self, point: g3.Vec3) -> g3.Vec3:
-        """Return the surface position nearest a point in the body's own axes."""
-        return g3.Vec3(
-            point.x + self.center_column,
-            point.y / TERMINAL_ROW_SCALE + self.center_row,
-            point.z,
-        )
+        Args:
+            body (Body): The body whose surface the target is on.
+            position (g3.Vec3): `(column, row, height)` on that surface.
+
+        """
+        self._parent = body
+        self._position = position
+
+    def __repr__(self) -> str:  # noqa: D105
+        return f"SurfaceTarget({self._position})"
+
+    @property
+    def position(self) -> g3.Vec3:
+        """`(column, row, height)` on the body's surface."""
+        return self._position
+
+    def attach(self, parent: Body, *, at: g3.Point3 | Coord | None = None) -> None:  # noqa: ARG002
+        """Raise: a target stays on its spot. Make a new one with `surface.target` instead."""
+        msg = "A surface target stays on its body; make a new one with surface.target()."
+        raise TypeError(msg)
 
 
 class Body(SpatialNode):
@@ -237,8 +263,13 @@ class Body(SpatialNode):
     `DEACTIVATE_PATH`, `SET_COORDINATE`, `ATTACH`, `DETACH`, `CALLBACK`). The world steps bodies' paths at the
     start of every frame.
 
+    A body with a shape has a `surface`: a grid of cells over the shape. Characters attached to it sit on the surface
+    at `(column, row, height)`, and their paths follow it, over folds and round laps.
+
     Attributes:
         world (World): The world the body belongs to.
+        shape (Shape | None): The body's shape, or `None` for a pivot.
+        surface (Surface | None): The grid of cells over the shape, or `None` for a pivot or a shape without one.
         position (g3.Vec3): Position in the parent's frame, in units.
         rotation (g3.Rotation): Orientation relative to the parent.
         scale (float): Uniform scale relative to the parent.
@@ -253,7 +284,8 @@ class Body(SpatialNode):
         parent: Body | None,
         *,
         at: g3.Point3 = g3.ORIGIN,
-        surface: _PlaneSurface | None = None,
+        shape: Shape | None = None,
+        surface: Surface | None = None,
     ) -> None:
         """Create a body. Bodies are made by a `World`, not directly.
 
@@ -261,7 +293,8 @@ class Body(SpatialNode):
             world (World): The owning world.
             parent (Body | None): The parent body, or `None` for the world's root.
             at (g3.Point3): Position in the parent's frame.
-            surface (_PlaneSurface | None): The body's surface, if it has one.
+            shape (Shape | None): The body's shape, or `None` for a shapeless pivot.
+            surface (Surface | None): The body's surface. Defaults to the shape's.
 
         """
         self.world = world
@@ -274,6 +307,11 @@ class Body(SpatialNode):
         self._removed = False
         self._rotation = g3.Rotation()
         self._scale = 1.0
+        self.shape = shape
+        if surface is None and shape is not None:
+            surface = shape.build_surface()
+        if surface is not None:
+            surface._body = self
         self.surface = surface
         # True only for the text plane while it and the camera are as the world made them (see `World.step`).
         self._flat = False
@@ -416,7 +454,7 @@ class Body(SpatialNode):
         self._refresh()
         position = g3._vec3(position)
         if surface and self.surface is not None:
-            position = self.surface.point(position)
+            position = self.surface._local(position)
         return self._local_to_world(position)
 
     def from_world(self, point: g3.Point3, *, surface: bool = True) -> g3.Vec3:
@@ -436,7 +474,7 @@ class Body(SpatialNode):
         # The matrix is a rotation times a uniform scale, so its inverse is its transpose over the scale squared.
         s2 = self.world_scale**2
         local = g3.Vec3((a * x + d * y + g * z) / s2, (b * x + e * y + h * z) / s2, (c * x + f * y + i * z) / s2)
-        return self.surface.locate(local) if surface and self.surface is not None else local
+        return self.surface._locate(local) if surface and self.surface is not None else local
 
     @property
     def world_scale(self) -> float:
@@ -484,7 +522,15 @@ class World:
         self.text_plane = Body(
             self,
             self.root,
-            surface=_PlaneSurface(self.camera.center_column, self.camera.center_row),
+            shape=Plane(canvas.right - canvas.left + 1, (canvas.top - canvas.bottom + 1) * TERMINAL_ROW_SCALE),
+            surface=PlaneSurface(
+                canvas.left,
+                canvas.right,
+                canvas.bottom,
+                canvas.top,
+                center_column=self.camera.center_column,
+                center_row=self.camera.center_row,
+            ),
         )
         self.light = LIGHTS["upper left"].normalized()
         self.light_space = "world"
@@ -543,7 +589,7 @@ class World:
                 and plane._position == g3.ORIGIN
                 and plane._rotation == g3.Rotation()
                 and plane._scale == 1.0
-                and plane.surface is not None
+                and isinstance(plane.surface, PlaneSurface)
                 and plane.surface.center_column == camera.center_column
                 and plane.surface.center_row == camera.center_row
             )
@@ -582,10 +628,11 @@ class World:
         """The light direction in world space."""
         return self.camera.rotation.apply(self.light) if self.light_space == "camera" else self.light
 
-    def body(self, *, at: g3.Point3 = g3.ORIGIN, parent: Body | None = None) -> Body:
-        """Create a shapeless body: a pivot that other nodes can be measured against.
+    def body(self, shape: Shape | None = None, *, at: g3.Point3 = g3.ORIGIN, parent: Body | None = None) -> Body:
+        """Create a body: a shape characters can sit on and travel over, or without one, a pivot.
 
         Args:
+            shape (Shape | None): The body's shape, such as `Cube(16)`. `None` makes a shapeless pivot.
             at (g3.Point3): Position in the parent's frame, in units.
             parent (Body | None): The parent body; `None` means the root.
 
@@ -596,7 +643,7 @@ class World:
         if parent is not None and (parent.world is not self or parent._removed):
             msg = "A body's parent must be a body in the same world that hasn't been removed."
             raise ValueError(msg)
-        return Body(self, parent if parent is not None else self.root, at=at)
+        return Body(self, parent if parent is not None else self.root, at=at, shape=shape)
 
     def remove(self, body: Body) -> None:
         """Take a body out of the world. Its children are detached and stay where they are in the world.
@@ -632,7 +679,9 @@ def _free_world() -> World:
     from terminaltexteffects.engine.canvas import Canvas  # noqa: PLC0415 (avoids an import cycle)
 
     world = World(Canvas(top=1, right=1))
-    world.text_plane.surface = _PlaneSurface(0.0, 0.0)
+    surface = PlaneSurface(1, 1, 1, 1, center_column=0.0, center_row=0.0)
+    surface._body = world.text_plane
+    world.text_plane.surface = surface
     world.camera.center_column = world.camera.center_row = 0.0
     world.step()
     return world

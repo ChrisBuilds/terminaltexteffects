@@ -9,6 +9,7 @@ Classes:
 
 from __future__ import annotations
 
+import bisect
 import functools
 import math
 import typing
@@ -30,6 +31,7 @@ from terminaltexteffects.utils.geometry import Coord
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine import base_character  # pragma: no cover
     from terminaltexteffects.engine.space3d import Mount  # pragma: no cover
+    from terminaltexteffects.engine.surfaces import Route, Surface  # pragma: no cover
 
 Point = typing.Union[Coord, g3.Vec3]
 """A waypoint position: a `Coord` cell, which means `Vec3(column, row, 0)`, or a `Vec3` in the parent's frame."""
@@ -94,6 +96,19 @@ def _segment_length(start: Point, controls: tuple[Point, ...] | None, end: Point
     return _line_length(_as_xyz(start), _as_xyz(end), row)
 
 
+def _along(route: Route, t: float) -> XYZ:
+    """Return the point `t` of the way along a route over a surface; `t` outside 0 to 1 extrapolates."""
+    points, travelled = route
+    distance = t * travelled[-1]
+    index = bisect.bisect_right(travelled, distance) - 1
+    last = len(points) - 2
+    index = 0 if index < 0 else min(index, last)
+    a, b = points[index], points[index + 1]
+    piece = travelled[index + 1] - travelled[index]
+    f = (distance - travelled[index]) / piece if piece else 1.0
+    return (a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f)
+
+
 def _curve_point(points: tuple[XYZ, ...], t: float) -> XYZ:
     """Return the point at `t` on a Bezier curve; `t` outside 0 to 1 extrapolates."""
     if len(points) == 3:
@@ -120,12 +135,16 @@ class Waypoint(typing.Generic[PointT]):
     A path reads a live target's world position again every tick, so the mover heads for where it is now and
     arrives on it exactly when the path finishes, however it moved.
 
+    A waypoint made by `Path.walk` is an amount instead: `coord` is `Vec3(columns, rows, 0)`, and where the walk ends
+    is worked out from the previous waypoint when the path is activated.
+
     Attributes:
         waypoint_id (str): Unique identifier for the waypoint.
         coord (Coord | g3.Vec3 | SpatialNode): Position of the waypoint as given, or the node it homes in on.
         bezier_control (tuple[Coord | g3.Vec3 | SpatialNode, ...] | None): Optional bezier control point(s).
             Defaults to None.
-        point (g3.Vec3): `coord` as a `Vec3`. For a live target, where it was last read, in the mover's frame.
+        point (g3.Vec3): `coord` as a `Vec3`. For a live target, where it was last read, in the mover's frame. For a
+            walk, where it ended on the last activation.
 
     """
 
@@ -136,6 +155,7 @@ class Waypoint(typing.Generic[PointT]):
     _curve_controls: tuple[XYZ | SpatialNode, ...] | None = field(init=False, repr=False, compare=False)
     _target: SpatialNode | None = field(init=False, repr=False, compare=False)
     _live: bool = field(init=False, repr=False, compare=False)
+    _walk: tuple[float, float] | None = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         """Keep the position as floats too, for stepping."""
@@ -151,6 +171,7 @@ class Waypoint(typing.Generic[PointT]):
         else:
             attributes["_xyz"] = _as_xyz(coord)
         attributes["_target"] = target
+        attributes["_walk"] = None
         controls = self.bezier_control
         if controls:
             curve = tuple(c if isinstance(c, SpatialNode) else _as_xyz(c) for c in controls)
@@ -203,6 +224,8 @@ class Segment:
         """Initialize additional attributes for the Segment class."""
         self.enter_event_triggered: bool = False
         self.exit_event_triggered: bool = False
+        # The route over a closed surface, set when the path is activated; None is a straight line.
+        self._route: Route | None = None
 
     def __eq__(self, other: object) -> bool:
         """Check if two Segment objects are equal.
@@ -275,6 +298,9 @@ class Path:
         # target. Activation measures again when the mover's frame differs, or targets need reading.
         self._row = _ROW
         self._live = False
+        # Whether any waypoint is a walk, and whether the last activation found routes over a surface.
+        self._walks = False
+        self._routed = False
         if self.speed <= 0:
             raise PathInvalidSpeedError(self.speed)
 
@@ -320,6 +346,72 @@ class Path:
         new_waypoint = Waypoint(waypoint_id, coord, bezier_control=bezier_control_tuple)
         self._add_waypoint_to_path(new_waypoint)
         return new_waypoint
+
+    def walk(self, columns: float = 0, rows: float = 0, *, waypoint_id: str = "") -> Waypoint[g3.Vec3]:
+        """Add a waypoint that many cells straight ahead of the previous one, wherever that ends.
+
+        On a closed surface the walk goes straight on over every fold and round as many laps as it takes:
+        `walk(columns=70)` on a cube 40 columns around goes round once and 30 columns more, and `walk(rows=24)` from
+        the middle of the front goes up, over the lid in line, and down the back. On a plane it's the point that
+        many columns and rows on. The previous waypoint is the one before this, or where the mover is when the path
+        is activated.
+
+        Args:
+            columns (float): Columns to walk; negative goes left.
+            rows (float): Rows to walk; negative goes down.
+            waypoint_id (str): Unique identifier for the waypoint. Used to query for the waypoint.
+
+        Returns:
+            Waypoint: The new waypoint. Its `point` is where the walk ended on the last activation.
+
+        """
+        waypoint = self.new_waypoint(g3.Vec3(columns, rows, 0.0), waypoint_id=waypoint_id)
+        waypoint.__dict__["_walk"] = (float(columns), float(rows))
+        self._walks = True
+        return waypoint
+
+    def _route(self, surface: Surface | None) -> None:
+        """Resolve walks and the routes over a closed surface, and measure the segments along them.
+
+        Called on activation, after the origin segment is in place. Live segments keep their measured lengths and
+        go straight.
+        """
+        closed = surface is not None and surface.closed
+        row = self._row
+        routed = False
+        total = 0.0
+        previous = self.segments[0].start._xyz
+        for segment in self.segments:
+            start, end = segment.start, segment.end
+            route = None
+            stop = end._xyz
+            walk = end._walk
+            if walk is not None:
+                if surface is not None:
+                    route = surface._walk(previous, walk[0], walk[1])
+                    stop = surface._normalize(route[0][-1]) if route is not None else previous
+                else:
+                    stop = (previous[0] + walk[0], previous[1] + walk[1], previous[2])
+                end.__dict__["_xyz"] = stop
+            if start._live or end._live:
+                segment._route = None
+            else:
+                if walk is None and closed and not end._curve_controls:
+                    stop = typing.cast("Surface", surface)._normalize(stop)
+                    end.__dict__["_xyz"] = stop
+                    route = typing.cast("Surface", surface)._route(previous, stop)
+                segment._route = route
+                if route is not None:
+                    segment.distance = route[1][-1]
+                    routed = True
+                elif end._curve_controls:
+                    segment.distance = _curve_length((previous, *end._curve_controls, stop), row)  # type: ignore[arg-type]
+                else:
+                    segment.distance = _line_length(previous, stop, row)
+            total += segment.distance
+            previous = stop if closed and not end._live else end._xyz
+        self._routed = routed
+        self.total_distance = total
 
     def _add_waypoint_to_path(self, waypoint: Waypoint) -> None:
         """Add a waypoint to the path and update the total distance and maximum steps.
@@ -404,7 +496,7 @@ class Path:
         """
         return g3.Vec3(*self._step(event_handler))
 
-    def _step(self, event_handler: base_character.EventHandler) -> XYZ:  # noqa: PLR0911
+    def _step(self, event_handler: base_character.EventHandler) -> XYZ:  # noqa: PLR0911, PLR0915
         """Step as `step()` does, returning the position as floats."""
         if not self.max_steps or self.current_step >= self.max_steps or not self.total_distance:
             # if the path has zero distance or there are no more steps, return the final waypoint position
@@ -456,6 +548,10 @@ class Path:
         start_waypoint = active_segment.start
         end = active_segment.end
         t = segment_distance_to_travel_factor
+        if self._routed:
+            route = active_segment._route
+            if route is not None:
+                return _along(route, t)
         if self._live:
             # Live targets: the timing was frozen on activation; the ends are read where they are now.
             start = _read(start_waypoint, motion) if start_waypoint._target is not None else start_waypoint._xyz
@@ -591,6 +687,11 @@ class Motion:
         node = self.character
         return _ROW if node._ON_SURFACE and node.parent.surface is not None else 1.0
 
+    def _surface(self) -> Surface | None:
+        """Return the surface this motion moves over, if the mover sits on one."""
+        node = self.character
+        return node.parent.surface if node._ON_SURFACE else None
+
     def _from_world(self, point: g3.Vec3) -> XYZ:
         """Return a world point in the frame this motion moves in."""
         node = self.character
@@ -613,6 +714,10 @@ class Motion:
                 self._depth_from_view = False
                 character._set_depth_order(0.0)
             return
+        surface = parent.surface
+        if surface is not None and surface.closed:
+            # Positions on a closed surface are kept normalized: the column within the grid, the row pole to pole.
+            position = self._xyz = surface._normalize(position)
         camera = parent.world.camera
         projected = camera.project(parent.to_world(position))
         if projected is None:
@@ -739,7 +844,7 @@ class Motion:
                 paths[0],
             )
 
-    def activate_path(self, path: Path | str) -> None:
+    def activate_path(self, path: Path | str) -> None:  # noqa: PLR0915
         """Activates the first waypoint in the given path and updates the path's properties accordingly.
 
         If the provided `path` arg is not a `Path` object, it must be a `path_id` string.
@@ -817,6 +922,11 @@ class Motion:
         else:
             self.active_path.segments.insert(0, new_origin_segment)
         self.active_path.origin_segment = new_origin_segment
+        surface = self._surface()
+        if found_path._walks or (surface is not None and surface.closed):
+            found_path._route(surface)
+        else:
+            found_path._routed = False
         self.active_path.current_step = 0
         self.active_path.last_distance_reached = 0
         self.active_path.hold_time_remaining = self.active_path.hold_time
