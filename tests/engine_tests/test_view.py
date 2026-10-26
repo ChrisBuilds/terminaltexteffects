@@ -11,6 +11,7 @@ from terminaltexteffects.engine.animation import Scene
 from terminaltexteffects.engine.shapes import Plane, Sphere
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.geometry3d import Vec3
 
 if TYPE_CHECKING:
     from terminaltexteffects.engine.base_character import EffectCharacter
@@ -295,3 +296,13 @@ def test_hiding_a_view_hidden_character_keeps_it_hidden(terminal: Terminal, worl
     body.position = (0, 0, 0)
     step(terminal, character)
     assert not character.is_visible
+
+
+def test_an_assigned_cell_survives_the_view_changing_in_the_same_frame(terminal: Terminal, world: World) -> None:
+    """A cell assigned to `current_coord` before a frame is kept when the camera moves in that frame."""
+    character = shown(terminal)
+    character.motion.current_coord = Coord(20, 10)
+    world.camera.truck(2)
+    step(terminal, character)
+    assert character.motion.position == Vec3(20, 10, 0)
+    assert character.motion.current_coord == Coord(18, 10)

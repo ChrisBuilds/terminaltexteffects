@@ -511,7 +511,11 @@ class Terminal:
             *self._outer_fill_characters,
             *self._added_characters,
         ):
-            character.motion._resolve()
+            motion = character.motion
+            if motion.current_coord is not motion._cell:
+                # The effect assigned a cell since the last tick: take it before projecting, or it would be lost.
+                motion._sync()
+            motion._resolve()
 
     def _build_input_character(self, parsed_character: ParsedCharacter, character_id_offset: int) -> EffectCharacter:
         """Allocate one terminal-owned character from parser output."""
