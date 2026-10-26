@@ -14,7 +14,7 @@ know where to look when the high-level calls don't do what you need.
 
 | Layer | Module | What it gives you |
 | --- | --- | --- |
-| [`Space3D`](../../engine/space3d.md) | `terminaltexteffects.engine.space3d` | A camera, a light and **bodies**: shapes you move, turn and animate, viewed through a camera you can also move and aim. You mount your characters on bodies, or draw the bodies as filled surfaces. |
+| [`Space3D`](../../engine/world.md) | `terminaltexteffects.engine.space3d` | A camera, a light and **bodies**: shapes you move, turn and animate, viewed through a camera you can also move and aim. You mount your characters on bodies, or draw the bodies as filled surfaces. |
 | [`geometry3d`](../../engine/utils/geometry3d.md) | `terminaltexteffects.utils.geometry3d` | The primitives underneath: vectors, rotations, the camera's projection, meshes, rasterizing into a depth buffer, wireframes and shading. |
 
 Most effects only need `Space3D`. Each chapter shows the `Space3D` calls first, then the primitives they use, for

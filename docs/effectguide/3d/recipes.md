@@ -127,6 +127,6 @@ Four solids tumble in a row, each in its own color, with hidden edges dimmed.
 
 ## Where to go next
 
-- The [`Space3D` reference](../../engine/space3d.md) lists every call used here.
+- The [World reference](../../engine/world.md) lists every call used here.
 - The [Effect Tutorial](../tutorial/01-scaffold.md) covers configuration, testing and packaging, which apply to 3D
   effects unchanged.
