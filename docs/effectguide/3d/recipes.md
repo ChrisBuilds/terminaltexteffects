@@ -54,7 +54,7 @@ A die rolls in from the left, tumbling, and lands with the five facing you.
 
 ![A die tumbles in from the left and settles facing the viewer, tipped slightly to show its top and side](../../img/effectguide/die_demo.webp)
 
-- **Per-face looks**: `draw(faces=looks)` gives each of the cube's tagged faces its own `Textured` look
+- **Per-face looks**: `draw(faces=looks)` gives each of the cube's faces, by name, its own `Textured` look
   ([Meshes](meshes.md)). Opposite faces add up to seven, as on a real die.
 - **Textures as pictures**: each face's text is a solid block of `█` with blank pips cut out. Each pip is two cells
   wide and one tall, which looks round on tall cells ([Tall cells](tall-cells.md), [Texture mapping](textures.md)).

@@ -16,6 +16,7 @@ Classes:
 from __future__ import annotations
 
 import math
+import typing
 from dataclasses import dataclass
 
 from terminaltexteffects.engine.surfaces import (
@@ -30,6 +31,9 @@ from terminaltexteffects.engine.surfaces import (
     _Circle,
     _Polygon,
 )
+
+if typing.TYPE_CHECKING:
+    from terminaltexteffects.engine.surfaces import FaceName
 from terminaltexteffects.utils import geometry3d as g3
 
 __all__ = [
@@ -98,6 +102,20 @@ class Shape:
         """
         return None
 
+    def face_tags(self) -> dict[FaceName, int]:
+        """Return the mesh tag of each face the surface names, so `Body.draw(faces=)` can take face names.
+
+        By default the mesh tags its faces in the order the surface lists them, as every built-in shape does: a
+        cube's `"front"` is tag 0 and its `"bottom"` tag 5, a prism's `"top"` is tag `sides`. Override this when a
+        custom shape's mesh tags its faces in another order.
+
+        Returns:
+            dict[str | int, int]: Face names mapped to mesh tags, empty for a shape without a surface or faces.
+
+        """
+        surface = self.build_surface()
+        return {} if surface is None else {name: tag for tag, name in enumerate(surface.faces)}
+
     def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:  # noqa: ARG002
         """Return where a drawn cell falls in a `Textured` look's text, as a fractional (column, row).
 
@@ -134,7 +152,7 @@ def _face_cell(
 
 @dataclass(frozen=True)
 class Box(Shape):
-    """A box. Faces are tagged 0 front, 1 right, 2 back, 3 left, 4 top, 5 bottom.
+    """A box. Its faces are `"front"`, `"right"`, `"back"`, `"left"`, `"top"` and `"bottom"`, mesh tags 0 to 5.
 
     Attributes:
         width (float): Width along x, in columns. Defaults to 16.
@@ -394,7 +412,7 @@ class Icosahedron(Shape):
 
 @dataclass(frozen=True)
 class Cylinder(Shape):
-    """An upright cylinder around the y axis. `wrap` lays text around its side.
+    """An upright cylinder around the y axis. Its faces are `"side"`, `"top"` and `"bottom"`.
 
     Attributes:
         radius (float): Radius of the side, in columns. Defaults to 10.
@@ -451,7 +469,7 @@ class Cylinder(Shape):
 
 @dataclass(frozen=True)
 class Sphere(Shape):
-    """A sphere. `wrap` lays text over it between 60 degrees north and south.
+    """A sphere. A `Textured` look wraps text over it from pole to pole.
 
     Attributes:
         radius (float): Radius in columns. Defaults to 10.

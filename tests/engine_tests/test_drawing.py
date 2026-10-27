@@ -426,6 +426,60 @@ def test_per_face_looks_draw_only_their_faces() -> None:
     assert {symbol(character) for character in body.surface_characters.values()} == {"A", "B"}
 
 
+def test_per_face_looks_take_surface_face_names() -> None:
+    """Face names from the surface pick the same faces as their mesh tags."""
+    for shape in (Cube(10), Box(12, 8, 6), Prism(5), Pyramid(5), Cylinder()):
+        world = make_world()
+        body = world.body(shape)
+        tags = shape.face_tags()
+        assert tuple(tags) == body.surface.faces
+        mesh_tags = {face.tag for face in body.mesh.faces}
+        assert set(tags.values()) == mesh_tags
+        body.draw(faces={name: Solid("A") for name in tags})
+        assert body._face_looks.keys() == mesh_tags
+
+
+def test_face_names_match_the_faces_characters_sit_on() -> None:
+    """Each mesh face's center lies on the surface face of the name that maps to its tag."""
+    for shape in (Cube(10), Box(12, 8, 6), Prism(5), Prism(3), Pyramid(4), Pyramid(5), Cylinder()):
+        mesh, surface = shape.build_mesh(), shape.build_surface()
+        names = {tag: name for name, tag in shape.face_tags().items()}
+        for face in mesh.faces:
+            corners = [mesh.vertices[index] for index in face.indices]
+            center = g3.Vec3(
+                sum(p.x for p in corners) / len(corners),
+                sum(p.y for p in corners) / len(corners),
+                sum(p.z for p in corners) / len(corners),
+            )
+            position = surface.locate(center)
+            assert surface._face_at((position.x, position.y, position.z)) == names[face.tag]
+
+
+def test_a_named_face_draws_that_face() -> None:
+    """A cube turned to show its front and right draws only the front for `"front"`, and the same for tag 0."""
+    world = make_world()
+    named = world.body(Cube(10), at=(-10, 0, 0)).rotate("y", 30).draw(faces={"front": Solid("A")})
+    tagged = world.body(Cube(10), at=(10, 0, 0)).rotate("y", 30).draw(faces={0: Solid("A")})
+    step(world)
+    assert named.surface_characters
+    assert len(named.surface_characters) == len(tagged.surface_characters)
+
+
+def test_per_face_looks_reject_unknown_and_repeated_faces() -> None:
+    """An unknown face name or tag raises, and so does naming one face twice."""
+    world = make_world()
+    with pytest.raises(ValueError, match="no face 'lid'"):
+        world.body(Cube(10)).draw(faces={"lid": Solid()})
+    with pytest.raises(ValueError, match="no face 6"):
+        world.body(Cube(10)).draw(faces={6: Solid()})
+    with pytest.raises(ValueError, match="same face"):
+        world.body(Cube(10)).draw(faces={"front": Solid(), 0: Shaded()})
+    with pytest.raises(ValueError, match="no face 'front'"):
+        world.body(Sphere(10)).draw(faces={"front": Solid()})
+    assert world.body(Prism(5)).draw(faces={5: Solid()}).drawn  # A prism's top by mesh tag.
+    assert world.body(Tetrahedron(10)).draw(faces={0: Solid()}).drawn
+
+
 # Depth and layers
 
 

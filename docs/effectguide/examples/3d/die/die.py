@@ -29,14 +29,14 @@ def pips(*spots: tuple[int, int]) -> str:
     return "\n".join("".join(row) for row in rows)
 
 
-# Box faces are tagged 0 front, 1 right, 2 back, 3 left, 4 top and 5 bottom. Opposite faces add up to seven.
+# Opposite faces add up to seven.
 FACES = {
-    0: pips((0, 0), (0, 2), (1, 1), (2, 0), (2, 2)),
-    1: pips((0, 0), (1, 1), (2, 2)),
-    2: pips((0, 0), (2, 2)),
-    3: pips((0, 0), (0, 2), (2, 0), (2, 2)),
-    4: pips((1, 1)),
-    5: pips((0, 0), (0, 2), (1, 0), (1, 2), (2, 0), (2, 2)),
+    "front": pips((0, 0), (0, 2), (1, 1), (2, 0), (2, 2)),
+    "right": pips((0, 0), (1, 1), (2, 2)),
+    "back": pips((0, 0), (2, 2)),
+    "left": pips((0, 0), (0, 2), (2, 0), (2, 2)),
+    "top": pips((1, 1)),
+    "bottom": pips((0, 0), (0, 2), (1, 0), (1, 2), (2, 0), (2, 2)),
 }
 
 
@@ -65,7 +65,7 @@ class DieIterator(BaseEffectIterator[DieConfig]):
         super().__init__(effect)
         self.world = self.terminal.world
         ivory = Gradient(Color("#4a3f35"), Color("#fff4e0"), steps=10)
-        looks = {tag: Textured(text, gradient=ivory) for tag, text in FACES.items()}
+        looks = {face: Textured(text, gradient=ivory) for face, text in FACES.items()}
         die = self.world.body(Cube(SIZE), at=(-60, 0, 0)).draw(faces=looks)
         die.rotation = rotation_about("diagonal", 120)
         # Roll to the center while tumbling, then settle with the five facing the viewer and a slight tilt.
