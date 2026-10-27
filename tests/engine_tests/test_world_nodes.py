@@ -331,7 +331,7 @@ def test_set_coordinate_takes_a_position(terminal: Terminal, world: World) -> No
         character.tick()
     assert character.motion.position == g3.Vec3(3, 3, 12)
     with pytest.raises(EventRegistrationTargetError):
-        character.event_handler.register_event(Event.PATH_COMPLETE, rise, Action.SET_COORDINATE, (3, 3, 12))
+        character.event_handler.register_event(Event.PATH_COMPLETE, rise, Action.SET_COORDINATE, (3, 3, 12))  # type: ignore[call-overload]
 
 
 def test_body_shape_is_read_only(world: World) -> None:
