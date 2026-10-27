@@ -4,7 +4,7 @@
 
 !!! info "New in 0.16.0"
 
-    The world is on the `native-3d` development branch and is not in the published 0.15.0 package.
+    The world is available on development `main` and is not in the published 0.15.0 package.
 
 Every terminal has a world, `terminal.world`: a tree of **nodes** in 3D, a camera and a light. Characters and bodies
 are nodes. A **body** has a position, rotation and scale, and the nodes attached to it move, turn and scale with it.

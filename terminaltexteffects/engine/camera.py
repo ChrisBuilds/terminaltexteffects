@@ -140,7 +140,7 @@ class Camera(g3.Camera, TweenQueue):
         return self.move_by(point.x, point.y, point.z)
 
     def dolly(self, amount: float) -> Camera:
-        """Move forward `amount` columns, now; negative amounts move backward.
+        """Move forward `amount` units, now; negative amounts move backward.
 
         Args:
             amount (float): Signed travel in units along the named camera-local direction.
@@ -154,7 +154,7 @@ class Camera(g3.Camera, TweenQueue):
     def truck(
         self, amount: float, *, frames: int | None = None, ease: EasingFunction | None = None, together: bool = False
     ) -> Camera:
-        """Move right `amount` columns, now or over `frames`, along the starting local axis.
+        """Move right `amount` units, now or over `frames`, along the starting local axis.
 
         Args:
             amount (float): Signed travel in units along the named camera-local direction.
@@ -178,7 +178,7 @@ class Camera(g3.Camera, TweenQueue):
     def pedestal(
         self, amount: float, *, frames: int | None = None, ease: EasingFunction | None = None, together: bool = False
     ) -> Camera:
-        """Move up `amount` columns, now or over `frames`, along the starting local axis.
+        """Move up `amount` units, now or over `frames`, along the starting local axis.
 
         Args:
             amount (float): Signed travel in units along the named camera-local direction.

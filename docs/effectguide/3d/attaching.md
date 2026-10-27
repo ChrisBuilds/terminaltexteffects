@@ -147,7 +147,8 @@ matters.
 
 ## At cell resolution
 
-- Attaching mid-flight, at the end of a path, never jumps. Attaching with `at` jumps at once, to the new place.
+- Attaching without `at` never jumps, whether the node is mid-flight or at the end of a path. Attaching with `at`
+  jumps at once, to the new place.
 - A character attached to the back of a shape is hidden by the shape's drawn cells in front of it, or, without a
   drawn shape, can be hidden by `hide_facing_away` (see [Depth](depth.md)).
 - A live target that leaves the canvas takes its followers with it. They are drawn wherever they are, even off screen,
