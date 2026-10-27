@@ -5,6 +5,7 @@ Classes:
     Segment: A segment of a path consisting of two waypoints and the distance between them.
     Path: Represents a path consisting of multiple waypoints for motion.
     Motion: Motion class for managing the movement of a character.
+    BodyMotion: Moves a body along paths, like a character.
 """
 
 from __future__ import annotations
@@ -590,16 +591,20 @@ class Path:
 class Motion:
     """Motion class for managing the movement of a character.
 
+    A character's position is measured in its parent's frame: `(column, row, height)` on the text plane, where it
+    starts. Waypoints take a `Coord` (height 0), a `Vec3`, or a node to home in on.
+
     Attributes:
         paths (dict[str, Path]): dictionary of paths
         character (base_character.EffectCharacter): The EffectCharacter to move.
-        current_coord (Coord): current coordinate
+        position (g3.Vec3): The exact position in the parent's frame. Setting it moves the character now.
+        current_coord (Coord): The cell the character is drawn in.
         previous_coord (Coord): previous coordinate
         active_path (Path | None): active path
 
     Methods:
         set_coordinate:
-            Sets the current coordinate to the given coordinate.
+            Moves the character to a cell in its parent's frame, keeping its height.
         new_path:
             Creates a new Path and adds it to the Motion.paths dictionary with the path_id as key.
         query_path:

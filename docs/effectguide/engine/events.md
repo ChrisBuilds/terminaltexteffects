@@ -34,6 +34,8 @@ Several actions can be registered for the same event; they run in the order you 
 | `PATH_COMPLETE` | A path finishes, after any hold. | `Path` |
 | `SCENE_ACTIVATED` | A scene is activated. | `Scene` |
 | `SCENE_COMPLETE` | A scene finishes. | `Scene` |
+| `ATTACHED` | The character is attached to a body other than the world root. | The new parent `Body` |
+| `DETACHED` | The character leaves a body other than the world root. | The old parent `Body` |
 
 The caller is the object the event is about. For path and scene activation and completion, you can pass the path or
 scene's ID string instead of the object.
@@ -56,6 +58,13 @@ Segment events fire once per traversal of the segment. A looping path fires them
 | `SET_COORDINATE` | `Coord` | Moves the character to that position instantly. |
 | `RESET_APPEARANCE` | none | Restores the input symbol and its input colors. |
 | `CALLBACK` | `EventHandler.Callback` | Calls your function. |
+| `ATTACH` | `Body` | Attaches the character to that body, keeping its place in the world. |
+| `DETACH` | none | Detaches the character into the world, keeping its place. |
+
+The attach events and actions belong to 3D effects, where characters move between bodies; see
+[Attaching and detaching](../3d/attaching.md). Bodies have event handlers too, with the path and attach events and
+the actions that apply to any node: `ACTIVATE_PATH`, `DEACTIVATE_PATH`, `SET_COORDINATE`, `ATTACH`, `DETACH` and
+`CALLBACK`. Registering a scene, layer or appearance action on a body raises `EventRegistrationNodeError`.
 
 ### Callbacks
 

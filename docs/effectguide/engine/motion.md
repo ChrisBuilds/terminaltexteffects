@@ -142,6 +142,20 @@ character.motion.chain_paths([rise, drift, land])
 return from the last to the first. Chaining is a shortcut for the event handling described in the Events chapter, which
 can also start scenes, change layers, or run your own code when a path starts, completes, or reaches a waypoint.
 
+## Positions in 3D
+
+Every character also has a 3D position, because it sits on the world's flat text plane (see
+[The world's part](frame-loop.md#the-worlds-part)). A 2D effect never needs it, but the pieces are the same:
+
+- `motion.current_coord` is the cell the character is drawn in. `motion.position` is its exact position, a `Vec3`
+  `(column, row, height)` on the text plane, and setting it moves the character now.
+- A waypoint takes a `Coord`, which means height 0, a `Vec3`, whose height lifts the character toward the camera, or
+  another character or body, which the path homes in on wherever it goes.
+- On a 3D body's surface, `path.walk(columns, rows)` moves straight ahead by an amount, over the body's edges.
+
+[Frames and coordinates](../3d/coordinates.md), [Attaching and detaching](../3d/attaching.md#live-targets) and
+[Surfaces](../3d/surfaces.md#travelling-over-a-surface) cover them.
+
 ## Where to go next
 
 - [Tutorial step 3: Move](../tutorial/03-move.md) gives MySpray's characters paths from a canvas edge to their homes.

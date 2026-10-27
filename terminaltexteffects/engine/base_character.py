@@ -526,10 +526,11 @@ class EffectCharacter(world.SpatialNode):
         position (g3.Vec3): The character's position in its parent's frame, `(column, row, height)` on the text
             plane. The same as `motion.position`.
         world_position (g3.Vec3): The character's position in the world.
+        view (view.View): How the character is seen this frame: its cell, depth, facing and light.
         event_handler (EventHandler): The event handler object that handles events related to the character.
-        layer (int): The layer of the character. Lower layers are painted first. When characters on the same layer
-            collide, the character with the higher `character_id` is painted last and wins the collision. Within a
-            layer, characters are ordered by their depth from the camera, farther first.
+        layer (int): The layer of the character. Lower layers are painted first. Within a layer, characters are
+            ordered by their depth from the camera, farther first. When characters on the same layer and at the same
+            depth collide, the character with the higher `character_id` is painted last and wins the collision.
         is_fill_character (bool): Whether the character is a fill character. Fill characters are used to fill
             the empty cells of the Canvas.
         uses_input_preexisting_colors (bool): Whether engine-level `existing_color_handling="always"` should treat

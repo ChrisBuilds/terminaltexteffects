@@ -12,7 +12,8 @@ three numbers mean. TTE uses one convention everywhere, chosen so that the input
 - One **unit** is the width of one terminal column. Positions, sizes and distances are all in columns, including
   heights: a shape 10 units tall is 10 columns tall, which is about 5 rows (see [Tall cells](tall-cells.md)).
 - **Angles** are in degrees, and **axes** can be named `"x"`, `"y"`, `"z"` or `"diagonal"`, or given as any
-  `(x, y, z)` direction.
+  `(x, y, z)` direction. The one exception is the low-level [`geometry3d`](../../engine/utils/geometry3d.md)
+  module, whose `Rotation` takes radians; `rotation_about(axis, degrees)` builds one from degrees.
 
 ![The canvas lies on the z = 0 plane with the origin at its center. x points right, y up, and z out toward the camera](../../img/effectguide/3d/world_axes.webp)
 

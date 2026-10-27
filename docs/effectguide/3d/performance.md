@@ -31,37 +31,37 @@ include the camera lessons.
 ## Measured costs
 
 These are the guide's own examples on the concept input, on an 80 by 24 canvas with the frame-rate limit off. Each
-time is the median of five runs, divided by the frames the example produces. They were measured at revision 5d10d89
+time is the median of five runs, divided by the frames the example produces. They were measured at revision 0985894
 with Python 3.14 on an Intel Xeon. Your times will differ with the processor and Python version. Treat them as a rough
 guide to which examples cost more, and measure your own effect on the machines you care about.
 
 | Example | What it draws | Time per frame |
 | --- | --- | --- |
-| [Card](depth.md#facing-away) | The text plane turning | 0.8 ms |
-| [Wireframe solids](recipes.md#wireframe-solids) | Four solids as edges | 1.5 ms |
-| [Cubes](terminal.md) | Three shaded cubes | 2.0 ms |
-| [Depth](depth.md) | A cube and a sphere | 2.5 ms |
-| [Depth](depth.md) `--see-through` | One textured cube, its far side shown with `back="dim"` | 2.6 ms |
-| [Gallery](meshes.md) | Ten shapes, two or three at a time | 2.8 ms |
-| [Light](light.md) | A shaded sphere | 3.3 ms |
-| [Spinning logo](recipes.md#spinning-logo) | The text plane turning, with lighting scenes | 3.8 ms |
-| [Light](light.md) `--shape torus` | A shaded torus | 4.4 ms |
-| [Texture](textures.md) `--text` | A textured cube and a textured sphere | 4.8 ms |
-| [Globe](recipes.md#globe) | A textured sphere, 48 by 24, back faces shown | 12.4 ms |
+| [Card](depth.md#facing-away) | The text plane turning | 1.1 ms |
+| [Wireframe solids](recipes.md#wireframe-solids) | Four solids as edges | 2.0 ms |
+| [Cubes](terminal.md) | Three shaded cubes | 2.8 ms |
+| [Depth](depth.md) | A cube and a sphere | 3.2 ms |
+| [Depth](depth.md) `--see-through` | One textured cube, its far side shown with `back="dim"` | 3.4 ms |
+| [Gallery](meshes.md) | Ten shapes, two or three at a time | 3.9 ms |
+| [Light](light.md) | A shaded sphere | 4.5 ms |
+| [Spinning logo](recipes.md#spinning-logo) | The text plane turning, with lighting scenes | 4.7 ms |
+| [Light](light.md) `--shape torus` | A shaded torus | 5.7 ms |
+| [Texture](textures.md) `--text` | A textured cube and a textured sphere | 6.1 ms |
+| [Globe](recipes.md#globe) | A textured sphere, 48 by 24, back faces shown | 16.0 ms |
 
-Every example fits in the budget, and the globe costs the most by far. Here's the same sphere drawn different ways,
-timing the world's part of a frame alone, on the same revision and machine:
+Every example but the globe fits comfortably in the budget, and the globe uses all of it. Here's the same sphere
+drawn different ways, timing the world's part of a frame alone, on the same revision and machine:
 
 | Sphere, radius 20 | Time per step |
 | --- | --- |
-| 8 by 4, `Shaded()` | 1.6 ms |
-| 16 by 8, `Shaded()` | 2.2 ms |
-| 24 by 12, `Shaded()` | 3.3 ms |
-| 32 by 16, `Shaded()` | 4.0 ms |
-| 48 by 24, `Shaded()` | 6.1 ms |
-| 24 by 12, `Textured(back="dim")` | 5.8 ms |
-| 48 by 24, `Textured()` | 7.2 ms |
-| 48 by 24, `Textured(back="dim")` | 11.6 ms |
+| 8 by 4, `Shaded()` | 1.9 ms |
+| 16 by 8, `Shaded()` | 3.2 ms |
+| 24 by 12, `Shaded()` | 3.8 ms |
+| 32 by 16, `Shaded()` | 5.2 ms |
+| 48 by 24, `Shaded()` | 8.2 ms |
+| 24 by 12, `Textured(back="dim")` | 8.2 ms |
+| 48 by 24, `Textured()` | 9.5 ms |
+| 48 by 24, `Textured(back="dim")` | 17.0 ms |
 
 The Detail example draws three of those spheres side by side, smaller, so you can see what the extra faces buy:
 
@@ -80,13 +80,14 @@ The script that produced these tables is `tools/perf/guide_3d_costs.py` in a TTE
 
 Two things stand out:
 
-- **Doubling the segments and rings costs about half as much again**, even though the sphere covers the same cells.
-  Four times the triangles, but each one covers fewer cells.
+- **Doubling the segments and rings costs well under four times as much**, even though it makes four times the
+  triangles: about 60% more at low detail, about twice as much from 24 by 12 to 48 by 24. The sphere covers the same
+  cells, so each triangle covers fewer.
 - **Showing back faces nearly doubles it.** `back="dim"` fills the far side too, so the world rasterizes the shape
   twice.
 
-Characters on a turning text plane cost about 3 microseconds each per frame to place. The concept input's 304
-characters take about 0.8 ms. A full 200 by 50 screen of text, 10,000 characters, takes about 29 ms, before their own
+Characters on a turning text plane cost about 3.5 microseconds each per frame to place. The concept input's 304
+characters take about 1.0 ms. A full 200 by 50 screen of text, 10,000 characters, takes about 35 ms, before their own
 ticks.
 
 ## Geometry preparation

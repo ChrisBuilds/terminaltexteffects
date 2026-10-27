@@ -10,13 +10,16 @@ it is finished.
 sequenceDiagram
     participant Caller as tte or your code
     participant It as Your iterator
+    participant W as World
     participant Ch as Active characters
     participant T as Terminal
     Caller->>It: next()
     It->>It: effect logic (release characters, change phase)
-    It->>Ch: update(): tick each active character
+    It->>W: update(): step the world
+    It->>Ch: tick each active character
     Ch->>Ch: motion.move(), then animation.step_animation()
     It->>It: drop characters that are no longer active
+    It->>W: paint drawn bodies
     It->>T: frame: wait for the frame rate, then render
     T-->>It: frame string
     It-->>Caller: frame string
@@ -37,9 +40,21 @@ def __next__(self) -> str:
 1. **Effect logic.** Your code decides what changes this frame: which characters appear, which phase the effect is
    in, what new paths or scenes to start. Keep it cheap, since it runs every frame; do expensive setup once, when the
    iterator is created.
-2. **`self.update()`** ticks every character in `self.active_characters`, then removes the ones that have finished.
+2. **`self.update()`** steps the world, ticks every character in `self.active_characters`, removes the ones that have
+   finished, and paints any drawn bodies.
 3. **`self.frame`** waits until the next frame is due, then asks the terminal to render the canvas.
 4. **`StopIteration`** ends the effect once nothing is left to do.
+
+## The world's part
+
+Every terminal has a 3D [world](../3d/world.md), `self.terminal.world`, and every character sits in it, on the flat
+**text plane** the camera looks straight at. `update()` steps the world before the characters tick: it plays camera
+and body tweens, moves bodies along their paths, and when the view changed, projects every character to its cell
+again. After the ticks it paints any bodies the effect drew.
+
+A 2D effect never moves the camera or the text plane, so stepping the world does nothing visible and costs almost
+nothing: a character on the text plane at rest is drawn in exactly the cell its position names. The
+[3D Effects](../3d/index.md) part of the guide covers what the world can do.
 
 ## Ticking a character
 

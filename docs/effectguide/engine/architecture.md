@@ -61,6 +61,11 @@ TTE treats every character on screen as an independent object. An `EffectCharact
 - **`event_handler`** ([`EventHandler`](../../engine/eventhandler.md)) reacts when a path or scene starts or
   finishes, for example by starting the next scene.
 
+Each character is also a node in the terminal's 3D world, `terminal.world`. It starts on the world's text plane, a
+flat body the camera looks straight at, so a 2D effect never notices: the character is drawn in the cell its position
+names. The [3D Effects](../3d/index.md) part of the guide covers moving characters off the plane, onto shapes and
+around the camera.
+
 Your iterator configures these helpers up front, then mostly steps back. Each frame, the engine advances every active
 character by one tick, and the terminal draws each visible character at its current position with its current
 appearance. The [Frame loop](frame-loop.md) chapter covers that cycle in detail.
