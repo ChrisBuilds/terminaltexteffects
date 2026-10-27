@@ -433,6 +433,7 @@ def test_per_face_looks_take_surface_face_names() -> None:
         body = world.body(shape)
         tags = shape.face_tags()
         assert tuple(tags) == body.surface.faces
+        assert body.mesh is not None
         mesh_tags = {face.tag for face in body.mesh.faces}
         assert set(tags.values()) == mesh_tags
         body.draw(faces={name: Solid("A") for name in tags})

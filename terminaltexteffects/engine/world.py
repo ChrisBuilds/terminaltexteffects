@@ -80,6 +80,9 @@ LIGHTS: typing.Mapping[str, g3.Vec3] = {
 
 _CAMERA_DISTANCE = 120.0
 
+FaceLooks = typing.Union["typing.Mapping[str, Look]", "typing.Mapping[int, Look]", "typing.Mapping[FaceName, Look]"]
+"""Looks for single faces, keyed by face name or mesh tag."""
+
 
 def _multiply(a: g3.Matrix3, b: g3.Matrix3) -> g3.Matrix3:
     """Return the row-major product `a @ b`."""
@@ -797,7 +800,7 @@ class Body(SpatialNode, TweenQueue):
 
     # Drawing
 
-    def draw(self, look: Look | None = None, *, faces: typing.Mapping[FaceName, Look] | None = None) -> Body:
+    def draw(self, look: Look | None = None, *, faces: FaceLooks | None = None) -> Body:
         """Draw the body with a look, from this frame on, replacing any earlier look.
 
         The world draws the body with characters it creates, one per covered cell, so none of the effect's own
@@ -835,7 +838,7 @@ class Body(SpatialNode, TweenQueue):
         self._texts = {}
         return self
 
-    def _face_tag_looks(self, faces: typing.Mapping[FaceName, Look]) -> dict[int, Look]:
+    def _face_tag_looks(self, faces: FaceLooks) -> dict[int, Look]:
         """Return per-face looks keyed by mesh tag, from face names or tags."""
         shape = typing.cast("Shape", self.shape)
         if self._face_tags is None:
