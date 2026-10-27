@@ -55,18 +55,21 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 
 ![The ten shapes turning two or three at a time, each named underneath: cube, box and prism; pyramid, tetrahedron and octahedron; icosahedron and cylinder; sphere and torus](../../img/effectguide/gallery_demo.webp)
 
-| Shape | Sizes | Faces tagged |
+| Shape | Sizes | Faces |
 | --- | --- | --- |
-| `Cube(size)`, `Box(width, height, depth)` | Edge lengths | 0 front, 1 right, 2 back, 3 left, 4 top, 5 bottom |
-| `Prism(sides, radius, height)` | `radius` is center to corner | Sides 0 to `sides - 1`, then top and bottom |
-| `Pyramid(sides, radius, height)` | Base radius and height | Sides 0 to `sides - 1`, then the base |
+| `Cube(size)`, `Box(width, height, depth)` | Edge lengths | `"front"`, `"right"`, `"back"`, `"left"`, `"top"`, `"bottom"` |
+| `Prism(sides, radius, height)` | `radius` is center to corner | Sides `0` to `sides - 1`, `"top"`, `"bottom"` |
+| `Pyramid(sides, radius, height)` | Base radius and height | Sides `0` to `sides - 1`, `"bottom"` |
+| `Cylinder(radius, height, segments)` | `segments` around | `"side"`, `"top"`, `"bottom"` |
 | `Tetrahedron`, `Octahedron`, `Icosahedron` | `radius` to each corner | |
-| `Cylinder(radius, height, segments)` | `segments` around | |
 | `Sphere(radius, segments, rings)` | `segments` around, `rings` top to bottom | |
 | `Torus(major_radius, minor_radius, segments, sides)` | Ring radius and tube radius | |
 
-Tags let you treat faces differently: `body.draw(Shaded(), faces={0: Textured("1")})` gives the front of a cube its
-own look (see the [die recipe](recipes.md#die)).
+The faces are the ones the body's [surface](surfaces.md#faces) names, so one name means one face whether you lay text
+out on it or draw it: `body.draw(Shaded(), faces={"front": Textured("1")})` gives the front of a cube its own look
+(see the [die recipe](recipes.md#die)). Underneath, the mesh tags each face with a number in the same order, so a
+cube's `"front"` is tag 0 and its `"bottom"` tag 5; `shape.face_tags()` lists them. Shapes without named faces, such
+as the icosahedron, take mesh tags in `faces` instead.
 
 The Star example builds its own shape. A custom shape subclasses `Shape`, like the built-in ones a frozen dataclass, and returns
 a mesh from `build_mesh`. Once defined, it's used like any other shape:

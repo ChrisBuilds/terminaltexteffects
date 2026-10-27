@@ -80,6 +80,9 @@ LIGHTS: typing.Mapping[str, g3.Vec3] = {
 
 _CAMERA_DISTANCE = 120.0
 
+FaceLooks = typing.Union["typing.Mapping[str, Look]", "typing.Mapping[int, Look]", "typing.Mapping[FaceName, Look]"]
+"""Looks for single faces, keyed by face name or mesh tag."""
+
 
 def _multiply(a: g3.Matrix3, b: g3.Matrix3) -> g3.Matrix3:
     """Return the row-major product `a @ b`."""
@@ -332,7 +335,8 @@ class Body(SpatialNode, TweenQueue):
         self._mesh: g3.Mesh | None = None
         self._extent: float | None = None
         self._look: Look | None = None
-        self._face_looks: dict[FaceName, Look] = {}
+        self._face_looks: dict[int, Look] = {}
+        self._face_tags: dict[FaceName, int] | None = None
         self._texts: dict[int, tuple[list[str], int]] = {}
         self._cells: list[typing.Any] = []
         self.shape = shape
@@ -796,9 +800,7 @@ class Body(SpatialNode, TweenQueue):
 
     # Drawing
 
-    def draw(
-        self, look: Look | None = None, *, faces: typing.Mapping[str, Look] | typing.Mapping[int, Look] | None = None
-    ) -> Body:
+    def draw(self, look: Look | None = None, *, faces: FaceLooks | None = None) -> Body:
         """Draw the body with a look, from this frame on, replacing any earlier look.
 
         The world draws the body with characters it creates, one per covered cell, so none of the effect's own
@@ -808,21 +810,23 @@ class Body(SpatialNode, TweenQueue):
         Args:
             look (Look | None): `Shaded()`, `Solid()`, `Textured()` or `Wireframe()`. With no `faces`, `None` means
                 `Shaded()`.
-            faces (Mapping[str | int, Look] | None): Looks for faces by the shape's face tags, such as one per side
-                of a die. Faces not listed use `look`, or are left out when `look` is `None`.
+            faces (Mapping[str | int, Look] | None): Looks for single faces, such as one per side of a die, by the
+                names `surface.face()` takes (`"front"`, `"top"`, a prism's side `0`) or by mesh tag (see
+                `Shape.face_tags`), for shapes without named faces. Faces not listed use `look`, or are left out
+                when `look` is `None`.
 
         Returns:
             Body: This body, for chaining.
 
         Raises:
-            ValueError: If the body has no shape, or a `Wireframe` is combined with `faces` (a wireframe draws the
-                whole body).
+            ValueError: If the body has no shape, a face isn't one of the shape's, two keys name the same face, or a
+                `Wireframe` is combined with `faces` (a wireframe draws the whole body).
 
         """
         if self.shape is None:
             msg = "Only a body with a shape can be drawn."
             raise ValueError(msg)
-        face_looks: dict[FaceName, Look] = dict(faces.items()) if faces else {}
+        face_looks = self._face_tag_looks(faces) if faces else {}
         if isinstance(look, Wireframe) and face_looks:
             msg = "A Wireframe look draws the whole body, so it can't be combined with per-face looks."
             raise ValueError(msg)
@@ -833,6 +837,30 @@ class Body(SpatialNode, TweenQueue):
         self._face_looks = face_looks
         self._texts = {}
         return self
+
+    def _face_tag_looks(self, faces: FaceLooks) -> dict[int, Look]:
+        """Return per-face looks keyed by mesh tag, from face names or tags."""
+        shape = typing.cast("Shape", self.shape)
+        if self._face_tags is None:
+            self._face_tags = shape.face_tags()
+        names = self._face_tags
+        tags = {face.tag for face in self.mesh.faces} if self.mesh is not None else set()
+        looks: dict[int, Look] = {}
+        keys: dict[int, FaceName] = {}
+        for key, face_look in faces.items():
+            if key in names:
+                tag = names[key]
+            elif isinstance(key, int) and key in tags:
+                tag = key
+            else:
+                known = ", ".join(map(repr, names)) or "none"
+                msg = f"{type(shape).__name__} has no face {key!r}. Its faces are {known}; mesh tags {sorted(tags)}."
+                raise ValueError(msg)
+            if tag in looks:
+                msg = f"{keys[tag]!r} and {key!r} are the same face."
+                raise ValueError(msg)
+            looks[tag], keys[tag] = face_look, key
+        return looks
 
     def erase(self) -> Body:
         """Stop drawing the body. Its cells are hidden when the world next paints.
@@ -859,7 +887,7 @@ class Body(SpatialNode, TweenQueue):
         """
         return {slot.character.motion.current_coord: slot.character for slot in self._cells}
 
-    def _face_look(self, tag: FaceName) -> Look | None:
+    def _face_look(self, tag: int) -> Look | None:
         """Return the look for faces with `tag`."""
         return self._face_looks.get(tag, self._look)
 
