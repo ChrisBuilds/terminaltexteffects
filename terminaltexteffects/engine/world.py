@@ -284,7 +284,7 @@ class Body(SpatialNode, TweenQueue):
 
     Attributes:
         world (World): The world the body belongs to.
-        shape (Shape | None): The body's shape, or `None` for a pivot.
+        shape (Shape | None): The body's shape, or `None` for a pivot. Read-only: make a new body for another shape.
         surface (Surface): The grid of cells over the shape. Raises `ValueError` for a pivot or a shape without one.
         has_surface (bool): Whether the body has a surface.
         position (g3.Vec3): Position in the parent's frame, in units.
@@ -339,7 +339,7 @@ class Body(SpatialNode, TweenQueue):
         self._face_tags: dict[FaceName, int] | None = None
         self._texts: dict[int, tuple[list[str], int]] = {}
         self._cells: list[typing.Any] = []
-        self.shape = shape
+        self._shape = shape
         if surface is None and shape is not None:
             surface = shape.build_surface()
         if surface is not None:
@@ -361,6 +361,11 @@ class Body(SpatialNode, TweenQueue):
 
     def _default_parent(self) -> Body:  # pragma: no cover
         return self.world.root
+
+    @property
+    def shape(self) -> Shape | None:
+        """The body's shape, or `None` for a pivot. Read-only, since the mesh and surface are built from it."""
+        return self._shape
 
     @property
     def surface(self) -> Surface:

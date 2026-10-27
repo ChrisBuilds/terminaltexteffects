@@ -22,6 +22,7 @@ from terminaltexteffects.utils.exceptions import (
     SceneNotFoundError,
 )
 from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.geometry3d import Vec3
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.utils import geometry3d as g3
@@ -91,6 +92,7 @@ class EventHandler:
                     | world.Body
                     | int
                     | Coord
+                    | Vec3
                     | EventHandler.Callback
                     | str
                     | None,
@@ -142,7 +144,8 @@ class EventHandler:
                 its ID, or None to deactivate the currently active scene.
             RESET_APPEARANCE (Action): Resets the appearance of the character to the input symbol and color.
             SET_LAYER (Action): Sets the layer of the character. The action target is the layer number.
-            SET_COORDINATE (Action): Sets the coordinate of the character. The action target is the coordinate.
+            SET_COORDINATE (Action): Moves the node, now. The action target is a `Coord`, a cell in the parent's
+                frame that keeps the node's height, or a `Vec3`, a whole position in the parent's frame.
             CALLBACK (Action): Calls a callback function. The action target is an EventHandler.Callback object.
             ATTACH (Action): Attaches the node to a body, keeping its place in the world. The action target is the
                 body.
@@ -232,7 +235,7 @@ class EventHandler:
         event: Event,
         caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: typing.Literal[Action.SET_COORDINATE],
-        target: Coord,
+        target: Coord | Vec3,
     ) -> None: ...
     @typing.overload
     def register_event(
@@ -279,7 +282,7 @@ class EventHandler:
         event: Event,
         caller: animation.Scene | motion.Waypoint | motion.Path | world.Body | str,
         action: Action,
-        target: animation.Scene | motion.Path | world.Body | int | Coord | Callback | str | None = None,
+        target: animation.Scene | motion.Path | world.Body | int | Coord | Vec3 | Callback | str | None = None,
     ) -> None:
         """Register an event to be handled by the EventHandler.
 
@@ -297,7 +300,7 @@ class EventHandler:
             caller (animation.Scene | motion.Waypoint | motion.Path | world.Body | str): The object
                 that triggers the event.
             action (Action): The action to take when the event is triggered.
-            target (animation.Scene | motion.Path | world.Body | int | Coord | Callback | str | None):
+            target (animation.Scene | motion.Path | world.Body | int | Coord | Vec3 | Callback | str | None):
                 The target of the action.
 
         Raises:
@@ -353,7 +356,9 @@ class EventHandler:
                 raise SceneNotFoundError(scene_id=target)
             target = scene_query_result
 
-        elif action in (EventHandler.Action.DEACTIVATE_PATH, EventHandler.Action.DEACTIVATE_SCENE) and target is None:
+        elif (
+            action in (EventHandler.Action.DEACTIVATE_PATH, EventHandler.Action.DEACTIVATE_SCENE) and target is None
+        ) or (action is EventHandler.Action.SET_COORDINATE and type(target) is Vec3):
             pass
 
         elif action is EventHandler.Action.DETACH:
@@ -399,7 +404,7 @@ class EventHandler:
         - RESET_APPEARANCE: Resets the character's appearance to its input symbol and,
           where applicable, its configured input colors
         - SET_LAYER: Sets the character's rendering layer
-        - SET_COORDINATE: Sets the character's current coordinate
+        - SET_COORDINATE: Moves the node to a cell (`Coord`) or a position (`Vec3`) in its parent's frame
         - CALLBACK: Executes a custom callback function with the character and additional arguments
 
         Args:
@@ -442,7 +447,10 @@ class EventHandler:
             elif action is EventHandler.Action.SET_LAYER:
                 self.character.layer = target  # type: ignore[assignment]
             elif action is EventHandler.Action.SET_COORDINATE:
-                self.character.motion.set_coordinate(target)  # type: ignore[arg-type]
+                if type(target) is Vec3:
+                    self.character.motion.position = target
+                else:
+                    self.character.motion.set_coordinate(target)  # type: ignore[arg-type]
             elif action is EventHandler.Action.CALLBACK:
                 target.callback(self.character, *target.args)  # type: ignore[union-attr]
             elif action is EventHandler.Action.ATTACH:
@@ -470,7 +478,7 @@ _EVENT_CALLER_TYPES: typing.Mapping[
 )
 _ACTION_TARGET_TYPES: typing.Mapping[
     EventHandler.Action,
-    type[animation.Scene | motion.Path | world.Body | int | Coord | EventHandler.Callback | None],
+    type[animation.Scene | motion.Path | world.Body | int | Coord | Vec3 | EventHandler.Callback | None],
 ] = MappingProxyType(
     {
         EventHandler.Action.ACTIVATE_PATH: motion.Path,

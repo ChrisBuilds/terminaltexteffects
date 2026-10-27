@@ -53,7 +53,7 @@ Segment events fire once per traversal of the segment. A looping path fires them
 | `ACTIVATE_SCENE` | `Scene` or scene ID | Starts that scene. |
 | `DEACTIVATE_SCENE` | `Scene`, scene ID, or `None` | Stops that scene, or whichever scene is active. |
 | `SET_LAYER` | `int` | Moves the character to that layer. |
-| `SET_COORDINATE` | `Coord` | Moves the character to that position instantly. |
+| `SET_COORDINATE` | `Coord` or `Vec3` | Moves the character there instantly: a `Coord` is a cell that keeps its height, a `Vec3` a whole [position](../3d/coordinates.md#frames). |
 | `RESET_APPEARANCE` | none | Restores the input symbol and its input colors. |
 | `CALLBACK` | `EventHandler.Callback` | Calls your function. |
 

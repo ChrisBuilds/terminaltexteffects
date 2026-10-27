@@ -9,6 +9,7 @@ from terminaltexteffects.utils.exceptions.base_terminaltexteffects_exception imp
 if TYPE_CHECKING:
     from terminaltexteffects import Coord, EventHandler, Path, Scene, Waypoint
     from terminaltexteffects.engine.world import Body
+    from terminaltexteffects.utils.geometry3d import Vec3
 
 
 class InvalidSymbolError(TerminalTextEffectsError):
@@ -94,16 +95,16 @@ class EventRegistrationTargetError(TerminalTextEffectsError):
     def __init__(
         self,
         action: EventHandler.Action,
-        target: Scene | Path | Body | int | Coord | EventHandler.Callback | str | None,
-        required: type[Scene | Path | Body | int | Coord | EventHandler.Callback | str | None],
+        target: Scene | Path | Body | int | Coord | Vec3 | EventHandler.Callback | str | None,
+        required: type[Scene | Path | Body | int | Coord | Vec3 | EventHandler.Callback | str | None],
     ) -> None:
         """Initialize an EventRegistrationTargetError.
 
         Args:
             action (EventHandler.Action): The action that was registered.
-            target (Scene | Path | Body | int | Coord | EventHandler.Callback | str | None): The target
+            target (Scene | Path | Body | int | Coord | Vec3 | EventHandler.Callback | str | None): The target
                 provided to the action.
-            required (type[Scene | Path | Body | int | Coord | EventHandler.Callback | str | None]): The valid
+            required (type[Scene | Path | Body | int | Coord | Vec3 | EventHandler.Callback | str | None]): The valid
                 target types.
 
         """
@@ -131,7 +132,7 @@ class DuplicateEventRegistrationError(TerminalTextEffectsError):
         event: EventHandler.Event,
         caller: Scene | Waypoint | Path | Body,
         action: EventHandler.Action,
-        target: Scene | Path | Body | int | Coord | EventHandler.Callback | str | None,
+        target: Scene | Path | Body | int | Coord | Vec3 | EventHandler.Callback | str | None,
     ) -> None:
         """Initialize a DuplicateEventRegistrationError.
 
@@ -139,7 +140,7 @@ class DuplicateEventRegistrationError(TerminalTextEffectsError):
             event (EventHandler.Event): The event that was already registered.
             caller (Scene | Waypoint | Path | Body): The caller object that was already registered.
             action (EventHandler.Action): The action that was already registered.
-            target (Scene | Path | Body | int | Coord | EventHandler.Callback | str | None): The target that was
+            target (Scene | Path | Body | int | Coord | Vec3 | EventHandler.Callback | str | None): The target that was
                 already registered.
 
         """

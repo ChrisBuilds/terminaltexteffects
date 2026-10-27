@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
+from terminaltexteffects.engine.shapes import Cube
 from terminaltexteffects.engine.terminal import Terminal
 from terminaltexteffects.utils import geometry3d as g3
 from terminaltexteffects.utils.exceptions import EventRegistrationNodeError, EventRegistrationTargetError
@@ -310,3 +311,32 @@ def test_set_coordinate_on_a_moved_body_projects(terminal: Terminal, world: Worl
     assert projected is not None
     assert character.motion.current_coord == projected.coord
     assert character.motion.current_coord != Coord(2, 0)
+
+
+def test_set_coordinate_takes_a_position(terminal: Terminal, world: World) -> None:
+    """`SET_COORDINATE` with a `Vec3` sets the whole position: a body's depth, a character's height."""
+    body = world.body()
+    path = body.motion.new_path(speed=1)
+    path.new_waypoint(g3.Vec3(2, 0, 0))
+    body.event_handler.register_event(Event.PATH_COMPLETE, path, Action.SET_COORDINATE, g3.Vec3(7, 8, -20))
+    body.motion.activate_path(path)
+    run(world, body)
+    assert body.position == g3.Vec3(7, 8, -20)
+    character = terminal.get_characters()[0]
+    rise = character.motion.new_path(speed=1)
+    rise.new_waypoint(Coord(3, 3))
+    character.event_handler.register_event(Event.PATH_COMPLETE, rise, Action.SET_COORDINATE, g3.Vec3(3, 3, 12))
+    character.motion.activate_path(rise)
+    while character.motion.active_path is not None:
+        character.tick()
+    assert character.motion.position == g3.Vec3(3, 3, 12)
+    with pytest.raises(EventRegistrationTargetError):
+        character.event_handler.register_event(Event.PATH_COMPLETE, rise, Action.SET_COORDINATE, (3, 3, 12))  # type: ignore[call-overload]
+
+
+def test_body_shape_is_read_only(world: World) -> None:
+    """A body's shape is fixed when it is made."""
+    body = world.body(Cube(10))
+    assert body.shape == Cube(10)
+    with pytest.raises(AttributeError):
+        body.shape = Cube(20)  # type: ignore[misc]
