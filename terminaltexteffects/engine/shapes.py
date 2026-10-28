@@ -6,6 +6,11 @@ side looks square on screen, about 10 cells wide and 5 rows tall.
     cube = terminal.world.body(Cube(16))
     cube.surface.face("front").layout_text(characters)
 
+`fit_text` sizes a box, cube, prism, cylinder, sphere or plane so the text wraps once around it:
+
+    cylinder = terminal.world.body(Cylinder.fit_text(characters))
+    cylinder.surface.layout_text(characters)
+
 Classes:
     Shape: The base class: `build_mesh` for drawing, `build_surface` for characters.
     Plane: A flat rectangle facing +z, an open grid of cells like the text plane.
@@ -33,6 +38,9 @@ from terminaltexteffects.engine.surfaces import (
 )
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from terminaltexteffects.engine.base_character import EffectCharacter
     from terminaltexteffects.engine.surfaces import FaceName
 from terminaltexteffects.utils import geometry3d as g3
 
@@ -52,6 +60,27 @@ __all__ = [
 ]
 
 _EPSILON = 1e-9
+_ROW = g3.TERMINAL_ROW_SCALE
+# How much a fitted sphere grows at a time while its cells are too crowded for the text.
+_GROWTH = 1.02
+
+ShapeT = typing.TypeVar("ShapeT", bound="Shape")
+
+
+def _text_size(characters: Iterable[EffectCharacter]) -> tuple[int, int]:
+    """Return how many columns and rows the characters' input coordinates span, as `layout_text` measures them."""
+    coords = [character.input_coord for character in characters]
+    if not coords:
+        msg = "A shape can't be fitted to no characters."
+        raise ValueError(msg)
+    columns = [coord.column for coord in coords]
+    rows = [coord.row for coord in coords]
+    return max(columns) - min(columns) + 1, max(rows) - min(rows) + 1
+
+
+def _ring_radius(columns: float, sides: int) -> float:
+    """Return the corner radius of a regular `sides`-gon whose perimeter is `columns`."""
+    return columns / (2 * sides * math.sin(math.pi / sides))
 
 
 def _box_surface(width: float, height: float, depth: float) -> ExtrudedSurface:
@@ -92,6 +121,47 @@ class Shape:
 
         """
         raise NotImplementedError
+
+    @classmethod
+    def fit(cls, columns: float, rows: float) -> Shape:
+        """Return a shape sized so text `columns` wide and `rows` tall wraps once around its surface.
+
+        The distance around the shape is `columns`, so the end of each line meets its start, and the sides are tall
+        enough for every row. Shapes that can't match both get as close as they can: see each shape's `fit`.
+
+        Args:
+            columns (float): Width of the text, in columns.
+            rows (float): Height of the text, in rows.
+
+        Returns:
+            Shape: The fitted shape.
+
+        Raises:
+            NotImplementedError: For a shape `fit` doesn't support: `Pyramid`, `Torus`, and shapes without a surface.
+
+        """
+        msg = f"{cls.__name__} can't be fitted to text."
+        raise NotImplementedError(msg)
+
+    @classmethod
+    def fit_text(cls: type[ShapeT], characters: Iterable[EffectCharacter], **options: typing.Any) -> ShapeT:
+        """Return a shape sized so the characters wrap once around its surface with `surface.layout_text`.
+
+        Measures the text as `layout_text` does, from the characters' input coordinates, and calls `fit`.
+
+        Args:
+            characters (Iterable[EffectCharacter]): The characters to fit.
+            **options (Any): Other settings for the shape's `fit`, such as a prism's `sides`.
+
+        Returns:
+            Shape: The fitted shape.
+
+        Raises:
+            ValueError: If there are no characters.
+
+        """
+        columns, rows = _text_size(characters)
+        return typing.cast("ShapeT", cls.fit(columns, rows, **options))
 
     def build_surface(self) -> Surface | None:
         """Return a new surface for a body of this shape, or None for shapes without one.
@@ -165,6 +235,21 @@ class Box(Shape):
     height: float = 16.0
     depth: float = 16.0
 
+    @classmethod
+    def fit(cls, columns: float, rows: float) -> Box:
+        """Return a box text `columns` wide wraps once around, `rows` tall, with a square top.
+
+        Args:
+            columns (float): Width of the text, in columns.
+            rows (float): Height of the text, in rows.
+
+        Returns:
+            Box: A box `columns / 4` wide and deep, with sides `rows` rows tall.
+
+        """
+        side = columns / 4
+        return cls(side, rows * _ROW, side)
+
     def build_mesh(self) -> g3.Mesh:
         """Return the box mesh.
 
@@ -208,6 +293,23 @@ class Cube(Shape):
     """
 
     size: float = 16.0
+
+    @classmethod
+    def fit(cls, columns: float, rows: float) -> Cube:
+        """Return the smallest cube that holds the text around its sides.
+
+        A cube has one size, so it matches the text's width or its height, whichever needs more: text that is short
+        for its width wraps exactly once, and taller text leaves a gap where its lines end.
+
+        Args:
+            columns (float): Width of the text, in columns.
+            rows (float): Height of the text, in rows.
+
+        Returns:
+            Cube: A cube `columns / 4` or `rows` rows on a side, whichever is larger.
+
+        """
+        return cls(max(columns / 4, rows * _ROW))
 
     def build_mesh(self) -> g3.Mesh:
         """Return the cube mesh.
@@ -254,6 +356,21 @@ class Prism(Shape):
     sides: int = 6
     radius: float = 10.0
     height: float = 12.0
+
+    @classmethod
+    def fit(cls, columns: float, rows: float, *, sides: int = 6) -> Prism:
+        """Return a prism text `columns` wide wraps once around, with sides `rows` rows tall.
+
+        Args:
+            columns (float): Width of the text, in columns.
+            rows (float): Height of the text, in rows.
+            sides (int): Number of rectangular sides, at least 3. Defaults to 6.
+
+        Returns:
+            Prism: The fitted prism.
+
+        """
+        return cls(sides, _ring_radius(columns, sides), rows * _ROW)
 
     def build_mesh(self) -> g3.Mesh:
         """Return the prism mesh.
@@ -425,6 +542,21 @@ class Cylinder(Shape):
     height: float = 12.0
     segments: int = 32
 
+    @classmethod
+    def fit(cls, columns: float, rows: float, *, segments: int = 32) -> Cylinder:
+        """Return a cylinder text `columns` wide wraps once around, with a side `rows` rows tall.
+
+        Args:
+            columns (float): Width of the text, in columns.
+            rows (float): Height of the text, in rows.
+            segments (int): Number of mesh sides, at least 3. Defaults to 32.
+
+        Returns:
+            Cylinder: The fitted cylinder.
+
+        """
+        return cls(columns / (2 * math.pi), rows * _ROW, segments)
+
     def build_mesh(self) -> g3.Mesh:
         """Return the cylinder mesh.
 
@@ -481,6 +613,29 @@ class Sphere(Shape):
     radius: float = 10.0
     segments: int = 24
     rings: int = 12
+
+    @classmethod
+    def fit(cls, columns: float, rows: float, *, segments: int = 24, rings: int = 12) -> Sphere:
+        """Return the smallest sphere that holds the text around its equator and between its poles.
+
+        Cells crowd together toward the poles, so a sphere grows past the text's width until `layout_text` can give
+        every character its own cell. Text that is wide and short wraps exactly once; other text leaves a gap where
+        its lines end.
+
+        Args:
+            columns (float): Width of the text, in columns.
+            rows (float): Height of the text, in rows.
+            segments (int): Number of mesh slices around y, at least 3. Defaults to 24.
+            rings (int): Number of mesh bands from pole to pole, at least 2. Defaults to 12.
+
+        Returns:
+            Sphere: The fitted sphere.
+
+        """
+        radius = max(columns / (2 * math.pi), rows * _ROW / math.pi)
+        while not SphereSurface(radius)._holds(math.ceil(columns), math.ceil(rows)):
+            radius *= _GROWTH
+        return cls(radius, segments, rings)
 
     def build_mesh(self) -> g3.Mesh:
         """Return the sphere mesh.
@@ -572,6 +727,20 @@ class Plane(Shape):
 
     width: float = 40.0
     height: float = 20.0
+
+    @classmethod
+    def fit(cls, columns: float, rows: float) -> Plane:
+        """Return a plane `columns` wide and `rows` rows tall.
+
+        Args:
+            columns (float): Width of the text, in columns.
+            rows (float): Height of the text, in rows.
+
+        Returns:
+            Plane: The fitted plane.
+
+        """
+        return cls(columns, rows * _ROW)
 
     def build_mesh(self) -> g3.Mesh:
         """Return the plane as one quad, textured from 0 to 1.

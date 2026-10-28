@@ -705,25 +705,41 @@ class Surface:
         rows = [c.input_coord.row for c in characters]
         middle_column = (min(columns) + max(columns)) / 2
         middle_row = (min(rows) + max(rows)) / 2
-        center = self.center
-        center_row = self._middle_row()
+        start = (self.center.x, self._middle_row())
         body = self._owner()
         unplaced = []
         taken: set[tuple[int, int, int]] = set()
         for character, column, row in zip(characters, columns, rows):
-            dc, dr = column - middle_column, row - middle_row
-            position = (center.x + dc, center_row + dr, 0.0)
-            if not self._fits(position, dc, dr, overflow):
+            placement = self._place(start, column - middle_column, row - middle_row, overflow)
+            if placement is None or placement[1] in taken:
                 unplaced.append(character)
                 continue
-            position = self._normalize(position)
-            key = self._cell_key(position)
-            if key in taken:
-                unplaced.append(character)
-                continue
+            position, key = placement
             taken.add(key)
             character.attach(body, at=g3.Vec3(*position))
         return unplaced
+
+    def _holds(self, columns: int, rows: int) -> bool:
+        """Return whether `layout_text` would place every character of text `columns` wide and `rows` tall."""
+        start = (self.center.x, self._middle_row())
+        taken: set[tuple[int, int, int]] = set()
+        for column in range(columns):
+            for row in range(rows):
+                placement = self._place(start, column - (columns - 1) / 2, row - (rows - 1) / 2, "extend")
+                if placement is None or placement[1] in taken:
+                    return False
+                taken.add(placement[1])
+        return True
+
+    def _place(
+        self, start: tuple[float, float], dc: float, dr: float, overflow: str
+    ) -> tuple[XYZ, tuple[int, int, int]] | None:
+        """Return where a character `dc`, `dr` from the middle of the text goes, and its cell key, or None."""
+        position = (start[0] + dc, start[1] + dr, 0.0)
+        if not self._fits(position, dc, dr, overflow):
+            return None
+        position = self._normalize(position)
+        return position, self._cell_key(position)
 
     def _middle_row(self) -> float:
         return self.rows / 2
