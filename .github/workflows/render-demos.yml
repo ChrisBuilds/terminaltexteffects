@@ -1,0 +1,125 @@
+name: Render demos
+
+# Demo fingerprints are checked on Linux, where floating-point results match CI, so demos are rendered here too.
+# Label a PR `render-demos` to render the demos its code has put out of date. A branch in this repository gets a
+# commit; a fork gets a `rendered-demos` artifact to extract at the repository root and commit.
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    name: Render out-of-date demos
+    if: github.event.label.name == 'render-demos'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    # This job runs the PR's code, so it gets no write access.
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.collect.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          cache-suffix: render-demos
+      - name: Install fonts
+        run: |
+          # DejaVu Sans Mono draws every demo; Unifont covers symbols it lacks.
+          apt_options=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install --yes fonts-dejavu-core fonts-unifont
+      - name: Install package and locked demo dependencies
+        run: uv sync --locked --no-default-groups --group demos
+      - name: Render out-of-date demos
+        run: |
+          .venv/bin/python tools/render_demos.py --stale --out docs/img/effects_demos | tee "$RUNNER_TEMP/render.log"
+          .venv/bin/python tools/render_demos.py --guide --stale --out docs/img/effectguide | tee -a "$RUNNER_TEMP/render.log"
+          if grep -q 'no font has' "$RUNNER_TEMP/render.log"; then
+            echo '::warning::Some symbols have no font and are drawn as boxes; see the log.'
+          fi
+      - name: Collect rendered demos
+        id: collect
+        run: |
+          git status --porcelain --untracked-files=all -- docs/img/effects_demos docs/img/effectguide |
+            cut -c4- > "$RUNNER_TEMP/changed.txt"
+          if [[ -s "$RUNNER_TEMP/changed.txt" ]]; then
+            tar -cf "$RUNNER_TEMP/rendered-demos.tar" --files-from "$RUNNER_TEMP/changed.txt"
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+            { echo '## Rendered demos'; sed 's/^/- /' "$RUNNER_TEMP/changed.txt"; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo '## No demos are out of date' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload rendered demos
+        if: steps.collect.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rendered-demos
+          path: ${{ runner.temp }}/rendered-demos.tar
+          retention-days: 7
+          if-no-files-found: error
+
+  commit:
+    name: Commit rendered demos
+    needs: render
+    # Forks get only the artifact: their PRs' tokens can't push, and the branch isn't ours to write.
+    if: >-
+      !cancelled() && github.event.label.name == 'render-demos' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # This job runs no code from the PR: it only unpacks the render job's demo files and pushes them.
+    permissions:
+      contents: write # Push the rendered demos to the PR branch.
+      actions: write # Start CI for the new commit; pushes made with this token start no workflows.
+      pull-requests: write # Remove the label so it can be applied again.
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: needs.render.outputs.changed == 'true'
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: needs.render.outputs.changed == 'true'
+        with:
+          name: rendered-demos
+          path: ${{ runner.temp }}
+      - name: Commit and push rendered demos
+        if: needs.render.outputs.changed == 'true'
+        run: |
+          # Only files directly in the demo folders are taken from the archive.
+          tar -tf "$RUNNER_TEMP/rendered-demos.tar" |
+            grep -E '^docs/img/(effects_demos|effectguide)/[^/]+$' > "$RUNNER_TEMP/members.txt"
+          tar -xf "$RUNNER_TEMP/rendered-demos.tar" --no-same-owner --no-same-permissions \
+            --verbatim-files-from --files-from "$RUNNER_TEMP/members.txt"
+          git add -- docs/img/effects_demos docs/img/effectguide
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit --quiet --message 'docs: render out-of-date demos on Linux'
+          # Fails rather than overwrites if the branch moved since the label was applied.
+          git push origin "HEAD:refs/heads/$HEAD_REF"
+          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$HEAD_REF"
+          echo "Committed $(git rev-parse --short HEAD) to $HEAD_REF and started CI." >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove the label
+        if: always()
+        run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --remove-label render-demos
