@@ -10,6 +10,11 @@ on:
 
 permissions: {}
 
+defaults:
+  run:
+    # Explicit bash adds pipefail, so a failing render isn't hidden by `tee`.
+    shell: bash
+
 concurrency:
   # Other labels get their own group, so adding one doesn't cancel a render.
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}-${{ github.event.label.name }}
