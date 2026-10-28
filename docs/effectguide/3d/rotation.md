@@ -56,7 +56,7 @@ useful when your own code decides the angle each frame.
 Both turn about the **parent's** axes by default, which for a body in the world are the world's axes.
 `rotate("y", 5)` on a body you've already tipped forward turns it about the screen's vertical. Use `rotate("y", 5, local=True)` or
 `spin("y", local=True)` to turn about the body's own tipped axis. The local axis follows the body
-when other turns run alongside it.
+when other turns run alongside it (see [Tumbling](#tumbling) for the order spins together combine in).
 
 ![Two tilted boxes turn. Left, spin("y") turns about world y, and the box's own axis sweeps a cone. Right, spin("y", local=True) turns about the box's own axis, which stays put](../../img/effectguide/3d/rotation_local.webp)
 
@@ -72,7 +72,22 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
 ![A cube spins about y and x at once](../../img/effectguide/turns_tumble_demo.webp)
 
 `together=True` runs a tween alongside the one queued before it. Two spins about different axes running together
-combine every frame into a tumble.
+combine into a tumble.
+
+Spins that run together combine from each spin's angle so far. On every frame the pose is the group's starting pose,
+turned once per spin in the order you queued them, just as `rotate(axis, angle)` calls would turn it, or
+`rotate(axis, angle, local=True)` for a local spin. A parent axis stays fixed in the parent. A local axis is the body's
+own, carried by the spins queued before it. Whole turns that end together therefore bring the body back to the pose it
+started from:
+
+```python
+plane.spin("x", turns=1, frames=120)
+plane.spin("y", turns=1, frames=120, together=True)  # After 120 frames the plane is back where it started.
+```
+
+Each spin keeps its own length and easing. One that finishes early holds its final angle until the others finish.
+Changes you make between frames, such as `rotate`, or other tweens in the same group, turn the pose the spins carry,
+as they would for a single spin. `cancel()` stops every spin where it is.
 
 ### Back to rest
 
