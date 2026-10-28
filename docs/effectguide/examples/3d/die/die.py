@@ -7,11 +7,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Gradient, Vec3, easing, rotation_about
+from terminaltexteffects import Color, Gradient, Textured, Vec3, easing, rotation_about
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.looks import Textured
-from terminaltexteffects.shapes import Cube
+from terminaltexteffects.engine.shapes import Cube
 from terminaltexteffects.utils import argutils
 
 SIZE = 20

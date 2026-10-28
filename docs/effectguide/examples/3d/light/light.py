@@ -8,11 +8,10 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, ColorPair, Vec3, rotation_about
+from terminaltexteffects import Color, ColorPair, Shaded, Vec3, rotation_about
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.looks import Shaded
-from terminaltexteffects.shapes import Sphere, Torus
+from terminaltexteffects.engine.shapes import Sphere, Torus
 from terminaltexteffects.utils import argutils
 
 

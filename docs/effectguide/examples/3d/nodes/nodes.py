@@ -7,11 +7,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import easing, rotation_about
+from terminaltexteffects import Shaded, easing, rotation_about
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.looks import Shaded
-from terminaltexteffects.shapes import Cube
+from terminaltexteffects.engine.shapes import Cube
 from terminaltexteffects.utils import argutils
 
 

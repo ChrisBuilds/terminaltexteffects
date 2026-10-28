@@ -31,7 +31,7 @@ The names an effect uses are on the top-level package, beside `Coord` and `Color
 | Import | Gives you |
 | --- | --- |
 | `tte.shapes` | `Box`, `Cube`, `Cylinder`, `Plane`, `Prism`, `Pyramid`, `Sphere`, `Torus`, `Tetrahedron`, `Octahedron`, `Icosahedron`, and `Shape` for your own |
-| `tte.looks` | `Shaded`, `Solid`, `Textured` and `Wireframe`, the looks `body.draw()` takes, and `Look`, any of them |
+| `tte.Shaded`, `tte.Solid`, `tte.Textured`, `tte.Wireframe` | The looks `body.draw()` takes; `tte.Look` is any of them |
 | `tte.Vec3`, `tte.Rotation` | Positions, directions and rotations |
 | `tte.rotation_about` | A rotation from an axis name and degrees: `rotation_about("y", 45)` |
 | `tte.Body` | The type of `world.body()`, for annotations |
@@ -39,11 +39,11 @@ The names an effect uses are on the top-level package, beside `Coord` and `Color
 ```python
 import terminaltexteffects as tte
 
-ball = self.terminal.world.body(tte.shapes.Sphere(10)).draw(tte.looks.Shaded())
+ball = self.terminal.world.body(tte.shapes.Sphere(10)).draw(tte.Shaded())
 ```
 
-`from terminaltexteffects.shapes import Sphere` and `from terminaltexteffects.looks import Shaded` work too. The world
-itself comes from the terminal, `self.terminal.world`, and the primitives under it from
+`tte.shapes` is `terminaltexteffects.engine.shapes`, so `from terminaltexteffects.engine.shapes import Sphere` works
+too. The world itself comes from the terminal, `self.terminal.world`, and the primitives under it from
 `terminaltexteffects.utils.geometry3d`.
 
 ## Two ways to show things
@@ -73,8 +73,8 @@ every character lands, ticks the active characters and paints the drawn bodies. 
 A drawn body needs no characters of yours, so the world alone decides when the effect is done:
 
 ```python
-from terminaltexteffects.looks import Shaded
-from terminaltexteffects.shapes import Cube
+from terminaltexteffects import Shaded
+from terminaltexteffects.engine.shapes import Cube
 
 # In the iterator's __init__:
 self.world = self.terminal.world

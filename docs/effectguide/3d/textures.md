@@ -125,7 +125,7 @@ Looks are immutable. Animate an offset by replacing the look each frame, without
 
 ```python
 from dataclasses import replace
-from terminaltexteffects.looks import Textured
+from terminaltexteffects import Textured
 
 look = Textured("A scrolling message")
 # In the iterator's __next__, with elapsed_frames advanced by the effect, before update():

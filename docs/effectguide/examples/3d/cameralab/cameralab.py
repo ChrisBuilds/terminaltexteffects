@@ -9,12 +9,11 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from terminaltexteffects import Body, Color, ColorPair, EffectCharacter, Gradient, easing, rotation_about
+from terminaltexteffects import Body, Color, ColorPair, EffectCharacter, Gradient, Solid, easing, rotation_about
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.camera import Camera
-from terminaltexteffects.looks import Solid
-from terminaltexteffects.shapes import Cube
+from terminaltexteffects.engine.shapes import Cube
 from terminaltexteffects.utils import argutils
 from terminaltexteffects.utils.geometry import Coord
 
