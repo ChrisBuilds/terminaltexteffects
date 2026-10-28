@@ -271,6 +271,98 @@ def test_groups_of_spins_together_play_in_sequence(world: World) -> None:
     assert not world.animating
 
 
+@pytest.mark.parametrize("local", [False, True])
+@pytest.mark.parametrize("first", [True, False])
+def test_turn_to_together_with_whole_spins_lands_on_target(world: World, *, local: bool, first: bool) -> None:
+    """Every frame is the turn_to's pose turned by the spins; whole turns end exactly on the target."""
+    start = rotation_about("z", 30) * rotation_about("x", 20)
+    target = rotation_about("x", 90)
+    body = world.body()
+    body.rotation = start
+    if first:
+        body.turn_to(target, frames=12).spin("y", turns=1, frames=12, together=True, local=local)
+    else:
+        body.spin("y", turns=1, frames=12, local=local).turn_to(target, frames=12, together=True)
+    for frame in range(1, 13):
+        world.step()
+        angle = 360 * frame / 12
+        assert_same_rotation(body.rotation, spun(start.slerp(target, frame / 12), ("y", angle, local)))
+    assert not world.animating
+    assert_same_rotation(body.rotation, target)
+
+
+def test_target_tween_follows_mixed_spins_and_easing(world: World) -> None:
+    """Parent and local spins of different lengths turn an eased turn_to's pose in queue order."""
+    start = rotation_about("y", 25)
+    target = rotation_about("z", 60) * rotation_about("x", -40)
+    body = world.body()
+    body.rotation = start
+    body.spin("x", turns=1, frames=6)
+    body.turn_to(target, frames=10, ease=easing.in_out_cubic, together=True)
+    body.spin("y", turns=0.5, frames=8, together=True, local=True)
+    body.spin("z", turns=-1, frames=10, together=True)
+    for frame in range(1, 11):
+        world.step()
+        pose = start.slerp(target, easing.in_out_cubic(frame / 10))
+        x = 360 * min(frame / 6, 1)
+        y = 180 * min(frame / 8, 1)
+        z = -360 * frame / 10
+        assert_same_rotation(body.rotation, spun(pose, ("x", x, False), ("y", y, True), ("z", z, False)))
+    # The half local turn also turns the target.
+    assert_same_rotation(body.rotation, target * rotation_about("y", 180))
+
+
+def test_target_tween_shorter_or_longer_than_spins(world: World) -> None:
+    """A turn_to that ends first holds its target for the spins; one that ends last finishes from the spun pose."""
+    target = rotation_about("x", 90)
+    body = world.body().turn_to(target, frames=4).spin("y", turns=1, frames=8, together=True)
+    steps(world, 4)
+    assert_same_rotation(body.rotation, spun(target, ("y", 180, False)))
+    steps(world, 4)
+    assert_same_rotation(body.rotation, target)
+    body.spin("y", turns=1, frames=4).turn_to_rest(frames=8, together=True)
+    for frame in range(1, 9):
+        world.step()
+        angle = 360 * min(frame / 4, 1)
+        assert_same_rotation(body.rotation, spun(target.slerp(g3.Rotation(), frame / 8), ("y", angle, False)))
+    assert_same_rotation(body.rotation, g3.Rotation())
+
+
+@pytest.mark.parametrize("spin_frames", [2, 4])
+def test_finished_partial_spin_keeps_turning_the_target_tween(world: World, spin_frames: int) -> None:
+    """A partial spin queued first that ends before or with the turn_to still turns its remaining frames."""
+    target = rotation_about("x", 90)
+    body = world.body().spin("y", turns=0.5, frames=spin_frames).turn_to(target, frames=4, together=True)
+    for frame in range(1, 5):
+        world.step()
+        angle = 180 * min(frame / spin_frames, 1)
+        assert_same_rotation(body.rotation, spun(g3.Rotation().slerp(target, frame / 4), ("y", angle, False)))
+    assert_same_rotation(body.rotation, rotation_about("y", 180) * target)
+    assert body._spins is None
+
+
+@pytest.mark.parametrize("local", [False, True])
+def test_settle_together_with_whole_spins_ends_at_rest(world: World, *, local: bool) -> None:
+    """Settle in a group with spins follows its own path inside them and still ends exactly at rest."""
+    body = world.body().rotate("x", 40).rotate("z", 25)
+    body.settle("y", turns=1, frames=10).spin("x", turns=2, frames=10, together=True, local=local)
+    reference = world.body().rotate("x", 40).rotate("z", 25).settle("y", turns=1, frames=10)
+    for frame in range(1, 11):
+        world.step()
+        assert_same_rotation(body.rotation, spun(reference.rotation, ("x", 720 * frame / 10, local)))
+    assert_same_rotation(body.rotation, g3.Rotation())
+
+
+def test_random_pose_together_with_spins_lands_on_its_pose(world: World) -> None:
+    """random_pose in a group with whole spins ends on the same pose as without them."""
+    random.seed(7)
+    alone = world.body().random_pose(frames=6)
+    random.seed(7)
+    body = world.body().random_pose(frames=6).spin("z", turns=1, frames=6, together=True)
+    steps(world, 6)
+    assert_same_rotation(body.rotation, alone.rotation)
+
+
 @pytest.mark.parametrize("turns", [1, 1.5, -2])
 def test_settle_starts_smoothly_and_ends_at_rest(world: World, turns: float) -> None:
     """Settle eases out of the current pose and ends exactly at rest."""

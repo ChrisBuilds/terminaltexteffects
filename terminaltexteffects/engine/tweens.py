@@ -196,7 +196,11 @@ class TweenQueue:
         """
         self._queue.clear()
         self._callback_generation += 1
+        self._group_ended()
         return self
+
+    def _group_ended(self) -> None:
+        """Handle the end of a group: finished, cancelled, or a tween applied at once. Subclasses may extend it."""
 
     def _queue_tween(self: _Queue, tween: Tween[typing.Any], *, together: bool) -> _Queue:
         if tween.frames < 0:
@@ -204,6 +208,7 @@ class TweenQueue:
             raise ValueError(msg)
         if tween.frames == 0 and not self._queue:
             tween.advance()
+            self._group_ended()
             for callback in tween.callbacks:
                 callback(self)
             return self
@@ -232,5 +237,6 @@ class TweenQueue:
                 finished.extend(tween.callbacks)
         if all(tween.done for tween in group.tweens):
             self._queue.pop(0)
+            self._group_ended()
             finished.extend(group.callbacks)
         return finished
