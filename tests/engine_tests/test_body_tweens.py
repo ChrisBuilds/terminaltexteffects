@@ -179,6 +179,98 @@ def test_spin_keeps_an_immediate_nudge(world: World) -> None:
     assert_same_rotation(body.rotation, expected)
 
 
+def spun(start: g3.Rotation, *turns: tuple[str, float, bool]) -> g3.Rotation:
+    """Return `start` turned by `rotate` calls for `(axis, degrees, local)` in order: the rule for spins together."""
+    rotation = start
+    for axis, degrees, local in turns:
+        turn = rotation_about(axis, degrees)
+        rotation = rotation * turn if local else turn * rotation
+    return rotation
+
+
+@pytest.mark.parametrize("local", [False, True])
+@pytest.mark.parametrize("start", [g3.Rotation(), rotation_about("z", 30) * rotation_about("x", 20)])
+def test_whole_turns_together_follow_queue_order_and_end_at_the_start(
+    world: World,
+    *,
+    local: bool,
+    start: g3.Rotation,
+) -> None:
+    """Every frame of x and y spins together is the start turned by each angle in queue order, ending at the start."""
+    body = world.body()
+    body.rotation = start
+    body.spin("x", turns=1, frames=12, local=local).spin("y", turns=1, frames=12, together=True, local=local)
+    for frame in range(1, 13):
+        assert world.animating
+        world.step()
+        angle = 360 * frame / 12
+        assert_same_rotation(body.rotation, spun(start, ("x", angle, local), ("y", angle, local)))
+    assert not world.animating
+    assert_same_rotation(body.rotation, start)
+
+
+def test_spins_together_with_different_lengths_easing_and_spaces(world: World) -> None:
+    """Each spin follows its own easing and length, and one that ends early holds its angle without a jump."""
+    start = rotation_about("y", 25)
+    body = world.body()
+    body.rotation = start
+    body.spin("x", turns=0.5, frames=6, ease=easing.in_quad)
+    body.spin("y", turns=1, frames=10, together=True, local=True)
+    body.spin("z", turns=0.25, frames=4, together=True)
+    body.spin("x", turns=0.25, frames=0, together=True, local=True)
+    for frame in range(1, 11):
+        world.step()
+        x = 180 * easing.in_quad(min(frame / 6, 1))
+        y = 360 * frame / 10
+        z = 90 * min(frame / 4, 1)
+        expected = spun(start, ("x", x, False), ("y", y, True), ("z", z, False), ("x", 90, True))
+        assert_same_rotation(body.rotation, expected)
+    assert not body.animating
+    assert body._spins is None
+
+
+def test_immediate_turn_during_spins_together_is_carried_by_them(world: World) -> None:
+    """A turn made between frames joins the pose the spins carry, as it does for one spin, with no jump."""
+    body = world.body().spin("x", turns=1, frames=8).spin("y", turns=1, frames=8, together=True)
+    steps(world, 3)
+    nudge = rotation_about("z", 30)
+    before = spun(g3.Rotation(), ("x", 135, False), ("y", 135, False))
+    body.rotation = nudge * body.rotation
+    carried = before.inverse() * nudge * before
+    for frame in range(4, 9):
+        world.step()
+        angle = 45 * frame
+        assert_same_rotation(body.rotation, spun(carried, ("x", angle, False), ("y", angle, False)))
+    assert_same_rotation(body.rotation, carried)
+
+
+def test_cancelled_spins_together_keep_the_pose_for_the_next_spin(world: World) -> None:
+    """Cancelling mid-group keeps the pose; spins queued afterwards start from it and finish as they would alone."""
+    body = world.body().spin("x", turns=1, frames=8).spin("y", turns=1, frames=8, together=True)
+    steps(world, 3)
+    stopped = body.rotation
+    body.cancel()
+    assert_same_rotation(body.rotation, stopped)
+    body.spin("z", turns=1, frames=4).spin("x", turns=1, frames=4, together=True, local=True)
+    world.step()
+    assert_same_rotation(body.rotation, spun(stopped, ("z", 90, False), ("x", 90, True)))
+    steps(world, 3)
+    assert_same_rotation(body.rotation, stopped)
+    assert not body.animating
+
+
+def test_groups_of_spins_together_play_in_sequence(world: World) -> None:
+    """Each group of spins composes from its own starting pose, and the queue ends after both groups."""
+    body = world.body().spin("x", turns=1, frames=4).spin("y", turns=1, frames=4, together=True)
+    body.spin("y", turns=0.25, frames=2).spin("z", turns=0.5, frames=2, together=True)
+    steps(world, 4)
+    assert_same_rotation(body.rotation, g3.Rotation())
+    assert body.animating
+    steps(world, 2)
+    assert_same_rotation(body.rotation, spun(g3.Rotation(), ("y", 90, False), ("z", 180, False)))
+    assert not world.animating
+
+
 @pytest.mark.parametrize("turns", [1, 1.5, -2])
 def test_settle_starts_smoothly_and_ends_at_rest(world: World, turns: float) -> None:
     """Settle eases out of the current pose and ends exactly at rest."""

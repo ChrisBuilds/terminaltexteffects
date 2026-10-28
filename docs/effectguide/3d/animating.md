@@ -27,7 +27,8 @@ independently.
 ![A timeline: hold for 30 frames, then a y spin and an x spin together for 120 frames, then a settle for 90 frames, with on_complete at the end](../../img/effectguide/3d/tween_timeline.webp)
 
 Tweens add their change to the body rather than setting it, so step-by-step calls and tweens combine. A spin keeps
-turning a body that your code is also nudging.
+turning a body that your code is also nudging. Spins running together combine in the order you queued them, so whole
+turns that end together finish at the starting pose (see [Tumbling](rotation.md#tumbling)).
 
 Each tween and path has a length and an optional **easing** function, the same ones paths always use (see
 [Motion](../engine/motion.md#easing)). Easing changes how the motion is spread over its frames, not how long it takes.
