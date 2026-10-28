@@ -328,6 +328,19 @@ def test_target_tween_shorter_or_longer_than_spins(world: World) -> None:
     assert_same_rotation(body.rotation, g3.Rotation())
 
 
+@pytest.mark.parametrize("spin_frames", [2, 4])
+def test_finished_partial_spin_keeps_turning_the_target_tween(world: World, spin_frames: int) -> None:
+    """A partial spin queued first that ends before or with the turn_to still turns its remaining frames."""
+    target = rotation_about("x", 90)
+    body = world.body().spin("y", turns=0.5, frames=spin_frames).turn_to(target, frames=4, together=True)
+    for frame in range(1, 5):
+        world.step()
+        angle = 180 * min(frame / spin_frames, 1)
+        assert_same_rotation(body.rotation, spun(g3.Rotation().slerp(target, frame / 4), ("y", angle, False)))
+    assert_same_rotation(body.rotation, rotation_about("y", 180) * target)
+    assert body._spins is None
+
+
 @pytest.mark.parametrize("local", [False, True])
 def test_settle_together_with_whole_spins_ends_at_rest(world: World, *, local: bool) -> None:
     """Settle in a group with spins follows its own path inside them and still ends exactly at rest."""

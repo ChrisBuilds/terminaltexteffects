@@ -108,17 +108,14 @@ class _Spins:
     pose the spins carry.
     """
 
-    def __init__(self, generation: int) -> None:
-        self.generation = generation
+    def __init__(self) -> None:
         self.spins: list[tuple[g3.Vec3, bool]] = []
         self.angles: list[float] = []
-        self.playing = 0
 
     def join(self, unit: g3.Vec3, *, local: bool) -> int:
         """Add a spin at angle zero and return its index."""
         self.spins.append((unit, local))
         self.angles.append(0.0)
-        self.playing += 1
         return len(self.spins) - 1
 
     def parent_turn(self) -> g3.Rotation:
@@ -586,24 +583,18 @@ class Body(SpatialNode, TweenQueue):
         """
         unit = direction(axis, AXES, "axis")
         total = 2 * math.pi * turns
-        state: dict[str, typing.Any] = {"left": max(frames, 1)}
+        state: dict[str, typing.Any] = {}
 
         def begin() -> None:
-            # A cancel leaves the spins it stopped behind, still counted as playing: start afresh after one.
-            spins = self._spins
-            if spins is None or spins.generation != self._callback_generation:
-                spins = self._spins = _Spins(self._callback_generation)
-            state["spins"] = spins
-            state["index"] = spins.join(unit, local=local)
+            # The group's spins last until the group ends, so spins that finish early still turn its target tweens.
+            if self._spins is None:
+                self._spins = _Spins()
+            state["spins"] = self._spins
+            state["index"] = self._spins.join(unit, local=local)
 
         def apply(previous: float, current: float) -> None:
             spins: _Spins = state["spins"]
             self.rotation = spins.turn(self._rotation, state["index"], total * current, total * (current - previous))
-            state["left"] -= 1
-            if not state["left"]:
-                spins.playing -= 1
-                if not spins.playing and self._spins is spins:
-                    self._spins = None
 
         return self._queue_tween(Tween(frames, apply, ease, begin), together=together)
 
@@ -775,13 +766,16 @@ class Body(SpatialNode, TweenQueue):
             target = pose(current)
             change = target * state["last"].inverse()
             spins = self._spins
-            if spins is not None and spins.generation == self._callback_generation:
+            if spins is not None:
                 outside = spins.parent_turn()
                 change = outside * change * outside.inverse()
             self.rotation = change * self._rotation
             state["last"] = target
 
         return apply
+
+    def _group_ended(self) -> None:
+        self._spins = None
 
     def _check_movable(self) -> None:
         if self is self.world.root:
