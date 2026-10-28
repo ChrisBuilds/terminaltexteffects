@@ -86,8 +86,20 @@ plane.spin("y", turns=1, frames=120, together=True)  # After 120 frames the plan
 ```
 
 Each spin keeps its own length and easing. One that finishes early holds its final angle until the others finish.
-Changes you make between frames, such as `rotate`, or other tweens in the same group, turn the pose the spins carry,
-as they would for a single spin. `cancel()` stops every spin where it is.
+Changes you make between frames, such as `rotate`, turn the pose the spins carry, as they would for a single spin.
+`cancel()` stops every spin where it is.
+
+A tween with a target, `turn_to`, `turn_to_rest`, `random_pose` or `settle`, sets the pose the spins in its group turn.
+On every frame the body is at the tween's own pose for that frame, turned by the spins as above, so the spins carry it
+along its path. Whole turns that end with or before the tween therefore land it exactly on its target:
+
+```python
+plane.turn_to(rotation_about("x", 90), frames=60)
+plane.spin("y", turns=1, frames=60, together=True)  # After 60 frames the plane is at rotation_about("x", 90).
+```
+
+A partial turn also turns the target. With `turns=0.5` above, the plane ends at `rotation_about("y", 180)` times
+`rotation_about("x", 90)`, as if it had reached the target and then made the half turn.
 
 ### Back to rest
 

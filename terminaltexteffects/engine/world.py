@@ -121,6 +121,14 @@ class _Spins:
         self.playing += 1
         return len(self.spins) - 1
 
+    def parent_turn(self) -> g3.Rotation:
+        """Return the parent-axis spins' turn so far, `S_n ··· S_1`."""
+        turn = g3.Rotation()
+        for (unit, local), angle in zip(self.spins, self.angles):
+            if not local:
+                turn = g3.Rotation.about_axis(unit, angle) * turn
+        return turn
+
     def turn(self, rotation: g3.Rotation, index: int, angle: float, change: float) -> g3.Rotation:
         """Return `rotation` after spin `index` turns by `change` radians, to `angle`."""
         unit, local = self.spins[index]
@@ -319,8 +327,8 @@ class Body(SpatialNode, TweenQueue):
     A body turns and scales now (`rotate`, the `rotation` and `scale` setters) or over frames with queued tweens
     (`spin`, `settle`, `turn_to`, `scale_to`, ...) that the world plays inside `update()`. Each tween runs after the
     previous one, or alongside it with `together=True`, and applies its change as a delta, so tweens compose with
-    each other and with changes made now. Spins played together compose from their angles so far, in queue order
-    (see `spin`). Tween methods return the body, so calls chain.
+    each other and with changes made now. Spins played together compose from their angles so far, in queue order,
+    turning the pose of any target tween in their group (see `spin`). Tween methods return the body, so calls chain.
 
     A body with a shape has a `surface`: a grid of cells over the shape. Characters attached to it sit on the surface
     at `(column, row, height)`, and their paths follow it, over folds and round laps.
@@ -557,8 +565,9 @@ class Body(SpatialNode, TweenQueue):
         group's starting pose turned, in queue order, the way `rotate(axis, angle, local=local)` would turn it for
         each spin's angle. A parent axis stays fixed in the parent; a local axis is the body's own, carried by the
         turns before it. Spins of whole turns that end together therefore end at the starting pose. A spin that ends
-        early holds its final angle until the rest end. Immediate turns and other tweens in the group turn the pose
-        the spins carry, as they would for a single spin.
+        early holds its final angle until the rest end. Immediate turns turn the pose the spins carry, as they would
+        for a single spin. A target tween in the group (`turn_to`, `turn_to_rest`, `random_pose`, `settle`) moves
+        that pose along its own path, so whole turns land the body exactly on its target.
 
         Args:
             axis (Axis): Axis name or nonzero `(x, y, z)` direction.
@@ -756,11 +765,20 @@ class Body(SpatialNode, TweenQueue):
         pose: Callable[[float], g3.Rotation],
         state: dict[str, g3.Rotation],
     ) -> Callable[[float, float], None]:
-        """Return a tween step that applies the change from the last pose to the next one."""
+        """Return a tween step that applies the change from the last pose to the next one.
+
+        Spins playing in the same group turn this pose: the change is made inside their parent-axis turns, so the
+        rotation stays `parent spins * pose * local spins`.
+        """
 
         def apply(_previous: float, current: float) -> None:
             target = pose(current)
-            self.rotation = target * state["last"].inverse() * self._rotation
+            change = target * state["last"].inverse()
+            spins = self._spins
+            if spins is not None and spins.generation == self._callback_generation:
+                outside = spins.parent_turn()
+                change = outside * change * outside.inverse()
+            self.rotation = change * self._rotation
             state["last"] = target
 
         return apply
