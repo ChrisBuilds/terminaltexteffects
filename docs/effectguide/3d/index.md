@@ -24,6 +24,28 @@ move will look like before you run it, and know where to look when the high-leve
 Most effects only need the world. Each chapter shows the world's calls first, then the primitives they use, for the
 times you want more control.
 
+### Imports
+
+The names an effect uses are on the top-level package, beside `Coord` and `Color`:
+
+| Import | Gives you |
+| --- | --- |
+| `tte.shapes` | `Box`, `Cube`, `Cylinder`, `Plane`, `Prism`, `Pyramid`, `Sphere`, `Torus`, `Tetrahedron`, `Octahedron`, `Icosahedron`, and `Shape` for your own |
+| `tte.looks` | `Shaded`, `Solid`, `Textured` and `Wireframe`, the looks `body.draw()` takes, and `Look`, any of them |
+| `tte.Vec3`, `tte.Rotation` | Positions, directions and rotations |
+| `tte.rotation_about` | A rotation from an axis name and degrees: `rotation_about("y", 45)` |
+| `tte.Body` | The type of `world.body()`, for annotations |
+
+```python
+import terminaltexteffects as tte
+
+ball = self.terminal.world.body(tte.shapes.Sphere(10)).draw(tte.looks.Shaded())
+```
+
+`from terminaltexteffects.shapes import Sphere` and `from terminaltexteffects.looks import Shaded` work too. The world
+itself comes from the terminal, `self.terminal.world`, and the primitives under it from
+`terminaltexteffects.utils.geometry3d`.
+
 ## Two ways to show things
 
 A body reaches the screen in one of two ways, and most effects use one or both:
@@ -51,8 +73,8 @@ every character lands, ticks the active characters and paints the drawn bodies. 
 A drawn body needs no characters of yours, so the world alone decides when the effect is done:
 
 ```python
-from terminaltexteffects.engine.drawing import Shaded
-from terminaltexteffects.engine.shapes import Cube
+from terminaltexteffects.looks import Shaded
+from terminaltexteffects.shapes import Cube
 
 # In the iterator's __init__:
 self.world = self.terminal.world

@@ -8,13 +8,13 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from terminaltexteffects import easing
+from terminaltexteffects import Vec3, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.drawing import Shaded, Wireframe
-from terminaltexteffects.engine.shapes import Shape
+from terminaltexteffects.looks import Shaded, Wireframe
+from terminaltexteffects.shapes import Shape
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.geometry3d import Face, Mesh, Vec3
+from terminaltexteffects.utils.geometry3d import Face, Mesh
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:

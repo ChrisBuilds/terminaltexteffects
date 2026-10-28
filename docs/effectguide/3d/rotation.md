@@ -131,8 +131,7 @@ drawn from Python's `random` module, so `random.seed` makes it repeatable.
 ```python
 import math
 
-from terminaltexteffects.engine.tweens import rotation_about
-from terminaltexteffects.utils.geometry3d import Rotation, Vec3
+from terminaltexteffects import Rotation, Vec3, rotation_about
 
 tip = Rotation.about_x(math.radians(20))
 turn = rotation_about("y", 45)  # The same, but in degrees and with axis names.

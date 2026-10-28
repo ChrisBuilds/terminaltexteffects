@@ -8,11 +8,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import easing
+from terminaltexteffects import Vec3, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.geometry3d import Vec3
 
 START_DISTANCE = 200
 """How far behind the canvas the sheet starts, in columns."""

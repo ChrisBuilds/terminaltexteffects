@@ -8,14 +8,12 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, ColorPair
+from terminaltexteffects import Color, ColorPair, Vec3, rotation_about
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.drawing import Shaded
-from terminaltexteffects.engine.shapes import Sphere, Torus
-from terminaltexteffects.engine.tweens import rotation_about
+from terminaltexteffects.looks import Shaded
+from terminaltexteffects.shapes import Sphere, Torus
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.geometry3d import Vec3
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:

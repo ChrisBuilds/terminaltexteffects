@@ -8,14 +8,12 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from terminaltexteffects import EffectCharacter, EventHandler, easing
+from terminaltexteffects import EffectCharacter, EventHandler, Vec3, easing, rotation_about
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.drawing import Shaded
-from terminaltexteffects.engine.shapes import Cube
-from terminaltexteffects.engine.tweens import rotation_about
+from terminaltexteffects.looks import Shaded
+from terminaltexteffects.shapes import Cube
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.geometry3d import Vec3
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:

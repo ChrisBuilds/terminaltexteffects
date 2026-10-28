@@ -37,7 +37,7 @@ world +y. Once the camera turns, its axes turn with it. The world axes do not.
 ![World +x remains fixed while the panned camera's local right and forward directions turn](../../img/effectguide/3d/camera_axes.webp)
 
 ```python
-from terminaltexteffects.engine.tweens import rotation_about
+from terminaltexteffects import rotation_about
 
 camera = self.world.camera
 camera.set_rotation(rotation_about("y", 35))

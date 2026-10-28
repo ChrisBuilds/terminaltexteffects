@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from terminaltexteffects import Color, ColorPair, EffectCharacter, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.drawing import Shaded, Wireframe
-from terminaltexteffects.engine.shapes import (
+from terminaltexteffects.looks import Shaded, Wireframe
+from terminaltexteffects.shapes import (
     Box,
     Cube,
     Cylinder,

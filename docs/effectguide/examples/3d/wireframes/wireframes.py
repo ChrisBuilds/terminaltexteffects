@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from terminaltexteffects import Color, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.drawing import Wireframe
-from terminaltexteffects.engine.shapes import Cube, Icosahedron, Octahedron, Tetrahedron
+from terminaltexteffects.looks import Wireframe
+from terminaltexteffects.shapes import Cube, Icosahedron, Octahedron, Tetrahedron
 from terminaltexteffects.utils import argutils
 
 
