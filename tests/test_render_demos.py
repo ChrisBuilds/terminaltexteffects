@@ -112,3 +112,53 @@ def test_main_renders_each_demo_once_and_records_webp_fingerprints(
     assert render_demos.main() == 0
     assert rendered == ["beams"]
     assert render_demos.read_manifest(tmp_path) == manifest
+
+
+def test_stale_renders_only_demos_whose_fingerprint_changed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """`--stale` renders the demos whose recorded fingerprint differs from the manifest, or that have none."""
+    pytest.importorskip("PIL")
+    render_demos.write_manifest(tmp_path, {"beams": "fingerprint of beams", "burn": "old"})
+    rendered: list[str] = []
+
+    def try_render(name: str, *_: object) -> tuple[str, str]:
+        rendered.append(name)
+        return name, f"fingerprint of {name}"
+
+    monkeypatch.setattr(
+        render_demos, "demos", lambda: {name: render_demos.Demo(effect=name) for name in ("beams", "burn", "crumble")}
+    )
+    monkeypatch.setattr(render_demos, "current_fingerprint", lambda demo, _fps: f"fingerprint of {demo.effect}")
+    monkeypatch.setattr(render_demos, "try_render", try_render)
+    monkeypatch.setattr(render_demos, "ProcessPoolExecutor", ThreadPoolExecutor)
+    monkeypatch.setattr(sys, "argv", ["render_demos", "--stale", "--out", str(tmp_path)])
+    assert render_demos.main() == 0
+    assert sorted(rendered) == ["burn", "crumble"]
+    assert render_demos.read_manifest(tmp_path) == {
+        "beams": "fingerprint of beams",
+        "burn": "fingerprint of burn",
+        "crumble": "fingerprint of crumble",
+    }
+
+
+def test_stale_with_nothing_out_of_date_renders_nothing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """`--stale` exits cleanly, without rendering, when every demo matches its code."""
+    render_demos.write_manifest(tmp_path, {"beams": "fingerprint of beams"})
+    monkeypatch.setattr(render_demos, "demos", lambda: {"beams": render_demos.Demo(effect="beams")})
+    monkeypatch.setattr(render_demos, "current_fingerprint", lambda demo, _fps: f"fingerprint of {demo.effect}")
+    monkeypatch.setattr(render_demos, "try_render", pytest.fail)
+    monkeypatch.setattr(render_demos, "ProcessPoolExecutor", ThreadPoolExecutor)
+    monkeypatch.setattr(sys, "argv", ["render_demos", "--stale", "--out", str(tmp_path)])
+    assert render_demos.main() == 0
+    assert "out of date" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("extra", [["beams"], ["--all"]])
+def test_stale_rejects_named_demos_and_all(monkeypatch: pytest.MonkeyPatch, extra: list[str]) -> None:
+    """`--stale` chooses the demos itself."""
+    monkeypatch.setattr(sys, "argv", ["render_demos", "--stale", *extra])
+    with pytest.raises(SystemExit):
+        render_demos.main()

@@ -129,8 +129,15 @@ Effect demos in `docs/img/effects_demos/` and Effect Guide demos in `docs/img/ef
 with `tools/render_demos.py` and committed; CI doesn't render them. Each folder's `demos.json` records a
 fingerprint of every demo's seeded frames and render settings. `tests/test_demo_freshness.py` records each demo
 again on Linux (Python 3.10+) and fails when a change to an effect, an example, an input file, the engine or the renderer would
-change what a demo shows. Its message names the command that re-renders the demo, for example
-`./.venv/bin/python tools/render_demos.py beams --out docs/img/effects_demos`; commit the new WebP and `demos.json`.
+change what a demo shows.
+
+Floating-point results differ slightly between platforms, so a demo rendered on macOS or Windows can fail the check.
+To render out-of-date demos on Linux in CI, add the `render-demos` label to the PR. The `Render demos` workflow
+renders every out-of-date demo. On a branch in this repository, it commits the new WebPs and `demos.json`, starts CI
+for that commit, and removes the label. On a fork, it uploads a `rendered-demos` artifact for you to extract at the
+repository root and commit. On Linux you can also render them yourself:
+`./.venv/bin/python tools/render_demos.py --stale --out docs/img/effects_demos`, plus `--guide` with
+`--out docs/img/effectguide` for Effect Guide demos. Commit the new WebPs and `demos.json`.
 
 ## CI
 
@@ -145,6 +152,9 @@ manual dispatch. Every run executes the full workflow:
 | Shell completions | Committed completion scripts are current |
 | Nix / Linux, Nix / macOS | Flake and classic package builds and CLI smoke tests; on PRs only when `flake.*`, `default.nix`, `pyproject.toml`, `tools/check_nix.sh`, or `ci.yml` change |
 | CI passed | Fails if any job above failed or was cancelled |
+
+`.github/workflows/render-demos.yml` renders out-of-date demos on Linux when a PR is labeled `render-demos` (see
+[Demos](#demos)); it is not part of `CI passed`.
 
 `.github/workflows/profile.yml` records Python 3.15 sampling profiles of the benchmark harness on
 `main` and on manual dispatch; it is informational and not part of `CI passed`. See
