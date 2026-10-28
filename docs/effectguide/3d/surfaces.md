@@ -101,6 +101,27 @@ taller than the face carries on across the surface beyond it with `overflow="ext
 goes. With `overflow="clip"`, the characters that would go past the edge aren't attached; they are returned, so the
 effect can hide them or send them elsewhere.
 
+### Sizing a shape to the text
+
+`fit_text(characters)` returns a shape sized so the text wraps once around it, with every character in its own cell.
+`fit(columns, rows)` does the same from the text's size. Other settings, such as a prism's `sides`, pass through:
+
+```python
+cylinder = self.terminal.world.body(Cylinder.fit_text(characters))
+cylinder.surface.layout_text(characters)  # Hands back no characters.
+prism = Prism.fit_text(characters, sides=5)
+```
+
+| Shape | Fitted size |
+| --- | --- |
+| `Box`, `Prism`, `Cylinder` | The text's width around and its rows tall; a box's top is square |
+| `Cube` | The text's width around or its rows tall, whichever is larger |
+| `Sphere` | Its width around the equator, growing until the rows toward the poles hold the text too |
+| `Plane` | The text's width and rows |
+
+A cube or sphere grown past the text's width leaves a gap where each line ends. `Pyramid` and `Torus` have no fit:
+their cells crowd toward the apex and the inside of the ring.
+
 ## Travelling over a surface
 
 On a surface, a waypoint and a walk mean different things:

@@ -18,6 +18,7 @@ from terminaltexteffects.engine.shapes import (
     Pyramid,
     Shape,
     Sphere,
+    Tetrahedron,
     Torus,
 )
 from terminaltexteffects.engine.terminal import Terminal
@@ -360,6 +361,39 @@ def test_whole_surface_layout(world: World, terminal: Terminal) -> None:
     assert plane.surface is not None
     assert len(plane.surface.layout_text(characters, overflow="clip")) > 0
     assert plane.surface.layout_text(characters) == []
+
+
+@pytest.mark.parametrize("shape", [Box, Cube, Prism, Cylinder, Sphere, Plane], ids=lambda shape: shape.__name__)
+@pytest.mark.parametrize(("columns", "rows"), [(1, 1), (7, 3), (24, 9), (63, 4), (80, 25)])
+def test_fitted_shapes_hold_every_character(shape: type[Shape], columns: int, rows: int) -> None:
+    """A shape fitted to the text holds every character, and the closed ones are at least the text's width around."""
+    terminal = Terminal("\n".join("x" * columns for _ in range(rows)))
+    characters = terminal.get_characters()
+    body = terminal.world.body(shape.fit_text(characters))
+    surface = surface_of(body)
+    assert surface.layout_text(characters) == []
+    assert surface.columns >= columns - 1e-9
+
+
+def test_fitted_shapes_wrap_exactly_once_when_they_can() -> None:
+    """Shapes wrap the text exactly once around, and grow past it only where their sides can't hold it otherwise."""
+    for shape in (Box.fit(40, 9), Prism.fit(40, 9, sides=5), Cylinder.fit(40, 9), Cube.fit(80, 6), Sphere.fit(80, 6)):
+        surface = shape.build_surface()
+        assert surface is not None
+        assert math.isclose(surface.columns, 40 if not isinstance(shape, (Cube, Sphere)) else 80)
+    assert Box.fit(40, 9).height == 18
+    assert Cube.fit(40, 20).size == 40
+    assert Sphere.fit(24, 15).build_surface().columns > 24
+    assert Prism.fit_text(Terminal("abc\ndef").get_characters(), sides=5) == Prism.fit(3, 2, sides=5)
+
+
+@pytest.mark.parametrize("shape", [Pyramid, Torus, Tetrahedron], ids=lambda shape: shape.__name__)
+def test_shapes_without_a_fit(shape: type[Shape]) -> None:
+    """Shapes whose grids crowd, or that have no surface, can't be fitted; nor can no text."""
+    with pytest.raises(NotImplementedError, match="can't be fitted"):
+        shape.fit(10, 2)
+    with pytest.raises(ValueError, match="no characters"):
+        Cylinder.fit_text([])
 
 
 def test_random_positions_are_on_the_surface(world: World) -> None:
