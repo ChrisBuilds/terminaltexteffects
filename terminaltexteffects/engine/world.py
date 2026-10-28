@@ -103,8 +103,9 @@ class _Spins:
     """The spins one tween group plays on a body, composed from their angles so far.
 
     The spins' part of the pose is what `rotate` calls for each spin's angle, in queue order, would add: parent-axis
-    turns on the left of the rotation, local ones on the right. Each frame changes the rotation by the change in
-    those two products, so whatever else turns the body stays in the pose the spins carry.
+    turns on the left of the rotation, local ones on the right. When one spin's angle changes, the rotation changes
+    by that turn as seen through the same-side spins queued after it, so whatever else turns the body stays in the
+    pose the spins carry.
     """
 
     def __init__(self, generation: int) -> None:
@@ -112,8 +113,6 @@ class _Spins:
         self.spins: list[tuple[g3.Vec3, bool]] = []
         self.angles: list[float] = []
         self.playing = 0
-        self.outer = g3.Rotation()
-        self.inner = g3.Rotation()
 
     def join(self, unit: g3.Vec3, *, local: bool) -> int:
         """Add a spin at angle zero and return its index."""
@@ -122,19 +121,24 @@ class _Spins:
         self.playing += 1
         return len(self.spins) - 1
 
-    def turn(self, rotation: g3.Rotation, index: int, angle: float) -> g3.Rotation:
-        """Return `rotation` after spin `index` moves to `angle` radians."""
+    def turn(self, rotation: g3.Rotation, index: int, angle: float, change: float) -> g3.Rotation:
+        """Return `rotation` after spin `index` turns by `change` radians, to `angle`."""
+        unit, local = self.spins[index]
         self.angles[index] = angle
-        outer = inner = g3.Rotation()
-        for (unit, local), spin_angle in zip(self.spins, self.angles):
-            turn = g3.Rotation.about_axis(unit, spin_angle)
-            if local:
-                inner = inner * turn
-            else:
-                outer = turn * outer
-        rotation = outer * self.outer.inverse() * rotation * self.inner.inverse() * inner
-        self.outer, self.inner = outer, inner
-        return rotation
+        turn = g3.Rotation.about_axis(unit, change)
+        later = [
+            g3.Rotation.about_axis(later_unit, later_angle)
+            for (later_unit, later_local), later_angle in zip(self.spins[index + 1 :], self.angles[index + 1 :])
+            if later_local == local
+        ]
+        if not later:
+            return rotation * turn if local else turn * rotation
+        after = g3.Rotation()
+        for later_turn in later:
+            after = after * later_turn if local else later_turn * after
+        if local:
+            return rotation * after.inverse() * turn * after
+        return after * turn * after.inverse() * rotation
 
 
 class SpatialNode:
@@ -583,9 +587,9 @@ class Body(SpatialNode, TweenQueue):
             state["spins"] = spins
             state["index"] = spins.join(unit, local=local)
 
-        def apply(_previous: float, current: float) -> None:
+        def apply(previous: float, current: float) -> None:
             spins: _Spins = state["spins"]
-            self.rotation = spins.turn(self._rotation, state["index"], total * current)
+            self.rotation = spins.turn(self._rotation, state["index"], total * current, total * (current - previous))
             state["left"] -= 1
             if not state["left"]:
                 spins.playing -= 1
