@@ -11,6 +11,7 @@ Examples:
     ./.venv/bin/python tools/render_demos.py beams matrix --formats gif,webp
     ./.venv/bin/python tools/render_demos.py --all --out docs/img/effects_demos
     ./.venv/bin/python tools/render_demos.py --guide --all --out docs/img/effectguide
+    ./.venv/bin/python tools/render_demos.py --stale --out docs/img/effects_demos
 
 """
 
@@ -415,6 +416,22 @@ def write_manifest(out_dir: Path, fingerprints: dict[str, str]) -> None:
     (out_dir / MANIFEST).write_text(json.dumps(dict(sorted(manifest.items())), indent=2) + "\n", encoding="utf-8")
 
 
+def current_fingerprint(demo: Demo, fps: int) -> str:
+    """Record `demo` as it is drawn and return its fingerprint."""
+    with tempfile.TemporaryDirectory(prefix="tte-demo-") as temp:
+        recording = Path(temp) / "demo.tterec"
+        record_for_render(demo, recording)
+        return fingerprint(recording, demo, fps)
+
+
+def stale_demos(available: dict[str, Demo], out_dir: Path, fps: int, jobs: int) -> list[str]:
+    """Return the demos whose fingerprint in `out_dir`'s manifest no longer matches what their code records."""
+    manifest = read_manifest(out_dir)
+    with ProcessPoolExecutor(max_workers=jobs) as executor:
+        futures = {name: executor.submit(current_fingerprint, demo, fps) for name, demo in available.items()}
+        return [name for name, future in futures.items() if future.result() != manifest.get(name)]
+
+
 def record_for_render(demo: Demo, path: Path) -> None:
     """Record the demo as it is drawn: with the closing text dropped when the demo doesn't end on it."""
     record(demo, path)
@@ -488,6 +505,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n\n")[0])
     parser.add_argument("demos", nargs="*", help="demo names to render (see --list)")
     parser.add_argument("--all", action="store_true", help="render every demo")
+    parser.add_argument(
+        "--stale",
+        action="store_true",
+        help="render the demos whose fingerprint in --out's manifest no longer matches their code",
+    )
     parser.add_argument("--guide", action="store_true", help="select Effect Guide demos instead of effect demos")
     parser.add_argument("--list", action="store_true", help="list demo names and exit")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="output directory (default: build/demos)")
@@ -523,13 +545,21 @@ def main() -> int:
     if args.list:
         print("\n".join(available))
         return 0
-    selected = list(available) if args.all else list(dict.fromkeys(args.demos))
-    if not selected:
-        parser.error("name at least one demo, or pass --all")
-    if unknown := [name for name in selected if name not in available]:
-        parser.error(f"unknown demo: {', '.join(unknown)}")
+    if args.stale and (args.all or args.demos):
+        parser.error("--stale picks the demos itself; don't name demos or pass --all with it")
     if args.jobs < 1:
         parser.error("--jobs must be at least 1")
+    if args.stale:
+        selected = stale_demos(available, args.out, args.fps, args.jobs)
+        if not selected:
+            print(f"No demos in {args.out} are out of date.")
+            return 0
+    else:
+        selected = list(available) if args.all else list(dict.fromkeys(args.demos))
+    if not selected:
+        parser.error("name at least one demo, or pass --all or --stale")
+    if unknown := [name for name in selected if name not in available]:
+        parser.error(f"unknown demo: {', '.join(unknown)}")
     if problem := export.format_problem(export.FORMATS[1]):
         parser.error(problem)
     from terminaltexteffects.utils._animation import Fonts, RenderError  # noqa: PLC0415 (needs Pillow)

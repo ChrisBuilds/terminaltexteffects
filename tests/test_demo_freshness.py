@@ -61,4 +61,7 @@ def test_demo_matches_its_code(name: str, demo: render_demos.Demo, out_dir: Path
     render_demos.record_for_render(demo, recording)
     expected = render_demos.read_manifest(out_dir).get(name)
     actual = render_demos.fingerprint(recording, demo, render_demos.DEFAULT_FPS)
-    assert actual == expected, f"{name} is out of date with its code. Re-render it: {rerender_command(name, out_dir)}"
+    assert actual == expected, (
+        f"{name} is out of date with its code. Label the PR `render-demos` to render it in CI, or on Linux run: "
+        f"{rerender_command(name, out_dir)}"
+    )
