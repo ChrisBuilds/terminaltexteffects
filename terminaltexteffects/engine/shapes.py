@@ -186,10 +186,15 @@ class Shape:
         surface = self.build_surface()
         return {} if surface is None else {name: tag for tag, name in enumerate(surface.faces)}
 
+    texture_centered: typing.ClassVar[bool] = False
+    """Whether `texture_cell` measures from the middle of the text, so a `Textured` look centers it."""
+
     def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:  # noqa: ARG002
         """Return where a drawn cell falls in a `Textured` look's text, as a fractional (column, row).
 
-        Row 0 is the top line of the text, and one unit is about one cell at the body's own size. Returns `None`
+        Row 0 is the top line of the text, and one unit is about one cell at the body's own size. A shape with
+        `texture_centered` measures from the middle of the text instead, with columns running right and rows down.
+        Returns `None`
         for faces without texture coordinates, which a `Textured` look shades instead. Shapes without a texture
         layout return `None` everywhere.
 
@@ -601,7 +606,7 @@ class Cylinder(Shape):
 
 @dataclass(frozen=True)
 class Sphere(Shape):
-    """A sphere. A `Textured` look wraps text over it from pole to pole.
+    """A sphere. A `Textured` look wraps text over it from pole to pole, centered on the front like `layout_text`.
 
     Attributes:
         radius (float): Radius in columns. Defaults to 10.
@@ -613,6 +618,7 @@ class Sphere(Shape):
     radius: float = 10.0
     segments: int = 24
     rings: int = 12
+    texture_centered: typing.ClassVar[bool] = True
 
     @classmethod
     def fit(cls, columns: float, rows: float, *, segments: int = 24, rings: int = 12) -> Sphere:
@@ -659,17 +665,27 @@ class Sphere(Shape):
         return SphereSurface(self.radius)
 
     def texture_cell(self, fragment: g3.Fragment) -> tuple[float, float] | None:
-        """Return the text cell for a fragment, starting at the left edge of the front, from pole to pole.
+        """Return the text cell for a fragment, measured from the middle of the front on the equator.
+
+        The text sits where `surface.layout_text` puts it: centered on the front, with the columns running round
+        the equator and the rows from pole to pole.
 
         Args:
             fragment (g3.Fragment): Rasterized surface fragment whose texture coordinates are sampled.
 
         Returns:
-            tuple[float, float] | None: Fractional text (column, row), or `None` without a texture layout.
+            tuple[float, float] | None: Fractional text (column, row) from the middle of the text, or `None` without a
+                texture layout.
 
         """
         around = 2 * math.pi * self.radius
-        return _face_cell(fragment, around, math.pi * self.radius, around / 4, around)
+        cell = _face_cell(fragment, around, math.pi * self.radius)
+        if cell is None:
+            return None
+        column, row = cell
+        # The mesh starts u at the middle of the front, so columns are already distances round from it. Wrapping them
+        # to either side puts the seam behind the sphere.
+        return (column + around / 2) % around - around / 2, row - math.pi * self.radius / 4
 
 
 @dataclass(frozen=True)

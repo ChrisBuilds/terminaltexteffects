@@ -94,7 +94,7 @@ class Solid:
 
 @dataclass(frozen=True)
 class Textured:
-    """Wrap text over the faces, colored by the light. Text repeats by default or clamps with `repeat=False`.
+    """Wrap text over the faces, colored by the light. Text repeats by default, or appears once with `repeat=False`.
 
     Each cell shows one symbol, so wide characters (such as CJK) are left blank.
 
@@ -108,7 +108,7 @@ class Textured:
         back_color (Color): Color of the far side and of faces without a texture layout.
         offset (tuple[float, float]): `(column_offset, row_offset)` in text cells, added before sampling. Positive
             values scroll left/up.
-        repeat (bool): Repeat the text, or clamp sampling to its edge cells when false.
+        repeat (bool): Repeat the text, or show it once and leave the rest of the surface blank when false.
         scale (float): Positive text size multiplier in both dimensions; 2 doubles each character's footprint.
 
     Raises:
@@ -472,14 +472,19 @@ class Painter:
         if grid is None:
             grid = texts[id(look)] = _text_grid(look.text if look.text is not None else self.input_text)
         lines, width = grid
+        # A centered shape measures from the middle of the text, so the text's own middle goes there.
+        middle_row, middle_column = (len(lines) / 2, width / 2) if shape and shape.texture_centered else (0.0, 0.0)
         # The nudge keeps cells that land exactly on a text column boundary from rounding down a column.
         row = math.floor(
-            place[1] * g3.TERMINAL_ROW_SCALE / self.world.camera.row_scale / look.scale + look.offset[1] + _TEXT_NUDGE
+            place[1] * g3.TERMINAL_ROW_SCALE / self.world.camera.row_scale / look.scale
+            + middle_row
+            + look.offset[1]
+            + _TEXT_NUDGE
         )
-        column = math.floor(place[0] / look.scale + look.offset[0] + _TEXT_NUDGE)
+        column = math.floor(place[0] / look.scale + middle_column + look.offset[0] + _TEXT_NUDGE)
         if look.repeat:
             row, column = row % len(lines), column % width
-        else:
-            row, column = min(max(row, 0), len(lines) - 1), min(max(column, 0), width - 1)
+        elif not (0 <= row < len(lines) and 0 <= column < width):
+            return " "
         line = lines[row]
         return line[column] if column < len(line) else " "
