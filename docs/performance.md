@@ -140,6 +140,12 @@ flamegraph, heatmap, Firefox Profiler JSON (`profile.gecko.json`, for <https://p
 and never fails on a slowdown. Its timings come from a shared runner under the profiler, so read proportions, not
 absolute times, and confirm any change with the benchmark harness.
 
+Python 3.15's profiler ends a `--binary` recording when a sampled frame name contains lone surrogates
+([python/cpython#160601](https://github.com/python/cpython/issues/160601)). The workflow records through
+`tools/perf/sample_profile.py`, which takes the same arguments as `python3.15 -m profiling.sampling` but drops those
+samples instead; the run then shows a "Profiler dropped samples" warning with the count, and the job log lists the
+first names it could not encode.
+
 ## Reporting a Change
 
 Put the measurements for a performance change in its PR description, not on this page. A useful report includes:

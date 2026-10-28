@@ -292,13 +292,22 @@ jobs:
           mkdir -p "$isolated"
           read -ra profiler_flags <<< "$PROFILER_FLAGS"
           record() {
-            # record <output.bin> <preset> <lifecycle> <benchmark.json>, paths relative to the checkout
+            # record <output.bin> <preset> <lifecycle> <benchmark.json>, paths relative to the checkout.
+            # The wrapper drops samples whose frame names the binary writer can't encode, which would
+            # otherwise end the recording (python/cpython#160601).
+            local log="$RUNNER_TEMP/profiler-stderr.txt" status=0
             (cd "$isolated" &&
-              "$venv/bin/python" -m profiling.sampling run "${profiler_flags[@]}" --binary -o "$root/$1" \
-                "$root/tools/perf/benchmark_effects.py" \
+              "$venv/bin/python" "$root/tools/perf/sample_profile.py" run "${profiler_flags[@]}" \
+                --binary -o "$root/$1" "$root/tools/perf/benchmark_effects.py" \
                 --effect "$EFFECT" --input-preset "$2" --lifecycle "$3" \
                 --effect-args="$EFFECT_ARGS" --terminal-args="$TERMINAL_ARGS" \
-                --samples "$SAMPLES" --warmups 0 --seed "$SEED" --json-out "$root/$4" > /dev/null)
+                --samples "$SAMPLES" --warmups 0 --seed "$SEED" --json-out "$root/$4" > /dev/null) \
+              2> "$log" || status=$?
+            cat "$log" >&2
+            if dropped=$(grep -m1 '^sample_profile: dropped' "$log"); then
+              echo "::warning title=Profiler dropped samples::$1: ${dropped#sample_profile: } (python/cpython#160601)."
+            fi
+            return "$status"
           }
           replay() {
             .venv/bin/python -m profiling.sampling replay "$@" > /dev/null
