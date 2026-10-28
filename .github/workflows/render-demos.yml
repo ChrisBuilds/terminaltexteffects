@@ -94,7 +94,7 @@ jobs:
     # This job runs no code from the PR: it only unpacks the render job's demo files and pushes them.
     permissions:
       contents: write # Push the rendered demos to the PR branch.
-      actions: write # Start CI for the new commit; pushes made with this token start no workflows.
+      actions: write # Approve the CI run that the bot's push leaves waiting for approval.
       pull-requests: write # Remove the label so it can be applied again.
     env:
       GH_TOKEN: ${{ github.token }}
@@ -111,6 +111,7 @@ jobs:
           name: rendered-demos
           path: ${{ runner.temp }}
       - name: Commit and push rendered demos
+        id: push
         if: needs.render.outputs.changed == 'true'
         run: |
           # Only files directly in the demo folders are taken from the archive.
@@ -124,8 +125,37 @@ jobs:
           git commit --quiet --message 'docs: render out-of-date demos on Linux'
           # Fails rather than overwrites if the branch moved since the label was applied.
           git push origin "HEAD:refs/heads/$HEAD_REF"
-          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$HEAD_REF"
-          echo "Committed $(git rev-parse --short HEAD) to $HEAD_REF and started CI." >> "$GITHUB_STEP_SUMMARY"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Committed $(git rev-parse --short HEAD) to $HEAD_REF." >> "$GITHUB_STEP_SUMMARY"
+      - name: Approve CI for the new commit
+        if: steps.push.outputs.sha
+        env:
+          SHA: ${{ steps.push.outputs.sha }}
+        run: |
+          # The bot's push starts the PR's own `pull_request` CI run, which counts toward `CI passed`, but GitHub
+          # holds it for approval. A dispatched run wouldn't help: GitHub doesn't link it to the PR.
+          run_id=''
+          for _ in {1..24}; do
+            run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&event=pull_request" \
+              --jq '.workflow_runs[] | select(.path == ".github/workflows/ci.yml") | .id' | head -n 1)
+            [[ -n "$run_id" ]] && break
+            sleep 5
+          done
+          if [[ -z "$run_id" ]]; then
+            echo '::warning::No CI run appeared for the new commit; push to the branch to start one.'
+            echo 'No CI run appeared for the new commit; push to the branch to start one.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run_id"
+          conclusion=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id" --jq '.conclusion // ""')
+          if [[ "$conclusion" != 'action_required' ]]; then
+            echo "[CI]($run_url) started for the new commit." >> "$GITHUB_STEP_SUMMARY"
+          elif gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/approve" > /dev/null; then
+            echo "Approved [CI]($run_url) for the new commit." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::CI for the new commit needs a maintainer's approval: $run_url"
+            echo "[CI]($run_url) for the new commit needs a maintainer's approval." >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Remove the label
         if: always()
         run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --remove-label render-demos

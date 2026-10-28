@@ -133,9 +133,11 @@ change what a demo shows.
 
 Floating-point results differ slightly between platforms, so a demo rendered on macOS or Windows can fail the check.
 To render out-of-date demos on Linux in CI, add the `render-demos` label to the PR. The `Render demos` workflow
-renders every out-of-date demo. On a branch in this repository, it commits the new WebPs and `demos.json`, starts CI
-for that commit, and removes the label. On a fork, it uploads a `rendered-demos` artifact for you to extract at the
-repository root and commit. On Linux you can also render them yourself:
+renders every out-of-date demo. On a branch in this repository, it commits the new WebPs and `demos.json`, approves
+the PR's CI run for that commit, which GitHub holds for approval after a bot's push, and removes the label. If it
+can't approve the run, its summary links to the run for a maintainer to approve. On a fork, it uploads a
+`rendered-demos` artifact for you to extract at the repository root and commit. On Linux you can also render them
+yourself:
 `./.venv/bin/python tools/render_demos.py --stale --out docs/img/effects_demos`, plus `--guide` with
 `--out docs/img/effectguide` for Effect Guide demos. Commit the new WebPs and `demos.json`.
 
