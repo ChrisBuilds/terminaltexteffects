@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import sys
 from types import SimpleNamespace
 
@@ -29,7 +30,7 @@ def test_patched_collector_drops_unencodable_samples(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A sample the writer cannot encode is dropped, counted, and its new names are reported once."""
-    from profiling.sampling import binary_collector  # noqa: PLC0415 (Python 3.15+ only)
+    binary_collector = importlib.import_module("profiling.sampling.binary_collector")
 
     written: list[object] = []
 
@@ -44,7 +45,7 @@ def test_patched_collector_drops_unencodable_samples(
     bad = _sample(("effect.py", "spin\udb31"))
 
     for stack_frames in (good, bad, bad, good):
-        binary_collector.BinaryCollector.collect(object(), stack_frames)  # type: ignore[arg-type]
+        binary_collector.BinaryCollector.collect(object(), stack_frames)
 
     assert written == [good, good]
     assert dropped == [2]

@@ -13,6 +13,7 @@ once the Python 3.15 used for profiling includes the upstream fix.
 
 from __future__ import annotations
 
+import importlib
 import re
 import sys
 from typing import Any
@@ -36,7 +37,8 @@ def _unencodable_names(stack_frames: Any) -> list[str]:
 
 def _install() -> list[int]:
     """Patch `BinaryCollector.collect` to drop unencodable samples; return the dropped-sample counter."""
-    from profiling.sampling import binary_collector  # noqa: PLC0415 (Python 3.15+ only)
+    # Imported by name: `profiling.sampling` is new in Python 3.15.
+    binary_collector = importlib.import_module("profiling.sampling.binary_collector")
 
     dropped = [0]
     reported: set[str] = set()
@@ -59,7 +61,7 @@ def _install() -> list[int]:
 def main() -> int:
     """Run the profiler CLI with the patched collector."""
     dropped = _install()
-    from profiling.sampling import cli  # noqa: PLC0415 (Python 3.15+ only)
+    cli = importlib.import_module("profiling.sampling.cli")
 
     sys.argv[0] = "python -m profiling.sampling"
     try:
