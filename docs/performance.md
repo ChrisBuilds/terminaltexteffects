@@ -140,10 +140,11 @@ flamegraph, heatmap, Firefox Profiler JSON (`profile.gecko.json`, for <https://p
 and never fails on a slowdown. Its timings come from a shared runner under the profiler, so read proportions, not
 absolute times, and confirm any change with the benchmark harness.
 
-Python 3.15's profiler can crash in `--binary` mode when a sample reads a frame name while it is changing
-([python/cpython#160601](https://github.com/python/cpython/issues/160601)). The workflow retries such a recording once
-and marks the run with a "Profiler crashed" annotation; if the second attempt crashes too, the job fails with that
-annotation, and re-running the workflow is the fix.
+Python 3.15's profiler ends a `--binary` recording when a sampled frame name contains lone surrogates
+([python/cpython#160601](https://github.com/python/cpython/issues/160601)). The workflow records through
+`tools/perf/sample_profile.py`, which takes the same arguments as `python3.15 -m profiling.sampling` but drops those
+samples instead; the run then shows a "Profiler dropped samples" warning with the count, and the job log lists the
+first names it could not encode.
 
 ## Reporting a Change
 
