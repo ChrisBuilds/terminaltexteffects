@@ -140,6 +140,11 @@ flamegraph, heatmap, Firefox Profiler JSON (`profile.gecko.json`, for <https://p
 and never fails on a slowdown. Its timings come from a shared runner under the profiler, so read proportions, not
 absolute times, and confirm any change with the benchmark harness.
 
+Python 3.15's profiler can crash in `--binary` mode when a sample reads a frame name while it is changing
+([python/cpython#160601](https://github.com/python/cpython/issues/160601)). The workflow retries such a recording once
+and marks the run with a "Profiler crashed" annotation; if the second attempt crashes too, the job fails with that
+annotation, and re-running the workflow is the fix.
+
 ## Reporting a Change
 
 Put the measurements for a performance change in its PR description, not on this page. A useful report includes:
