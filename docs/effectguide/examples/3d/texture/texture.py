@@ -7,10 +7,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import easing
+from terminaltexteffects import Textured, easing
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.drawing import Textured
 from terminaltexteffects.engine.shapes import Cube, Sphere
 from terminaltexteffects.utils import argutils
 

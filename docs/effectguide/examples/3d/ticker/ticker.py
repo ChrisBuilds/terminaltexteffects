@@ -7,12 +7,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Gradient
+from terminaltexteffects import Color, Gradient, Textured, rotation_about
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.drawing import Textured
 from terminaltexteffects.engine.shapes import Cylinder
-from terminaltexteffects.engine.tweens import rotation_about
 from terminaltexteffects.utils import argutils
 
 

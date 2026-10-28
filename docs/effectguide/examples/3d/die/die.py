@@ -7,14 +7,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Gradient, easing
+from terminaltexteffects import Color, Gradient, Textured, Vec3, easing, rotation_about
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.drawing import Textured
 from terminaltexteffects.engine.shapes import Cube
-from terminaltexteffects.engine.tweens import rotation_about
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.geometry3d import Vec3
 
 SIZE = 20
 """The die's width in columns. A face is `SIZE` columns wide and `SIZE // 2` rows tall."""

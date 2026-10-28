@@ -72,7 +72,8 @@ transforms fixed and moves the viewpoint around the scene.
 [`geometry3d.transform_points`](../../engine/utils/geometry3d.md) applies a transform to many points at once:
 
 ```python
-from terminaltexteffects.utils.geometry3d import Rotation, Vec3, transform_points
+from terminaltexteffects import Rotation, Vec3
+from terminaltexteffects.utils.geometry3d import transform_points
 
 world = transform_points(points, Rotation.about_y(angle), scale=2.0, position=Vec3(10, 0, 0))
 ```

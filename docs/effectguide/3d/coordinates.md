@@ -106,7 +106,7 @@ Positions and displacements accept a `Vec3` or an `(x, y, z)` three-tuple. On a 
 `(column, row, height)`; everywhere else they are right, up and toward the default viewer in the parent's axes.
 
 ```python
-from terminaltexteffects.utils.geometry3d import Vec3
+from terminaltexteffects import Vec3
 
 source = self.world.body(Cube(10), at=(10, 0, -20))
 copy = self.world.body(Cube(10), at=source.position)

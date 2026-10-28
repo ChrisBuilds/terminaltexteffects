@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, ColorPair, Gradient
+from terminaltexteffects import Color, ColorPair, Gradient, Solid
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.drawing import Solid
 from terminaltexteffects.engine.shapes import Cube
 from terminaltexteffects.utils import argutils, easing
 from terminaltexteffects.utils.geometry import Coord

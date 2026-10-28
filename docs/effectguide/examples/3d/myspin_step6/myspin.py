@@ -11,7 +11,7 @@ from __future__ import annotations
 import typing
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, ColorPair, EffectCharacter, Gradient, Scene, easing
+from terminaltexteffects import Body, Color, ColorPair, EffectCharacter, Gradient, Scene, Vec3, easing
 from terminaltexteffects.engine.base_config import (
     BaseConfig,
     FinalGradientDirectionArg,
@@ -19,9 +19,7 @@ from terminaltexteffects.engine.base_config import (
     FinalGradientStopsArg,
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.engine.world import Body
 from terminaltexteffects.utils import argutils
-from terminaltexteffects.utils.geometry3d import Vec3
 
 
 def get_effect_resources() -> tuple[str, type[BaseEffect], type[BaseConfig]]:
