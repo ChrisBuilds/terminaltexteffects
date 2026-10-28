@@ -29,13 +29,20 @@ def test_patched_collector_drops_unencodable_samples(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """A sample the writer cannot encode is dropped, counted, and its new names are reported once."""
+    """A sample the writer cannot encode never reaches it; it is counted, and its new names are reported once."""
     binary_collector = importlib.import_module("profiling.sampling.binary_collector")
 
     written: list[object] = []
+    broken = False
 
     def collect(_self: object, stack_frames: list[SimpleNamespace], _timestamp_us: int | None = None) -> None:
+        # Like CPython's writer, refuse every sample after a failed one.
+        nonlocal broken
+        if broken:
+            msg = "Writer is broken"
+            raise ValueError(msg)
         if sample_profile._unencodable_names(stack_frames):
+            broken = True
             "\udb31".encode()
         written.append(stack_frames)
 
