@@ -58,7 +58,8 @@ sphere = self.world.body(Sphere(13, segments=32, rings=16), at=(20, 0, 0)).draw(
 - `Textured()` wraps the effect's input text. `Textured("...")` wraps any string, with lines separated by `\n`.
 - A grid shows the mapping clearly: watch the squares compress toward the sphere's edges, where the surface turns away.
 - Each face of a `Box` or `Cube` starts the text at its own top left corner. `Prism` and `Pyramid` run the text
-  around their sides. `Cylinder` and `Sphere` wrap it all the way around, starting at the front.
+  around their sides. `Cylinder` wraps it all the way around, starting at the front. `Sphere` wraps it round and
+  from pole to pole, centered on the front like `surface.layout_text`.
 - Faces without texture coordinates, such as prism and cylinder caps, are drawn in `back_color`.
 - `back="dim"` shows the far side through the spaces in the text (see [Depth](depth.md)).
 - Each cell shows one character, so wide characters such as CJK can't be split across cells and are left blank.
@@ -85,10 +86,11 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
   away, the letters still read upright, in reverse order.
 - A textured surface is lit and hides what's behind it, but it can't hand its letters back: they belong to the world.
 - Attach text that has to land somewhere. Texture text that decorates a shape.
-- `surface.layout_text(characters)` and `Textured(text)` both put text around a cylinder or sphere, but differently.
-  `layout_text` attaches each of your characters to one cell of the surface's grid, and the characters ride the
-  surface as wholes. `Textured` resamples the text into the drawn cells, so the letters stretch, repeat and shade with
-  the surface. See [Laying out text](surfaces.md#laying-out-text).
+- `surface.layout_text(characters)` and `Textured(text)` both put text around a cylinder or sphere. On a sphere they
+  agree on where the text goes: centered on the front, with the same rows. `layout_text` attaches each of your
+  characters to one cell of the surface's grid, and the characters ride the surface as wholes. `Textured` resamples
+  the text into the drawn cells, so the letters stretch, repeat and shade with the surface, and a few land a column
+  off. See [Laying out text](surfaces.md#laying-out-text).
 
 ## Under the hood
 
@@ -101,7 +103,8 @@ column, row = body.shape.texture_cell(fragment)  # For example (12.4, 3.9): colu
 ```
 
 A custom shape can override `texture_cell` to lay its text out differently. Return `None` for faces that shouldn't be
-textured.
+textured. A shape that sets `texture_centered = True`, as `Sphere` does, returns the column and row from the middle of
+the text instead of its top left corner, and the look centers the text there.
 
 ## At cell resolution
 
@@ -117,7 +120,7 @@ textured.
 
 `Textured(offset=(column, row))` adds an offset in text cells before sampling. Positive columns
 scroll left; positive rows scroll up. `repeat=True` wraps the text in both directions.
-`repeat=False` clamps samples outside the text to the nearest edge cell. `scale=2` doubles each
+`repeat=False` shows the text once and leaves the cells outside it blank. `scale=2` doubles each
 character's footprint in both dimensions; scale must be finite and positive. Row density follows
 `world.camera.row_scale`, including when it differs from the usual tall-cell ratio.
 

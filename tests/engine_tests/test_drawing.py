@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import typing
 from dataclasses import replace
 
@@ -302,12 +303,13 @@ def test_textured_row_density_follows_camera(row_scale: float) -> None:
         (Textured("ABCD\nEFGH", offset=(1, 1)), "G"),
         (Textured("ABCD\nEFGH", offset=(-2, -1)), "H"),
         (Textured("ABCD\nEFGH", scale=2), "A"),
-        (Textured("ABCD\nEFGH", offset=(100, 100), repeat=False), "H"),
-        (Textured("ABCD\nEFGH", offset=(-100, -100), repeat=False), "A"),
+        (Textured("ABCD\nEFGH", offset=(100, 100), repeat=False), " "),
+        (Textured("ABCD\nEFGH", offset=(-100, -100), repeat=False), " "),
+        (Textured("ABCD\nEFGH", offset=(1, 1), repeat=False), "G"),
     ],
 )
 def test_texture_controls_sample_text_without_moving_geometry(look: Textured, expected: str) -> None:
-    """Offset, scale and clamping transform text sampling while leaving the body pose alone."""
+    """Offset, scale and repeat transform text sampling while leaving the body pose alone."""
     world = make_world()
     body = world.body(Cube(8)).draw(look)
     fragment = g3.Fragment(1, g3.Z_AXIS, True, 0, 0, (0.125, 1.0))  # noqa: FBT003
@@ -392,12 +394,52 @@ def test_shapes_map_their_faces_into_the_text() -> None:
     for shape in (Prism(), Pyramid(), Cylinder(), Sphere()):
         place = shape.texture_cell(fragment)
         assert place is not None
-        assert place[1] == 0.0
+        assert place[1] == (-shape.radius * math.pi / 4 if isinstance(shape, Sphere) else 0.0)
         assert shape.texture_cell(no_uv) is None
     assert Torus().texture_cell(fragment) is None
     assert Tetrahedron().texture_cell(fragment) is None
     bottom = Cylinder(10, 8).texture_cell(fragment._replace(uv=(0.0, 0.0)))
     assert bottom == pytest.approx((2 * 3.141592653589793 * 10 / 4, 8 / g3.TERMINAL_ROW_SCALE))
+
+
+def test_a_sphere_measures_its_texture_from_the_middle_of_the_front() -> None:
+    """A sphere's texture cell is zero at the middle of the front on the equator, and wraps behind the sphere."""
+    sphere = Sphere(10)
+    around = 2 * math.pi * 10
+    middle = g3.Fragment(1.0, g3.Z_AXIS, True, 0, 0, (0.0, 0.5))  # noqa: FBT003
+    assert sphere.texture_cell(middle) == pytest.approx((0.0, 0.0))
+    assert sphere.texture_cell(middle._replace(uv=(0.25, 0.5))) == pytest.approx((around / 4, 0.0))
+    assert sphere.texture_cell(middle._replace(uv=(0.75, 0.5))) == pytest.approx((-around / 4, 0.0))
+
+
+def test_textured_sphere_centers_the_text_where_layout_text_does() -> None:
+    """Text on a sphere sits where `surface.layout_text` puts it: the same rows, and nearly all the same columns."""
+    text = "\n".join("".join(chr(0x1E00 + row * 41 + column) for column in range(41)) for row in range(5))
+    laid_out = make_world(text, width=121, height=61)
+    characters = terminal_of(laid_out).get_characters()
+    sphere = Sphere.fit_text(characters)
+    laid_out.body(sphere).surface.layout_text(characters)
+    for character in characters:
+        terminal_of(laid_out).set_character_visibility(character, is_visible=True)
+    step(laid_out)
+    textured = make_world(text, width=121, height=61)
+    body = textured.body(Sphere(sphere.radius)).draw(Textured())
+    step(textured)
+
+    def position(symbol_: str) -> tuple[int, int]:
+        row, column = divmod(ord(symbol_) - 0x1E00, 41)
+        return column, row
+
+    placed = {
+        character.motion.current_coord: position(character.input_symbol)
+        for character in characters
+        if character.view.facing_amount > 0.5
+    }
+    sampled = {coord: position(symbol(cell)) for coord, cell in body.surface_characters.items()}
+    shared = placed.keys() & sampled.keys()
+    assert len(shared) > 50
+    assert all(placed[coord][1] == sampled[coord][1] for coord in shared)
+    assert sum(placed[coord] == sampled[coord] for coord in shared) > 0.8 * len(shared)
 
 
 def test_wireframe_draws_edges_with_hidden_edges_dimmed_or_left_out() -> None:
