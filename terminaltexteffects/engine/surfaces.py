@@ -1565,6 +1565,10 @@ class TorusSurface(Surface):
         """The position at the front of the ring, on the outside equator."""
         return g3.Vec3(self.columns / 8, 0.0, 0.0)
 
+    def _middle_row(self) -> float:
+        # Rows wrap around the tube from the outside equator: rows / 2 would be the inside of the ring.
+        return self.center.y
+
     def _normal(self, position: XYZ) -> g3.Vec3:
         around = _FRONT + 2 * math.pi * position[0] / self.columns
         tube = 2 * math.pi * position[1] / self.rows

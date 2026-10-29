@@ -363,6 +363,38 @@ def test_whole_surface_layout(world: World, terminal: Terminal) -> None:
     assert plane.surface.layout_text(characters) == []
 
 
+def test_torus_layout_centers_text_on_the_outside() -> None:
+    """Text on a torus is centered on `center`, on the outside equator at the front, not around the inside."""
+    terminal = Terminal("HELLO")
+    torus = terminal.world.body(Torus(10, 4))
+    surface = surface_of(torus)
+    characters = terminal.get_characters()
+    assert surface.layout_text(characters) == []
+    for character in characters:
+        assert character.parent is torus
+        assert math.isclose(character.position.y, surface.center.y, abs_tol=1e-9)
+        p = character.world_position
+        assert math.isclose(math.hypot(p.x, p.z), 14, abs_tol=1e-6)
+    middle = next(c for c in characters if c.input_symbol == "L" and c.input_coord.column == 3)
+    assert close(middle.position, surface.center)
+    assert middle.world_position.z > 0
+
+
+def test_torus_layout_wraps_taller_text_over_the_outside_equator() -> None:
+    """Rows of taller text sit either side of the outside equator, on the outside of the ring."""
+    terminal = Terminal("ABC\nDEF\nGHI")
+    torus = terminal.world.body(Torus(10, 4))
+    surface = surface_of(torus)
+    characters = terminal.get_characters()
+    assert surface.layout_text(characters) == []
+    for character in characters:
+        p = character.world_position
+        assert math.hypot(p.x, p.z) > 10
+    top = next(c for c in characters if c.input_symbol == "B")
+    bottom = next(c for c in characters if c.input_symbol == "H")
+    assert top.world_position.y > 0 > bottom.world_position.y
+
+
 @pytest.mark.parametrize("shape", [Box, Cube, Prism, Cylinder, Sphere, Plane], ids=lambda shape: shape.__name__)
 @pytest.mark.parametrize(("columns", "rows"), [(1, 1), (7, 3), (24, 9), (63, 4), (80, 25)])
 def test_fitted_shapes_hold_every_character(shape: type[Shape], columns: int, rows: int) -> None:
