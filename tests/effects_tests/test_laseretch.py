@@ -10,6 +10,7 @@ import pytest
 from terminaltexteffects.effects import effect_laseretch
 from terminaltexteffects.engine.terminal import TerminalConfig
 from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils.geometry import Coord
 from terminaltexteffects.utils.graphics import Color, ColorPair
 from tests.effects_tests.assertions import assert_final_gradient
 
@@ -399,3 +400,39 @@ def test_laseretch_always_with_preexisting_colors_uses_input_colors() -> None:
     assert final_frame.colors == ColorPair(fg=Color(196), bg=Color(106))
     assert final_frame._fg_color_code == Color(196).rgb_color
     assert final_frame._bg_color_code == Color(106).rgb_color
+
+
+@pytest.mark.parametrize("target", [Coord(1, 1), Coord(40, 3), Coord(80, 8)])
+def test_laseretch_beam_runs_from_fixed_mount_to_target(target: Coord) -> None:
+    """The beam follows the world segment from a mount above the canvas, in front of the text, down to the target."""
+    effect = effect_laseretch.LaserEtch("x" * 80 + "\n" + "x" * 80)
+    effect.terminal_config = _make_terminal_config("ignore")
+    effect.terminal_config.canvas_width = 80
+    effect.terminal_config.canvas_height = 8
+    iterator = cast("effect_laseretch.LaserEtchIterator", iter(effect))
+    laser = iterator.laser
+    camera = iterator.terminal.world.camera
+    mount = laser.mount
+    target_point = iterator.terminal.world.text_plane.to_world((target.column, target.row, 0))
+    assert 0 < mount.z < camera.position.z
+    projected_mount = camera.project(mount)
+    assert projected_mount is not None
+    assert projected_mount.row > iterator.terminal.canvas.top
+
+    laser.reposition(target)
+
+    assert laser.lit_chars
+    assert laser.lit_chars[0].motion.current_coord == target
+    assert all(char.is_visible for char in laser.lit_chars)
+    assert not any(char.is_visible for char in laser.beam_chars[len(laser.lit_chars) :])
+    segment = mount - target_point
+    for char in laser.lit_chars:
+        # Each point is snapped to its cell's viewing ray, so it is within about a cell of the segment.
+        offset = char.world_position - target_point
+        assert offset.cross(segment).length() / segment.length() < 1.5
+        assert -1.5 < offset.dot(segment) / segment.length() < segment.length() + 1.5
+    rows = [char.motion.current_coord.row for char in laser.lit_chars]
+    assert rows == sorted(rows)
+    assert rows[-1] == iterator.terminal.canvas.top
+    for _ in iterator:
+        pass

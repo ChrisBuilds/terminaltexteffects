@@ -10,7 +10,6 @@ Classes:
 from __future__ import annotations
 
 import random
-from collections import deque
 from dataclasses import dataclass
 from typing import Literal
 
@@ -23,7 +22,8 @@ from terminaltexteffects.engine.base_config import (
     FinalGradientStopsArg,
 )
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
-from terminaltexteffects.utils import argutils
+from terminaltexteffects.utils import argutils, geometry3d
+from terminaltexteffects.utils.geometry import rasterize_line
 from terminaltexteffects.utils.spanningtree.algo.recursivebacktracker import RecursiveBacktracker
 
 
@@ -213,20 +213,24 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
     class Laser:
         """A class to represent a laser beam effect in a terminal.
 
-        The Laser class is responsible for creating and managing a laser beam effect
-        in a terminal. It handles the initialization of the laser beam, the creation
-        of spark effects, repositioning of the laser beam, emitting sparks, and
-        disabling the laser beam.
+        The laser is mounted at a fixed point in the 3D world, above the top of the canvas and halfway between the
+        camera and the text plane. Its beam is a straight segment from that point down to the character being
+        etched on the text plane, so the beam swings around the mount as the etch moves across the text.
 
         Methods:
             reposition(target: Coord) -> None:
                 Repositions the laser beam to the target coordinate.
+            shimmer() -> None:
+                Advances the beam's color cycle by one frame.
             emit(spark_count: int = 1) -> None:
                 Emits a specified number of sparks from the laser beam.
             disable() -> None:
                 Disables the laser beam by setting the visibility of the beam characters to False.
 
         """
+
+        MOUNT_ROWS_ABOVE_CANVAS = 4
+        "int: How many rows above the canvas top the mount appears to sit, as seen by the camera."
 
         def __init__(
             self,
@@ -246,28 +250,31 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
             self.config = config
             self.active_chars = active_chars
             self.position: tte.Coord = tte.Coord(0, 0)
-            row = 0
-            col = 0
-            self.beam_chars: list[tte.EffectCharacter] = []
-            laser_gradient = deque(tte.Gradient(*config.laser_gradient_stops, steps=6, loop=True))
+            self.world = terminal.world
+            canvas = terminal.canvas
+            camera = self.world.camera
+            # Halfway between the eye and the text plane, on the ray through a cell above the canvas.
+            self.mount = camera.cell_to_world(
+                tte.Coord(canvas.center_column, canvas.top + self.MOUNT_ROWS_ABOVE_CANVAS),
+                z=camera.position.z / 2,
+            )
+            self.laser_gradient = tuple(tte.Gradient(*config.laser_gradient_stops, steps=6, loop=True))
             self.spark_gradient = tte.Gradient(
                 *config.spark_gradient_stops,
                 steps=(3, 8),
             )
             self.sparks_pool = self._make_sparks_pool()
-            while row <= self.terminal.canvas.top:
-                symbol = "*" if not self.beam_chars else "/"
-                char = self.terminal.add_character(symbol, tte.Coord(col, row))
+            # A beam is at most one cell per step along its longer axis on screen.
+            beam_length = max(canvas.width, canvas.height + self.MOUNT_ROWS_ABOVE_CANVAS) + 1
+            self.beam_chars: list[tte.EffectCharacter] = []
+            for _ in range(beam_length):
+                char = self.terminal.add_character(" ", canvas.center)
                 char.layer = 2
-                self.terminal.set_character_visibility(char, is_visible=True)
-                row += 1
-                col += 1
+                char.attach(self.world.root, at=self.mount)
                 self.beam_chars.append(char)
-                laser_scn = char.animation.new_scene(scene_id="laser", is_looping=True)
-                for color in laser_gradient:
-                    laser_scn.add_frame(char.input_symbol, 3, colors=tte.ColorPair(fg=color))
-                laser_gradient.rotate(-1)
-                char.animation.activate_scene(laser_scn)
+            self.lit_chars: list[tte.EffectCharacter] = []
+            self.beam_symbol = "|"
+            self.frame = 0
 
         def _make_sparks_pool(self) -> tte.ParticlePool:
             def initialize_sparks(spark_char: tte.EffectCharacter) -> None:
@@ -294,21 +301,65 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
         def reposition(self, target: tte.Coord) -> None:
             """Reposition the laser beam to the target coordinate.
 
-            Set the coordinate of the laser beam characters based on the target coordinate to
-            create the appearance of a laser beam.
+            Lay the beam characters along the segment from the mount to the target on the text plane. Each one is
+            placed in the world on the viewing ray of one cell of the segment's projection, at the depth the
+            segment has there, so the beam reads as an unbroken line in front of the text.
 
             Args:
                 target (Coord): The target coordinate for the laser beam.
 
             """
             self.position = target
-            row = target.row
-            col = target.column
-            for char in self.beam_chars:
-                char.motion.set_coordinate(tte.Coord(col, row))
-                row += 1
-                col += 1
+            camera = self.world.camera
+            canvas = self.terminal.canvas
+            tip = camera.project(self.world.text_plane.to_world((target.column, target.row, 0)))
+            mount = camera.project(self.mount)
+            if tip is None or mount is None:
+                return
+            self.beam_symbol = geometry3d.line_symbol(
+                mount.column - tip.column,
+                mount.row - tip.row,
+                camera.row_scale,
+            )
+            cells = rasterize_line(tip.coord, mount.coord)
+            steps = max(len(cells) - 1, 1)
+            lit_chars: list[tte.EffectCharacter] = []
+            for step, cell in enumerate(cells):
+                if not canvas.coord_is_in_canvas(cell):
+                    continue
+                t = step / steps
+                # Under perspective, reciprocal depth is what changes linearly along the line on screen.
+                depth = (
+                    tip.depth + (mount.depth - tip.depth) * t
+                    if camera.orthographic
+                    else 1 / ((1 - t) / tip.depth + t / mount.depth)
+                )
+                ray_origin, ray_direction = camera.ray(cell)
+                char = self.beam_chars[len(lit_chars)]
+                char.motion.position = ray_origin + ray_direction * depth
+                lit_chars.append(char)
+            for char in self.lit_chars[len(lit_chars) :]:
+                self.terminal.set_character_visibility(char, is_visible=False)
+            for char in lit_chars[len(self.lit_chars) :]:
+                self.terminal.set_character_visibility(char, is_visible=True)
+            self.lit_chars = lit_chars
+            self._paint_beam()
             self.emit_sparks()
+
+        def shimmer(self) -> None:
+            """Advance the beam's color cycle by one frame, so colors flow along the beam."""
+            self.frame += 1
+            self._paint_beam()
+
+        def _paint_beam(self) -> None:
+            """Draw the lit beam characters, with the tip at the target and the beam symbol following its slope."""
+            gradient = self.laser_gradient
+            offset = self.frame // 3
+            for index, char in enumerate(self.lit_chars):
+                char.animation.set_appearance_if_changed(
+                    "*" if index == 0 else self.beam_symbol,
+                    tte.ColorPair(fg=gradient[(index + offset) % len(gradient)]),
+                )
 
         def emit_sparks(self, spark_count: int = 1) -> None:
             """Emit sparks from the laser beam.
@@ -339,9 +390,9 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
 
         def disable(self) -> None:
             """Disable the laser beam by setting the visibility of the beam characters to False."""
-            for char in self.beam_chars:
-                char.animation.deactivate_scene()
+            for char in self.lit_chars:
                 self.terminal.set_character_visibility(char, is_visible=False)
+            self.lit_chars = []
 
     def __init__(self, effect: LaserEtch) -> None:
         """Initialize the effect iterator."""
@@ -351,7 +402,6 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
         self.build()
         self.char_delay = 0
         self.laser = LaserEtchIterator.Laser(self.terminal, self.config, self.active_characters)
-        self.active_characters.update(self.laser.beam_chars)
         self.color_shifted_chars: set[tte.EffectCharacter] = set()
 
     @staticmethod
@@ -456,7 +506,7 @@ class LaserEtchIterator(BaseEffectIterator[LaserEtchConfig]):
             else:
                 self.char_delay -= 1
             if self.pending_chars:
-                self.active_characters.update(self.laser.beam_chars)
+                self.laser.shimmer()
             else:
                 self.laser.disable()
             self.update()
