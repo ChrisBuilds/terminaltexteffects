@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from terminaltexteffects.engine.animation import Scene
 from terminaltexteffects.engine.shapes import Cube, Sphere
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.engine.tweens import rotation_about
@@ -15,6 +16,7 @@ from terminaltexteffects.utils import easing
 from terminaltexteffects.utils import geometry3d as g3
 
 if TYPE_CHECKING:
+    from terminaltexteffects.engine.motion import Path
     from terminaltexteffects.engine.world import Body, World
 
 pytestmark = [pytest.mark.engine, pytest.mark.motion, pytest.mark.smoke]
@@ -572,3 +574,140 @@ def test_shape_mesh_and_reach_follow_the_body(world: World) -> None:
     assert sphere._reach() == pytest.approx(5)
     sphere.scale = 2
     assert sphere._reach() == pytest.approx(10)
+
+
+def travel(body: Body, distance: float = 20.0, speed: float = 1.0, **path_options: object) -> Path:
+    """Activate a straight path of `distance` units along x and return it."""
+    path = body.motion.new_path(speed=speed, **path_options)  # type: ignore[arg-type]
+    path.new_waypoint(g3.Vec3(distance, 0.0, 0.0))
+    body.motion.activate_path(path)
+    return path
+
+
+def spin_angle(body: Body) -> float:
+    """Return the body's turn about y in turns, from where it carries the x axis."""
+    x = body.rotation.apply(g3.X_AXIS)
+    return (math.atan2(-x.z, x.x) / (2 * math.pi)) % 1.0
+
+
+@pytest.mark.parametrize("sync", [Scene.SyncMetric.DISTANCE, Scene.SyncMetric.STEP])
+def test_synced_spin_follows_path_progress_and_lands_on_arrival(world: World, sync: Scene.SyncMetric) -> None:
+    """A synced spin's progress is the path's, matching the position every frame, and ends the frame it arrives."""
+    body = world.body(Cube(4))
+    travel(body)
+    body.spin("y", turns=0.5, frames=999, sync=sync)
+    for _ in range(19):
+        world.step()
+        assert spin_angle(body) == pytest.approx(0.5 * body.position.x / 20.0)
+        assert body.animating
+    world.step()
+    assert body.position.x == pytest.approx(20.0)
+    assert_same_rotation(body.rotation, rotation_about("y", 180))
+    assert not body.animating
+
+
+def test_synced_tween_uses_easing_and_whole_turns_end_at_rest(world: World) -> None:
+    """`ease` shapes the path's progress; whole synced turns end where they started."""
+    body = world.body(Cube(4))
+    travel(body)
+    body.spin("y", turns=0.5, sync=Scene.SyncMetric.DISTANCE, ease=easing.in_quad)
+    steps(world, 10)
+    assert spin_angle(body) == pytest.approx(0.5 * easing.in_quad(0.5))
+    other = world.body(Cube(4))
+    travel(other)
+    other.spin("y", turns=3, sync=Scene.SyncMetric.DISTANCE).spin("x", turns=1, together=True, frames=5)
+    steps(world, 20)
+    assert_same_rotation(other.rotation, g3.Rotation())
+    assert not other.animating
+
+
+def test_synced_tweens_together_land_turn_to_and_scale(world: World) -> None:
+    """Synced target tweens, spins and scales land together on arrival."""
+    body = world.body(Cube(4))
+    travel(body, distance=10)
+    target = rotation_about("x", 90)
+    body.turn_to(target, sync=Scene.SyncMetric.STEP)
+    body.spin("y", turns=2, together=True, sync=Scene.SyncMetric.STEP)
+    body.scale_to(3.0, together=True, sync=Scene.SyncMetric.STEP)
+    steps(world, 5)
+    assert body.scale == pytest.approx(2.0)
+    steps(world, 5)
+    assert_same_rotation(body.rotation, target)
+    assert body.scale == pytest.approx(3.0)
+    assert not body.animating
+
+
+def test_synced_tween_ends_before_the_path_hold(world: World) -> None:
+    """A path that holds at its end doesn't hold the tween."""
+    body = world.body(Cube(4))
+    travel(body, distance=4, hold_time=10)
+    done: list[Body] = []
+    body.spin("y", turns=0.25, sync=Scene.SyncMetric.DISTANCE).on_complete(done.append)
+    steps(world, 4)
+    assert done == [body]
+    assert body.motion.active_path is not None
+
+
+@pytest.mark.parametrize("change", ["deactivate", "replace", "loop"])
+def test_synced_tween_jumps_to_its_end_when_its_path_stops(world: World, change: str) -> None:
+    """Deactivating, replacing or looping the followed path ends the tween at its final pose."""
+    body = world.body(Cube(4))
+    path = body.motion.new_path(speed=1, loop=change == "loop")
+    path.new_waypoint(g3.Vec3(6.0, 0.0, 0.0))
+    path.new_waypoint(g3.Vec3(6.0, 6.0, 0.0))
+    body.motion.activate_path(path)
+    body.spin("y", turns=0.25, sync=Scene.SyncMetric.DISTANCE).spin("x", turns=1, frames=100)
+    steps(world, 3)
+    assert body.animating
+    if change == "deactivate":
+        body.motion.deactivate_path()
+    elif change == "replace":
+        travel(body, distance=50)
+    else:
+        steps(world, 8)
+    world.step()
+    assert_same_rotation(body.rotation, rotation_about("y", 90))
+    assert body._queue[0].tweens[0].frames == 100  # the next tween is playing
+
+
+def test_synced_tween_without_a_path_applies_at_once(world: World) -> None:
+    """A synced tween that starts with no active path finishes on its first frame."""
+    body = world.body(Cube(4))
+    body.spin("y", turns=0.25, sync=Scene.SyncMetric.DISTANCE)
+    world.step()
+    assert_same_rotation(body.rotation, rotation_about("y", 90))
+    assert not body.animating
+
+
+def test_queued_synced_tween_follows_the_path_active_when_it_starts(world: World) -> None:
+    """A synced tween behind a hold reads the path's progress from where the path is when it starts."""
+    body = world.body(Cube(4))
+    travel(body)
+    body.hold(10).spin("y", turns=0.5, sync=Scene.SyncMetric.DISTANCE)
+    steps(world, 11)
+    assert spin_angle(body) == pytest.approx(0.5 * body.position.x / 20.0)
+
+
+@pytest.mark.parametrize("sync", [Scene.SyncMetric.LIGHT, Scene.SyncMetric.DEPTH])
+def test_light_and_depth_sync_are_rejected(world: World, sync: Scene.SyncMetric) -> None:
+    """Only path metrics drive body tweens."""
+    body = world.body(Cube(4))
+    with pytest.raises(ValueError, match="DISTANCE"):
+        body.spin("y", sync=sync)
+    with pytest.raises(ValueError, match="DISTANCE"):
+        body.turn_to_rest(sync=sync)
+
+
+def test_synced_tween_ends_when_its_path_ends_on_the_first_frame(world: World) -> None:
+    """A path that completes on the tween's first frame ends the tween, not the path chained after it."""
+    body = world.body(Cube(4))
+    first = body.motion.new_path(speed=1)
+    first.new_waypoint(g3.Vec3(1.0, 0.0, 0.0))
+    second = body.motion.new_path(speed=1)
+    second.new_waypoint(g3.Vec3(10.0, 0.0, 0.0))
+    body.motion.chain_paths([first, second])
+    body.motion.activate_path(first)
+    body.scale_to(3.0, sync=Scene.SyncMetric.STEP)
+    world.step()
+    assert body.scale == pytest.approx(3.0)
+    assert not body.animating

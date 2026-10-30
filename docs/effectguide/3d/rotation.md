@@ -124,6 +124,52 @@ There are two ways back to rest:
 `turn_to(rotation)` turns along the shortest path to any orientation, and `random_pose()` turns to a random one,
 drawn from Python's `random` module, so `random.seed` makes it repeatable.
 
+### Syncing to a path
+
+```bash
+tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c roll
+```
+
+![Two cubes roll from left to right along the same eased path. The top one, labeled sync=DISTANCE, turns in step with how far it has traveled; the bottom one, labeled frames, turns at its own pace and slides](../../img/effectguide/roll_demo.webp)
+
+A tween can take its progress from the body's path instead of counting frames, the way a scene can
+[sync to a path](../engine/animation.md#syncing-a-scene-to-a-path). Pass `sync=Scene.SyncMetric.DISTANCE` to follow the distance the body has
+traveled, or `Scene.SyncMetric.STEP` to follow its steps. Every body tween takes it: `spin`, `settle`, `turn_to`,
+`turn_to_rest`, `random_pose` and `scale_to`.
+
+```python
+path = cube.motion.new_path(speed=0.5, ease=easing.in_out_sine)
+path.new_waypoint(Vec3(24, 0, 0))
+cube.motion.activate_path(path)
+cube.spin("z", turns=-1, local=True, sync=Scene.SyncMetric.DISTANCE)
+```
+
+The cube makes one turn over the path, speeding up and slowing down with it, so it rolls instead of sliding. A cube
+with edge 12 makes a quarter turn for every 12 units it rolls, so 48 units is one turn.
+
+??? example "roll.py"
+
+    Save it in your community effects directory as `roll.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/roll/roll.py"
+    ```
+
+A synced tween follows the body's own active path:
+
+- `frames` is ignored. `ease` still shapes the progress, on top of the path's own easing.
+- The tween's progress is the path's progress, so start them together. A synced tween queued behind a `hold` picks up
+  at however far the path has gone when it starts.
+- It reaches its end on the frame the body arrives, before any hold at the end of the path, and the next tween in the
+  queue starts on the following frame.
+- If the path is deactivated, replaced or restarted partway, the tween jumps to its end. A looping path restarts at the
+  end of each lap, so a synced tween covers one lap; queue another to keep going. With no active path, the tween
+  applies at once.
+- It plays in queues and `together=True` groups like any other tween, and combines with spins as in
+  [Tumbling](#tumbling).
+
+The world moves a body along its path before playing its synced tweens, so on every frame the pose matches the position.
+
 ## Under the hood
 
 [`geometry3d.Rotation`](../../engine/utils/geometry3d.md) is the quaternion. Its angles are in radians:

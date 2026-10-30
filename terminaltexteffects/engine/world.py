@@ -54,10 +54,11 @@ from terminaltexteffects.utils.geometry import TERMINAL_ROW_SCALE
 if typing.TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
+    from terminaltexteffects.engine.animation import Scene
     from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
     from terminaltexteffects.engine.canvas import Canvas
     from terminaltexteffects.engine.drawing import Look
-    from terminaltexteffects.engine.motion import BodyMotion, Motion
+    from terminaltexteffects.engine.motion import BodyMotion, Motion, Path
     from terminaltexteffects.engine.shapes import Shape
     from terminaltexteffects.engine.surfaces import FaceName, Surface
     from terminaltexteffects.engine.terminal import Terminal
@@ -309,6 +310,49 @@ class SurfaceTarget(SpatialNode):
         raise TypeError(msg)
 
 
+class _PathFollow:
+    """The progress of the path a body is on when a synced tween starts, or `None` once that path stops."""
+
+    def __init__(self, body: Body, *, by_step: bool) -> None:
+        self.body = body
+        self.by_step = by_step
+        self.bound = False
+        self.path: Path | None = None
+        self.generation = 0
+
+    def bind(self) -> None:
+        """Follow the body's active path, once.
+
+        The world binds before moving the body, so a path that ends or is replaced on the tween's first frame still
+        ends the tween.
+        """
+        if self.bound:
+            return
+        self.bound = True
+        motion = self.body._motion
+        if motion is not None:
+            self.path = motion.active_path
+            self.generation = motion._path_generation
+
+    def __call__(self) -> float | None:
+        self.bind()
+        motion = self.body._motion
+        path = self.path
+        if (
+            path is None
+            or motion is None
+            or motion.active_path is not path
+            or motion._path_generation != self.generation
+            or path.current_step >= path.max_steps
+        ):
+            return None
+        if self.by_step:
+            progress = path.current_step / path.max_steps
+        else:
+            progress = path.last_distance_reached / path.total_distance if path.total_distance > 0 else 1.0
+        return min(max(progress, 0.0), 1.0)
+
+
 class Body(SpatialNode, TweenQueue):
     """A node with rotation and scale, which other nodes are measured against.
 
@@ -326,6 +370,13 @@ class Body(SpatialNode, TweenQueue):
     previous one, or alongside it with `together=True`, and applies its change as a delta, so tweens compose with
     each other and with changes made now. Spins played together compose from their angles so far, in queue order,
     turning the pose of any target tween in their group (see `spin`). Tween methods return the body, so calls chain.
+
+    A tween queued with `sync=Scene.SyncMetric.DISTANCE` or `STEP` takes its progress from the body's own path
+    instead of counting frames, like a synced scene: its progress is the distance or steps traveled along the path
+    that is active when it starts, so `frames` is ignored and `ease` shapes that progress. It lands on its end
+    the frame the body arrives, before any hold. If that path is deactivated, replaced or restarted, including a
+    looping path starting its next lap, the tween jumps to its end; with no active path it applies at once. The
+    world moves a body along its path before playing its synced tweens, so pose and position match every frame.
 
     A body with a shape has a `surface`: a grid of cells over the shape. Characters attached to it sit on the surface
     at `(column, row, height)`, and their paths follow it, over folds and round laps.
@@ -555,6 +606,7 @@ class Body(SpatialNode, TweenQueue):
         *,
         together: bool = False,
         local: bool = False,
+        sync: Scene.SyncMetric | None = None,
     ) -> Body:
         """Queue full turns about an axis of the parent, or of the body with `local=True`.
 
@@ -572,13 +624,15 @@ class Body(SpatialNode, TweenQueue):
             frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Play alongside the last queued tween instead of after it.
+            sync (Scene.SyncMetric | None): `DISTANCE` or `STEP` to take progress from the body's active path
+                instead of counting `frames`. See `Body` for how a synced tween follows its path.
             local (bool): Turn about the body's own axis.
 
         Returns:
             Body: This body, for chaining.
 
         Raises:
-            ValueError: If `frames` is negative or the axis is unknown or zero.
+            ValueError: If `frames` is negative, the axis is unknown or zero, or `sync` isn't `DISTANCE` or `STEP`.
 
         """
         unit = direction(axis, AXES, "axis")
@@ -596,7 +650,7 @@ class Body(SpatialNode, TweenQueue):
             spins: _Spins = state["spins"]
             self.rotation = spins.turn(self._rotation, state["index"], total * current, total * (current - previous))
 
-        return self._queue_tween(Tween(frames, apply, ease, begin), together=together)
+        return self._queue_tween(self._tween(frames, apply, ease, begin, sync), together=together)
 
     def settle(
         self,
@@ -606,6 +660,7 @@ class Body(SpatialNode, TweenQueue):
         ease: EasingFunction | None = None,
         *,
         together: bool = False,
+        sync: Scene.SyncMetric | None = None,
     ) -> Body:
         """Queue `turns` turns about `axis` while easing out any other tilt, ending at the rest orientation.
 
@@ -615,12 +670,14 @@ class Body(SpatialNode, TweenQueue):
             frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Play alongside the last queued tween instead of after it.
+            sync (Scene.SyncMetric | None): `DISTANCE` or `STEP` to take progress from the body's active path
+                instead of counting `frames`. See `Body` for how a synced tween follows its path.
 
         Returns:
             Body: This body, for chaining.
 
         Raises:
-            ValueError: If `frames` is negative or the axis is unknown or zero.
+            ValueError: If `frames` is negative, the axis is unknown or zero, or `sync` isn't `DISTANCE` or `STEP`.
 
         """
         unit = direction(axis, AXES, "axis")
@@ -635,7 +692,10 @@ class Body(SpatialNode, TweenQueue):
             state["start"] = g3.Rotation.about_axis(unit, total) * self._rotation
             state["last"] = self._rotation
 
-        return self._queue_tween(Tween(frames, self._turn_through(pose, state), ease, begin), together=together)
+        return self._queue_tween(
+            self._tween(frames, self._turn_through(pose, state), ease, begin, sync),
+            together=together,
+        )
 
     def turn_to(
         self,
@@ -644,6 +704,7 @@ class Body(SpatialNode, TweenQueue):
         ease: EasingFunction | None = None,
         *,
         together: bool = False,
+        sync: Scene.SyncMetric | None = None,
     ) -> Body:
         """Queue a turn to `rotation`, relative to the parent, the shortest way round.
 
@@ -652,12 +713,14 @@ class Body(SpatialNode, TweenQueue):
             frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Play alongside the last queued tween instead of after it.
+            sync (Scene.SyncMetric | None): `DISTANCE` or `STEP` to take progress from the body's active path
+                instead of counting `frames`. See `Body` for how a synced tween follows its path.
 
         Returns:
             Body: This body, for chaining.
 
         Raises:
-            ValueError: If `frames` is negative.
+            ValueError: If `frames` is negative or `sync` isn't `DISTANCE` or `STEP`.
 
         """
         state: dict[str, g3.Rotation] = {}
@@ -668,38 +731,59 @@ class Body(SpatialNode, TweenQueue):
         def pose(fraction: float) -> g3.Rotation:
             return state["start"].slerp(rotation, fraction)
 
-        return self._queue_tween(Tween(frames, self._turn_through(pose, state), ease, begin), together=together)
+        return self._queue_tween(
+            self._tween(frames, self._turn_through(pose, state), ease, begin, sync),
+            together=together,
+        )
 
-    def turn_to_rest(self, frames: int = 60, ease: EasingFunction | None = None, *, together: bool = False) -> Body:
+    def turn_to_rest(
+        self,
+        frames: int = 60,
+        ease: EasingFunction | None = None,
+        *,
+        together: bool = False,
+        sync: Scene.SyncMetric | None = None,
+    ) -> Body:
         """Queue a turn back to the rest orientation, the shortest way round.
 
         Args:
             frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Play alongside the last queued tween instead of after it.
+            sync (Scene.SyncMetric | None): `DISTANCE` or `STEP` to take progress from the body's active path
+                instead of counting `frames`. See `Body` for how a synced tween follows its path.
 
         Returns:
             Body: This body, for chaining.
 
         Raises:
-            ValueError: If `frames` is negative.
+            ValueError: If `frames` is negative or `sync` isn't `DISTANCE` or `STEP`.
 
         """
-        return self.turn_to(g3.Rotation(), frames, ease, together=together)
+        return self.turn_to(g3.Rotation(), frames, ease, together=together, sync=sync)
 
-    def random_pose(self, frames: int = 0, ease: EasingFunction | None = None, *, together: bool = False) -> Body:
+    def random_pose(
+        self,
+        frames: int = 0,
+        ease: EasingFunction | None = None,
+        *,
+        together: bool = False,
+        sync: Scene.SyncMetric | None = None,
+    ) -> Body:
         """Queue a turn to a random orientation, drawn evenly from all orientations with the `random` module.
 
         Args:
             frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Play alongside the last queued tween instead of after it.
+            sync (Scene.SyncMetric | None): `DISTANCE` or `STEP` to take progress from the body's active path
+                instead of counting `frames`. See `Body` for how a synced tween follows its path.
 
         Returns:
             Body: This body, for chaining.
 
         Raises:
-            ValueError: If `frames` is negative.
+            ValueError: If `frames` is negative or `sync` isn't `DISTANCE` or `STEP`.
 
         """
         # Shoemake's method: uniform unit quaternions from three uniform numbers.
@@ -711,7 +795,7 @@ class Body(SpatialNode, TweenQueue):
             a * math.cos(2 * math.pi * u2),
             b * math.sin(2 * math.pi * u3),
         )
-        return self.turn_to(target, frames, ease, together=together)
+        return self.turn_to(target, frames, ease, together=together, sync=sync)
 
     def scale_to(
         self,
@@ -720,6 +804,7 @@ class Body(SpatialNode, TweenQueue):
         ease: EasingFunction | None = None,
         *,
         together: bool = False,
+        sync: Scene.SyncMetric | None = None,
     ) -> Body:
         """Queue a change of the body's scale to `scale`.
 
@@ -728,12 +813,14 @@ class Body(SpatialNode, TweenQueue):
             frames (int): Duration in frames. Zero applies at once when nothing is queued ahead.
             ease (EasingFunction | None): Easing function, or `None` for linear progress.
             together (bool): Play alongside the last queued tween instead of after it.
+            sync (Scene.SyncMetric | None): `DISTANCE` or `STEP` to take progress from the body's active path
+                instead of counting `frames`. See `Body` for how a synced tween follows its path.
 
         Returns:
             Body: This body, for chaining.
 
         Raises:
-            ValueError: If `frames` is negative or `scale` isn't positive.
+            ValueError: If `frames` is negative, `scale` isn't positive or `sync` isn't `DISTANCE` or `STEP`.
 
         """
         if scale <= 0:
@@ -749,7 +836,25 @@ class Body(SpatialNode, TweenQueue):
             self.scale = self._scale * value / state["last"]
             state["last"] = value
 
-        return self._queue_tween(Tween(frames, apply, ease, begin), together=together)
+        return self._queue_tween(self._tween(frames, apply, ease, begin, sync), together=together)
+
+    def _tween(
+        self,
+        frames: int,
+        apply: Callable[[float, float], None],
+        ease: EasingFunction | None,
+        begin: Callable[[], None] | None,
+        sync: Scene.SyncMetric | None,
+    ) -> Tween[Body]:
+        """Return a tween of `frames` frames, or one that follows the body's active path when `sync` is set."""
+        if sync is None:
+            return Tween(frames, apply, ease, begin)
+        from terminaltexteffects.engine.animation import Scene  # noqa: PLC0415 (animation imports motion)
+
+        if sync not in (Scene.SyncMetric.DISTANCE, Scene.SyncMetric.STEP):
+            msg = "A body tween syncs to its path with Scene.SyncMetric.DISTANCE or Scene.SyncMetric.STEP."
+            raise ValueError(msg)
+        return Tween(1, apply, ease, begin, follow=_PathFollow(self, by_step=sync is Scene.SyncMetric.STEP))
 
     def _turn_through(
         self,
@@ -1097,11 +1202,20 @@ class World:
             (camera, camera._callback_generation, callback) for callback in camera._advance()
         ]
         for body in tuple(self._bodies):
-            if body._queue:
-                finished.extend((body, body._callback_generation, callback) for callback in body._advance())
+            queue = body._queue
             motion = body._motion
+            # Tweens synced to the body's path play after it moves, so its pose matches where it is.
+            follows = bool(queue) and queue[0].follows
+            if follows:
+                for tween in queue[0].tweens:
+                    if isinstance(tween.follow, _PathFollow):
+                        tween.follow.bind()
+            elif queue:
+                finished.extend((body, body._callback_generation, callback) for callback in body._advance())
             if motion is not None and motion.active_path is not None:
                 motion.move()
+            if follows:
+                finished.extend((body, body._callback_generation, callback) for callback in body._advance())
         for owner, generation, callback in finished:
             if owner._callback_generation == generation and not getattr(owner, "_removed", False):
                 callback(owner)

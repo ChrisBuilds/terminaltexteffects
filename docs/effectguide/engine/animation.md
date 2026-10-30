@@ -143,6 +143,9 @@ distance in the first few ticks:
 Without easing, distance and step progress at the same rate. Use `DISTANCE` to tie an appearance to position, such as
 a trail that changes as a character travels, and `STEP` to tie it to time.
 
+A 3D body's turn and scale tweens take the same `sync`, so a body can spin in step with its path. See
+[Syncing to a path](../3d/rotation.md#syncing-to-a-path).
+
 ## More scene options
 
 `new_scene()` takes these keyword arguments:

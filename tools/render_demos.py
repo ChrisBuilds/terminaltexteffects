@@ -208,6 +208,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
             ("turns_axes", "turns", ()),
             ("turns_tumble", "turns", ("--mode", "tumble")),
             ("turns_rest", "turns", ("--mode", "rest")),
+            ("roll", "roll", ()),
             ("lens_0", "lens", ("--perspective", "0")),
             ("lens_1", "lens", ()),
             ("lens_2", "lens", ("--perspective", "2")),
