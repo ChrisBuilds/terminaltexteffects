@@ -9,7 +9,7 @@ from dataclasses import replace
 import pytest
 
 from terminaltexteffects.engine import drawing
-from terminaltexteffects.engine.drawing import Shaded, Solid, Textured, Wireframe
+from terminaltexteffects.engine.drawing import Ink, Shaded, Solid, Textured, Wireframe
 from terminaltexteffects.engine.shapes import Box, Cube, Cylinder, Prism, Pyramid, Shape, Sphere, Tetrahedron, Torus
 from terminaltexteffects.engine.terminal import Terminal, TerminalConfig
 from terminaltexteffects.utils import geometry3d as g3
@@ -80,6 +80,12 @@ def color(character: EffectCharacter) -> Color | None:
     """Return the foreground color a character currently shows."""
     colors = character.animation.current_character_visual.colors
     return colors.fg if colors is not None else None
+
+
+def background(character: EffectCharacter) -> Color | None:
+    """Return the background color a character currently shows."""
+    colors = character.animation.current_character_visual.colors
+    return colors.bg if colors is not None else None
 
 
 def rows(body: Body) -> list[str]:
@@ -313,7 +319,9 @@ def test_texture_controls_sample_text_without_moving_geometry(look: Textured, ex
     world = make_world()
     body = world.body(Cube(8)).draw(look)
     fragment = g3.Fragment(1, g3.Z_AXIS, True, 0, 0, (0.125, 1.0))  # noqa: FBT003
-    assert painter(world)._sample(body, look, fragment) == expected
+    sampled = painter(world)._sample(body, look, fragment)
+    assert sampled is not None
+    assert sampled[0] == expected
     assert body.position == g3.ORIGIN
     assert body.rotation == g3.Rotation()
 
@@ -711,3 +719,107 @@ def test_input_text_keeps_blank_lines() -> None:
     """A blank line inside the input stays in the default text, so later rows keep their place."""
     world = make_world("a\n\nb")
     assert painter(world).input_text == "a\n\nb"
+
+
+def test_solid_background_fills_cells_with_the_lit_color() -> None:
+    """`Solid(background=True)` paints the lit color behind a space instead of drawing its symbol."""
+    world = make_world()
+    stone = Gradient(Color("#202020"), Color("#e0e0e0"), steps=8)
+    plain = world.body(Cube(8), at=(-10, 0, 0)).rotate("y", 30).rotate("x", 20).draw(Solid(gradient=stone))
+    filled = (
+        world.body(Cube(8), at=(10, 0, 0)).rotate("y", 30).rotate("x", 20).draw(Solid(gradient=stone, background=True))
+    )
+    step(world)
+    plain_colors = sorted(str(color(character)) for character in plain.surface_characters.values())
+    filled_cells = list(filled.surface_characters.values())
+    assert filled_cells
+    assert all(symbol(character) == " " and color(character) is None for character in filled_cells)
+    assert sorted(str(background(character)) for character in filled_cells) == plain_colors
+    assert len({background(character) for character in filled_cells}) > 1  # Faces are lit differently.
+
+
+def test_textured_background_fills_every_cell_under_the_text() -> None:
+    """A textured look with a background fills text cells, blanks and untextured faces alike."""
+    world = make_world()
+    fill = Color("#334455")
+    box = world.body(Box(10, 6, 10)).draw(Textured("ab \ncd ", background=fill, repeat=False))
+    cap = world.body(Cylinder(8, 6), at=(15, 0, 0)).rotate("x", 90).draw(Textured(background=fill))
+    step(world)
+    for character in [*box.surface_characters.values(), *cap.surface_characters.values()]:
+        assert background(character) == fill
+    assert {symbol(character) for character in cap.surface_characters.values()} == {" "}
+    assert set("abcd") <= {symbol(character) for character in box.surface_characters.values()}
+
+
+def test_textured_gradient_background_is_lit() -> None:
+    """A gradient background runs from unlit to fully lit, as `Solid` colors do."""
+    world = make_world()
+    stone = Gradient(Color("#202020"), Color("#e0e0e0"), steps=8)
+    body = world.body(Cube(8)).rotate("y", 30).rotate("x", 20).draw(Textured("x", background=stone))
+    step(world)
+    fills = {background(character) for character in body.surface_characters.values()}
+    assert len(fills) > 1
+    assert fills <= set(stone)
+
+
+def test_textured_ink_defaults_to_the_brand_gradient_following_the_light() -> None:
+    """The default ink is the brand gradient picked by the light, so text with no ink settings looks as before."""
+    world = make_world()
+    body = world.body(Box(10, 6, 10)).draw(Textured())
+    step(world)
+    expected = drawing._gradient(None).get_color_at_fraction(
+        drawing._AMBIENT + (1 - drawing._AMBIENT) * g3.lambert(g3.Z_AXIS, world.world_light)
+    )
+    assert {color(character) for character in body.surface_characters.values()} == {expected}
+
+
+@pytest.mark.parametrize(("amount", "expected"), [(0.0, "ffffff"), (1.0, None)])
+def test_ink_light_sets_how_much_shadow_darkens_text(amount: float, expected: str | None) -> None:
+    """`light=0` keeps the ink color everywhere, and `light=1` darkens it as much as the face's shadow."""
+    world = make_world(light="right")
+    body = world.body(Box(10, 6, 10)).draw(Textured("x", ink=Ink(Color("#ffffff"), light=amount)))
+    step(world)
+    colors = {color(character) for character in body.surface_characters.values()}
+    assert len(colors) == 1
+    shown = colors.pop()
+    assert shown is not None
+    if expected is not None:
+        assert shown.rgb_color == expected
+    else:
+        assert shown.rgb_ints[0] < 255  # The front faces away from a light on the right.
+
+
+def test_ink_spread_across_the_text_keeps_colors_on_their_letters() -> None:
+    """A gradient spread across the text gives each column its own color, whatever the light."""
+    world = make_world()
+    red, blue = Color("#ff0000"), Color("#0000ff")
+    ink = Ink(Gradient(red, blue, steps=10), spread=Gradient.Direction.HORIZONTAL, light=0)
+    body = world.body(Box(10, 6, 10)).draw(Textured("abcdefghij", ink=ink, repeat=False))
+    step(world)
+    by_symbol = {symbol(character): color(character) for character in body.surface_characters.values()}
+    assert by_symbol["a"] == red
+    assert by_symbol["j"] == blue
+
+
+def test_ink_and_background_validation() -> None:
+    """Ink rejects unknown spreads and light outside 0 to 1, and `back="dim"` can't be combined with a fill."""
+    with pytest.raises(ValueError, match="spread"):
+        Ink(spread="text")  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="light"):
+        Ink(light=1.5)
+    with pytest.raises(ValueError, match="dim"):
+        Textured(back="dim", background=Color("#000000"))
+
+
+def test_painter_shares_pairs_with_backgrounds_and_shades_by_light_level() -> None:
+    """Pairs with a background are shared, and shading rounds the light so nearby levels reuse one color."""
+    world = make_world()
+    fg, bg = Color("#abcdef"), Color("#123456")
+    pair = painter(world).pair(fg, bg)
+    assert pair == ColorPair(fg=fg, bg=bg)
+    assert painter(world).pair(fg, bg) is pair
+    assert painter(world).pair(fg) is not pair
+    white = Color("#ffffff")
+    assert painter(world).shade(white, 0.0, 0.2) is white
+    assert painter(world).shade(white, 1.0, 0.5) is painter(world).shade(white, 1.0, 0.51)
+    assert painter(world).shade(white, 1.0, 1.0) == white

@@ -69,6 +69,8 @@ self.world.set_light((math.sin(angle), 0.5, math.cos(angle)))
 - `Solid(symbol, gradient)` uses one symbol and lets color alone show the light. It and `Textured` add a little
   **ambient** light, coloring by `0.15 + 0.85 x lambert`, so their unlit faces aren't the darkest color.
 - Gradients default to the TTE brand colors, purple to cyan to white.
+- `Solid(background=True)` paints the lit color as each cell's background instead of drawing a symbol, and
+  `Textured(background=...)` lights a fill behind its text. See [Text over a solid fill](textures.md#text-over-a-solid-fill).
 
 Characters can follow the light too. `character.view.light` is the Lambert value for the surface under the
 character, and a scene created with `sync=Scene.SyncMetric.LIGHT` picks its frame from it. The

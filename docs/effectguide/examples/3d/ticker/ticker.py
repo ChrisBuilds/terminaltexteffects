@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Gradient, Textured, rotation_about
+from terminaltexteffects import Color, Gradient, Ink, Textured, rotation_about
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.shapes import Cylinder
@@ -50,7 +50,7 @@ class TickerIterator(BaseEffectIterator[TickerConfig]):
         amber = Gradient(Color("#3a2000"), Color("#ffb000"), Color("#fff0c0"), steps=10)
         # Two columns tall is one row, so the message runs around the drum once, in a single line.
         drum = Cylinder(radius=26, height=2, segments=72)
-        self.drum = self.world.body(drum).draw(Textured(self.config.message, gradient=amber))
+        self.drum = self.world.body(drum).draw(Textured(self.config.message, ink=Ink(amber)))
         self.tilt = rotation_about("x", 10)  # Tip the top toward the viewer, so we look down on the drum a little.
         self.frames = 420
         self.frame_number = 0

@@ -64,6 +64,57 @@ sphere = self.world.body(Sphere(13, segments=32, rings=16), at=(20, 0, 0)).draw(
 - `back="dim"` shows the far side through the spaces in the text (see [Depth](depth.md)).
 - Each cell shows one character, so wide characters such as CJK can't be split across cells and are left blank.
 
+### Text over a solid fill
+
+By default the text is the surface: each cell's symbol is drawn in a color from the light, with nothing behind it.
+Give the look a `background` and every cell is filled with it first, as the cell's background color, and the text is
+drawn on top in its **ink**. Blanks in the text, cells outside text that doesn't repeat, and faces without texture
+coordinates all show the fill, so the shape reads as solid.
+
+```python
+white = Ink(Color("#ffffff"), light=light)
+spread = Ink(Gradient(...), spread=Gradient.Direction.HORIZONTAL, light=light)
+cube = self.world.body(Cube(22), at=(-20, 0, 0)).draw(Textured(ink=white, background=purple))
+sphere.draw(Textured(ink=spread, background=navy, repeat=False))
+```
+
+??? example "ink.py"
+
+    Save it in your community effects directory as `ink.py`.
+
+    ```python
+    --8<-- "docs/effectguide/examples/3d/ink/ink.py"
+    ```
+
+=== "Glowing text"
+
+    ```bash
+    tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c ink
+    ```
+
+    ![White text on a turning purple cube, and blue to gold text on a navy sphere, both readable on the shadowed side](../../img/effectguide/ink_demo.webp)
+
+=== "Lit text"
+
+    ```bash
+    tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c ink --light 1
+    ```
+
+    ![The same shapes with the text darkening into the shadow along with the fill](../../img/effectguide/ink_lit_demo.webp)
+
+- `background` takes a `Color`, the same on every face, or a `Gradient`, which runs from unlit to fully lit like a
+  `Solid` look. `Solid(background=True)` fills a shape the same way without any text.
+- `Ink(color)` is the text color: a `Color`, a `Gradient`, or `None` for the TTE brand colors. The default `Ink()` is
+  the brand gradient following the light, the look `Textured` has without a fill.
+- `spread` says what a gradient runs along. `"light"` picks a color by how lit the cell is. A `Gradient.Direction`
+  spreads it across the text instead, the way an effect's final gradient runs across the canvas, so each letter keeps
+  its color as it travels round the shape.
+- `light` says how much shadow darkens the text, from 0, the same color lit or not, to 1, as dark as the surface
+  gets. Glowing text stays readable on the shadowed side. Lit text sits in the surface like paint. It doesn't apply
+  to a gradient following the light, which is lit already.
+- `back="dim"` shows the far side through blanks, which a fill would cover, so it can't be combined with
+  `background`.
+
 ### Attached text or textured surface
 
 Text can be part of a 3D scene in two ways. Attaching puts each character on a body, as in

@@ -3,6 +3,7 @@
     cube = world.body(Cube(16))
     cube.draw(Shaded())                      # or Solid(), Textured(), Wireframe()
     cube.draw(faces={"front": Textured(), "top": Solid("#")})
+    card.draw(Textured("HELLO", background=stone, ink=Ink("#ffffff", light=0.3)))  # text over a solid fill
 
 A drawn body is shown with characters the world creates and manages, one per covered cell, so an effect's own
 characters are never used for it. Drawn cells and characters are painted in one order: by layer, then farther
@@ -11,6 +12,7 @@ draws over that body's own cell beneath it, like a decal, and anything genuinely
 
 Classes:
     Shaded, Solid, Textured, Wireframe: Looks for drawing a body.
+    Ink: How a `Textured` look colors its text.
 """
 
 from __future__ import annotations
@@ -22,21 +24,24 @@ from dataclasses import dataclass
 
 from terminaltexteffects.utils import geometry3d as g3
 from terminaltexteffects.utils.exceptions import InvalidSymbolError
-from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient
+from terminaltexteffects.utils.geometry import Coord
+from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient, shift_color_towards
 from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 if typing.TYPE_CHECKING:
     from terminaltexteffects.engine.base_character import EffectCharacter
     from terminaltexteffects.engine.terminal import Terminal
     from terminaltexteffects.engine.world import Body, World
-    from terminaltexteffects.utils.geometry import Coord
 
-__all__ = ["Look", "Shaded", "Solid", "Textured", "Wireframe"]
+__all__ = ["Ink", "Look", "Shaded", "Solid", "Textured", "Wireframe"]
 
 _BRAND_STOPS = ("#8A008A", "#00D1FF", "#ffffff")
 _DIM = Color("#7a3a86")
 _SHADE_SYMBOLS = ".,-~:;=!*#$@"
 _AMBIENT = 0.15
+_BLACK = Color("#000000")
+_LIGHT_LEVELS = 15
+"""Light is rounded to this many steps above unlit before it darkens ink, so shaded colors repeat and are reused."""
 _TEXT_NUDGE = 1e-6
 _SURFACE_BIAS = 1e-3
 """How much farther a drawn cell is ordered than it is, in units, so a character exactly on the surface draws on top.
@@ -76,8 +81,10 @@ class Solid:
     """Fill faces with one symbol, colored by the light.
 
     Attributes:
-        symbol (str): The fill symbol, one cell wide.
+        symbol (str): The fill symbol, one cell wide. Not drawn when `background` is true.
         gradient (Gradient | None): Colors from unlit to fully lit. `None` uses the TTE brand colors.
+        background (bool): Paint the color as each cell's background, filling the whole cell, instead of drawing
+            `symbol` in it.
 
     Raises:
         ValueError: If `symbol` is not one printable character one cell wide.
@@ -86,6 +93,7 @@ class Solid:
 
     symbol: str = "█"
     gradient: Gradient | None = None
+    background: bool = False
 
     def __post_init__(self) -> None:
         """Validate the symbol."""
@@ -93,16 +101,61 @@ class Solid:
 
 
 @dataclass(frozen=True)
+class Ink:
+    """How a `Textured` look colors its text.
+
+    A gradient either follows the light, unlit to fully lit, or is spread across the text so its colors stay on the
+    same letters as they travel round the shape. Any other color can be darkened by the light by `light`.
+
+        Ink()                                                       # the brand gradient, following the light
+        Ink(Color("#ffffff"), light=0)                              # white everywhere, glowing on the dark side
+        Ink(Gradient(red, gold, steps=8), spread=Gradient.Direction.HORIZONTAL, light=0.5)
+
+    Attributes:
+        color (Color | Gradient | None): The text color. `None` uses the TTE brand colors.
+        spread (Literal["light"] | Gradient.Direction): What a gradient runs along: `"light"` from unlit to fully
+            lit, or a `Gradient.Direction` across the text, as an effect's final gradient runs across the canvas.
+        light (float): How much shadow darkens the text, from 0 (the same color lit or not) to 1 (as dark as the
+            surface gets). It doesn't apply to a gradient following the light, which is lit already.
+
+    Raises:
+        ValueError: If `spread` is not `"light"` or a `Gradient.Direction`, or `light` is not between 0 and 1.
+
+    """
+
+    color: Color | Gradient | None = None
+    spread: typing.Literal["light"] | Gradient.Direction = "light"
+    light: float = 1.0
+
+    def __post_init__(self) -> None:
+        """Validate the spread and light."""
+        if self.spread != "light" and not isinstance(self.spread, Gradient.Direction):
+            msg = 'Ink spread must be "light" or a Gradient.Direction.'
+            raise ValueError(msg)
+        if not 0 <= self.light <= 1:
+            msg = "Ink light must be between 0 and 1."
+            raise ValueError(msg)
+
+    @property
+    def _follows_light(self) -> bool:
+        """Whether the color is a gradient picked by the light, rather than a color the light darkens."""
+        return self.spread == "light" and not isinstance(self.color, Color)
+
+
+@dataclass(frozen=True)
 class Textured:
-    """Wrap text over the faces, colored by the light. Text repeats by default, or appears once with `repeat=False`.
+    """Wrap text over the faces, colored by its `ink`. Text repeats by default, or appears once with `repeat=False`.
 
     Each cell shows one symbol, so wide characters (such as CJK) are left blank.
 
-    Faces without a texture layout (prism and cylinder caps, polyhedra, the torus) are shaded in `back_color`.
+    With a `background`, every cell is filled with it and the text is drawn on top, in its ink. Without one, faces
+    without a texture layout (prism and cylinder caps, polyhedra, the torus) are shaded in `back_color`.
 
     Attributes:
         text (str | None): The text to wrap. `None` uses the effect's input text.
-        gradient (Gradient | None): Colors from unlit to fully lit. `None` uses the TTE brand colors.
+        ink (Ink): How the text is colored. The default follows the light through the TTE brand colors.
+        background (Color | Gradient | None): Fill behind the text, painted as each cell's background. A gradient
+            runs from unlit to fully lit, as `Solid` colors are. `None` leaves the text without a fill.
         back (str): `"hide"` draws spaces in the text as blank surface. `"dim"` lets the far side show through
             them, drawn in `back_color`.
         back_color (Color): Color of the far side and of faces without a texture layout.
@@ -112,13 +165,14 @@ class Textured:
         scale (float): Positive text size multiplier in both dimensions; 2 doubles each character's footprint.
 
     Raises:
-        ValueError: If `back` is not `"hide"` or `"dim"`, `scale` is not finite and positive,
-            or `offset` does not contain two finite coordinates.
+        ValueError: If `back` is not `"hide"` or `"dim"`, `back` is `"dim"` with a `background`, `scale` is not
+            finite and positive, or `offset` does not contain two finite coordinates.
 
     """
 
     text: str | None = None
-    gradient: Gradient | None = None
+    ink: Ink = Ink()
+    background: Color | Gradient | None = None
     back: typing.Literal["hide", "dim"] = "hide"
     back_color: Color = _DIM
     offset: tuple[float, float] = (0.0, 0.0)
@@ -129,6 +183,9 @@ class Textured:
         """Validate texture sampling settings."""
         if self.back not in ("hide", "dim"):
             msg = 'back must be "hide" or "dim".'
+            raise ValueError(msg)
+        if self.back == "dim" and self.background is not None:
+            msg = 'back="dim" shows the far side through the text, which a background would cover.'
             raise ValueError(msg)
         if not math.isfinite(self.scale) or self.scale <= 0:
             msg = "Texture scale must be finite and positive."
@@ -202,6 +259,23 @@ def _text_grid(text: str) -> tuple[list[str], int]:
     return lines, max(1, *(len(line) for line in lines))
 
 
+class _Text:
+    """A `Textured` look's text as one-cell symbols, and its ink colors where a gradient spreads across it."""
+
+    __slots__ = ("colors", "lines", "width")
+
+    def __init__(self, text: str, ink: Ink) -> None:
+        self.lines, self.width = _text_grid(text)
+        self.colors: list[list[Color]] | None = None
+        if isinstance(ink.spread, Gradient.Direction) and not isinstance(ink.color, Color):
+            rows = len(self.lines)
+            mapping = _gradient(ink.color).build_coordinate_color_mapping(1, rows, 1, self.width, ink.spread)
+            # Rows count up from the bottom, as on the canvas, so a vertical gradient starts at the last line.
+            self.colors = [
+                [mapping[Coord(column + 1, rows - row)] for column in range(self.width)] for row in range(rows)
+            ]
+
+
 def depth_order(depth: float, distance: float) -> float:
     """Return the order within a layer at `depth`: nearer than the text plane paints later, farther earlier."""
     return max(-0.49, min(0.49, (distance - depth) / (4 * distance)))
@@ -220,6 +294,10 @@ class _Slot:
         self.order = math.nan
         self.frame = -1
 
+
+_Style = tuple["Look | None", str, "ColorPair | None", ColorPair, float, "Color | None"]
+"""How a face is drawn: its look, symbol, colors (`None` where ink varies across the text), colors for cells without
+text, how lit it is, and the fill behind its text."""
 
 _Cell = tuple[float, "g3.Vec3 | None", str, ColorPair, "Body"]
 """A drawn cell: its camera depth, the face's world normal (`None` for wireframe edges), symbol, colors and body."""
@@ -250,7 +328,8 @@ class Painter:
         self.frame = 0
         self._slots: dict[Coord, _Slot] = {}
         self._shown: list[_Slot] = []
-        self._pairs: dict[Color, ColorPair] = {}
+        self._pairs: dict[object, ColorPair] = {}
+        self._shades: dict[tuple[Color, float, int], Color] = {}
         self._input_text: str | None = None
 
     @property
@@ -285,12 +364,25 @@ class Painter:
             self._input_text = "\n".join(lines)
         return self._input_text
 
-    def pair(self, color: Color) -> ColorPair:
-        """Return a shared foreground `ColorPair` for `color`, so unchanged cells can be spotted by identity."""
-        pair = self._pairs.get(color)
+    def pair(self, color: Color | None, background: Color | None = None) -> ColorPair:
+        """Return a shared `ColorPair` for these colors, so unchanged cells can be spotted by identity."""
+        key = color if background is None else (color, background)
+        pair = self._pairs.get(key)
         if pair is None:
-            pair = self._pairs[color] = ColorPair(fg=color)
+            pair = self._pairs[key] = ColorPair(fg=color, bg=background)
         return pair
+
+    def shade(self, color: Color, amount: float, lit: float) -> Color:
+        """Return `color` darkened toward black by `amount` of the shadow at `lit`, rounded to a light level."""
+        if not amount:
+            return color
+        level = round(lit * _LIGHT_LEVELS)
+        key = (color, amount, level)
+        shaded = self._shades.get(key)
+        if shaded is None:
+            factor = amount * (1 - level / _LIGHT_LEVELS)
+            shaded = self._shades[key] = shift_color_towards(color, _BLACK, factor)
+        return shaded
 
     def surface_characters(self) -> dict[Coord, EffectCharacter]:
         """Every pooled character, shown or not, by cell."""
@@ -420,31 +512,41 @@ class Painter:
         else:
             fronts, backs = g3.rasterize(mesh, camera, cull="back", **pose), {}
         # Shading depends only on the face, so it is worked out once per face rather than per cell.
-        styles: dict[int, tuple[Look | None, str, ColorPair, ColorPair]] = {}
+        styles: dict[int, _Style] = {}
         for cell, fragment in fronts.items():
             style = styles.get(fragment.face)
             if style is None:
                 style = styles[fragment.face] = self._face_style(body, fragment)
-            face_look, symbol, colors, fallback = style
+            face_look, symbol, colors, fallback, lit, fill = style
             if face_look is None:
                 continue
             if isinstance(face_look, Textured):
                 sampled = self._sample(body, face_look, fragment)
                 if sampled is None:
-                    colors = fallback  # A face without a texture layout is shaded instead.
-                elif sampled == " " and face_look.back == "dim":
-                    continue  # Let the far side show through.
+                    # A face without a texture layout is filled, or shaded without a fill.
+                    colors = fallback
+                    if fill is not None:
+                        symbol = " "
                 else:
-                    symbol = sampled
+                    symbol, row, column = sampled
+                    if symbol == " ":
+                        if face_look.back == "dim":
+                            continue  # Let the far side show through.
+                        if fill is not None or colors is None:
+                            colors = fallback  # A blank needs no ink, only the fill.
+                    elif colors is None:
+                        colors = self._spread_colors(body, face_look, row, column, lit, fill)
+            assert colors is not None  # Only text cells leave colors to be looked up, and they were.
             _offer(cells, cell, fragment.depth, fragment.normal, symbol, colors, body)
         for cell, fragment in backs.items():
             face_look = body._face_look(fragment.tag)
             if isinstance(face_look, Textured) and face_look.back == "dim":
-                symbol = self._sample(body, face_look, fragment) or " "
+                sampled = self._sample(body, face_look, fragment)
+                symbol = sampled[0] if sampled is not None else " "
                 _offer(cells, cell, fragment.depth, fragment.normal, symbol, self.pair(face_look.back_color), body)
 
-    def _face_style(self, body: Body, fragment: g3.Fragment) -> tuple[Look | None, str, ColorPair, ColorPair]:
-        """Return a face's look, symbol, lit colors and colors for untextured faces, from its angle to the light."""
+    def _face_style(self, body: Body, fragment: g3.Fragment) -> _Style:
+        """Return how a face is drawn, from its look and its angle to the light."""
         look = body._face_look(fragment.tag)
         shade = g3.lambert(fragment.normal, self.world.world_light)
         lit = _AMBIENT + (1 - _AMBIENT) * shade
@@ -452,26 +554,52 @@ class Painter:
         if isinstance(look, Shaded):
             symbol = look.symbols[min(len(look.symbols) - 1, int(shade * len(look.symbols)))]
             colors = self.pair(_gradient(look.gradient).get_color_at_fraction(shade))
-            return look, symbol, colors, colors
+            return look, symbol, colors, colors, lit, None
         if isinstance(look, Solid):
-            colors = self.pair(_gradient(look.gradient).get_color_at_fraction(lit))
-            return look, look.symbol, colors, colors
+            color = _gradient(look.gradient).get_color_at_fraction(lit)
+            if look.background:
+                colors = self.pair(None, color)
+                return look, " ", colors, colors, lit, color
+            colors = self.pair(color)
+            return look, look.symbol, colors, colors, lit, None
         if isinstance(look, Textured):
-            colors = self.pair(_gradient(look.gradient).get_color_at_fraction(lit))
-            return look, ramp, colors, self.pair(look.back_color)
-        return None, ramp, self.pair(_DIM), self.pair(_DIM)
+            background = look.background
+            fill = background.get_color_at_fraction(lit) if isinstance(background, Gradient) else background
+            fallback = self.pair(None, fill) if fill is not None else self.pair(look.back_color)
+            ink = look.ink
+            if ink._follows_light:
+                text_colors = self.pair(
+                    _gradient(typing.cast("Gradient | None", ink.color)).get_color_at_fraction(lit), fill
+                )
+            elif isinstance(ink.color, Color):
+                text_colors = self.pair(self.shade(ink.color, ink.light, lit), fill)
+            else:
+                text_colors = None  # Spread across the text: looked up per cell.
+            return look, ramp, text_colors, fallback, lit, fill
+        return None, ramp, self.pair(_DIM), self.pair(_DIM), lit, None
 
-    def _sample(self, body: Body, look: Textured, fragment: g3.Fragment) -> str | None:
-        """Return the text symbol at a fragment, or `None` where its face has no texture layout."""
+    def _spread_colors(
+        self, body: Body, look: Textured, row: int, column: int, lit: float, fill: Color | None
+    ) -> ColorPair:
+        """Return the colors of the text cell at `row`, `column` of an ink spread across the text."""
+        colors = body._texts[id(look)].colors
+        assert colors is not None  # Built for every ink spread across the text.
+        return self.pair(self.shade(colors[row][column], look.ink.light, lit), fill)
+
+    def _sample(self, body: Body, look: Textured, fragment: g3.Fragment) -> tuple[str, int, int] | None:
+        """Return the text symbol at a fragment with its text row and column, or `None` without a texture layout.
+
+        A blank outside text that doesn't repeat has row and column -1.
+        """
         shape = body.shape
         place = shape.texture_cell(fragment) if shape is not None else None
         if place is None:
             return None
         texts = body._texts
-        grid = texts.get(id(look))
-        if grid is None:
-            grid = texts[id(look)] = _text_grid(look.text if look.text is not None else self.input_text)
-        lines, width = grid
+        text = texts.get(id(look))
+        if text is None:
+            text = texts[id(look)] = _Text(look.text if look.text is not None else self.input_text, look.ink)
+        lines, width = text.lines, text.width
         # A centered shape measures from the middle of the text, so the text's own middle goes there.
         middle_row, middle_column = (len(lines) / 2, width / 2) if shape and shape.texture_centered else (0.0, 0.0)
         # The nudge keeps cells that land exactly on a text column boundary from rounding down a column.
@@ -485,6 +613,6 @@ class Painter:
         if look.repeat:
             row, column = row % len(lines), column % width
         elif not (0 <= row < len(lines) and 0 <= column < width):
-            return " "
+            return " ", -1, -1
         line = lines[row]
-        return line[column] if column < len(line) else " "
+        return (line[column] if column < len(line) else " "), row, column
