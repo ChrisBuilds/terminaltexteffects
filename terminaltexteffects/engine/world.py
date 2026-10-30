@@ -310,6 +310,49 @@ class SurfaceTarget(SpatialNode):
         raise TypeError(msg)
 
 
+class _PathFollow:
+    """The progress of the path a body is on when a synced tween starts, or `None` once that path stops."""
+
+    def __init__(self, body: Body, *, by_step: bool) -> None:
+        self.body = body
+        self.by_step = by_step
+        self.bound = False
+        self.path: Path | None = None
+        self.generation = 0
+
+    def bind(self) -> None:
+        """Follow the body's active path, once.
+
+        The world binds before moving the body, so a path that ends or is replaced on the tween's first frame still
+        ends the tween.
+        """
+        if self.bound:
+            return
+        self.bound = True
+        motion = self.body._motion
+        if motion is not None:
+            self.path = motion.active_path
+            self.generation = motion._path_generation
+
+    def __call__(self) -> float | None:
+        self.bind()
+        motion = self.body._motion
+        path = self.path
+        if (
+            path is None
+            or motion is None
+            or motion.active_path is not path
+            or motion._path_generation != self.generation
+            or path.current_step >= path.max_steps
+        ):
+            return None
+        if self.by_step:
+            progress = path.current_step / path.max_steps
+        else:
+            progress = path.last_distance_reached / path.total_distance if path.total_distance > 0 else 1.0
+        return min(max(progress, 0.0), 1.0)
+
+
 class Body(SpatialNode, TweenQueue):
     """A node with rotation and scale, which other nodes are measured against.
 
@@ -811,30 +854,7 @@ class Body(SpatialNode, TweenQueue):
         if sync not in (Scene.SyncMetric.DISTANCE, Scene.SyncMetric.STEP):
             msg = "A body tween syncs to its path with Scene.SyncMetric.DISTANCE or Scene.SyncMetric.STEP."
             raise ValueError(msg)
-        by_step = sync is Scene.SyncMetric.STEP
-        followed: dict[str, typing.Any] = {}
-
-        def follow() -> float | None:
-            motion = self._motion
-            if not followed:
-                followed["path"] = motion.active_path if motion is not None else None
-                followed["generation"] = motion._path_generation if motion is not None else 0
-            path: Path | None = followed["path"]
-            if (
-                path is None
-                or motion is None
-                or motion.active_path is not path
-                or motion._path_generation != followed["generation"]
-                or path.current_step >= path.max_steps
-            ):
-                return None
-            if by_step:
-                progress = path.current_step / path.max_steps
-            else:
-                progress = path.last_distance_reached / path.total_distance if path.total_distance > 0 else 1.0
-            return min(max(progress, 0.0), 1.0)
-
-        return Tween(1, apply, ease, begin, follow=follow)
+        return Tween(1, apply, ease, begin, follow=_PathFollow(self, by_step=sync is Scene.SyncMetric.STEP))
 
     def _turn_through(
         self,
@@ -1186,7 +1206,11 @@ class World:
             motion = body._motion
             # Tweens synced to the body's path play after it moves, so its pose matches where it is.
             follows = bool(queue) and queue[0].follows
-            if queue and not follows:
+            if follows:
+                for tween in queue[0].tweens:
+                    if isinstance(tween.follow, _PathFollow):
+                        tween.follow.bind()
+            elif queue:
                 finished.extend((body, body._callback_generation, callback) for callback in body._advance())
             if motion is not None and motion.active_path is not None:
                 motion.move()

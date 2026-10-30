@@ -696,3 +696,18 @@ def test_light_and_depth_sync_are_rejected(world: World, sync: Scene.SyncMetric)
         body.spin("y", sync=sync)
     with pytest.raises(ValueError, match="DISTANCE"):
         body.turn_to_rest(sync=sync)
+
+
+def test_synced_tween_ends_when_its_path_ends_on_the_first_frame(world: World) -> None:
+    """A path that completes on the tween's first frame ends the tween, not the path chained after it."""
+    body = world.body(Cube(4))
+    first = body.motion.new_path(speed=1)
+    first.new_waypoint(g3.Vec3(1.0, 0.0, 0.0))
+    second = body.motion.new_path(speed=1)
+    second.new_waypoint(g3.Vec3(10.0, 0.0, 0.0))
+    body.motion.chain_paths([first, second])
+    body.motion.activate_path(first)
+    body.scale_to(3.0, sync=Scene.SyncMetric.STEP)
+    world.step()
+    assert body.scale == pytest.approx(3.0)
+    assert not body.animating
