@@ -78,13 +78,18 @@ _Owner = typing.TypeVar("_Owner")
 
 @dataclass
 class Tween(typing.Generic[_Owner]):
-    """One queued animation. `apply` receives the previous and current eased progress."""
+    """One queued animation. `apply` receives the previous and current eased progress.
+
+    A tween with `follow` takes its progress from it instead of counting frames: `follow()` returns the fraction
+    played so far, or `None` once the tween should end, and its first call happens after `begin`.
+    """
 
     frames: int
     apply: Callable[[float, float], None]
     ease: EasingFunction | None = None
     begin: Callable[[], None] | None = None
     callbacks: list[Callable[[_Owner], None]] = field(default_factory=list)
+    follow: Callable[[], float | None] | None = None
     frame: int = 0
     progress: float = 0.0
     started: bool = False
@@ -102,11 +107,19 @@ class Tween(typing.Generic[_Owner]):
     def advance(self) -> None:
         """Play one frame, or the whole tween when it has no frames."""
         self.start()
-        if self.frames == 0:
+        if self.follow is not None:
+            followed = self.follow()
+            if followed is None:
+                fraction = 1.0
+                self.frame = self.frames
+            else:
+                fraction = followed
+        elif self.frames == 0:
             self.apply(0.0, 1.0)
             return
-        self.frame += 1
-        fraction = self.frame / self.frames
+        else:
+            self.frame += 1
+            fraction = self.frame / self.frames
         eased = self.ease(fraction) if self.ease is not None else fraction
         self.apply(self.progress, eased)
         self.progress = eased
@@ -118,6 +131,7 @@ class _Group(typing.Generic[_Owner]):
 
     tweens: list[Tween[_Owner]]
     callbacks: list[Callable[[_Owner], None]] = field(default_factory=list)
+    follows: bool = False
 
 
 _Queue = typing.TypeVar("_Queue", bound="TweenQueue")
@@ -213,9 +227,12 @@ class TweenQueue:
                 callback(self)
             return self
         if together and self._queue:
-            self._queue[-1].tweens.append(tween)
+            group = self._queue[-1]
+            group.tweens.append(tween)
         else:
-            self._queue.append(_Group([tween]))
+            group = _Group([tween])
+            self._queue.append(group)
+        group.follows = group.follows or tween.follow is not None
         return self
 
     def _advance(self) -> list[Callable[[typing.Any], None]]:
