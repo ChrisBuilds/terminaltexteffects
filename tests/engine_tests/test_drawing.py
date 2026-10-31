@@ -823,3 +823,125 @@ def test_painter_shares_pairs_with_backgrounds_and_shades_by_light_level() -> No
     assert painter(world).shade(white, 0.0, 0.2) is white
     assert painter(world).shade(white, 1.0, 0.5) is painter(world).shade(white, 1.0, 0.51)
     assert painter(world).shade(white, 1.0, 1.0) == white
+
+
+def test_text_on_a_filled_body_draws_over_the_fill() -> None:
+    """A character on a background-filled body shows its symbol and color over the fill, in front of itself."""
+    world = make_world("Z")
+    fill = Color("#334455")
+    body = world.body(Box(10, 6, 10)).draw(Solid(gradient=Gradient(fill, fill), background=True))
+    character = attach(world, body, (0, 0, 5))
+    character.animation.set_appearance("Z", ColorPair(fg="ff0000"))
+    step(world)
+    cell = body.surface_characters[character.motion.current_coord]
+    assert symbol(cell) == "Z"
+    assert color(cell) == Color("ff0000")
+    assert background(cell) == fill
+    assert painter_order(cell) > painter_order(character)
+    character.animation.set_appearance("Y", ColorPair(fg="00ff00"))
+    step(world)
+    assert (symbol(cell), color(cell), background(cell)) == ("Y", Color("00ff00"), fill)
+
+
+def test_the_fill_returns_when_text_leaves_the_surface() -> None:
+    """Once the character detaches, the cell it sat on shows only the fill again."""
+    world = make_world("Z")
+    body = world.body(Box(10, 6, 10)).draw(Solid(background=True))
+    character = attach(world, body, (0, 0, 5))
+    step(world)
+    coord = character.motion.current_coord
+    character.detach()
+    step(world)
+    cell = body.surface_characters[coord]
+    assert symbol(cell) == " "
+    assert color(cell) is None
+    assert background(cell) is not None
+    assert cell.layer == 0
+
+
+def test_text_keeps_its_own_background_and_layer_over_a_fill() -> None:
+    """A character's own background wins over the fill, and the cell takes the character's layer."""
+    world = make_world("Z")
+    body = world.body(Box(10, 6, 10)).draw(Solid(background=True))
+    character = attach(world, body, (0, 0, 5))
+    character.layer = 2
+    character.animation.set_appearance("Z", ColorPair(fg="ff0000", bg="0000ff"))
+    step(world)
+    cell = body.surface_characters[character.motion.current_coord]
+    assert background(cell) == Color("0000ff")
+    assert cell.layer == 2
+    assert painter_order(cell) > painter_order(character)
+
+
+def test_text_replaces_cells_without_a_fill() -> None:
+    """Without a background fill, a character still draws over the cell, which keeps its own symbol."""
+    world = make_world("Z")
+    body = world.body(Box(10, 6, 10)).draw(Solid("#"))
+    character = attach(world, body, (0, 0, 5))
+    step(world)
+    cell = body.surface_characters[character.motion.current_coord]
+    assert symbol(cell) == "#"
+    assert painter_order(cell) < painter_order(character)
+
+
+@pytest.mark.parametrize(
+    ("ink", "expected"),
+    [
+        (None, "ff0000"),
+        (Ink(light=0), "ff0000"),
+        (Ink(Color("#00ff00"), light=0), "00ff00"),
+        (Ink(Gradient(Color("#00ff00"), Color("#0000ff")), light=0), "0000ff"),
+    ],
+)
+def test_solid_ink_colors_text_over_the_fill(ink: Ink | None, expected: str) -> None:
+    """`Solid.ink` keeps, darkens or replaces the color of characters drawn over its fill."""
+    world = make_world("Z", light="front")
+    body = world.body(Box(10, 6, 10)).draw(Solid(background=True, ink=ink))
+    character = attach(world, body, (0, 0, 5))
+    character.animation.set_appearance("Z", ColorPair(fg="ff0000"))
+    step(world)
+    cell = body.surface_characters[character.motion.current_coord]
+    shown = color(cell)
+    assert shown is not None
+    if ink is not None and isinstance(ink.color, Gradient):
+        assert shown in set(ink.color)  # Follows the light: fully lit from the front.
+    else:
+        assert shown.rgb_color == expected
+
+
+def test_solid_ink_light_darkens_text_in_shadow() -> None:
+    """`Ink(light=1)` darkens a character's own color on a face turned from the light."""
+    world = make_world("Z", light="right")
+    body = world.body(Box(10, 6, 10)).draw(Solid(background=True, ink=Ink(light=1)))
+    character = attach(world, body, (0, 0, 5))
+    character.animation.set_appearance("Z", ColorPair(fg="ffffff"))
+    step(world)
+    shown = color(body.surface_characters[character.motion.current_coord])
+    assert shown is not None
+    assert shown.rgb_ints[0] < 255
+
+
+def test_solid_ink_spread_runs_across_the_input_text() -> None:
+    """A spread ink colors each character by its input position across the input text."""
+    world = make_world("AB")
+    red, blue = Color("#ff0000"), Color("#0000ff")
+    ink = Ink(Gradient(red, blue, steps=4), spread=Gradient.Direction.HORIZONTAL, light=0)
+    body = world.body(Box(20, 6, 10)).draw(Solid(background=True, ink=ink))
+    first, second = terminal_of(world).get_characters()
+    for character, x in ((first, -2), (second, 2)):
+        terminal_of(world).set_character_visibility(character, is_visible=True)
+        character.attach(body, at=body.surface.locate((x, 0, 5)))
+    step(world)
+    assert color(body.surface_characters[first.motion.current_coord]) == red
+    assert color(body.surface_characters[second.motion.current_coord]) == blue
+
+
+def test_text_a_rounding_error_off_the_surface_still_draws_over_the_fill() -> None:
+    """A character landing on a surface can keep a trace of height, and still counts as on it."""
+    world = make_world("Z")
+    body = world.body(Box(10, 6, 10)).draw(Solid(background=True))
+    character = attach(world, body, (0, 0, 5))
+    position = character.motion._xyz
+    character.motion._xyz = (position[0], position[1], 1e-15)
+    step(world)
+    assert symbol(body.surface_characters[character.motion.current_coord]) == "Z"

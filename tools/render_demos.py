@@ -228,6 +228,7 @@ GUIDE_DEMOS: dict[str, Demo] = {
             ("handoff", "handoff", ()),
             ("nodes", "nodes", ()),
             ("flight", "flight", ()),
+            ("flight_filled", "flight", ("--filled",)),
             ("routes", "routes", ()),
             ("logo", "logo", ()),
             ("die", "die", ()),
