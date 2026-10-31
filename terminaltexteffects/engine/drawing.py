@@ -8,7 +8,9 @@
 A drawn body is shown with characters the world creates and manages, one per covered cell, so an effect's own
 characters are never used for it. Drawn cells and characters are painted in one order: by layer, then farther
 first, so the nearest wins each cell. A character sitting on its body's surface (height 0) and facing the camera
-draws over that body's own cell beneath it, like a decal, and anything genuinely in front of it still hides it.
+draws over that body's own cell beneath it, like a decal, and anything genuinely in front of it still hides it. On a
+body filled with a background color (`Solid(background=True)`, `Textured(background=...)`) the character's symbol is
+drawn over the fill instead, so the shape stays solid under the text.
 
 Classes:
     Shaded, Solid, Textured, Wireframe: Looks for drawing a body.
@@ -20,7 +22,7 @@ from __future__ import annotations
 import math
 import typing
 import weakref
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from terminaltexteffects.utils import geometry3d as g3
 from terminaltexteffects.utils.exceptions import InvalidSymbolError
@@ -29,6 +31,7 @@ from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient, shift
 from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 if typing.TYPE_CHECKING:
+    from terminaltexteffects.engine.animation import CharacterVisual
     from terminaltexteffects.engine.base_character import EffectCharacter
     from terminaltexteffects.engine.terminal import Terminal
     from terminaltexteffects.engine.world import Body, World
@@ -46,6 +49,10 @@ _TEXT_NUDGE = 1e-6
 _SURFACE_BIAS = 1e-3
 """How much farther a drawn cell is ordered than it is, in units, so a character exactly on the surface draws on top.
 It is in units rather than order, so it stays smaller than real gaps however far away the eye is."""
+_SPREAD_CACHE_SIZE = 64
+"""How many inks' gradients spread across the input text are kept worked out at once."""
+_ON_SURFACE_HEIGHT = 1e-9
+"""The largest height a character can have and still count as on its body's surface."""
 _DECAL_REACH = 2.0
 """How far behind its body's drawn cell, in units, a character on the surface still draws over it. It covers
 the gap between a curved surface and the flat facets it is drawn with, and the cell-center sampling at folds."""
@@ -77,32 +84,8 @@ class Shaded:
 
 
 @dataclass(frozen=True)
-class Solid:
-    """Fill faces with one symbol, colored by the light.
-
-    Attributes:
-        symbol (str): The fill symbol, one cell wide. Not drawn when `background` is true.
-        gradient (Gradient | None): Colors from unlit to fully lit. `None` uses the TTE brand colors.
-        background (bool): Paint the color as each cell's background, filling the whole cell, instead of drawing
-            `symbol` in it.
-
-    Raises:
-        ValueError: If `symbol` is not one printable character one cell wide.
-
-    """
-
-    symbol: str = "█"
-    gradient: Gradient | None = None
-    background: bool = False
-
-    def __post_init__(self) -> None:
-        """Validate the symbol."""
-        _check_one_cell(self.symbol)
-
-
-@dataclass(frozen=True)
 class Ink:
-    """How a `Textured` look colors its text.
+    """How a `Textured` look colors its text, or a `Solid` background fill the characters drawn over it.
 
     A gradient either follows the light, unlit to fully lit, or is spread across the text so its colors stay on the
     same letters as they travel round the shape. Any other color can be darkened by the light by `light`.
@@ -140,6 +123,35 @@ class Ink:
     def _follows_light(self) -> bool:
         """Whether the color is a gradient picked by the light, rather than a color the light darkens."""
         return self.spread == "light" and not isinstance(self.color, Color)
+
+
+@dataclass(frozen=True)
+class Solid:
+    """Fill faces with one symbol, colored by the light.
+
+    Attributes:
+        symbol (str): The fill symbol, one cell wide. Not drawn when `background` is true.
+        gradient (Gradient | None): Colors from unlit to fully lit. `None` uses the TTE brand colors.
+        background (bool): Paint the color as each cell's background, filling the whole cell, instead of drawing
+            `symbol` in it. Characters on the body's surface are then drawn over the fill.
+        ink (Ink | None): How characters drawn over a background fill are colored. `None` keeps each character's own
+            color. An `Ink` with no color keeps it too, darkened by the light by `light`, and an `Ink` with a color
+            replaces it; a gradient spread across the text runs across the input text, by each character's input
+            position.
+
+    Raises:
+        ValueError: If `symbol` is not one printable character one cell wide.
+
+    """
+
+    symbol: str = "█"
+    gradient: Gradient | None = None
+    background: bool = False
+    ink: Ink | None = None
+
+    def __post_init__(self) -> None:
+        """Validate the symbol."""
+        _check_one_cell(self.symbol)
 
 
 @dataclass(frozen=True)
@@ -284,13 +296,14 @@ def depth_order(depth: float, distance: float) -> float:
 class _Slot:
     """One pooled character showing a drawn cell, and the appearance it was last given."""
 
-    __slots__ = ("character", "colors", "frame", "order", "symbol", "visual")
+    __slots__ = ("character", "colors", "frame", "order", "source", "symbol", "visual")
 
     def __init__(self, character: EffectCharacter) -> None:
         self.character = character
         self.symbol = ""
         self.colors: ColorPair | None = None
         self.visual: object = None
+        self.source: CharacterVisual | None = None
         self.order = math.nan
         self.frame = -1
 
@@ -299,8 +312,18 @@ _Style = tuple["Look | None", str, "ColorPair | None", ColorPair, float, "Color 
 """How a face is drawn: its look, symbol, colors (`None` where ink varies across the text), colors for cells without
 text, how lit it is, and the fill behind its text."""
 
-_Cell = tuple[float, "g3.Vec3 | None", str, ColorPair, "Body"]
-"""A drawn cell: its camera depth, the face's world normal (`None` for wireframe edges), symbol, colors and body."""
+_Cell = tuple[float, "g3.Vec3 | None", str, ColorPair, "Body", "Ink | None"]
+"""A drawn cell: its camera depth, the face's world normal (`None` for wireframe edges), symbol, colors, body, and the
+ink for characters drawn over its fill."""
+
+_Decal = tuple[float, "EffectCharacter", float]
+"""The characters on a drawn cell's surface: the depth to order the cell at (the farthest character's, never nearer
+than the cell), and the character the terminal would paint last there, with its depth."""
+
+
+def _painter_key(character: EffectCharacter) -> tuple[int, float, int]:
+    """Return what the terminal paints characters in a cell by: the last painted, with the largest key, shows."""
+    return character._layer, character._depth_order, character._character_id
 
 
 def _offer(
@@ -311,11 +334,12 @@ def _offer(
     symbol: str,
     colors: ColorPair,
     body: Body,
+    ink: Ink | None = None,
 ) -> None:
     """Put a drawn cell into `cells` if it is nearer than what is there."""
     current = cells.get(cell)
     if current is None or depth < current[0]:
-        cells[cell] = (depth, normal, symbol, colors, body)
+        cells[cell] = (depth, normal, symbol, colors, body, ink)
 
 
 class Painter:
@@ -330,6 +354,8 @@ class Painter:
         self._shown: list[_Slot] = []
         self._pairs: dict[object, ColorPair] = {}
         self._shades: dict[tuple[Color, float, int], Color] = {}
+        # Keyed by id, holding the ink so its id can't be reused for another while its entry stands.
+        self._spreads: dict[int, tuple[Ink, dict[Coord, Color]]] = {}
         self._input_text: str | None = None
 
     @property
@@ -418,25 +444,24 @@ class Painter:
         frame = self.frame
         decals = self._decals(cells)
         shown: list[_Slot] = []
-        for cell, (depth, _normal, symbol, colors, body) in cells.items():
+        for cell, drawn_cell in cells.items():
+            depth, normal, symbol, colors, body, ink = drawn_cell
             slot = self._slots.get(cell)
             if slot is None:
                 slot = self._slots[cell] = _Slot(self._new_character(cell))
-            character = slot.character
-            animation = character.animation
-            if (
-                slot.symbol != symbol
-                or slot.colors is not colors
-                or slot.visual is not animation.current_character_visual
-            ):
-                animation.set_appearance(symbol, colors)
-                slot.symbol, slot.colors, slot.visual = symbol, colors, animation.current_character_visual
-            order = depth_order(decals.get(cell, depth) + _SURFACE_BIAS, distance)
-            if slot.order != order:
-                character._set_depth_order(order)
-                slot.order = order
-            if not character.is_visible:
-                self.terminal.set_character_visibility(character, is_visible=True)
+            decal = decals.get(cell)
+            layer = 0
+            source = None
+            if decal is None:
+                order_depth = depth
+            elif colors.bg is not None and (drawn := self._over_fill(decal[1], colors, normal, ink)) is not None:
+                # Drawn over the fill: this cell shows the character, so it goes just in front of it.
+                source, colors = drawn
+                order_depth = decal[2] - 2 * _SURFACE_BIAS
+                layer = decal[1].layer
+            else:
+                order_depth = decal[0]
+            self._show(slot, symbol, colors, depth_order(order_depth + _SURFACE_BIAS, distance), layer, source)
             slot.frame = frame
             body._cells.append(slot)
             shown.append(slot)
@@ -444,6 +469,53 @@ class Painter:
             if slot.frame != frame:
                 self.terminal.set_character_visibility(slot.character, is_visible=False)
         self._shown = shown
+
+    def _show(
+        self,
+        slot: _Slot,
+        symbol: str,
+        colors: ColorPair,
+        order: float,
+        layer: int,
+        source: CharacterVisual | None = None,
+    ) -> None:
+        """Give a slot's character this appearance, order and layer, changing only what differs, and show it.
+
+        With a `source` visual, the slot shows that visual, with its symbol and modes (bold, underline and so on),
+        in `colors` instead.
+        """
+        character = slot.character
+        if character.layer != layer:
+            character.layer = layer
+        animation = character.animation
+        if source is not None:
+            if (
+                slot.source is not source
+                or slot.colors is not colors
+                or slot.visual is not animation.current_character_visual
+            ):
+                animation.current_character_visual = replace(
+                    source,
+                    colors=colors,
+                    _fg_color_code=animation._get_color_code(colors.fg),
+                    _bg_color_code=animation._get_color_code(colors.bg),
+                )
+                slot.symbol, slot.colors, slot.visual = source.symbol, colors, animation.current_character_visual
+                slot.source = source
+        elif (
+            slot.source is not None
+            or slot.symbol != symbol
+            or slot.colors is not colors
+            or slot.visual is not animation.current_character_visual
+        ):
+            animation.set_appearance(symbol, colors)
+            slot.symbol, slot.colors, slot.visual = symbol, colors, animation.current_character_visual
+            slot.source = None
+        if slot.order != order:
+            character._set_depth_order(order)
+            slot.order = order
+        if not character.is_visible:
+            self.terminal.set_character_visibility(character, is_visible=True)
 
     def _new_character(self, cell: Coord) -> EffectCharacter:
         """Add a character that stays on its screen cell whatever the camera does."""
@@ -453,14 +525,14 @@ class Painter:
         character.motion = ScreenMotion(character)
         return character
 
-    def _decals(self, cells: dict[Coord, _Cell]) -> dict[Coord, float]:
-        """Return the depths to order drawn cells at, where a character on the body's surface draws over them.
+    def _decals(self, cells: dict[Coord, _Cell]) -> dict[Coord, _Decal]:
+        """Return the characters on the body's surface over each drawn cell, which draw over the body's own cell.
 
         A character at height 0 on a drawn body, facing the camera, draws over the body's own cell beneath it, even
         when it measures a little farther (a curved surface is drawn with flat facets). A cell of anything else,
         or of the body well in front of the character, keeps its depth and still hides it.
         """
-        decals: dict[Coord, float] = {}
+        decals: dict[Coord, _Decal] = {}
         for body in {cell[4] for cell in cells.values()}:
             surface = body._surface
             if surface is None:
@@ -469,17 +541,77 @@ class Painter:
                 if not node._ON_SURFACE:
                     continue  # a body: only characters are decals
                 character = typing.cast("EffectCharacter", node)
-                if not character.is_visible or character.motion._xyz[2]:
+                # Within a rounding error of height 0: landing on a surface can leave a trace of height.
+                if not character.is_visible or abs(character.motion._xyz[2]) > _ON_SURFACE_HEIGHT:
                     continue
                 view = character.view
                 if not view.projected or not view.facing:
                     continue
                 cell = view.cell
                 drawn = cells.get(cell)
-                if drawn is None or drawn[4] is not body or not 0 < view.depth - drawn[0] <= _DECAL_REACH:
+                # Nearer than the cell is always fine: the character is drawn in front of it anyway.
+                if drawn is None or drawn[4] is not body or view.depth - drawn[0] > _DECAL_REACH:
                     continue
-                decals[cell] = max(decals.get(cell, drawn[0]), view.depth)
+                current = decals.get(cell)
+                depth = view.depth
+                if current is None:
+                    # Ordered no nearer than the cell itself: a character in front of it is drawn later anyway.
+                    decals[cell] = (max(depth, drawn[0]), character, depth)
+                else:
+                    # The cell shows the character the terminal paints last there, ties broken as it breaks them.
+                    shown, shown_depth = current[1], current[2]
+                    if _painter_key(character) > _painter_key(shown):
+                        shown, shown_depth = character, depth
+                    decals[cell] = (max(depth, current[0]), shown, shown_depth)
         return decals
+
+    def _over_fill(
+        self, character: EffectCharacter, fill: ColorPair, normal: g3.Vec3 | None, ink: Ink | None
+    ) -> tuple[CharacterVisual, ColorPair] | None:
+        """Return the visual and colors of `character` drawn over a cell's background `fill`, coloring it by `ink`.
+
+        A character with its own background keeps it. A wide character can't be drawn in one cell, so it is left to
+        draw itself, and `None` is returned.
+        """
+        visual = character.animation.current_character_visual
+        if visual.cell_width != 1:
+            return None
+        own = visual.colors
+        color = own.fg if own is not None else None
+        background = own.bg if own is not None and own.bg is not None else fill.bg
+        if ink is not None:
+            lit = _AMBIENT + (1 - _AMBIENT) * g3.lambert(normal, self.world.world_light) if normal is not None else 1.0
+            ink_color = ink.color
+            if isinstance(ink_color, Color):
+                color = ink_color
+            elif ink_color is not None:
+                if ink.spread == "light":
+                    return visual, self.pair(ink_color.get_color_at_fraction(lit), background)
+                color = self._spread_color(ink, character) or color
+            if color is not None:
+                color = self.shade(color, ink.light, lit)
+        return visual, self.pair(color, background)
+
+    def _spread_color(self, ink: Ink, character: EffectCharacter) -> Color | None:
+        """Return the color of an ink's gradient, spread across the input text, at a character's input position."""
+        entry = self._spreads.get(id(ink))
+        if entry is not None and entry[0] is ink:
+            mapping = entry[1]
+        else:
+            if len(self._spreads) >= _SPREAD_CACHE_SIZE:
+                self._spreads.clear()  # Looks replaced over and over: start again rather than keep every ink.
+            canvas = self.terminal.canvas
+            gradient = typing.cast("Gradient", ink.color)
+            direction = typing.cast("Gradient.Direction", ink.spread)
+            mapping = gradient.build_coordinate_color_mapping(
+                max(1, canvas.text_bottom),
+                max(1, canvas.text_top),
+                max(1, canvas.text_left),
+                max(1, canvas.text_right),
+                direction,
+            )
+            self._spreads[id(ink)] = (ink, mapping)
+        return mapping.get(character.input_coord)
 
     def _contribute(self, body: Body, cells: dict[Coord, _Cell], bounds: g3.Bounds) -> None:
         """Add the body's nearest surface in each cell inside `bounds` to `cells`, where it beats what is there."""
@@ -537,7 +669,8 @@ class Painter:
                     elif colors is None:
                         colors = self._spread_colors(body, face_look, row, column, lit, fill)
             assert colors is not None  # Only text cells leave colors to be looked up, and they were.
-            _offer(cells, cell, fragment.depth, fragment.normal, symbol, colors, body)
+            ink = face_look.ink if isinstance(face_look, Solid) else None
+            _offer(cells, cell, fragment.depth, fragment.normal, symbol, colors, body, ink)
         for cell, fragment in backs.items():
             face_look = body._face_look(fragment.tag)
             if isinstance(face_look, Textured) and face_look.back == "dim":

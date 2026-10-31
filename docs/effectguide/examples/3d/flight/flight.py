@@ -8,7 +8,18 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from terminaltexteffects import EffectCharacter, EventHandler, Shaded, Vec3, easing, rotation_about
+from terminaltexteffects import (
+    Color,
+    EffectCharacter,
+    EventHandler,
+    Gradient,
+    Ink,
+    Shaded,
+    Solid,
+    Vec3,
+    easing,
+    rotation_about,
+)
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.shapes import Cube
@@ -33,6 +44,14 @@ class FlightConfig(BaseConfig):
     )  # pyright: ignore[reportAssignmentType]
     "int : Frames the text rides the cube once every character has landed."
 
+    filled: bool = argutils.ArgSpec(
+        name="--filled",
+        default=False,
+        action="store_true",
+        help="Fill the cube with a solid background color, so the riders are drawn over it.",
+    )  # pyright: ignore[reportAssignmentType]
+    "bool : Fill the cube with a solid background color, so the riders are drawn over it."
+
     parser_spec = argutils.ParserSpec(
         name="flight",
         help="The text flies onto a spinning cube, rides it, and flies home.",
@@ -49,7 +68,13 @@ class FlightIterator(BaseEffectIterator[FlightConfig]):
         super().__init__(effect)
         self.world = self.terminal.world
         self.world.set_light("upper left")
-        self.cube = self.world.body(Cube(24), at=(0, 0, -30)).draw(Shaded())
+        self.cube = self.world.body(Cube(24), at=(0, 0, -30))
+        if self.config.filled:
+            # A background fill keeps the cube solid under the riders. The ink draws them white, dimmed in shadow.
+            fill = Gradient(Color("#1a0020"), Color("#8A008A"), steps=12)
+            self.cube.draw(Solid(gradient=fill, background=True, ink=Ink(Color("#ffffff"), light=0.6)))
+        else:
+            self.cube.draw(Shaded())
         self.cube.rotation = rotation_about("x", 20)
         self.cube.spin("y", turns=6, frames=1200, local=True)
 
