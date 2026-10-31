@@ -49,6 +49,8 @@ _TEXT_NUDGE = 1e-6
 _SURFACE_BIAS = 1e-3
 """How much farther a drawn cell is ordered than it is, in units, so a character exactly on the surface draws on top.
 It is in units rather than order, so it stays smaller than real gaps however far away the eye is."""
+_SPREAD_CACHE_SIZE = 64
+"""How many inks' gradients spread across the input text are kept worked out at once."""
 _ON_SURFACE_HEIGHT = 1e-9
 """The largest height a character can have and still count as on its body's surface."""
 _DECAL_REACH = 2.0
@@ -352,8 +354,8 @@ class Painter:
         self._shown: list[_Slot] = []
         self._pairs: dict[object, ColorPair] = {}
         self._shades: dict[tuple[Color, float, int], Color] = {}
-        # Keyed by id, like texts: inks are frozen and live as long as the looks that hold them.
-        self._spreads: dict[int, dict[Coord, Color]] = {}
+        # Keyed by id, holding the ink so its id can't be reused for another while its entry stands.
+        self._spreads: dict[int, tuple[Ink, dict[Coord, Color]]] = {}
         self._input_text: str | None = None
 
     @property
@@ -592,18 +594,23 @@ class Painter:
 
     def _spread_color(self, ink: Ink, character: EffectCharacter) -> Color | None:
         """Return the color of an ink's gradient, spread across the input text, at a character's input position."""
-        mapping = self._spreads.get(id(ink))
-        if mapping is None:
+        entry = self._spreads.get(id(ink))
+        if entry is not None and entry[0] is ink:
+            mapping = entry[1]
+        else:
+            if len(self._spreads) >= _SPREAD_CACHE_SIZE:
+                self._spreads.clear()  # Looks replaced over and over: start again rather than keep every ink.
             canvas = self.terminal.canvas
             gradient = typing.cast("Gradient", ink.color)
             direction = typing.cast("Gradient.Direction", ink.spread)
-            mapping = self._spreads[id(ink)] = gradient.build_coordinate_color_mapping(
+            mapping = gradient.build_coordinate_color_mapping(
                 max(1, canvas.text_bottom),
                 max(1, canvas.text_top),
                 max(1, canvas.text_left),
                 max(1, canvas.text_right),
                 direction,
             )
+            self._spreads[id(ink)] = (ink, mapping)
         return mapping.get(character.input_coord)
 
     def _contribute(self, body: Body, cells: dict[Coord, _Cell], bounds: g3.Bounds) -> None:

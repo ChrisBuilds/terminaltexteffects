@@ -977,3 +977,15 @@ def test_text_sharing_a_cell_over_a_fill_shows_the_one_painted_last() -> None:
         character.attach(body, at=body.surface.locate((0, 0, 5)))
     step(world)
     assert symbol(body.surface_characters[first.motion.current_coord]) == "B"
+
+
+def test_a_new_spread_ink_never_reuses_an_old_inks_colors() -> None:
+    """Replacing a body's look with a new spread ink shows the new gradient, even if the old ink is gone."""
+    world = make_world("A")
+    body = world.body(Box(10, 6, 10))
+    character = attach(world, body, (0, 0, 5))
+    for code in ("#ff0000", "#00ff00", "#0000ff") * 30:
+        gradient = Gradient(Color(code), Color(code))
+        body.draw(Solid(background=True, ink=Ink(gradient, spread=Gradient.Direction.HORIZONTAL, light=0)))
+        step(world)
+        assert color(body.surface_characters[character.motion.current_coord]) == Color(code)
