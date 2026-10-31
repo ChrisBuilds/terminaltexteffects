@@ -945,3 +945,35 @@ def test_text_a_rounding_error_off_the_surface_still_draws_over_the_fill() -> No
     character.motion._xyz = (position[0], position[1], 1e-15)
     step(world)
     assert symbol(body.surface_characters[character.motion.current_coord]) == "Z"
+
+
+def test_text_keeps_its_modes_over_a_fill() -> None:
+    """Bold, underline and other modes of a character's visual carry over to the cell drawn over the fill."""
+    world = make_world("Z")
+    body = world.body(Box(10, 6, 10)).draw(Solid(background=True))
+    character = attach(world, body, (0, 0, 5))
+    animation = character.animation
+    animation.current_character_visual = replace(animation.current_character_visual, bold=True, underline=True)
+    step(world)
+    shown = body.surface_characters[character.motion.current_coord].animation.current_character_visual
+    assert shown.bold
+    assert shown.underline
+    assert shown.colors is not None
+    assert shown.colors.bg is not None
+    animation.current_character_visual = replace(animation.current_character_visual, underline=False)
+    step(world)
+    shown = body.surface_characters[character.motion.current_coord].animation.current_character_visual
+    assert shown.bold
+    assert not shown.underline
+
+
+def test_text_sharing_a_cell_over_a_fill_shows_the_one_painted_last() -> None:
+    """Two characters on the same spot show the one the terminal paints last, the higher character ID on a tie."""
+    world = make_world("AB")
+    body = world.body(Box(10, 6, 10)).draw(Solid(background=True))
+    first, second = terminal_of(world).get_characters()
+    for character in (first, second):  # The first attached is met first, but B paints last.
+        terminal_of(world).set_character_visibility(character, is_visible=True)
+        character.attach(body, at=body.surface.locate((0, 0, 5)))
+    step(world)
+    assert symbol(body.surface_characters[first.motion.current_coord]) == "B"

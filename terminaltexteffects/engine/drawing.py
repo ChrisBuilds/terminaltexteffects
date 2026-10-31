@@ -22,7 +22,7 @@ from __future__ import annotations
 import math
 import typing
 import weakref
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from terminaltexteffects.utils import geometry3d as g3
 from terminaltexteffects.utils.exceptions import InvalidSymbolError
@@ -31,6 +31,7 @@ from terminaltexteffects.utils.graphics import Color, ColorPair, Gradient, shift
 from terminaltexteffects.utils.terminal_text import get_symbol_cell_width
 
 if typing.TYPE_CHECKING:
+    from terminaltexteffects.engine.animation import CharacterVisual
     from terminaltexteffects.engine.base_character import EffectCharacter
     from terminaltexteffects.engine.terminal import Terminal
     from terminaltexteffects.engine.world import Body, World
@@ -293,13 +294,14 @@ def depth_order(depth: float, distance: float) -> float:
 class _Slot:
     """One pooled character showing a drawn cell, and the appearance it was last given."""
 
-    __slots__ = ("character", "colors", "frame", "order", "symbol", "visual")
+    __slots__ = ("character", "colors", "frame", "order", "source", "symbol", "visual")
 
     def __init__(self, character: EffectCharacter) -> None:
         self.character = character
         self.symbol = ""
         self.colors: ColorPair | None = None
         self.visual: object = None
+        self.source: CharacterVisual | None = None
         self.order = math.nan
         self.frame = -1
 
@@ -314,7 +316,12 @@ ink for characters drawn over its fill."""
 
 _Decal = tuple[float, "EffectCharacter", float]
 """The characters on a drawn cell's surface: the depth to order the cell at (the farthest character's, never nearer
-than the cell), and the nearest character with its depth."""
+than the cell), and the character the terminal would paint last there, with its depth."""
+
+
+def _painter_key(character: EffectCharacter) -> tuple[int, float, int]:
+    """Return what the terminal paints characters in a cell by: the last painted, with the largest key, shows."""
+    return character._layer, character._depth_order, character._character_id
 
 
 def _offer(
@@ -442,16 +449,17 @@ class Painter:
                 slot = self._slots[cell] = _Slot(self._new_character(cell))
             decal = decals.get(cell)
             layer = 0
+            source = None
             if decal is None:
                 order_depth = depth
             elif colors.bg is not None and (drawn := self._over_fill(decal[1], colors, normal, ink)) is not None:
                 # Drawn over the fill: this cell shows the character, so it goes just in front of it.
-                symbol, colors = drawn
+                source, colors = drawn
                 order_depth = decal[2] - 2 * _SURFACE_BIAS
                 layer = decal[1].layer
             else:
                 order_depth = decal[0]
-            self._show(slot, symbol, colors, depth_order(order_depth + _SURFACE_BIAS, distance), layer)
+            self._show(slot, symbol, colors, depth_order(order_depth + _SURFACE_BIAS, distance), layer, source)
             slot.frame = frame
             body._cells.append(slot)
             shown.append(slot)
@@ -460,15 +468,47 @@ class Painter:
                 self.terminal.set_character_visibility(slot.character, is_visible=False)
         self._shown = shown
 
-    def _show(self, slot: _Slot, symbol: str, colors: ColorPair, order: float, layer: int) -> None:
-        """Give a slot's character this appearance, order and layer, changing only what differs, and show it."""
+    def _show(
+        self,
+        slot: _Slot,
+        symbol: str,
+        colors: ColorPair,
+        order: float,
+        layer: int,
+        source: CharacterVisual | None = None,
+    ) -> None:
+        """Give a slot's character this appearance, order and layer, changing only what differs, and show it.
+
+        With a `source` visual, the slot shows that visual, with its symbol and modes (bold, underline and so on),
+        in `colors` instead.
+        """
         character = slot.character
         if character.layer != layer:
             character.layer = layer
         animation = character.animation
-        if slot.symbol != symbol or slot.colors is not colors or slot.visual is not animation.current_character_visual:
+        if source is not None:
+            if (
+                slot.source is not source
+                or slot.colors is not colors
+                or slot.visual is not animation.current_character_visual
+            ):
+                animation.current_character_visual = replace(
+                    source,
+                    colors=colors,
+                    _fg_color_code=animation._get_color_code(colors.fg),
+                    _bg_color_code=animation._get_color_code(colors.bg),
+                )
+                slot.symbol, slot.colors, slot.visual = source.symbol, colors, animation.current_character_visual
+                slot.source = source
+        elif (
+            slot.source is not None
+            or slot.symbol != symbol
+            or slot.colors is not colors
+            or slot.visual is not animation.current_character_visual
+        ):
             animation.set_appearance(symbol, colors)
             slot.symbol, slot.colors, slot.visual = symbol, colors, animation.current_character_visual
+            slot.source = None
         if slot.order != order:
             character._set_depth_order(order)
             slot.order = order
@@ -515,16 +555,18 @@ class Painter:
                 if current is None:
                     # Ordered no nearer than the cell itself: a character in front of it is drawn later anyway.
                     decals[cell] = (max(depth, drawn[0]), character, depth)
-                elif depth > current[0]:
-                    decals[cell] = (depth, current[1], current[2])
-                elif depth < current[2]:
-                    decals[cell] = (current[0], character, depth)
+                else:
+                    # The cell shows the character the terminal paints last there, ties broken as it breaks them.
+                    shown, shown_depth = current[1], current[2]
+                    if _painter_key(character) > _painter_key(shown):
+                        shown, shown_depth = character, depth
+                    decals[cell] = (max(depth, current[0]), shown, shown_depth)
         return decals
 
     def _over_fill(
         self, character: EffectCharacter, fill: ColorPair, normal: g3.Vec3 | None, ink: Ink | None
-    ) -> tuple[str, ColorPair] | None:
-        """Return the symbol and colors of `character` drawn over a cell's background `fill`, coloring it by `ink`.
+    ) -> tuple[CharacterVisual, ColorPair] | None:
+        """Return the visual and colors of `character` drawn over a cell's background `fill`, coloring it by `ink`.
 
         A character with its own background keeps it. A wide character can't be drawn in one cell, so it is left to
         draw itself, and `None` is returned.
@@ -542,11 +584,11 @@ class Painter:
                 color = ink_color
             elif ink_color is not None:
                 if ink.spread == "light":
-                    return visual.symbol, self.pair(ink_color.get_color_at_fraction(lit), background)
+                    return visual, self.pair(ink_color.get_color_at_fraction(lit), background)
                 color = self._spread_color(ink, character) or color
             if color is not None:
                 color = self.shade(color, ink.light, lit)
-        return visual.symbol, self.pair(color, background)
+        return visual, self.pair(color, background)
 
     def _spread_color(self, ink: Ink, character: EffectCharacter) -> Color | None:
         """Return the color of an ink's gradient, spread across the input text, at a character's input position."""
