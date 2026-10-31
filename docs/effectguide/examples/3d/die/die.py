@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from terminaltexteffects import Color, Gradient, Textured, Vec3, easing, rotation_about
+from terminaltexteffects import Color, Gradient, Ink, Textured, Vec3, easing, rotation_about
 from terminaltexteffects.engine.base_config import BaseConfig
 from terminaltexteffects.engine.base_effect import BaseEffect, BaseEffectIterator
 from terminaltexteffects.engine.shapes import Cube
@@ -62,7 +62,7 @@ class DieIterator(BaseEffectIterator[DieConfig]):
         super().__init__(effect)
         self.world = self.terminal.world
         ivory = Gradient(Color("#4a3f35"), Color("#fff4e0"), steps=10)
-        looks = {face: Textured(text, gradient=ivory) for face, text in FACES.items()}
+        looks = {face: Textured(text, ink=Ink(ivory)) for face, text in FACES.items()}
         die = self.world.body(Cube(SIZE), at=(-60, 0, 0)).draw(faces=looks)
         die.rotation = rotation_about("diagonal", 120)
         # Roll to the center while tumbling, then settle with the five facing the viewer and a slight tilt.

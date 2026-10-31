@@ -223,6 +223,8 @@ GUIDE_DEMOS: dict[str, Demo] = {
             ("light_torus", "light", ("--shape", "torus", "--symbols", "░▒▓█")),
             ("texture_grid", "texture", ()),
             ("texture_text", "texture", ("--text",)),
+            ("ink", "ink", ()),
+            ("ink_lit", "ink", ("--light", "1")),
             ("handoff", "handoff", ()),
             ("nodes", "nodes", ()),
             ("flight", "flight", ()),

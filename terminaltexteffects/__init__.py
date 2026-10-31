@@ -6,7 +6,7 @@ This package provides various text effects for terminal applications.
 from terminaltexteffects.engine import shapes
 from terminaltexteffects.engine.animation import Animation, Scene
 from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
-from terminaltexteffects.engine.drawing import Look, Shaded, Solid, Textured, Wireframe
+from terminaltexteffects.engine.drawing import Ink, Look, Shaded, Solid, Textured, Wireframe
 from terminaltexteffects.engine.effect_support import ParticlePool, ParticleReset
 from terminaltexteffects.engine.motion import (
     Motion,

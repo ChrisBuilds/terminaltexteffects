@@ -57,7 +57,7 @@ if typing.TYPE_CHECKING:
     from terminaltexteffects.engine.animation import Scene
     from terminaltexteffects.engine.base_character import EffectCharacter, EventHandler
     from terminaltexteffects.engine.canvas import Canvas
-    from terminaltexteffects.engine.drawing import Look
+    from terminaltexteffects.engine.drawing import Look, _Text
     from terminaltexteffects.engine.motion import BodyMotion, Motion, Path
     from terminaltexteffects.engine.shapes import Shape
     from terminaltexteffects.engine.surfaces import FaceName, Surface
@@ -437,7 +437,7 @@ class Body(SpatialNode, TweenQueue):
         self._look: Look | None = None
         self._face_looks: dict[int, Look] = {}
         self._face_tags: dict[FaceName, int] | None = None
-        self._texts: dict[int, tuple[list[str], int]] = {}
+        self._texts: dict[int, _Text] = {}
         self._cells: list[typing.Any] = []
         self._shape = shape
         if surface is None and shape is not None:
