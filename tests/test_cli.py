@@ -159,8 +159,8 @@ def test_main_print_completion_bash_outputs_script(
     __main__.main()
 
     output = capsys.readouterr().out
-    assert "complete -o filenames -F _shtab_tte tte" in output
-    assert "complete -o filenames -F _shtab_tte terminaltexteffects" in output
+    assert "complete -o bashdefault -o filenames -F _shtab_tte tte" in output
+    assert "complete -o bashdefault -o filenames -F _shtab_tte terminaltexteffects" in output
     assert "mapfile" not in output
     assert "--wrap-text" in output
     assert "--random-effect" in output
@@ -766,7 +766,7 @@ def test_bundled_completion_does_not_import_plugin_effect(
     __main__.main()
 
     output = capsys.readouterr().out
-    assert "complete -o filenames -F _shtab_tte tte" in output
+    assert "complete -o bashdefault -o filenames -F _shtab_tte tte" in output
 
 
 def test_bash_completion_registers_in_clean_shell() -> None:
@@ -777,8 +777,8 @@ def test_bash_completion_registers_in_clean_shell() -> None:
         ')"; complete -p tte; complete -p terminaltexteffects',
     )
 
-    assert "complete -o filenames -F _shtab_tte tte" in result.stdout
-    assert "complete -o filenames -F _shtab_tte terminaltexteffects" in result.stdout
+    assert "complete -o bashdefault -o filenames -F _shtab_tte tte" in result.stdout
+    assert "complete -o bashdefault -o filenames -F _shtab_tte terminaltexteffects" in result.stdout
 
 
 def test_zsh_completion_registers_in_clean_shell() -> None:

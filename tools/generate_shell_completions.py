@@ -60,14 +60,17 @@ def _configure_completers(
 def _register_aliases(script: str, shell: str) -> str:
     """Register the generated completion function for both CLI entry points."""
     if shell == "bash":
-        # shtab 1.12 uses read loops compatible with Bash 3.2; no mapfile transform is needed.
-        registration = "complete -F _shtab_tte tte"
+        # shtab 1.13 uses read loops compatible with Bash 3.2; no mapfile transform is needed.
+        # It registers with `-o bashdefault` and switches `filenames` per word with `compopt`, which
+        # Bash 3.2 (macOS) lacks, so `-o filenames` stays on the registration for that shell.
+        registration = "complete -o bashdefault -F _shtab_tte tte"
         if registration not in script:
             msg = "shtab's Bash registration changed; review CLI alias registration"
             raise RuntimeError(msg)
         script = script.replace(
             registration,
-            "complete -o filenames -F _shtab_tte tte\ncomplete -o filenames -F _shtab_tte terminaltexteffects",
+            "complete -o bashdefault -o filenames -F _shtab_tte tte\n"
+            "complete -o bashdefault -o filenames -F _shtab_tte terminaltexteffects",
             1,
         )
     else:

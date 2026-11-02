@@ -491,8 +491,13 @@ _shtab_tte() {
       compgen -W "${current_action_choices[*]}" -- "$completing_word")
   fi
 
+  if [[ ${#COMPREPLY[@]} = 0 ]]; then
+    # native fallback matches are not necessarily filenames (e.g. variables)
+    compopt +o filenames 2>/dev/null || : # bash>=4
+  fi
+
   return 0
 }
 
-complete -o filenames -F _shtab_tte tte
-complete -o filenames -F _shtab_tte terminaltexteffects
+complete -o bashdefault -o filenames -F _shtab_tte tte
+complete -o bashdefault -o filenames -F _shtab_tte terminaltexteffects

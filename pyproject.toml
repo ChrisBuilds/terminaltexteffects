@@ -60,7 +60,7 @@ docs = [
 
 [dependency-groups]
 quality = [
-    "ruff==0.16.10",
+    "ruff==0.17.2",
     "pyright==1.1.414",
 ]
 test = [
@@ -70,7 +70,7 @@ test = [
     "pytest-randomly>=4.0.1,<4.1; python_version < '3.10'",
     "pytest-randomly>=5.0.0; python_version >= '3.10'",
     "pytest-xdist>=3.6.1",
-    "shtab==1.12.1",
+    "shtab==1.13.0",
     "towncrier==26.9.0",
     "diff-cover>=10.6.0; python_version >= '3.10'",
     "textual>=8.0",
