@@ -114,6 +114,8 @@ sphere.draw(Textured(ink=spread, background=navy, repeat=False))
   to a gradient following the light, which is lit already.
 - `back="dim"` shows the far side through blanks, which a fill would cover, so it can't be combined with
   `background`.
+- Characters attached to a filled body's surface are drawn over the fill too. See
+  [Riding a solid shape](attaching.md#riding-a-solid-shape).
 
 ### Attached text or textured surface
 

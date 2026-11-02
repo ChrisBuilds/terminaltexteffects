@@ -60,6 +60,34 @@ tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor
   to be active.
 - `len(self.cube.children)` counts the riders. It reaches the total once every character has landed.
 
+### Riding a solid shape
+
+A character on a drawn body's surface draws over the body's cell beneath it, so it replaces whatever the look put
+there. When the look fills cells with a background color, `Solid(background=True)` or `Textured(background=...)`, the
+character is drawn over the fill instead: the cell shows the character's symbol and color on the body's color, and
+the shape stays solid around the text.
+
+```bash
+tte --input-file concept_input.txt --canvas-width 80 --canvas-height 24 --anchor-text c flight --filled
+```
+
+![The characters fly onto a solid purple cube and ride it in white, dimming as their faces turn from the light, then fly home and leave the cube whole](../../img/effectguide/flight_filled_demo.webp)
+
+```python
+fill = Gradient(Color("#1a0020"), Color("#8A008A"), steps=12)
+self.cube.draw(Solid(gradient=fill, background=True, ink=Ink(Color("#ffffff"), light=0.6)))
+```
+
+- The effect stays in charge of its characters. Their scenes, colors and visibility keep working, and the cell follows
+  them every frame. A character that detaches, lifts off the surface or hides leaves just the fill behind.
+- `Solid(ink=...)` colors the characters drawn over its fill. With no ink they keep their own colors.
+  `Ink(light=0.6)` keeps them too, darkened in shadow. `Ink(color)` replaces them: a color, a gradient following the
+  light, or a gradient spread across the input text by each character's input position. See
+  [Text over a solid fill](textures.md#text-over-a-solid-fill) for how `Ink` works.
+- A character with its own background color keeps it. A wide character (such as CJK) can't be drawn in one cell, so
+  it draws itself as before.
+- The cell takes the character's layer, so a character raised to a higher layer is still drawn over the fill.
+
 ## Live targets
 
 Any node can be a waypoint. A path heading for a node follows it to wherever it is when the character arrives:
