@@ -178,7 +178,7 @@ tte -i banner.txt --frame-rate 30 --export banner.webp wipe
 | `.gif` | An animation of the canvas, with the last frame held for two seconds, at up to 50 frames per second. Colors are reduced to one palette of 255. |
 | `.webp` | The same animation as a lossless animated WebP, keeping every color and frame. |
 
-Both formats are drawn with [Pillow](https://python-pillow.org), which needs Python 3.10 or later:
+Both formats are drawn with [Pillow](https://python-pillow.org), which needs Python 3.11 or later:
 
 ```bash
 pip install 'terminaltexteffects[export]'

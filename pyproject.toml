@@ -43,8 +43,8 @@ tte = "terminaltexteffects.__main__:main"
 terminaltexteffects = "terminaltexteffects.__main__:main"
 
 [project.optional-dependencies]
-# GIF and WebP export. Pillow releases without known vulnerabilities need Python 3.10 or later.
-export = ["pillow>=12.3; python_version >= '3.10'"]
+# GIF and WebP export. Pillow releases without known vulnerabilities need Python 3.11 or later.
+export = ["pillow>=13.0; python_version >= '3.11'"]
 # The interactive interface, which includes export.
 tui = ["textual>=8.0", "terminaltexteffects[export]"]
 # Every feature extra: the interactive interface and GIF and WebP export.
@@ -90,7 +90,7 @@ dev = [
     "terminaltexteffects[docs]",
 ]
 demos = [
-    "pillow>=12.3; python_version >= '3.10'",
+    "pillow>=13.0; python_version >= '3.11'",
 ]
 artifacts = [
     "hatchling>=1.27",
@@ -107,12 +107,12 @@ exclude = ["/dev_effects/**", "/terminaltexteffects/effects/effect_dev.py"]
 
 [tool.uv]
 # Security floors for optional documentation and release-tool dependencies.
-constraint-dependencies = ["cryptography>=50.0.2", "requests>=2.33.0", "urllib3>=2.8.0", "filelock>=3.20.3"]
+constraint-dependencies = ["cryptography>=50.0.2", "requests>=2.33.0", "urllib3>=2.8.0", "filelock>=4.2.1"]
 
 [tool.uv.dependency-groups]
-dev = { requires-python = ">=3.10" }
-artifacts = { requires-python = ">=3.10" }
-hooks = { requires-python = ">=3.10" }
+dev = { requires-python = ">=3.11" }
+artifacts = { requires-python = ">=3.11" }
+hooks = { requires-python = ">=3.11" }
 
 [tool.ruff]
 show-fixes = true

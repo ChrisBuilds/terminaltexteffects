@@ -33,8 +33,8 @@ def test_missing_pillow_names_the_install_command(monkeypatch: pytest.MonkeyPatc
     assert export.format_problem(export.FORMATS[0]) is None
     assert export.format_problem(_WEBP) == "WebP export needs Pillow; install it with: " + export.INSTALL_HINT
     monkeypatch.setattr(export, "PILLOW_PYTHON", False)
-    assert export.format_problem(_GIF) == "GIF export needs Python 3.10 or later."
-    with pytest.raises(export.ExportError, match=r"Python 3\.10"):
+    assert export.format_problem(_GIF) == "GIF export needs Python 3.11 or later."
+    with pytest.raises(export.ExportError, match=r"Python 3\.11"):
         export.export_recording(Path("effect.tterec"), Path("out.gif"), _GIF, fps=30)
 
 

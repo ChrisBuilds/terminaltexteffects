@@ -1,7 +1,7 @@
 """Convert recordings to GIF or animated WebP.
 
 Frames are drawn from the recording with Pillow, which `pip install 'terminaltexteffects[export]'` installs on Python
-3.10 and later. Pillow is imported only when exporting, so the rest of TTE does not need it. `tte --export`, the
+3.11 and later. Pillow is imported only when exporting, so the rest of TTE does not need it. `tte --export`, the
 TUI's Export, and `tools/render_demos.py` for the documentation demos all use this module.
 """
 
@@ -39,8 +39,8 @@ FORMATS = (
 INSTALL_HINT = "pip install 'terminaltexteffects[export]'"
 """The command that installs what GIF and WebP export needs."""
 
-PILLOW_PYTHON = sys.version_info >= (3, 10)
-"""Whether this Python can install a Pillow release the `export` extra allows, which needs 3.10 or later."""
+PILLOW_PYTHON = sys.version_info >= (3, 11)
+"""Whether this Python can install a Pillow release the `export` extra allows, which needs 3.11 or later."""
 
 END_HOLD = 2.0
 """Seconds the last frame of a GIF or WebP is shown before the animation repeats."""
@@ -73,7 +73,7 @@ def format_problem(fmt: ExportFormat) -> str | None:
     if not fmt.needs_pillow or pillow_available():
         return None
     if not PILLOW_PYTHON:
-        return f"{fmt.name} export needs Python 3.10 or later."
+        return f"{fmt.name} export needs Python 3.11 or later."
     return f"{fmt.name} export needs Pillow; install it with: {INSTALL_HINT}"
 
 

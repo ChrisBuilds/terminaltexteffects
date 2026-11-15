@@ -8,7 +8,7 @@ import pytest
 
 from terminaltexteffects.engine._recording import RecordingHeader, RecordingWriter
 
-# Pillow is only installed on Python 3.10 and later.
+# Pillow is only installed on Python 3.11 and later.
 pytest.importorskip("PIL")
 
 from PIL import Image, ImageChops, ImageStat

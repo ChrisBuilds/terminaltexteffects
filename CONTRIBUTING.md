@@ -10,7 +10,7 @@ see [SUPPORT.md](SUPPORT.md).
 
 ## Setup
 
-TTE runs on Python 3.9.2+. Development tools (docs, hooks, release tooling) need Python 3.10+;
+TTE runs on Python 3.9.2+. Development tools (docs, hooks, release tooling) need Python 3.11+;
 use 3.14:
 
 ```sh
@@ -128,7 +128,7 @@ and you can post them in
 Effect demos in `docs/img/effects_demos/` and Effect Guide demos in `docs/img/effectguide/` are rendered locally
 with `tools/render_demos.py` and committed; CI doesn't render them. Each folder's `demos.json` records a
 fingerprint of every demo's seeded frames and render settings. `tests/test_demo_freshness.py` records each demo
-again on Linux (Python 3.10+) and fails when a change to an effect, an example, an input file, the engine or the renderer would
+again on Linux (Python 3.11+) and fails when a change to an effect, an example, an input file, the engine or the renderer would
 change what a demo shows.
 
 Floating-point results differ slightly between platforms, so a demo rendered on macOS or Windows can fail the check.
