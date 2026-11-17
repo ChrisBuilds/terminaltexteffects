@@ -4,7 +4,7 @@ Each demo is recorded ahead of time with `tte --export`, so frame timing is exac
 speed, then drawn as a lossless WebP or a GIF with the same Pillow renderer `tte --export` uses (see
 `terminaltexteffects.utils.export`). Demos render in parallel, one per CPU core.
 
-Requires Pillow, installed on Python 3.10 and later by `uv sync --group dev`.
+Requires Pillow, installed on Python 3.11 and later by `uv sync --group dev`.
 
 Examples:
     ./.venv/bin/python tools/render_demos.py --list

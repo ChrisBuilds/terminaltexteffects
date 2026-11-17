@@ -4,7 +4,7 @@ These are drawings, not TTE output: smooth lines and shapes that explain an idea
 before the guide shows what it looks like in cells. The 3D math comes from `terminaltexteffects.utils.geometry3d`,
 so the diagrams follow the same conventions as the engine: x right, y up, z toward the default viewer.
 
-Requires Pillow, installed on Python 3.10 and later by `uv sync --group dev`.
+Requires Pillow, installed on Python 3.11 and later by `uv sync --group dev`.
 
 Examples:
     ./.venv/bin/python tools/render_3d_diagrams.py --list

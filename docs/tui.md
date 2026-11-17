@@ -157,7 +157,7 @@ file is written:
 | Format | What you get | Needs |
 | --- | --- | --- |
 | tterec | A recording that `tte --play` replays in a terminal. See [recording and playback](appguide.md#recording-and-playback). | Nothing else. |
-| GIF | An animation of the canvas, with the last frame held for two seconds, at up to 50 frames per second. Colors are reduced to one palette of 255. | [Pillow](https://python-pillow.org), which the `tui` extra installs on Python 3.10 or later. |
+| GIF | An animation of the canvas, with the last frame held for two seconds, at up to 50 frames per second. Colors are reduced to one palette of 255. | [Pillow](https://python-pillow.org), which the `tui` extra installs on Python 3.11 or later. |
 | WebP | The same animation as a lossless animated WebP, keeping every color and frame. | Pillow, as for GIF. |
 
 Choosing a format changes the file's suffix, and typing a suffix chooses the format. When Pillow is missing, the
