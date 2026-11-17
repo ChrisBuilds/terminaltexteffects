@@ -90,6 +90,9 @@ class DevEffects:
     def scan(self) -> dict[Path, str | None]:
         """Import new and changed modules, and forget deleted ones.
 
+        A deleted module is also removed from `sys.modules`, so a later import of it fails as it would after a
+        restart. Modules that already imported it keep their reference.
+
         Returns:
             dict[Path, str | None]: The modules that were imported again or whose listing changed, mapped to the
                 names they were listed under before, or `None` for new modules. A deleted module is no longer in
@@ -122,6 +125,9 @@ class DevEffects:
                 effect = _load(path, signature, module_name, self._check_name if bare else None)
                 imported.add(path)
             effects[path] = effect
+        for path, effect in self.effects.items():
+            if path not in effects:
+                _forget(path, effect.module_name)
         self.effects = effects
         self._resolve_commands()
         changed: dict[Path, str | None] = {path: name for path, (name, _) in before.items() if path not in effects}
@@ -227,6 +233,21 @@ def _load(
         _bind_to_parent(module_name, previous)
         effect.error = format_error(error, path)
     return effect
+
+
+def _forget(path: Path, module_name: str) -> None:
+    """Remove the module imported from `path` as `module_name` from `sys.modules` and its parent package.
+
+    A module of the same name imported from another file is left alone.
+    """
+    module = sys.modules.get(module_name)
+    origin = getattr(getattr(module, "__spec__", None), "origin", None)
+    if module is None or not isinstance(origin, str) or Path(origin).resolve() != path.resolve():
+        return
+    del sys.modules[module_name]
+    _bind_to_parent(module_name, None)
+    # The import system caches directory listings, which would still name the deleted file.
+    importlib.invalidate_caches()
 
 
 def _bind_to_parent(module_name: str, module: ModuleType | None) -> None:

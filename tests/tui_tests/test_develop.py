@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import importlib
 import os
 import sys
 import types
@@ -108,6 +109,46 @@ def test_taken_commands_are_reported(tmp_path: Path) -> None:
     assert changed == {tmp_path / "effect_a.py": "same", tmp_path / "effect_b.py": "effect_b.py"}
     assert list(development.playable()) == ["same"]
     assert development.path_of("same") == tmp_path / "effect_b.py"
+
+
+def test_deleted_modules_can_no_longer_be_imported(tmp_path: Path) -> None:
+    """A deleted module is forgotten by the import system, while a module that imported it keeps its reference."""
+    helper = tmp_path / "effect_base.py"
+    _write(helper, PROTOTYPE.format(speed=7, command="base"))
+    dependent = PROTOTYPE.format(speed=1, command="{command}") + "from _tte_dev_effect_base import SPEED as HELPER\n"
+    _write(tmp_path / "effect_early.py", dependent.format(command="early"))
+    development = DevEffects(tmp_path)
+    development.scan()
+    assert sys.modules["_tte_dev_effect_early"].HELPER == 7
+
+    helper.unlink()
+    assert development.scan() == {helper: "base"}
+    assert "_tte_dev_effect_base" not in sys.modules
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("_tte_dev_effect_base")
+    assert sys.modules["_tte_dev_effect_early"].HELPER == 7
+
+    # A module saved after the deletion fails to import it, as it would after a restart.
+    _write(tmp_path / "effect_late.py", dependent.format(command="late"))
+    development.scan()
+    assert list(development.playable()) == ["early"]
+    assert "No module named '_tte_dev_effect_base'" in development.broken()["effect_late.py"]
+
+
+def test_deleting_a_file_keeps_a_same_named_module_from_elsewhere(tmp_path: Path) -> None:
+    """Only the module imported from the deleted file is forgotten."""
+    path = tmp_path / "effect_other.py"
+    _write(path, PROTOTYPE.format(speed=1, command="other"))
+    development = DevEffects(tmp_path)
+    development.scan()
+    replacement = types.ModuleType("_tte_dev_effect_other")
+    sys.modules["_tte_dev_effect_other"] = replacement
+    try:
+        path.unlink()
+        development.scan()
+        assert sys.modules["_tte_dev_effect_other"] is replacement
+    finally:
+        sys.modules.pop("_tte_dev_effect_other", None)
 
 
 def test_location_names_the_development_file(tmp_path: Path) -> None:
@@ -293,6 +334,12 @@ def test_reloaded_package_modules_replace_the_package_attribute(tmp_path: Path) 
         watched.scan()
         assert package.effect_bound is sys.modules["_tte_test_package.effect_bound"]
         assert package.effect_bound.SPEED == 2
+
+        # Deleting the file removes the package attribute too.
+        path.unlink()
+        watched.scan()
+        assert "_tte_test_package.effect_bound" not in sys.modules
+        assert not hasattr(package, "effect_bound")
     finally:
         sys.modules.pop("_tte_test_package", None)
         sys.modules.pop("_tte_test_package.effect_bound", None)
